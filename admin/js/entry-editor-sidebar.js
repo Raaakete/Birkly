@@ -34,17 +34,26 @@
         return document.getElementById(id);
     }
 
+    function escapeHtml(text) {
+        return String(text == null ? '' : text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function apiUrl(path) {
         return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
     }
 
+    function titleField() {
+        const scope = form || document;
+        return scope.querySelector('#field-title, #field_title, input[name="title"], .language-tab-content:first-child input[name$="[title]"]');
+    }
+
     function getTitleValue() {
-        return (
-            $('field-title')?.value ||
-            $('field_title')?.value ||
-            document.querySelector('input[name="title"]')?.value ||
-            ''
-        ).trim();
+        return (titleField()?.value || '').trim();
     }
 
     function getSlugValue() {
@@ -76,10 +85,34 @@
 
     function updateStatusClarity() {
         const el = $('status-clarity-text');
-        const status = $('status')?.value || 'unpublished';
+        const select = $('status');
+        const status = select?.value || 'unpublished';
         if (el) {
             el.textContent = statusMessages[status] || statusMessages.unpublished;
         }
+        const badge = $('entry-status-badge');
+        if (badge && select && select.selectedIndex >= 0) {
+            badge.className = 'status is-' + status;
+            badge.textContent = select.options[select.selectedIndex].textContent.trim();
+        }
+    }
+
+    // One mint per view: Publish while the entry is not live, Save changes once it is.
+    function updatePrimaryAction() {
+        const publishBtn = $('entry-publish-btn');
+        const saveBtn = $('entry-save-submit');
+        if (!publishBtn || !saveBtn) return;
+        const published = ($('status')?.value || '') === 'published';
+        publishBtn.hidden = published;
+        saveBtn.classList.toggle('btn-primary', published);
+        saveBtn.classList.toggle('btn-secondary', !published);
+    }
+
+    function updateSlugMirrors() {
+        const slug = getSlugValue();
+        document.querySelectorAll('[data-slug-mirror]').forEach(function (el) {
+            el.textContent = slug;
+        });
     }
 
     function counterState(len, ideal, max) {
@@ -157,12 +190,9 @@
                 });
             }
         });
-        const titleField = document.querySelector('input[name="title"], #field-title, #field_title');
-        if (titleField) {
-            titleField.addEventListener('input', function () {
-                updateMetaPreviews();
-            });
-        }
+        titleField()?.addEventListener('input', function () {
+            updateMetaPreviews();
+        });
     }
 
     function initOgImagePicker() {
@@ -345,29 +375,38 @@
         return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
     }
 
+    function setRevisionCount(count) {
+        const badge = $('entry-revisions-count');
+        if (!badge) return;
+        badge.textContent = count > 0 ? String(count) : '';
+        badge.hidden = !(count > 0);
+    }
+
     function renderRevisionHistory(versions) {
         const list = $('entry-revisions-list');
         if (!list) return;
 
         if (!Array.isArray(versions) || versions.length === 0) {
-            list.innerHTML = '<div class="entry-revisions-empty">' + escapeHtml(sidebarT('entry_editor_js_no_revisions_yet', 'No saved revisions yet.')) + '</div>';
+            setRevisionCount(0);
+            list.innerHTML = '<div class="entry-revisions-empty empty">' + escapeHtml(sidebarT('entry_editor_no_revisions', 'No saved revisions yet')) + '</div>';
             return;
         }
 
+        setRevisionCount(versions.length);
         list.innerHTML = versions.map(function (version) {
             const number = Number(version.version || 0);
             const isCurrent = version.author === 'Current';
-            const author = isCurrent ? 'Current version' : (version.author || 'Unknown author');
+            const author = isCurrent ? sidebarT('entry_editor_current_version', 'Current version') : (version.author || 'Unknown author');
             const subtitle = author + ' · ' + formatRevisionDate(version.created_at || version.updated_at || '');
-            return '<div class="entry-revision-item' + (isCurrent ? ' is-current' : '') + '">' +
-                '<div class="entry-revision-meta">' +
-                    '<div class="entry-revision-title">Version ' + number + (isCurrent ? ' · Current' : '') + '</div>' +
-                    '<div class="entry-revision-subtitle">' + subtitle + '</div>' +
+            return '<div class="revision-row entry-revision-item' + (isCurrent ? ' is-current' : '') + '">' +
+                '<div class="row-body entry-revision-meta">' +
+                    '<div class="row-title entry-revision-title">' + escapeHtml(sidebarT('entry_editor_version_n', 'Version {n}', { n: number })) + '</div>' +
+                    '<div class="row-meta entry-revision-subtitle">' + escapeHtml(subtitle) + '</div>' +
                 '</div>' +
                 '<div class="entry-revision-actions">' +
                     (isCurrent
-                        ? '<span class="status-badge published" style="white-space:nowrap;">Current</span>'
-                        : '<button type="button" class="btn btn-secondary btn-sm restore-entry-version-btn" data-version="' + number + '">Restore</button>') +
+                        ? '<span class="status is-info is-plain">' + escapeHtml(sidebarT('entry_editor_current', 'Current')) + '</span>'
+                        : '<button type="button" class="btn btn-ghost btn-sm restore-entry-version-btn" data-version="' + number + '">' + escapeHtml(sidebarT('entry_editor_restore', 'Restore')) + '</button>') +
                 '</div>' +
             '</div>';
         }).join('');
@@ -392,7 +431,7 @@
             }
             renderRevisionHistory(payload.versions || []);
         } catch (error) {
-            list.innerHTML = '<div class="entry-revisions-empty">Unable to load revisions.</div>';
+            list.innerHTML = '<div class="entry-revisions-empty empty">' + escapeHtml(sidebarT('entry_editor_revisions_unavailable', 'Unable to load revisions.')) + '</div>';
             setRevisionFeedback(error.message || 'Unable to load revisions', 'error');
         }
     }
@@ -453,6 +492,7 @@
     function init() {
         updatePermalinkPreview();
         updateStatusClarity();
+        updatePrimaryAction();
         bindCharCounter('meta_title', 'meta-title-counter', 60, 70);
         bindCharCounter('meta_description', 'meta-description-counter', 160, 200);
         bindMetaPreviewInputs();
@@ -465,14 +505,25 @@
         if (slugField) {
             slugField.addEventListener('input', function () {
                 updatePermalinkPreview();
+                updateSlugMirrors();
                 validateSidebar();
+            });
+            slugField.addEventListener('birkly:slug-generated', function () {
+                updatePermalinkPreview();
+                updateSlugMirrors();
+                updateMetaPreviews();
             });
         }
         const statusField = $('status');
         if (statusField) {
             statusField.addEventListener('change', function () {
                 updateStatusClarity();
+                updatePrimaryAction();
                 validateSidebar();
+            });
+            statusField.addEventListener('birkly:status-synced', function () {
+                updateStatusClarity();
+                updatePrimaryAction();
             });
         }
         ['meta_title', 'meta_description', 'published_at'].forEach(function (id) {

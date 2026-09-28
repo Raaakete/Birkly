@@ -84,7 +84,8 @@ class DynamicItems extends BaseField {
                         
                         $availableFieldtypes[] = [
                             'name' => strtolower($fieldtypeName),
-                            'label' => ucfirst($fieldtypeName),
+                            'label' => $fieldtype->getTypeLabel() ?: ucfirst($fieldtypeName),
+                            'icon' => $fieldtype->getIcon(),
                             'category' => $category
                         ];
                     } catch (\Exception $e) {
@@ -111,15 +112,15 @@ class DynamicItems extends BaseField {
             'availableFieldtypes' => $availableFieldtypes
         ]), ENT_QUOTES, 'UTF-8');
         
+        $plusIcon = function_exists('birkly_icon') ? birkly_icon('plus', ['size' => 13]) : '+';
+
         return <<<HTML
         <div class="block-field" id="field_{$this->name}" data-field-config="{$configJson}">
-            <div class="block-items" ondragover="event.preventDefault()">
+            <div class="block-items">
                 <!-- Blocks will be rendered by JavaScript -->
             </div>
             <div class="block-controls">
-                <button type="button" class="btn btn-primary dynamicitems-add-block-btn" data-dynamicitems-action="add-block">
-                    + Add Block
-                </button>
+                <button type="button" class="add-row dynamicitems-add-block-btn" data-dynamicitems-action="add-block">{$plusIcon}Add block</button>
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJson}">
         </div>
@@ -189,257 +190,170 @@ class DynamicItems extends BaseField {
     
     public function getCSS(): string {
         return <<<'CSS'
+        /* Blocks are wells 4px apart inside the field slab; fields in a block are white
+           (a field takes the opposite of what it sits on). Add block is a dashed row. */
         .block-field {
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-5, 1.25rem);
-            background: var(--bg-secondary, #fafafa);
-            margin-bottom: var(--space-4, 1rem);
-        }
-        
-        .block-items {
-            margin-bottom: var(--space-5, 1.25rem);
-            min-height: 80px;
-            background: var(--bg-primary, #ffffff);
-            border: 2px dashed var(--border-light, #f3f4f6);
-            border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-4, 1rem);
-        }
-        
-        .block-items:empty::before {
-            content: "No blocks yet. Click 'Add Block' to get started.";
-            color: var(--text-secondary, #72746F);
-            font-style: italic;
-            text-align: center;
-            display: block;
-            padding: var(--space-10, 2.5rem) var(--space-5, 1.25rem);
-        }
-        
-        .block-item {
-            border: 1px solid var(--border-light, #f3f4f6);
-            border-radius: var(--radius-md, 0.5rem);
-            margin-bottom: var(--space-4, 1rem);
-            background: var(--bg-primary, #ffffff);
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
-            transition: all var(--transition-fast, 150ms ease);
-            overflow: hidden;
-        }
-        
-        .block-item:hover {
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-            border-color: var(--primary-500, #3b82f6);
-        }
-        
-        .block-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .block-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-            background: var(--bg-secondary, #fafafa);
-            border-bottom: 1px solid var(--border-light, #f3f4f6);
-        }
-        
-        .block-item-info {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3, 0.75rem);
-            flex: 1;
-        }
-        
-        .block-item-label {
-            font-weight: 600;
-            color: var(--text-primary, #20221D);
-            font-size: 0.875rem;
-        }
-        
-        .block-item-type {
-            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-            background: var(--bg-hover, #f3f4f6);
-            border-radius: var(--radius-sm, 0.375rem);
-            font-size: 0.6875rem;
-            text-transform: uppercase;
-            color: var(--text-secondary, #72746F);
-            font-weight: 500;
-        }
-        
-        .block-item-name {
-            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-            background: var(--bg-primary, #ffffff);
-            border: 1px solid var(--border-light, #f3f4f6);
-            border-radius: var(--radius-sm, 0.375rem);
-            font-size: 0.6875rem;
-            color: var(--text-secondary, #72746F);
-            font-family: var(--font-family-mono, monospace);
-        }
-        
-        .block-item-actions {
-            display: flex;
-            gap: var(--space-2, 0.5rem);
-        }
-        
-        .block-item-content {
-            padding: var(--space-4, 1rem);
-        }
-        
-        .block-loading {
-            padding: var(--space-5, 1.25rem);
-            text-align: center;
-            color: var(--text-secondary, #72746F);
-            font-style: italic;
-        }
-        
-        .block-error {
-            padding: var(--space-4, 1rem);
-            background: var(--error-50, #fef2f2);
-            border: 1px solid var(--error-200, #fecaca);
-            border-radius: var(--radius-sm, 0.375rem);
-            color: var(--error-700, #b91c1c);
-        }
-        
-        .block-controls {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2, 0.5rem);
-        }
-        
-        /* Buttons use system button classes - no custom styles needed */
-        
-        /* Modal Styles */
-        .dynamicitems-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-overlay, rgba(0, 0, 0, 0.5));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: var(--z-modal, 400);
-            padding: var(--space-5, 1.25rem);
-        }
-        
-        .dynamicitems-modal {
-            background: var(--bg-primary, #ffffff);
-            border-radius: var(--radius-md, 0.5rem);
-            box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            gap: var(--s-1);
         }
-        
-        .dynamicitems-modal-header {
+        .block-items {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: var(--s-1);
+        }
+        .block-items:empty { display: none; }
+        .block-item {
+            padding: var(--s-3);
+            border-radius: var(--r);
+            background: var(--surface-2);
+        }
+        .block-item .input { border-color: transparent; background: var(--surface); }
+        .block-item .input:focus { border-color: var(--accent); }
+        .block-item-header {
+            display: flex;
             align-items: center;
-            padding: var(--space-5, 1.25rem);
-            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            gap: var(--s-2);
+            margin-block-end: var(--s-2);
         }
-        
-        .dynamicitems-modal-header h3 {
-            margin: 0;
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary, #20221D);
+        .block-item-info {
+            display: flex;
+            flex: 1 1 auto;
+            align-items: center;
+            gap: var(--s-2);
+            min-width: 0;
         }
-        
-        .dynamicitems-modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-secondary, #72746F);
-            padding: 0;
-            width: 30px;
-            height: 30px;
+        .block-item-label {
+            overflow: hidden;
+            color: var(--text);
+            font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .block-item-type {
+            flex: none;
+            padding: 0 6px;
+            border-radius: var(--r-inset);
+            background: var(--surface);
+            color: var(--text-2);
+            font: var(--weight-medium) var(--size-caption) / 18px var(--font-sans);
+        }
+        .block-item-name {
+            flex: none;
+            color: var(--text-3);
+            font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+        }
+        .block-item-actions {
+            display: flex;
+            flex: none;
+            gap: 2px;
+        }
+        .block-item-actions .btn { border: 0; background: none; color: var(--text-2); }
+        .block-item-actions .btn:hover { background: var(--surface-3); color: var(--text); }
+        .block-item-actions [data-dynamicitems-action="remove-block"]:hover { color: var(--danger); }
+        .block-loading,
+        .block-error {
+            color: var(--text-3);
+            font-size: var(--size-small);
+        }
+        .block-error { color: var(--danger); }
+        .block-controls { display: flex; }
+        .dynamicitems-add-block-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: var(--radius-sm, 0.375rem);
-            transition: all var(--transition-fast, 150ms ease);
+            gap: var(--s-2);
+            width: 100%;
+            min-height: 40px;
+            padding: 0 var(--s-3);
+            border-radius: var(--r);
+            border: 1px dashed var(--line-strong);
+            background: none;
+            color: var(--text-2);
+            font: var(--weight-medium) var(--size-body) / 1 var(--font-sans);
+            cursor: pointer;
         }
-        
-        .dynamicitems-modal-close:hover {
-            background: var(--bg-secondary, #fafafa);
-            color: var(--text-primary, #20221D);
+        .dynamicitems-add-block-btn:hover { border-color: var(--text-3); color: var(--text); }
+
+        /* Add or edit a block: a float */
+        .dynamicitems-modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: var(--z-modal, 400);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--s-5);
+            background: var(--overlay, rgb(0 0 0 / 0.4));
         }
-        
+        .dynamicitems-modal {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow: hidden;
+            border-radius: var(--r);
+            background: var(--bg);
+            box-shadow: var(--shadow-sheet);
+        }
+        .dynamicitems-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--s-5) var(--s-5) var(--s-3);
+        }
+        .dynamicitems-modal-header h3 {
+            margin: 0;
+            color: var(--text);
+            font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+        }
+        .dynamicitems-modal-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--control-sm);
+            height: var(--control-sm);
+            padding: 0;
+            border: 0;
+            border-radius: var(--r);
+            background: none;
+            color: var(--text-3);
+            font-size: var(--size-title-l);
+            cursor: pointer;
+        }
+        .dynamicitems-modal-close:hover { background: var(--surface-2); color: var(--text); }
         .dynamicitems-modal-body {
-            padding: var(--space-5, 1.25rem);
-            overflow-y: auto;
             flex: 1;
+            overflow-y: auto;
+            padding: 0 var(--s-5) var(--s-4);
         }
-        
         .dynamicitems-modal-footer {
             display: flex;
             justify-content: flex-end;
-            gap: var(--space-3, 0.75rem);
-            padding: var(--space-5, 1.25rem);
-            border-top: 1px solid var(--border-light, #f3f4f6);
-            background: var(--bg-secondary, #fafafa);
+            gap: var(--s-2);
+            padding: var(--s-4) var(--s-5) var(--s-5);
         }
-        
         .dynamicitems-form-group {
-            margin-bottom: var(--space-5, 1.25rem);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-block-end: var(--s-4);
         }
-        
         .dynamicitems-form-group label {
-            display: block;
-            margin-bottom: var(--space-2, 0.5rem);
-            font-weight: 500;
-            color: var(--text-primary, #20221D);
-            font-size: 0.875rem;
+            color: var(--text);
+            font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
         }
-        
-        .dynamicitems-form-group label .required {
-            color: var(--error-500, #ef4444);
-        }
-        
+        .dynamicitems-form-group label .required { color: var(--text-3); }
         .dynamicitems-form-group small {
-            display: block;
-            margin-top: var(--space-1, 0.25rem);
-            color: var(--text-secondary, #72746F);
-            font-size: 0.75rem;
+            color: var(--text-3);
+            font-size: var(--size-small);
         }
-        
-        .dynamicitems-form-group .input {
-            width: 100%;
-            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            font-size: 0.875rem;
-            font-family: inherit;
-            background: var(--bg-primary, #ffffff);
-            color: var(--text-primary, #20221D);
-        }
-        
-        .dynamicitems-form-group .input:focus {
-            outline: none;
-            border-color: var(--primary-500, #3b82f6);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .dynamicitems-form-group input[type="checkbox"] {
-            margin-right: var(--space-2, 0.5rem);
-        }
-        
-        #block-settings-container {
-            margin-top: var(--space-5, 1.25rem);
-            padding-top: var(--space-5, 1.25rem);
-            border-top: 1px solid var(--border-light, #f3f4f6);
-        }
-        
+        .dynamicitems-form-group input[type="checkbox"] { margin-inline-end: var(--s-2); }
         #block-settings-content {
-            background: var(--bg-secondary, #fafafa);
-            padding: var(--space-4, 1rem);
-            border-radius: var(--radius-sm, 0.375rem);
+            padding: var(--s-4);
+            border-radius: var(--r);
+            background: var(--surface);
         }
         CSS;
     }
@@ -517,6 +431,6 @@ class DynamicItems extends BaseField {
         }
         
         return '<span class="ft-list-badge">' . $count . ' item' . ($count === 1 ? '' : 's') . '</span>' .
-               ($previewText ? ' <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>' : '');
+               ($previewText ? '<span class="ft-list-muted">' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . '</span>' : '');
     }
 } 

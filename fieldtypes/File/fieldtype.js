@@ -41,6 +41,9 @@
         const fileInput = container.querySelector('#file_input_' + fieldName);
         const hiddenInput = container.querySelector('#field_' + fieldName + '_value');
         const previewContainer = container.querySelector('.file-preview-container');
+        const metaEl = container.querySelector('.file-meta');
+        const selectLabel = container.querySelector('.file-select-label');
+        const uploadLabel = container.querySelector('.file-upload-label');
         
         if (!selectBtn || !fileInput || !hiddenInput) return;
         container.dataset.fileFieldReady = '1';
@@ -90,40 +93,49 @@
             const fileId = media.id || media;
             hiddenInput.value = fileId;
             
-            // Update preview
             updatePreview(media);
-            
-            // Show remove button
-            if (removeBtn) removeBtn.style.display = 'block';
+        }
+
+        function escapeText(text) {
+            return String(text == null ? '' : text).replace(/[&<>"]/g, function (c) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+            });
+        }
+
+        function describeFile(fileInfo) {
+            const dims = fileInfo && fileInfo.dimensions;
+            if (dims && dims.width && dims.height) {
+                return dims.width + ' × ' + dims.height;
+            }
+            return formatFileSize((fileInfo && fileInfo.size) || 0);
+        }
+
+        function setState(filled, meta) {
+            container.dataset.state = filled ? 'filled' : 'empty';
+            if (removeBtn) removeBtn.hidden = !filled;
+            if (selectLabel) selectLabel.textContent = filled ? 'Replace' : 'Choose file';
+            if (metaEl) {
+                metaEl.textContent = meta || '';
+                metaEl.hidden = !meta;
+            }
         }
         
         function updatePreview(fileInfo) {
             if (!previewContainer) return;
-            
-            let html = '';
-            
-            if (fileInfo && fileInfo.url) {
-                const fileName = fileInfo.name || 'File';
-                const fileSize = formatFileSize(fileInfo.size || 0);
-                const fileType = fileInfo.type || '';
-                
-                // Check if it's an image
-                if (fileType.startsWith('image/')) {
-                    html = `<img src="${fileInfo.url}" alt="${fileName}" style="max-width:100px;max-height:100px;object-fit:cover;border-radius:4px;">`;
-                } else {
-                    html = `
-                        <div class="file-preview">
-                            <div class="file-icon">📄</div>
-                            <div class="file-name">${fileName}</div>
-                            <div class="file-size">${fileSize}</div>
-                        </div>
-                    `;
-                }
-            } else {
-                html = '<div class="file-placeholder">No file selected</div>';
+
+            if (!fileInfo || !fileInfo.url) {
+                previewContainer.innerHTML = '<div class="file-placeholder">No file yet</div>';
+                setState(false, '');
+                return;
             }
-            
-            previewContainer.innerHTML = html;
+
+            const fileName = escapeText(fileInfo.name || 'File');
+            if ((fileInfo.type || '').startsWith('image/')) {
+                previewContainer.innerHTML = '<img class="file-cover" src="' + escapeText(fileInfo.url) + '" alt="' + fileName + '">';
+            } else {
+                previewContainer.innerHTML = '<div class="file-doc"><span class="file-name">' + fileName + '</span></div>';
+            }
+            setState(true, (fileInfo.name || 'File') + ' · ' + describeFile(fileInfo));
         }
         
         function uploadFile(file) {
@@ -133,7 +145,7 @@
             if (csrf) formData.append('_csrf', csrf);
 
             uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Uploading...';
+            if (uploadLabel) uploadLabel.textContent = 'Uploading…';
 
             fetch(Birkly.url('/api/admin_media.php?action=upload'), {
                 method: 'POST',
@@ -148,8 +160,8 @@
             })
             .then(data => {
                 uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Upload File';
-                
+                if (uploadLabel) uploadLabel.textContent = 'Upload';
+
                 if (data.status === 'ok' && data.data) {
                     setFileValue(data.data);
                 } else {
@@ -159,17 +171,14 @@
             .catch(error => {
                 console.error('Upload error:', error);
                 uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Upload File';
+                if (uploadLabel) uploadLabel.textContent = 'Upload';
                 fileFieldNotice('Upload failed: ' + error.message, 'error');
             });
         }
         
         function clearFile() {
             hiddenInput.value = '';
-            if (previewContainer) {
-                previewContainer.innerHTML = '<div class="file-placeholder">No file selected</div>';
-            }
-            if (removeBtn) removeBtn.style.display = 'none';
+            updatePreview(null);
             if (fileInput) fileInput.value = '';
         }
         
@@ -189,7 +198,6 @@
                 .then(data => {
                     if (data.status === 'ok' && data.data) {
                         updatePreview(data.data);
-                        if (removeBtn) removeBtn.style.display = 'block';
                     }
                 })
                 .catch(error => {

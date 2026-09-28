@@ -39,7 +39,12 @@ class Gallery extends BaseField {
             }
         }
         
-        // Build preview HTML
+        $removeIcon = function_exists('birkly_icon') ? birkly_icon('x', ['size' => 13]) : '×';
+        $icon = static fn (string $n): string => function_exists('birkly_icon') ? birkly_icon($n, ['size' => 13]) : '';
+        $addIcon = $icon('media');
+        $uploadIcon = $icon('upload');
+        $clearHidden = empty($items) ? ' hidden' : '';
+
         $previewHtml = '';
         if (!empty($items)) {
             $previewHtml = '<div class="gallery-grid">';
@@ -54,13 +59,13 @@ class Gallery extends BaseField {
                 $previewHtml .= <<<HTML
                     <div class="gallery-item" data-id="{$mediaId}">
                         {$mediaTag}
-                        <button type="button" class="gallery-remove" data-id="{$mediaId}">×</button>
+                        <button type="button" class="gallery-remove" data-id="{$mediaId}" title="Remove" aria-label="Remove {$name}">{$removeIcon}</button>
                     </div>
                 HTML;
             }
             $previewHtml .= '</div>';
         } else {
-            $previewHtml = '<div class="gallery-empty">No images selected</div>';
+            $previewHtml = '<div class="gallery-empty">No images yet</div>';
         }
         
         return <<<HTML
@@ -69,12 +74,12 @@ class Gallery extends BaseField {
                 {$previewHtml}
             </div>
             <div class="gallery-controls">
-                <button type="button" class="btn btn-secondary add-gallery-images" data-field="{$this->name}">Add Images</button>
-                <button type="button" class="btn btn-primary upload-gallery-images" data-field="{$this->name}">Upload Images</button>
-                <button type="button" class="btn btn-danger clear-gallery" data-field="{$this->name}" style="display:none;">Clear All</button>
+                <button type="button" class="btn btn-secondary btn-sm add-gallery-images" data-field="{$this->name}">{$addIcon}Add images</button>
+                <button type="button" class="btn btn-ghost btn-sm upload-gallery-images" data-field="{$this->name}">{$uploadIcon}Upload</button>
+                <button type="button" class="btn btn-ghost btn-sm clear-gallery" data-field="{$this->name}"{$clearHidden}>Clear all</button>
             </div>
-            <input type="file" id="gallery_input_{$this->name}" multiple accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.m4v,.webm,.mov,.ogv" style="display:none;">
-            <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value='{$this->encodeValue($value)}'>
+            <input type="file" id="gallery_input_{$this->name}" multiple accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.m4v,.webm,.mov,.ogv" hidden>
+            <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$this->encodeValue($value)}">
         </div>
         HTML;
     }
@@ -134,7 +139,7 @@ class Gallery extends BaseField {
     }
     
     private function encodeValue($value) {
-        return json_encode($value);
+        return htmlspecialchars((string) json_encode($value), ENT_QUOTES, 'UTF-8');
     }
 
     public function validate($value): array {
@@ -151,73 +156,74 @@ class Gallery extends BaseField {
         return file_get_contents(__DIR__ . '/fieldtype.js');
     }
 
+    public function getListCSS(): string {
+        return <<<'CSS'
+        .ft-gallery-stack { flex-wrap: nowrap; gap: 2px; }
+        CSS;
+    }
+
     public function getCSS(): string {
-        return <<<CSS
+        return <<<'CSS'
+        /* Thumbnails are wells 8px apart; an empty gallery is a dashed area. */
         .gallery-field {
             display: flex;
             flex-direction: column;
-            gap: var(--space-3, 0.75rem);
-        }
-        .gallery-preview {
-            min-height: 100px;
+            gap: var(--s-3);
         }
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: var(--space-3, 0.75rem);
-            padding: var(--space-3, 0.75rem);
-            border: 1px dashed var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--bg-secondary, #fafafa);
+            grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+            gap: var(--s-2);
         }
         .gallery-item {
             position: relative;
-            aspect-ratio: 1;
+            aspect-ratio: 4 / 3;
             overflow: hidden;
-            border-radius: var(--radius-sm, 0.375rem);
-            border: 1px solid var(--border-medium, #e5e7eb);
-            background: var(--bg-primary, #ffffff);
+            border-radius: var(--r);
+            background: var(--surface-2);
         }
         .gallery-item img,
         .gallery-item video {
+            display: block;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
         .gallery-remove {
             position: absolute;
-            top: var(--space-1, 0.25rem);
-            right: var(--space-1, 0.25rem);
-            width: 24px;
-            height: 24px;
-            border-radius: var(--radius-full, 50%);
-            border: none;
-            background: rgba(239, 68, 68, 0.8);
-            color: var(--text-inverse, #ffffff);
-            cursor: pointer;
-            font-size: 1.125rem;
-            line-height: 1;
-            display: flex;
+            inset-block-start: var(--s-1);
+            inset-inline-end: var(--s-1);
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: background var(--transition-fast, 150ms ease);
+            width: var(--control-sm);
+            height: var(--control-sm);
+            border: 0;
+            border-radius: var(--r);
+            background: var(--surface);
+            color: var(--text-2);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity var(--dur-1) var(--ease);
         }
-        .gallery-remove:hover {
-            background: var(--error-500, #ef4444);
-        }
+        .gallery-item:hover .gallery-remove,
+        .gallery-remove:focus-visible { opacity: 1; }
+        .gallery-remove:hover { color: var(--danger); }
         .gallery-empty {
-            padding: var(--space-6, 1.5rem);
+            padding: var(--s-6);
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--r);
+            color: var(--text-3);
+            font-size: var(--size-small);
             text-align: center;
-            color: var(--text-tertiary, #9ca3af);
-            font-style: italic;
-            border: 1px dashed var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--bg-secondary, #fafafa);
         }
         .gallery-controls {
             display: flex;
-            gap: var(--space-2, 0.5rem);
+            align-items: center;
+            gap: var(--s-1);
         }
+        .gallery-controls .clear-gallery:hover { color: var(--danger); }
+        .gallery-field [hidden] { display: none; }
         CSS;
     }
 
@@ -354,16 +360,16 @@ class Gallery extends BaseField {
             }
         }
         
-        $html = '<div class="ft-gallery-preview-container" style="display:flex;gap:4px;align-items:center;">';
+        $html = '<span class="ft-list-row ft-gallery-stack">';
         $html .= implode('', $previews);
         
         // Add count badge if more than 3 items
         if ($count > 3) {
             $remaining = $count - 3;
-            $html .= '<span class="ft-gallery-count" style="display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;background:var(--color-neutral-200, #f3f4f6);color:var(--text-secondary, #6b7280);border-radius:4px;font-size:12px;font-weight:600;flex-shrink:0;">+' . $remaining . '</span>';
+            $html .= '<span class="ft-list-badge">+' . $remaining . '</span>';
         }
         
-        $html .= '</div>';
+        $html .= '</span>';
         return $html;
     }
 

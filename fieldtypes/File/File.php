@@ -26,47 +26,63 @@ class File extends BaseField {
         
         // Try to get file info if we have an ID
         $fileInfo = $this->getFileInfo($fileId);
-        $preview = '';
-        
+        $name = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
+        $idAttr = htmlspecialchars((string) $fileId, ENT_QUOTES, 'UTF-8');
+        $preview = '<div class="file-placeholder">No file yet</div>';
+        $meta = '';
+        $filled = false;
+
         if ($fileInfo && isset($fileInfo['url'])) {
-            $fileName = htmlspecialchars($fileInfo['name'] ?? $fileId);
-            $fileSize = $this->formatFileSize($fileInfo['size'] ?? 0);
-            $fileType = $fileInfo['type'] ?? 'unknown';
-            
-            // Show image preview for images, icon for others
-            if ($this->isImage($fileType)) {
-                $preview = "<img src=\"{$fileInfo['url']}\" alt=\"{$fileName}\" style=\"max-width:100px;max-height:100px;object-fit:cover;border-radius:4px;\">";
+            $filled = true;
+            $fileName = htmlspecialchars($fileInfo['name'] ?? $fileId, ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars($fileInfo['url'], ENT_QUOTES, 'UTF-8');
+            if ($this->isImage($fileInfo['type'] ?? '')) {
+                $preview = "<img class=\"file-cover\" src=\"{$url}\" alt=\"{$fileName}\">";
             } else {
-                $preview = "<div class=\"file-preview\">
-                    <div class=\"file-icon\">📄</div>
-                    <div class=\"file-name\">{$fileName}</div>
-                    <div class=\"file-size\">{$fileSize}</div>
-                </div>";
+                $preview = "<div class=\"file-doc\"><span class=\"file-name\">{$fileName}</span></div>";
             }
-        } else if ($fileId) {
-            $preview = "<div class=\"file-placeholder\">File ID: {$fileId}</div>";
-        } else {
-            $preview = '<div class="file-placeholder">No file selected</div>';
+            $meta = $fileName . ' · ' . htmlspecialchars($this->describeFile($fileInfo), ENT_QUOTES, 'UTF-8');
+        } elseif ($fileId) {
+            $filled = true;
+            $preview = "<div class=\"file-doc\"><span class=\"file-name\">{$idAttr}</span></div>";
         }
-        
+
+        $state = $filled ? 'filled' : 'empty';
+        $selectLabel = $filled ? 'Replace' : 'Choose file';
+        $removeHidden = $filled ? '' : ' hidden';
+        $metaHidden = $meta !== '' ? '' : ' hidden';
+        $icon = static fn (string $n): string => function_exists('birkly_icon') ? birkly_icon($n, ['size' => 13]) : '';
         $multi = $this->options['multiple'] ?? false;
-        $accept = $this->options['accept'] ?? '*/*';
+        $accept = htmlspecialchars($this->options['accept'] ?? '*/*', ENT_QUOTES, 'UTF-8');
         $multipleAttr = $multi ? 'multiple' : '';
-        
+        $mediaIcon = $icon('media');
+        $uploadIcon = $icon('upload');
+        $trashIcon = $icon('trash');
+
         return <<<HTML
-        <div class="file-field" id="field_{$this->name}">
-            <div class="file-preview-container" data-field="{$this->name}">
+        <div class="file-field" id="field_{$name}" data-state="{$state}">
+            <div class="file-preview-container" data-field="{$name}">
                 {$preview}
             </div>
+            <span class="file-meta"{$metaHidden}>{$meta}</span>
             <div class="file-controls">
-                <button type="button" class="btn btn-secondary select-file-btn" data-field="{$this->name}">Select File</button>
-                <button type="button" class="btn btn-primary upload-file-btn" data-field="{$this->name}">Upload File</button>
-                <button type="button" class="btn btn-danger remove-file-btn" data-field="{$this->name}" style="display:none;">Remove</button>
+                <button type="button" class="btn btn-secondary btn-sm select-file-btn" data-field="{$name}">{$mediaIcon}<span class="file-select-label">{$selectLabel}</span></button>
+                <button type="button" class="btn btn-ghost btn-sm upload-file-btn" data-field="{$name}">{$uploadIcon}<span class="file-upload-label">Upload</span></button>
+                <button type="button" class="btn-icon remove-file-btn" data-field="{$name}" title="Remove file" aria-label="Remove file"{$removeHidden}>{$trashIcon}</button>
             </div>
-            <input type="file" id="file_input_{$this->name}" accept="{$accept}" style="display:none;" {$multipleAttr}>
-            <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$fileId}">
+            <input type="file" id="file_input_{$name}" accept="{$accept}" hidden {$multipleAttr}>
+            <input type="hidden" name="{$name}" id="field_{$name}_value" value="{$idAttr}">
         </div>
         HTML;
+    }
+
+    /** "1600 × 900" for images, the size otherwise. */
+    private function describeFile(array $fileInfo): string {
+        $dims = $fileInfo['dimensions'] ?? null;
+        if (is_array($dims) && !empty($dims['width']) && !empty($dims['height'])) {
+            return (int) $dims['width'] . ' × ' . (int) $dims['height'];
+        }
+        return $this->formatFileSize($fileInfo['size'] ?? 0);
     }
     
     private function extractFileId($value) {
@@ -117,7 +133,8 @@ class File extends BaseField {
                         'url' => $fileInfo['url'],
                         'type' => $fileInfo['type'] ?? '',
                         'size' => $fileInfo['size'] ?? 0,
-                        'ext' => $fileInfo['ext'] ?? ''
+                        'ext' => $fileInfo['ext'] ?? '',
+                        'dimensions' => $fileInfo['dimensions'] ?? null
                     ];
                 }
             }
@@ -186,48 +203,95 @@ class File extends BaseField {
     }
 
     public function getCSS(): string {
-        return <<<CSS
+        return <<<'CSS'
+        /* Filled: a well with the file, its meta and actions (Birch cover). Empty: a dashed drop area. */
         .file-field {
+            position: relative;
             display: flex;
             flex-direction: column;
-            gap: var(--space-3, 0.75rem);
+            align-items: center;
+            justify-content: center;
+            gap: var(--s-3);
+            min-height: 140px;
+            padding: var(--s-4);
+            border-radius: var(--r);
+        }
+        .file-field[data-state="empty"] {
+            border: 1px dashed var(--line-strong);
+            background: none;
+        }
+        .file-field[data-state="filled"] {
+            padding: 0;
+            min-height: 0;
+            overflow: hidden;
+            background: var(--surface-2);
         }
         .file-preview-container {
-            min-height: 100px;
-            border: 1px dashed var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            padding: var(--space-3, 0.75rem);
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--bg-secondary, #fafafa);
+            width: 100%;
         }
-        .file-preview {
+        .file-cover {
+            display: block;
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .file-doc {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: var(--space-2, 0.5rem);
-        }
-        .file-icon {
-            font-size: 3rem;
-            color: var(--text-secondary, #72746F);
-        }
-        .file-name {
-            font-weight: var(--font-medium, 500);
-            color: var(--text-primary, #20221D);
-        }
-        .file-size {
-            font-size: 0.875em;
-            color: var(--text-secondary, #72746F);
+            justify-content: center;
+            width: 100%;
+            min-height: 120px;
+            color: var(--text-2);
+            font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans);
         }
         .file-placeholder {
-            color: var(--text-tertiary, #9ca3af);
-            font-style: italic;
+            color: var(--text-3);
+            font-size: var(--size-small);
+        }
+        .file-meta {
+            position: absolute;
+            inset-block-end: var(--s-2);
+            inset-inline-start: var(--s-2);
+            max-width: 55%;
+            overflow: hidden;
+            padding: 2px 6px;
+            border-radius: var(--r-inset);
+            background: var(--surface);
+            color: var(--text-2);
+            font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .file-controls {
             display: flex;
-            gap: var(--space-2, 0.5rem);
+            align-items: center;
+            gap: var(--s-1);
         }
+        .file-field[data-state="filled"] .file-controls {
+            position: absolute;
+            inset-block-end: var(--s-2);
+            inset-inline-end: var(--s-2);
+        }
+        .file-field[data-state="filled"] .file-controls .btn,
+        .file-field[data-state="filled"] .file-controls .btn-icon {
+            background: var(--surface);
+        }
+        .file-field[data-state="filled"] .upload-file-btn { display: none; }
+        .file-controls .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--control-sm);
+            height: var(--control-sm);
+            border: 0;
+            border-radius: var(--r);
+            color: var(--text-2);
+        }
+        .file-controls .btn-icon:hover { color: var(--danger); }
+        .file-field [hidden] { display: none; }
         CSS;
     }
 

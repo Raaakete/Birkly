@@ -52,7 +52,7 @@ class OEmbed extends BaseField {
             <div class="oembed-field-preview" {$previewHidden}>
                 <iframe
                     class="oembed-field-frame"
-                    src="{$embedUrl}"
+                    data-src="{$embedUrl}"
                     loading="lazy"
                     allowfullscreen
                     referrerpolicy="strict-origin-when-cross-origin"
@@ -86,20 +86,18 @@ class OEmbed extends BaseField {
         return <<<'CSS'
         .oembed-field {
             display: grid;
-            gap: var(--space-2, 0.5rem);
+            gap: var(--s-2);
         }
-
         .oembed-field-preview {
-            position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
             overflow: hidden;
-            background: var(--bg-secondary, #f8fafc);
+            border-radius: var(--r);
+            background: var(--surface-2);
         }
-
+        .oembed-field-preview[hidden] { display: none; }
         .oembed-field-frame {
+            display: block;
             width: 100%;
             height: 100%;
             border: 0;

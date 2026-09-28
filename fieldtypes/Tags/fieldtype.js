@@ -87,6 +87,25 @@ if (window.HaruFieldtypePerformance) {
     }, 300000); // 5 minutes
 }
 
+// Chips carry data attributes; removal is delegated (the admin CSP blocks inline handlers).
+function tagEscape(text) {
+  return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function tagChipHtml(fieldName, tag) {
+  const safe = tagEscape(tag);
+  return `<span class="tag-chip">${safe}<button type="button" class="tag-remove" data-tags-field="${tagEscape(fieldName)}" data-tag="${safe}" aria-label="Remove ${safe}">&times;</button></span>`;
+}
+
+document.addEventListener('click', function (event) {
+  const btn = event.target.closest ? event.target.closest('.tag-remove[data-tag]') : null;
+  if (!btn || !window.HaruFieldtypes || !window.HaruFieldtypes.tags) return;
+  event.preventDefault();
+  window.HaruFieldtypes.tags.removeTag(btn.getAttribute('data-tags-field'), btn.getAttribute('data-tag'));
+});
+
 window.HaruFieldtypes['tags'] = {
   label: 'Tags',
   category: 'content',
@@ -95,7 +114,7 @@ window.HaruFieldtypes['tags'] = {
   render: function(fieldConfig, value) {
     value = Array.isArray(value) ? value : [];
     const tagsHtml = value.map((tag, idx) =>
-      `<span class='tag-chip'>${tag}<span class='tag-remove' onclick='window.HaruFieldtypes["tags"].removeTag("${fieldConfig.name}", "${tag}")'>&times;</span></span>`
+      tagChipHtml(fieldConfig.name, tag)
     ).join('');
     
     return `<div class="tags-field-container" id="field_${fieldConfig.name}">
@@ -169,7 +188,7 @@ window.HaruFieldtypes['tags'] = {
           const chipsContainer = container.querySelector(chipsSelector);
           if (chipsContainer) {
             const tagsHtml = value.map((tag, idx) =>
-              `<span class='tag-chip'>${tag}<span class='tag-remove' onclick='window.HaruFieldtypes["tags"].removeTag("${fieldName}", "${tag}")'>&times;</span></span>`
+              tagChipHtml(fieldName, tag)
             ).join('');
             chipsContainer.innerHTML = tagsHtml;
           }
@@ -183,7 +202,7 @@ window.HaruFieldtypes['tags'] = {
       const chipsContainer = container.querySelector(chipsSelector);
       if (chipsContainer) {
         const tagsHtml = value.map((tag, idx) =>
-          `<span class='tag-chip'>${tag}<span class='tag-remove' onclick='window.HaruFieldtypes["tags"].removeTag("${fieldName}", "${tag}")'>&times;</span></span>`
+          tagChipHtml(fieldName, tag)
         ).join('');
         chipsContainer.innerHTML = tagsHtml;
       }

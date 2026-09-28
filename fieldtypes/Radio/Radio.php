@@ -87,44 +87,32 @@ class Radio extends BaseField {
     public function getCSS(): string {
         return <<<'CSS'
         .radio-field {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 0.4375rem !important;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        
         .radio-group-horizontal {
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
-            gap: 0.875rem !important;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: var(--s-1) var(--s-4);
         }
-        
         .radio-option {
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.5rem !important;
+            display: flex;
+            align-items: center;
+            gap: var(--s-2);
+            min-height: 28px;
         }
-        
         .radio-input {
-            width: 16px !important;
-            height: 16px !important;
-            cursor: pointer !important;
-            margin: 0 !important;
-            flex-shrink: 0 !important;
-            accent-color: var(--primary, #007bff) !important;
+            flex: none;
+            margin: 0;
+            cursor: pointer;
         }
-        
         .radio-label {
-            cursor: pointer !important;
-            user-select: none !important;
-            font-size: 0.875rem !important;
-            line-height: 1.4 !important;
-            color: var(--text-primary, #20221D) !important;
-        }
-        
-        .radio-input:focus + .radio-label {
-            outline: 2px solid var(--primary-500, #3b82f6) !important;
-            outline-offset: 2px !important;
-            border-radius: var(--radius-xs, 0.125rem) !important;
+            color: var(--text);
+            font-size: var(--size-body);
+            line-height: var(--lh-body);
+            cursor: pointer;
+            user-select: none;
         }
         CSS;
     }

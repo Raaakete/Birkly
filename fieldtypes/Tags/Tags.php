@@ -43,14 +43,15 @@ class Tags extends BaseField {
             $value = [];
         }
         
-        $valueJson = json_encode($value);
+        $valueJson = htmlspecialchars((string) json_encode($value), ENT_QUOTES, 'UTF-8');
         
         // Generate existing tag chips
         $existingChips = '';
         if (is_array($value)) {
             foreach ($value as $tag) {
                 $tagHtml = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
-                $existingChips .= "<span class=\"tag-chip\">{$tagHtml}<span class=\"tag-remove\" onclick=\"window.HaruFieldtypes['tags'].removeTag('{$this->name}', '{$tagHtml}')\">×</span></span>";
+                $fieldAttr = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
+                $existingChips .= "<span class=\"tag-chip\">{$tagHtml}<button type=\"button\" class=\"tag-remove\" data-tags-field=\"{$fieldAttr}\" data-tag=\"{$tagHtml}\" aria-label=\"Remove {$tagHtml}\">×</button></span>";
             }
         }
         
@@ -58,7 +59,7 @@ class Tags extends BaseField {
         <div class="tags-field-container" id="field_{$this->name}">
             <div class="tags-field" id="tags_field_{$this->name}">
                 <div class="tags-chips">{$existingChips}</div>
-                <input type="text" class="tags-field-input" id="field_{$this->name}_input" placeholder="Add tag and press Enter">
+                <input type="text" class="tags-field-input" id="field_{$this->name}_input" placeholder="Add a tag">
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJson}">
         </div>
@@ -90,77 +91,63 @@ class Tags extends BaseField {
     }
     public function getCSS(): string {
         return <<<'CSS'
-        /* Tags Fieldtype - Uses system CSS variables */
-        .tags-field-container {
-            margin-bottom: var(--space-4, 1rem);
-        }
-        
+        /* Tags are wells in a row; the add input is a small grey field at the end. */
         .tags-field {
-            border: 1px solid var(--border-control, var(--border-light, #e5e7eb));
-            border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-            background: var(--surface, var(--bg-primary, #ffffff));
-            min-height: var(--control-md, 2.5rem);
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: var(--space-2, 0.5rem);
+            gap: var(--s-1);
+            min-height: var(--control);
         }
-        
-        .tags-field:focus-within {
-            border-color: var(--accent, var(--primary-500, #3b82f6));
-            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent);
-        }
-        
-        .tags-chips {
-            display: contents;
-        }
-        
+        .tags-chips { display: contents; }
         .tag-chip {
-            background: var(--bg-secondary, #fafafa);
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-round, 9999px);
-            padding: var(--space-1, 0.25rem) var(--space-3, 0.75rem);
-            font-size: 0.875rem;
             display: inline-flex;
             align-items: center;
-            gap: var(--space-2, 0.5rem);
+            gap: 2px;
+            height: 24px;
             max-width: 200px;
-            color: var(--text-primary, #20221D);
+            padding: 0 2px 0 var(--s-2);
+            border-radius: var(--r-inset);
+            background: var(--surface-2);
+            color: var(--text);
+            font: var(--weight-medium) var(--size-small) / 1 var(--font-sans);
         }
-        
         .tag-remove {
-            cursor: pointer;
-            color: var(--text-secondary, #72746F);
-            font-weight: bold;
-            font-size: 1rem;
+            padding: 0;
+            border: 0;
+            background: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: var(--r-inset);
+            color: var(--text-3);
+            font-size: var(--size-body);
             line-height: 1;
-            padding: 0 var(--space-1, 0.25rem);
-            border-radius: 50%;
-            transition: all var(--transition-fast, 150ms ease);
+            cursor: pointer;
         }
-        
-        .tag-remove:hover {
-            background: var(--error-500, #ef4444);
-            color: var(--text-inverse, #ffffff);
-        }
-        
+        .tag-remove:hover { background: var(--surface-3); color: var(--danger); }
         .tags-field-input,
         .tags-field input {
-            border: none;
-            outline: none;
-            background: transparent;
-            flex: 1 1 8rem;
-            min-width: 8rem;
+            flex: 0 1 12rem;
             width: auto;
-            height: auto;
-            min-height: 0;
-            padding: var(--space-1, 0.25rem) 0;
+            min-width: 8rem;
+            height: 24px;
             margin: 0;
+            padding: 0 var(--s-2);
+            border: 1px solid transparent;
+            border-radius: var(--r-inset);
+            background: var(--surface-2);
             box-shadow: none;
-            color: var(--text-primary, #20221D);
-            font-size: var(--text-base, 1rem);
-            line-height: var(--leading-snug, 1.375);
+            color: var(--text);
+            font: var(--weight-regular) var(--size-small) / 1 var(--font-sans);
+        }
+        .tags-field-input::placeholder { color: var(--text-3); }
+        .tags-field-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--surface);
         }
         CSS;
     }
@@ -220,15 +207,15 @@ class Tags extends BaseField {
         
         // Show tags as badges (larger size)
         $tags = array_slice($value, 0, 3);
-        $html = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+        $html = '<span class="ft-list-row">';
         foreach ($tags as $tag) {
             $tagText = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
-            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;">' . $tagText . '</span>';
+            $html .= '<span class="ft-list-badge">' . $tagText . '</span>';
         }
         if ($count > 3) {
-            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;background:var(--color-neutral-200, #f3f4f6);">+' . ($count - 3) . '</span>';
+            $html .= '<span class="ft-list-muted">+' . ($count - 3) . '</span>';
         }
-        $html .= '</div>';
+        $html .= '</span>';
         
         return $html;
     }

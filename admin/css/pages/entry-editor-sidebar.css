@@ -496,3 +496,326 @@
    ============================================ */
 .entry-editor-page .form-group[hidden],
 .entry-editor-page .field-block[hidden] { display: none; }
+
+/* ============================================
+   Birch entry editor (P96-M10, P96-D5)
+   Every field is its own slab, 4 px apart on the canvas; the rail is
+   frames 24 px apart. Fieldtype widgets style themselves (getCSS()).
+   ============================================ */
+.entry-editor-page[data-birch] .editor-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  .entry-editor-page[data-birch] .editor-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+.entry-editor-page[data-birch] .editor-content,
+.entry-editor-page[data-birch] .language-tab-content.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.entry-editor-page[data-birch] .language-tab-content:not(.active) { display: none; }
+
+/* Field slab */
+.entry-editor-page[data-birch] .entry-field {
+  gap: 6px;
+  margin: 0;
+  padding: var(--s-4);
+}
+
+.entry-editor-page[data-birch] .entry-field .field-header { gap: 0; }
+
+.entry-editor-page[data-birch] .entry-field .field-title {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.entry-editor-page[data-birch] .entry-field .required { color: var(--text-3); margin-inline-start: 2px; }
+
+.entry-editor-page[data-birch] .entry-field .field-help {
+  max-width: none;
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.entry-editor-page[data-birch] .entry-field .field-feedback:empty { display: none; }
+
+.entry-editor-page[data-birch] .entry-field[data-field-name="title"] .input {
+  height: auto;
+  min-height: var(--control);
+  padding-block: 6px;
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+}
+
+/* Slug: prefix well + mono value */
+.entry-editor-page[data-birch] .entry-slug-field .input-group .input { flex: 1 1 auto; min-width: 0; }
+.entry-editor-page[data-birch] .entry-slug-field .prefix { flex: none; }
+.entry-editor-page[data-birch] .entry-slug-mirror {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control);
+  color: var(--text-2);
+}
+
+.entry-editor-page[data-birch] .auto-slug-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: var(--size-small);
+}
+
+.entry-editor-page[data-birch] .empty {
+  padding: var(--s-6);
+  color: var(--text-3);
+  text-align: center;
+}
+
+/* Page bar */
+.entry-editor-page[data-birch] .editor-unsaved-badge:not(.is-visible) { display: none; }
+
+.entry-editor-page[data-birch] .language-switch > button {
+  font: var(--weight-medium) var(--size-small) / 1 var(--font-sans);
+}
+
+.entry-editor-page[data-birch] .language-switch > button.active {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.entry-editor-page[data-birch] .main-actions-right { gap: var(--s-2); }
+
+/* Rail */
+.entry-editor-page[data-birch] .editor-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+}
+
+.entry-editor-page[data-birch] .editor-sidebar > .frame { margin: 0; }
+
+.entry-editor-page[data-birch] .entry-publishing {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.entry-editor-page[data-birch] .entry-publishing .frame-head { margin: 0; }
+
+.entry-editor-page[data-birch] .editor-sidebar label,
+.entry-editor-page[data-birch] .editor-sidebar .info-item > label {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.entry-editor-page[data-birch] .editor-sidebar .info-item:not([hidden]),
+.entry-editor-page[data-birch] .editor-sidebar .form-group:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.entry-editor-page[data-birch] .editor-sidebar .form-text,
+.entry-editor-page[data-birch] .editor-sidebar small,
+.entry-editor-page[data-birch] .status-clarity {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.entry-editor-page[data-birch] .entry-review-actions {
+  margin: 0;
+  padding: var(--s-3);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+/* General | Templating */
+.entry-editor-page[data-birch] .sidebar-tabs {
+  border: 1px solid var(--line);
+  background: none;
+  box-shadow: none;
+}
+
+.entry-editor-page[data-birch] .sidebar-tabs .tab-content {
+  margin: var(--s-4) 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.entry-editor-page[data-birch] .sidebar-tabs .tab-pane.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.entry-editor-page[data-birch] .permalink-preview {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.entry-editor-page[data-birch] .permalink-preview-label {
+  margin-block-end: 6px;
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.entry-editor-page[data-birch] .permalink-preview-url {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 0 0 0 var(--s-2);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.entry-editor-page[data-birch] .permalink-preview-url code {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  background: none;
+  color: var(--text-2);
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Entry details: label | value rows split by hairlines */
+.entry-editor-page[data-birch] .entry-info-section {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.entry-editor-page[data-birch] .entry-info-row {
+  display: contents;
+}
+
+.entry-editor-page[data-birch] .entry-info-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-2) 0;
+  border-block-start: 1px solid var(--line);
+}
+
+.entry-editor-page[data-birch] .entry-info-section > :first-child { border-block-start: 0; }
+
+.entry-editor-page[data-birch] .entry-info-label {
+  flex: none;
+  color: var(--text-3);
+  font: var(--weight-regular) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.entry-editor-page[data-birch] .entry-info-value {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0 var(--s-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+  text-align: end;
+}
+
+.entry-editor-page[data-birch] .entry-info-id {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+}
+
+.entry-editor-page[data-birch] .entry-info-time,
+.entry-editor-page[data-birch] .entry-info-user-email { color: var(--text-3); }
+
+/* Revisions */
+.entry-editor-page[data-birch] .entry-revisions-section {
+  padding: var(--s-5);
+  background: none;
+}
+
+.entry-editor-page[data-birch] .entry-revisions-section .frame-head .btn-icon {
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border: 0;
+  background: none;
+  color: var(--text-3);
+}
+
+.entry-editor-page[data-birch] .entry-revisions-section .frame-head .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+
+.entry-editor-page[data-birch] .entry-revisions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.entry-editor-page[data-birch] .revision-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: 0;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+}
+
+.entry-editor-page[data-birch] .revision-row .row-body { flex: 1 1 auto; min-width: 0; }
+.entry-editor-page[data-birch] .revision-row .row-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entry-editor-page[data-birch] .entry-revisions-empty {
+  padding: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  text-align: center;
+}
+
+.entry-editor-page[data-birch] .sidebar-validation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-3);
+}
+
+.entry-editor-page[data-birch] .sidebar-validation[hidden] { display: none; }
+.entry-editor-page[data-birch] [hidden] { display: none; }

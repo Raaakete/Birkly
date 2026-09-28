@@ -58,7 +58,7 @@ class Color extends BaseField {
                         name="{$this->name}_hex" 
                         id="field_{$this->name}_hex"
                         value="{$hexValue}"
-                        class="input color-hex-input"
+                        class="input is-mono color-hex-input"
                         pattern="^#[0-9A-Fa-f]{6}$"
                         placeholder="#000000"
                         title="Hex color code (e.g., #FF0000)"
@@ -70,7 +70,7 @@ class Color extends BaseField {
                         name="{$this->name}_rgba" 
                         id="field_{$this->name}_rgba"
                         value="{$rgbaValue}"
-                        class="input color-rgba-input"
+                        class="input is-mono color-rgba-input"
                         pattern="^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)$"
                         placeholder="rgba(0, 0, 0, 1)"
                         title="RGBA color (e.g., rgba(255, 0, 0, 1))"
@@ -280,78 +280,62 @@ class Color extends BaseField {
         JS;
     }
 
+    public function getListCSS(): string {
+        return <<<'CSS'
+        .ft-color-swatch {
+            flex: none;
+            width: 16px;
+            height: 16px;
+            border-radius: var(--r-inset);
+            background: var(--swatch);
+            box-shadow: inset 0 0 0 1px var(--line);
+        }
+        CSS;
+    }
+
     public function getCSS(): string {
         return <<<'CSS'
+        /* One row: swatch, hex, rgba. The swatch opens the native picker. */
         .color-field-wrapper {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: var(--space-4, 1rem) !important;
+            display: flex;
+            align-items: flex-end;
+            gap: var(--s-2);
         }
-        
-        .color-picker-section {
-            display: flex !important;
-            justify-content: center !important;
-        }
-        
         .color-picker-label {
-            cursor: pointer !important;
-            display: inline-block !important;
+            display: block;
+            flex: none;
+            cursor: pointer;
         }
-        
         .color-picker {
-            width: 80px !important;
-            height: 80px !important;
-            border: 3px solid var(--border-medium, #e5e7eb) !important;
-            border-radius: var(--radius-lg, 0.75rem) !important;
-            cursor: pointer !important;
-            padding: 0 !important;
-            transition: all var(--transition-base, 0.3s ease) !important;
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1)) !important;
+            display: block;
+            width: var(--control);
+            height: var(--control);
+            padding: 0;
+            border: 0;
+            border-radius: var(--r);
+            background: none;
+            cursor: pointer;
         }
-        
-        .color-picker:hover {
-            border-color: var(--primary-500, #3b82f6) !important;
-            transform: scale(1.05) !important;
-            box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)) !important;
-        }
-        
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border: 0; border-radius: var(--r); box-shadow: inset 0 0 0 1px var(--line); }
+        .color-picker::-moz-color-swatch { border: 0; border-radius: var(--r); }
+        .color-picker:focus-visible { outline: var(--focus-outline); outline-offset: 1px; }
         .color-inputs-section {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: var(--space-3, 0.75rem) !important;
+            display: flex;
+            flex: 1 1 auto;
+            gap: var(--s-2);
+            min-width: 0;
         }
-        
         .color-input-group {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: var(--space-2, 0.5rem) !important;
-            flex: 1 !important;
+            display: flex;
+            flex: 1 1 0;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
         }
-        
         .color-input-label {
-            font-size: 0.875rem !important;
-            font-weight: var(--font-medium, 500) !important;
-            color: var(--text-secondary, #72746F) !important;
-        }
-        
-        .color-hex-input,
-        .color-rgba-input {
-            width: 100% !important;
-            padding: var(--space-3, 0.75rem) !important;
-            border: 1px solid var(--border-medium, #e5e7eb) !important;
-            border-radius: var(--radius-md, 0.5rem) !important;
-            font-size: 0.9375rem !important;
-            font-family: var(--font-family-mono, 'Courier New', monospace) !important;
-            background: var(--bg-primary, #ffffff) !important;
-            color: var(--text-primary, #20221D) !important;
-            transition: all var(--transition-fast, 150ms ease) !important;
-        }
-        
-        .color-hex-input:focus,
-        .color-rgba-input:focus {
-            border-color: var(--primary-500, #3b82f6) !important;
-            outline: none !important;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            color: var(--text-3);
+            font: var(--weight-regular) var(--size-caption) / var(--lh-caption) var(--font-sans);
         }
         CSS;
     }
@@ -407,7 +391,7 @@ class Color extends BaseField {
         
         // Show color swatch with hex code
         $hex = $this->normalizeToHex($value);
-        return '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:20px;height:20px;background-color:' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . ';border-radius:4px;border:1px solid var(--border-light, #e5e7eb);flex-shrink:0;"></span><span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '</span></div>';
+        return '<span class="ft-list-row"><span class="ft-color-swatch" style="--swatch: ' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '"></span><span class="ft-list-text ft-list-mono">' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '</span></span>';
     }
 
     public function getTableMinWidth(): string {

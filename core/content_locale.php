@@ -47,6 +47,39 @@ function birkly_locale_to_bcp47(string $code): string
 }
 
 /**
+ * A language's own name for itself (English, Deutsch, …); the upper-case code when unknown.
+ */
+function birkly_locale_endonym(string $code): string
+{
+    $normalized = birkly_locale_normalize_code($code);
+    $map = [
+        'en' => 'English',
+        'de' => 'Deutsch',
+        'fr' => 'Français',
+        'es' => 'Español',
+        'it' => 'Italiano',
+        'pt' => 'Português',
+        'nl' => 'Nederlands',
+        'ja' => '日本語',
+        'zh' => '中文',
+        'zh-tw' => '繁體中文',
+        'ko' => '한국어',
+        'ar' => 'العربية',
+        'ru' => 'Русский',
+        'pl' => 'Polski',
+        'sv' => 'Svenska',
+        'da' => 'Dansk',
+        'fi' => 'Suomi',
+        'no' => 'Norsk',
+        'tr' => 'Türkçe',
+        'cs' => 'Čeština',
+        'uk' => 'Українська',
+    ];
+
+    return $map[$normalized] ?? strtoupper($normalized);
+}
+
+/**
  * Default PHP date display format for a language (admin list / field display).
  */
 function birkly_locale_default_date_format(?string $langCode): string

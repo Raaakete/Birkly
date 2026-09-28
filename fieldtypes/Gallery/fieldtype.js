@@ -110,7 +110,7 @@
             
             // Show/hide clear button
             if (clearBtn) {
-                clearBtn.style.display = currentImages.length > 0 ? 'block' : 'none';
+                clearBtn.hidden = currentImages.length === 0;
             }
         }
         
@@ -118,13 +118,14 @@
             if (!previewContainer) return;
             
             if (currentImages.length === 0) {
-                previewContainer.innerHTML = '<div class="gallery-empty">No images selected</div>';
+                previewContainer.innerHTML = '<div class="gallery-empty">No images yet</div>';
                 return;
             }
             
             // Load media info for all images
             Promise.all(currentImages.map(id => loadMediaInfo(id)))
                 .then(items => {
+                    const removeIcon = (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon('x', { size: 13 }) : '×';
                     let html = '<div class="gallery-grid">';
                     items.forEach(item => {
                         if (item) {
@@ -138,7 +139,7 @@
                             html += `
                                 <div class="gallery-item" data-id="${mediaId}">
                                     ${mediaTag}
-                                    <button type="button" class="gallery-remove" data-id="${mediaId}">×</button>
+                                    <button type="button" class="gallery-remove" data-id="${mediaId}" title="Remove" aria-label="Remove ${name}">${removeIcon}</button>
                                 </div>
                             `;
                         }

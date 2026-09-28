@@ -1,16 +1,50 @@
 /**
  * Map/Location Fieldtype JavaScript
- * Uses Leaflet with OpenStreetMap (no API key required)
+ * Coordinates, address search and "use my location" work on their own; the
+ * Leaflet map (OpenStreetMap, no API key) is shown only when Leaflet loads.
  */
 (function() {
     'use strict';
-    
-    let mapInstances = {};
-    
+
+    const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    let leafletPromise = null;
+
+    function loadLeaflet() {
+        if (typeof L !== 'undefined') {
+            return Promise.resolve(true);
+        }
+        if (leafletPromise) {
+            return leafletPromise;
+        }
+        leafletPromise = new Promise(function(resolve) {
+            if (!document.querySelector('link[href*="leaflet"]')) {
+                const css = document.createElement('link');
+                css.rel = 'stylesheet';
+                css.href = LEAFLET_CSS;
+                document.head.appendChild(css);
+            }
+            const js = document.createElement('script');
+            js.src = LEAFLET_JS;
+            js.onload = function() { resolve(typeof L !== 'undefined'); };
+            js.onerror = function() { resolve(false); };
+            document.head.appendChild(js);
+        });
+        return leafletPromise;
+    }
+
+    function notify(message) {
+        if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+            window.BirklyFeedback.toast(message, 'error');
+        } else {
+            alert(message);
+        }
+    }
+
     function initMapField(fieldName) {
         const container = document.getElementById('field_' + fieldName);
-        if (!container) return;
-        
+        if (!container || container.dataset.mapReady === '1') return;
+
         const mapDiv = document.getElementById('map_' + fieldName);
         const latInput = document.getElementById('map_lat_' + fieldName);
         const lngInput = document.getElementById('map_lng_' + fieldName);
@@ -18,181 +52,121 @@
         const hiddenInput = document.getElementById('field_' + fieldName + '_value');
         const searchBtn = document.getElementById('map_search_' + fieldName);
         const getLocationBtn = document.getElementById('map_get_location_' + fieldName);
-        
-        if (!mapDiv || !latInput || !lngInput || !hiddenInput) return;
-        
-        // Load Leaflet CSS if not already loaded
-        if (!document.querySelector('link[href*="leaflet"]')) {
-            const leafletCSS = document.createElement('link');
-            leafletCSS.rel = 'stylesheet';
-            leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-            document.head.appendChild(leafletCSS);
+
+        if (!latInput || !lngInput || !hiddenInput) return;
+        container.dataset.mapReady = '1';
+
+        let map = null;
+        let marker = null;
+
+        function updateHiddenInput() {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            const address = addressInput ? addressInput.value.trim() : '';
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const location = { lat: lat, lng: lng };
+                if (address) {
+                    location.address = address;
+                }
+                hiddenInput.value = JSON.stringify(location);
+                hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
         }
-        
-        // Load Leaflet JS if not already loaded
-        if (typeof L === 'undefined') {
-            const leafletJS = document.createElement('script');
-            leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-            leafletJS.onload = function() {
-                initMap();
-            };
-            document.head.appendChild(leafletJS);
-        } else {
-            initMap();
+
+        function setPosition(lat, lng, zoom) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+            if (map && marker) {
+                marker.setLatLng([lat, lng]);
+                map.setView([lat, lng], zoom || map.getZoom());
+            }
+            updateHiddenInput();
         }
-        
-        function initMap() {
-            // Get initial location
-            let lat = parseFloat(latInput.value) || 51.505;
-            let lng = parseFloat(lngInput.value) || -0.09;
-            
-            // Initialize map
-            const map = L.map(mapDiv).setView([lat, lng], 13);
-            
-            // Add OpenStreetMap tiles
+
+        function onCoordinatesChanged() {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                setPosition(lat, lng);
+            }
+        }
+
+        latInput.addEventListener('change', onCoordinatesChanged);
+        lngInput.addEventListener('change', onCoordinatesChanged);
+        if (addressInput) {
+            addressInput.addEventListener('change', updateHiddenInput);
+        }
+
+        if (searchBtn && addressInput) {
+            searchBtn.addEventListener('click', function() {
+                const address = addressInput.value.trim();
+                if (!address) {
+                    notify('Enter an address to search for.');
+                    return;
+                }
+                searchBtn.disabled = true;
+                fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(address))
+                    .then(function(response) { return response.json(); })
+                    .then(function(data) {
+                        if (data && data.length > 0) {
+                            setPosition(parseFloat(data[0].lat), parseFloat(data[0].lon), 15);
+                        } else {
+                            notify('Address not found. Try a different address.');
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Geocoding error:', error);
+                        notify('Address search failed: ' + error.message);
+                    })
+                    .finally(function() {
+                        searchBtn.disabled = false;
+                    });
+            });
+        }
+
+        if (getLocationBtn) {
+            getLocationBtn.addEventListener('click', function() {
+                if (!navigator.geolocation) {
+                    notify('This browser cannot share its location.');
+                    return;
+                }
+                getLocationBtn.disabled = true;
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        setPosition(position.coords.latitude, position.coords.longitude, 15);
+                        getLocationBtn.disabled = false;
+                    },
+                    function(error) {
+                        console.error('Geolocation error:', error);
+                        getLocationBtn.disabled = false;
+                        notify('Could not get your location: ' + error.message);
+                    }
+                );
+            });
+        }
+
+        if (!mapDiv) return;
+        loadLeaflet().then(function(available) {
+            if (!available) return;
+            mapDiv.hidden = false;
+            const lat = parseFloat(latInput.value) || 51.505;
+            const lng = parseFloat(lngInput.value) || -0.09;
+            map = L.map(mapDiv).setView([lat, lng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors',
                 maxZoom: 19
             }).addTo(map);
-            
-            // Add marker
-            let marker = L.marker([lat, lng], { draggable: true }).addTo(map);
-            
-            // Store map instance
-            mapInstances[fieldName] = { map, marker };
-            
-            // Update location when marker is dragged
-            marker.on('dragend', function(e) {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            marker.on('dragend', function() {
                 const position = marker.getLatLng();
-                latInput.value = position.lat.toFixed(6);
-                lngInput.value = position.lng.toFixed(6);
-                updateHiddenInput();
+                setPosition(position.lat, position.lng);
             });
-            
-            // Update marker when inputs change
-            function updateMarker() {
-                const newLat = parseFloat(latInput.value);
-                const newLng = parseFloat(lngInput.value);
-                
-                if (!isNaN(newLat) && !isNaN(newLng)) {
-                    const newPosition = [newLat, newLng];
-                    marker.setLatLng(newPosition);
-                    map.setView(newPosition, map.getZoom());
-                    updateHiddenInput();
-                }
-            }
-            
-            latInput.addEventListener('change', updateMarker);
-            lngInput.addEventListener('change', updateMarker);
-            
-            // Update marker on map click
             map.on('click', function(e) {
-                const position = e.latlng;
-                latInput.value = position.lat.toFixed(6);
-                lngInput.value = position.lng.toFixed(6);
-                marker.setLatLng(position);
-                updateHiddenInput();
+                setPosition(e.latlng.lat, e.latlng.lng);
             });
-            
-            // Search address (geocoding)
-            if (searchBtn && addressInput) {
-                searchBtn.addEventListener('click', function() {
-                    const address = addressInput.value.trim();
-                    if (!address) {
-                        alert('Please enter an address to search');
-                        return;
-                    }
-                    
-                    searchBtn.disabled = true;
-                    searchBtn.textContent = 'Searching...';
-                    
-                    // Use Nominatim (OpenStreetMap geocoding) - free, no API key
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
-                        .then(response => response.json())
-                        .then(data => {
-                            searchBtn.disabled = false;
-                            searchBtn.textContent = 'Search Location';
-                            
-                            if (data && data.length > 0) {
-                                const result = data[0];
-                                const lat = parseFloat(result.lat);
-                                const lng = parseFloat(result.lon);
-                                
-                                latInput.value = lat.toFixed(6);
-                                lngInput.value = lng.toFixed(6);
-                                
-                                marker.setLatLng([lat, lng]);
-                                map.setView([lat, lng], 15);
-                                updateHiddenInput();
-                            } else {
-                                alert('Address not found. Please try a different address.');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Geocoding error:', error);
-                            searchBtn.disabled = false;
-                            searchBtn.textContent = 'Search Location';
-                            alert('Error searching for address: ' + error.message);
-                        });
-                });
-            }
-            
-            // Get current location
-            if (getLocationBtn) {
-                getLocationBtn.addEventListener('click', function() {
-                    if (!navigator.geolocation) {
-                        alert('Geolocation is not supported by your browser');
-                        return;
-                    }
-                    
-                    getLocationBtn.disabled = true;
-                    getLocationBtn.textContent = 'Getting location...';
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        function(position) {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            
-                            latInput.value = lat.toFixed(6);
-                            lngInput.value = lng.toFixed(6);
-                            
-                            marker.setLatLng([lat, lng]);
-                            map.setView([lat, lng], 15);
-                            updateHiddenInput();
-                            
-                            getLocationBtn.disabled = false;
-                            getLocationBtn.textContent = 'Get Current Location';
-                        },
-                        function(error) {
-                            console.error('Geolocation error:', error);
-                            getLocationBtn.disabled = false;
-                            getLocationBtn.textContent = 'Get Current Location';
-                            alert('Error getting location: ' + error.message);
-                        }
-                    );
-                });
-            }
-            
-            function updateHiddenInput() {
-                const lat = parseFloat(latInput.value);
-                const lng = parseFloat(lngInput.value);
-                const address = addressInput ? addressInput.value.trim() : '';
-                
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    const location = { lat, lng };
-                    if (address) {
-                        location.address = address;
-                    }
-                    hiddenInput.value = JSON.stringify(location);
-                }
-            }
-            
-            // Initial update
-            updateHiddenInput();
-        }
+        });
     }
-    
-    // Initialize all map fields
+
     function initAllMapFields() {
         document.querySelectorAll('.map-field').forEach(function(container) {
             const fieldName = container.id.replace('field_', '');
@@ -201,26 +175,21 @@
             }
         });
     }
-    
-    // Initialize on DOM ready
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initAllMapFields);
     } else {
-        // Wait a bit for Leaflet to potentially load
-        setTimeout(initAllMapFields, 100);
+        initAllMapFields();
     }
-    
-    // Also initialize on custom event for dynamic fields
+
     document.addEventListener('fieldtype:init', function(e) {
         if (e.detail && e.detail.fieldtype === 'map') {
-            const fieldName = e.detail.fieldName || e.detail.element?.id?.replace('field_', '');
+            const fieldName = e.detail.fieldName || (e.detail.element && e.detail.element.id ? e.detail.element.id.replace('field_', '') : '');
             if (fieldName) {
-                setTimeout(() => initMapField(fieldName), 100);
+                initMapField(fieldName);
             }
         }
     });
-    
-    // Expose for manual initialization
+
     window.initMapField = initMapField;
 })();
-

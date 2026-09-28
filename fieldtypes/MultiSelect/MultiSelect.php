@@ -53,7 +53,7 @@ class MultiSelect extends BaseField {
             $value = [];
         }
         
-        $valueJson = json_encode($value);
+        $valueJson = htmlspecialchars((string) json_encode($value), ENT_QUOTES, 'UTF-8');
         $searchable = $this->searchable ? 'true' : 'false';
         
         // Build options HTML
@@ -66,25 +66,6 @@ class MultiSelect extends BaseField {
             $labelEscaped = htmlspecialchars($optLabel);
             
             $optionsHtml .= "<option value=\"{$valueEscaped}\" {$selected}>{$labelEscaped}</option>";
-        }
-        
-        // Build selected badges
-        $badgesHtml = '';
-        foreach ($value as $val) {
-            $opt = array_filter($this->options, function($o) use ($val) {
-                return ($o['value'] ?? '') === $val;
-            });
-            $opt = reset($opt);
-            $label = $opt ? ($opt['label'] ?? $val) : $val;
-            $valEscaped = htmlspecialchars($val);
-            $labelEscaped = htmlspecialchars($label);
-            
-            $badgesHtml .= <<<HTML
-            <span class="multiselect-badge" data-value="{$valEscaped}">
-                {$labelEscaped}
-                <span class="badge-remove" onclick="window.HaruFieldtypes['multiselect'].removeValue('{$this->name}', '{$valEscaped}')">×</span>
-            </span>
-            HTML;
         }
         
         // Build options list HTML
@@ -115,9 +96,6 @@ class MultiSelect extends BaseField {
         
         return <<<HTML
         <div class="multiselect-field" id="multiselect_field_{$this->name}">
-            <div class="multiselect-badges" id="multiselect_badges_{$this->name}">
-                {$badgesHtml}
-            </div>
             <div class="multiselect-options-list" id="multiselect_options_{$this->name}">
                 {$optionsListHtml}
             </div>
@@ -156,115 +134,25 @@ class MultiSelect extends BaseField {
 
     public function getCSS(): string {
         return <<<'CSS'
-        .multiselect-field {
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-3, 0.75rem);
-            background: var(--bg-primary, #ffffff);
-        }
-        
-        .multiselect-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-2, 0.5rem);
-            margin-bottom: var(--space-3, 0.75rem);
-            min-height: 40px;
-            padding: var(--space-2, 0.5rem);
-            background: var(--bg-secondary, #fafafa);
-            border-radius: var(--radius-sm, 0.375rem);
-        }
-        
-        .multiselect-badges:empty::before {
-            content: "No options selected";
-            color: var(--text-tertiary, #9ca3af);
-            font-style: italic;
-            font-size: 0.875rem;
-        }
-        
-        .multiselect-badge {
-            background: var(--primary-50, #eff6ff);
-            border: 1px solid var(--primary-200, #bfdbfe);
-            border-radius: var(--radius-full, 9999px);
-            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-            font-size: 0.875rem;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2, 0.5rem);
-            color: var(--primary-700, #1d4ed8);
-        }
-        
-        .badge-remove {
-            cursor: pointer;
-            color: var(--primary-700, #1d4ed8);
-            font-weight: bold;
-            font-size: 1.125rem;
-            line-height: 1;
-            padding: 0 var(--space-1, 0.25rem);
-            border-radius: var(--radius-full, 50%);
-            transition: all var(--transition-fast, 150ms ease);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-        }
-        
-        .badge-remove:hover {
-            background: var(--error-500, #ef4444);
-            color: var(--text-inverse, #ffffff);
-        }
-        
+        /* The options are a check list in the field slab; the checks are the selection. */
         .multiselect-options-list {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: var(--space-2, 0.5rem) !important;
-            max-height: 250px !important;
-            overflow-y: auto !important;
-            padding: var(--space-2, 0.5rem) !important;
-            background: var(--bg-secondary, #fafafa) !important;
-            border-radius: var(--radius-sm, 0.375rem) !important;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
-        
-        .multiselect-option-item {
-            background: var(--bg-primary, #ffffff) !important;
-            border: 1px solid var(--border-light, #f3f4f6) !important;
-            border-radius: var(--radius-sm, 0.375rem) !important;
-            transition: all var(--transition-fast, 150ms ease) !important;
-        }
-        
-        .multiselect-option-item:hover {
-            border-color: var(--primary-500, #3b82f6) !important;
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1)) !important;
-        }
-        
         .multiselect-option-label {
-            display: flex !important;
-            align-items: center !important;
-            gap: var(--space-2, 0.5rem) !important;
-            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem) !important;
-            cursor: pointer !important;
-            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            gap: var(--s-2);
+            min-height: 32px;
+            padding: 0 var(--s-2);
+            border-radius: var(--r);
+            color: var(--text);
+            font-size: var(--size-body);
+            cursor: pointer;
         }
-        
-        .multiselect-option-checkbox {
-            width: 16px !important;
-            height: 16px !important;
-            cursor: pointer !important;
-            flex-shrink: 0 !important;
-            margin: 0 !important;
-        }
-        
-        .multiselect-option-text {
-            font-size: 0.875rem !important;
-            color: var(--text-primary, #20221D) !important;
-            user-select: none !important;
-            line-height: 1.4 !important;
-        }
-        
-        .multiselect-option-checkbox:checked + .multiselect-option-text {
-            font-weight: 500;
-            color: var(--primary-500, #3b82f6);
-        }
+        .multiselect-option-label:hover { background: var(--surface-2); }
+        .multiselect-option-checkbox { flex: none; margin: 0; }
         CSS;
     }
 
@@ -362,7 +250,7 @@ class MultiSelect extends BaseField {
             $previewText .= '...';
         }
         
-        return '<span class="ft-list-badge">' . $count . ' selected</span> <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);margin-left:4px;">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>';
+        return '<span class="ft-list-row"><span class="ft-list-badge">' . $count . ' selected</span><span class="ft-list-muted">' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . '</span></span>';
     }
 
     public function getTableMinWidth(): string {

@@ -41,6 +41,12 @@ $fields = $fields ?? [];
 $collection = $collection ?? [];
 $options = $options ?? [];
 
+require_once dirname(__DIR__, 3) . '/core/fieldtype_list_css.php';
+$fieldtypeListCss = birkly_fieldtype_list_css($fields);
+if ($fieldtypeListCss !== '') {
+    echo '<style data-fieldtype-list-css>' . $fieldtypeListCss . '</style>';
+}
+
 // Set defaults
 $showCheckbox = $options['show_checkbox'] ?? false;
 $showDrag = $options['show_drag'] ?? false;

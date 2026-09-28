@@ -38,13 +38,13 @@ class Markdown extends BaseField {
         return <<<HTML
         <div class="markdown-field" data-markdown-field>
             <div class="markdown-field-tabs">
-                <button type="button" class="btn btn-secondary btn-sm is-active" data-markdown-tab="write">Write</button>
-                <button type="button" class="btn btn-secondary btn-sm" data-markdown-tab="preview">Preview</button>
+                <button type="button" class="markdown-tab is-active" data-markdown-tab="write" aria-pressed="true">Write</button>
+                <button type="button" class="markdown-tab" data-markdown-tab="preview" aria-pressed="false">Preview</button>
             </div>
             <textarea
                 name="{$this->name}"
                 id="field_{$this->name}"
-                class="input markdown-field-input"
+                class="input is-mono markdown-field-input"
                 rows="{$rows}"
                 {$required}
                 placeholder="{$placeholder}"
@@ -70,66 +70,65 @@ class Markdown extends BaseField {
 
     public function getCSS(): string {
         return <<<'CSS'
+        /* Write | Preview is a segmented control; the preview is a well. */
         .markdown-field {
             display: grid;
-            gap: var(--space-2, 0.5rem);
+            gap: var(--s-2);
         }
-
         .markdown-field-tabs {
-            display: flex;
-            gap: var(--space-2, 0.5rem);
+            display: inline-flex;
+            justify-self: start;
+            gap: 2px;
+            padding: 2px;
+            border-radius: var(--r);
+            background: var(--surface-2);
         }
-
-        .markdown-field-tabs .is-active {
-            background: var(--primary-50, #eff6ff);
-            color: var(--primary-700, #1d4ed8);
+        .markdown-tab {
+            height: 24px;
+            padding: 0 var(--s-2);
+            border: 0;
+            border-radius: var(--r-inset);
+            background: none;
+            color: var(--text-2);
+            font: var(--weight-medium) var(--size-small) / 1 var(--font-sans);
+            cursor: pointer;
         }
-
+        .markdown-tab.is-active {
+            background: var(--surface);
+            color: var(--text);
+        }
         .markdown-field-input,
         .markdown-field-preview {
             min-height: 220px;
         }
-
-        .markdown-field-input {
-            font-family: var(--font-family-mono, SFMono-Regular, Consolas, monospace);
-            line-height: 1.6;
-        }
-
         .markdown-field-preview {
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--bg-primary, #ffffff);
-            padding: var(--space-3, 0.75rem);
+            padding: var(--s-3);
+            border-radius: var(--r);
+            background: var(--surface-2);
             overflow-wrap: anywhere;
         }
-
         .markdown-field-preview h1,
         .markdown-field-preview h2,
         .markdown-field-preview h3,
         .markdown-field-preview h4,
         .markdown-field-preview h5,
-        .markdown-field-preview h6 {
-            margin: 0 0 var(--space-2, 0.5rem);
-        }
-
+        .markdown-field-preview h6,
         .markdown-field-preview p,
         .markdown-field-preview ul,
         .markdown-field-preview ol,
         .markdown-field-preview blockquote {
-            margin: 0 0 var(--space-2, 0.5rem);
+            margin: 0 0 var(--s-2);
         }
-
         .markdown-field-preview code {
-            font-family: var(--font-family-mono, SFMono-Regular, Consolas, monospace);
-            background: var(--bg-secondary, #f5f5f5);
-            padding: 0.1rem 0.35rem;
-            border-radius: var(--radius-xs, 0.25rem);
+            padding: 1px 4px;
+            border-radius: var(--r-inset);
+            background: var(--surface);
+            font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
         }
-
         .markdown-field-preview blockquote {
-            border-left: 3px solid var(--border-medium, #d1d5db);
-            padding-left: var(--space-3, 0.75rem);
-            color: var(--text-secondary, #4b5563);
+            padding-inline-start: var(--s-3);
+            border-inline-start: 2px solid var(--line-strong);
+            color: var(--text-2);
         }
         CSS;
     }

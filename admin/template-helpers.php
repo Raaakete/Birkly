@@ -30,7 +30,8 @@ function birkly_entry_breadcrumb_title(array $entry, bool $isNew = false): strin
         return __('admin.new_entry');
     }
 
-    $title = trim((string) ($entry['title'] ?? ''));
+    require_once __DIR__ . '/../core/entry_multilang.php';
+    $title = birkly_entry_display_title($entry);
 
     return $title !== '' ? $title : __('admin.untitled');
 }

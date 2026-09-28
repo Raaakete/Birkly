@@ -1112,7 +1112,8 @@ if ($action === 'get_entry_titles') {
         foreach ($collections as $d) {
             $entry = $storage->read("collections/$d/entries/$id.json");
             if ($entry) {
-                $result[] = [ 'id' => $id, 'title' => $entry['title'] ?? $id ];
+                require_once __DIR__ . '/../core/entry_multilang.php';
+                $result[] = [ 'id' => $id, 'title' => birkly_entry_display_title($entry) ?: $id ];
                 break;
             }
         }
