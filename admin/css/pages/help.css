@@ -95,16 +95,6 @@
 
 .help-link-muted { color: var(--text-2); }
 
-/* Legacy PHP doc fragments under admin/docs/*.php still mark up worked
-   examples with .example-box. They are no longer wired into help.js, but the
-   markup is outside this scope, so the class keeps a tokenised surface. */
-.prose .example-box {
-  padding: var(--s-4);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  background: var(--surface-2);
-}
-
 /* ============================================
    Birch (P96-M13): search field on the canvas, the article is one slab
    (the reading surface), the topic rail is canvas with the ink bar.
@@ -128,10 +118,4 @@
   font-size: var(--size-caption);
   letter-spacing: 0;
   text-transform: none;
-}
-
-.help-page[data-birch] .prose .example-box {
-  border: 0;
-  border-radius: var(--r);
-  background: var(--surface-2);
 }

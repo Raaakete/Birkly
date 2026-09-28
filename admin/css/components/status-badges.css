@@ -134,8 +134,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-
-
 /* ============================================
    Status dot — inline state indicator without a full badge
    ============================================ */
@@ -148,14 +146,6 @@
   background: var(--text-2);
   flex-shrink: 0;
 }
-.status-indicator--success,
-.status-dot--success { background: var(--success); }
-.status-indicator--warning,
-.status-dot--warning { background: var(--warning); }
-.status-indicator--danger,
-.status-dot--danger { background: var(--danger); }
-.status-indicator--info,
-.status-dot--info { background: var(--info); }
 
 /* ============================================
    Chip / tag — removable or selectable token

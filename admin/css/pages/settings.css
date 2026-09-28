@@ -731,11 +731,6 @@
 
 .activity-content { flex: 1 1 auto; min-width: 0; }
 
-.activity-message {
-  font-weight: var(--weight-medium);
-  color: var(--text);
-}
-
 .activity-meta {
   display: flex;
   gap: var(--s-4);
@@ -1145,8 +1140,6 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 .settings-shell .settings-panels .card .card .card-body { gap: var(--s-2); }
 
 .settings-shell .settings-panels .card .u-grid-auto { gap: var(--s-1); }
-
-
 
 .settings-shell .settings-panels .card .input {
   border-color: transparent;

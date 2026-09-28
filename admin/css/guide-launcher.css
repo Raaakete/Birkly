@@ -245,11 +245,6 @@ body.ai-chat-window-open .assist-fab-wrap {
   }
 }
 
-.guide-post-onboarding-mount {
-  margin: 0 var(--s-6) var(--s-4);
-  max-width: var(--measure-lg, 72ch);
-}
-
 /* ---- Panel shell ---- */
 .guide-panel {
   position: fixed;
@@ -444,10 +439,6 @@ body.ai-chat-window-open .guide-panel {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-}
-
-.guide-checklist--compact {
-  margin-block-start: var(--s-2);
 }
 
 .guide-checklist__item {

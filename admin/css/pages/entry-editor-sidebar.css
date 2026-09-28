@@ -187,34 +187,6 @@
   color: var(--text-2);
 }
 
-.og-image-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--s-2);
-}
-
-.og-image-row .input { flex: 1 1 auto; }
-
-.ai-seo-panel {
-  padding-block-start: var(--s-4);
-  border-block-start: 1px solid var(--line);
-}
-
-.ai-seo-panel h4 {
-  margin: 0 0 var(--s-2);
-  font-size: var(--size-body);
-  font-weight: var(--weight-semibold);
-}
-
-.ai-seo-tips {
-  margin: 0 0 var(--s-3);
-  padding-inline-start: var(--s-4);
-  list-style: disc;
-  font-size: var(--size-small);
-  color: var(--text-2);
-  line-height: 1.5;
-}
-
 .sidebar-validation { font-size: var(--size-small); }
 
 .sidebar-validation-item {
@@ -337,74 +309,8 @@
 .entry-revisions-feedback.is-success { color: var(--success); }
 
 /* ============================================
-   7. Save confirmation (banner + modal)
+   7. Save states (action bar)
    ============================================ */
-.entry-save-success-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-  margin-block-end: var(--s-4);
-  padding: var(--s-3) var(--s-4);
-  border: 1px solid var(--success-soft);
-  border-radius: var(--r);
-  background: var(--success-soft);
-  color: var(--success);
-  font-weight: var(--weight-medium);
-  opacity: 0;
-  transition: opacity var(--dur-3) var(--ease);
-}
-
-.entry-save-success-banner.is-visible { opacity: 1; }
-
-.entry-save-success-banner__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-sm);
-  height: var(--control-sm);
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--success);
-  color: var(--on-status);
-  font-size: var(--size-small);
-}
-
-.entry-save-success-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--s-3);
-  padding: var(--s-6) var(--s-4);
-  text-align: center;
-}
-
-.entry-save-success-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--success-soft);
-  color: var(--success);
-  font-size: var(--size-number);
-  font-weight: var(--weight-semibold);
-}
-
-.entry-save-success-meta {
-  margin: 0;
-  font-size: var(--size-small);
-  line-height: 1.5;
-  color: var(--text-2);
-}
-
-.entry-save-success-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-3);
-  justify-content: center;
-}
-
 .main-actions-bar--saving .btn-primary {
   opacity: 0.85;
   pointer-events: none;
@@ -606,7 +512,6 @@
   height: 6px;
   background: var(--danger);
 }
-
 
 /* Rail */
 .entry-editor-page[data-birch] .editor-sidebar {

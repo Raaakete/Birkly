@@ -26,21 +26,6 @@
   height: var(--icon);
 }
 
-.birkly-icon--md {
-  width: var(--icon);
-  height: var(--icon);
-}
-
-.birkly-icon--lg {
-  width: var(--icon-l);
-  height: var(--icon-l);
-}
-
-.birkly-icon--xl {
-  width: var(--icon-l);
-  height: var(--icon-l);
-}
-
 .birkly-icon-img {
   display: inline-block;
   vertical-align: middle;
