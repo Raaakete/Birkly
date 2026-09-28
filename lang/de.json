@@ -2818,6 +2818,16 @@
         "who_can_use_connection": "Who Can Use Connection",
         "write_rate_limit_per_hour": "Write Rate Limit Per Hour",
         "you_are_all_set": "You Are All Set",
-        "your_review": "Your review"
+        "your_review": "Your review",
+        "entry_editor_languages": "Sprachen",
+        "entry_editor_add_language": "Sprache hinzufügen",
+        "entry_editor_slug_shared": "Gilt für alle Sprachen. Ändern in {{language}}.",
+        "entry_editor_publishing": "Veröffentlichung",
+        "entry_editor_no_revisions": "Noch keine gespeicherten Versionen",
+        "entry_editor_current": "Aktuell",
+        "entry_editor_current_version": "Aktuelle Version",
+        "entry_editor_restore": "Wiederherstellen",
+        "entry_editor_version_n": "Version {n}",
+        "entry_editor_revisions_unavailable": "Versionen konnten nicht geladen werden."
     }
 }

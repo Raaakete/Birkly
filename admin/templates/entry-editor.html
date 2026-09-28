@@ -60,7 +60,7 @@ $isSubEntry = isset($is_sub_entry) ? $is_sub_entry : (!empty($subCollectionSlug)
 $isNestedSubEntry = !empty($parentSubCollectionSlug) && !empty($parentSubEntryId);
 $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?action=save';
 ?>
-<div class="entry-editor-page">
+<div class="entry-editor-page" data-birch>
 <?php if (!empty($fieldtypeAssets['css'])): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url($fieldtypeAssets['css'])) ?>">
 <?php elseif (!empty($fieldtypeAssets['css_inline'])): ?>
@@ -95,20 +95,45 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
         $entryEditorStatus = 'unpublished';
     }
     $entryEditorIsPublished = ($entryEditorStatus === 'published');
+    $multilanguageEnabled = !empty($multilanguage_enabled);
+    $multilanguageLanguages = $multilanguage_languages ?? [];
+    $languageFields = $language_fields ?? [];
+    $entryEditorHasLanguages = $multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields);
+    // One mint per view: Publish while the entry is not live, Save changes once it is.
+    $entryEditorShowPublish = !$isSubEntry && !$entryEditorIsPublished;
     $stickySaveBarForm = 'entry-form';
-    $stickySaveBarSaveLabel = __('admin.save');
-    $stickySaveBarSaveClass = 'btn btn-secondary';
+    $stickySaveBarSaveLabel = __('admin.save_changes');
+    $stickySaveBarSaveClass = $entryEditorShowPublish ? 'btn btn-secondary' : 'btn btn-primary';
     $stickySaveBarSaveId = 'entry-save-submit';
     $stickySaveBarCancelLabel = __('admin.close');
     $stickySaveBarCancelId = 'entry-close-btn';
     $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
+    $stickySaveBarExtraActionHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge status is-warning" aria-live="polite">'
+        . htmlspecialchars(__('admin.unsaved_changes')) . '</span>';
     $stickySaveBarStatusHtml = '<span id="entry-editor-action-status" class="entry-editor-action-status" aria-live="polite" hidden>'
         . '<span class="entry-editor-action-status__spinner spinner" aria-hidden="true" hidden></span>'
         . '<span class="entry-editor-action-status__text"></span>'
-        . '</span>'
-        . '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">' . htmlspecialchars(__('admin.unsaved_changes')) . '</span>';
+        . '</span>';
+    if ($entryEditorHasLanguages) {
+        require_once dirname(__DIR__, 2) . '/core/content_locale.php';
+        $languageSwitch = '<div class="segmented language-switch" role="tablist" aria-label="' . htmlspecialchars(__('admin.entry_editor_languages')) . '">';
+        foreach ($multilanguageLanguages as $langIdx => $langCode) {
+            $languageSwitch .= '<button type="button" class="language-tab-btn' . ($langIdx === 0 ? ' active' : '') . '"'
+                . ' data-lang="' . htmlspecialchars($langCode) . '" role="tab"'
+                . ' aria-selected="' . ($langIdx === 0 ? 'true' : 'false') . '"'
+                . ' aria-controls="entry-lang-' . htmlspecialchars($langCode) . '">'
+                . htmlspecialchars(birkly_locale_endonym((string) $langCode))
+                . '</button>';
+        }
+        $languageSwitch .= '</div>';
+        if (!$isSubEntry && !empty($collection['slug'])) {
+            $languageSwitch .= '<a class="btn btn-ghost btn-sm" href="' . htmlspecialchars(admin_url('collection-editor', ['collection' => $collection['slug']])) . '#multilanguage-settings">'
+                . birkly_icon('plus', ['size' => 13]) . htmlspecialchars(__('admin.entry_editor_add_language')) . '</a>';
+        }
+        $stickySaveBarStatusHtml .= $languageSwitch;
+    }
   if (!$isSubEntry):
-    $stickySaveBarAfterSaveHtml = '<button type="button" class="btn btn-primary" id="entry-publish-btn">'
+    $stickySaveBarAfterSaveHtml = '<button type="button" class="btn btn-primary" id="entry-publish-btn"' . ($entryEditorShowPublish ? '' : ' hidden') . '>'
         . htmlspecialchars(__('admin.entry_publish_and_save'))
         . '</button>';
   endif;
@@ -138,131 +163,227 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
             <div class="editor-main">
                 <div class="editor-content">
                     <?php
-                    $multilanguageEnabled = !empty($multilanguage_enabled);
-                    $multilanguageLanguages = $multilanguage_languages ?? [];
-                    $languageFields = $language_fields ?? [];
-                    ?>
-                    <?php if ($multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields)): ?>
-                        <div class="language-tabs-container entry-language-tabs">
-                            <div class="tabs language-tabs-nav" role="tablist" aria-label="Entry languages">
-                                <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
-                                    <button type="button"
-                                            class="tab language-tab-btn <?= $langIdx === 0 ? 'active' : '' ?>"
-                                            data-lang="<?= htmlspecialchars($langCode) ?>"
-                                            role="tab"
-                                            aria-selected="<?= $langIdx === 0 ? 'true' : 'false' ?>">
-                                        <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                    </button>
-                                <?php endforeach; ?>
+                    $collectionPathPrefix = '/' . ($collection['slug'] ?? 'collection') . '/';
+                    $renderSlugSlab = function () use ($entry, $collectionPathPrefix, $autoSlugChecked) {
+                        ?>
+                        <div class="field-block entry-field entry-slug-field" data-field-name="slug">
+                            <div class="field-header">
+                                <label class="field-title" for="slug"><?= htmlspecialchars(__('admin.col_editor_slug_label')) ?></label>
                             </div>
+                            <div class="field-control">
+                                <div class="input-group">
+                                    <span class="prefix mono"><?= htmlspecialchars($collectionPathPrefix) ?></span>
+                                    <input type="text" name="slug" id="slug" class="input is-mono" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_auto_ph')) ?>">
+                                </div>
+                                <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($autoSlugChecked) ? '1' : '0' ?>">
+                            </div>
+                            <label class="auto-slug-toggle">
+                                <input type="checkbox" id="auto_slug_checkbox" <?= !empty($autoSlugChecked) ? 'checked' : '' ?>>
+                                <?= htmlspecialchars(__('admin.col_editor_auto_generate_slug')) ?>
+                            </label>
+                            <p class="field-help"><?= htmlspecialchars(__('admin.entry_editor_slug_help')) ?></p>
+                            <p id="slug-unicode-hint" class="field-help slug-unicode-hint" hidden><?= __('admin.entry_editor_slug_unicode_hint') ?></p>
+                        </div>
+                        <?php
+                    };
+                    $renderSlugMirror = function (string $firstLangLabel) use ($entry, $collectionPathPrefix) {
+                        ?>
+                        <div class="field-block entry-field entry-slug-field is-shared" data-field-name="slug-shared">
+                            <div class="field-header">
+                                <span class="field-title"><?= htmlspecialchars(__('admin.col_editor_slug_label')) ?></span>
+                            </div>
+                            <div class="field-control">
+                                <div class="input-group">
+                                    <span class="prefix mono"><?= htmlspecialchars($collectionPathPrefix) ?></span>
+                                    <span class="entry-slug-mirror mono" data-slug-mirror><?= htmlspecialchars($entry['slug'] ?? '') ?></span>
+                                </div>
+                            </div>
+                            <p class="field-help"><?= htmlspecialchars(__('admin.entry_editor_slug_shared', ['language' => $firstLangLabel])) ?></p>
+                        </div>
+                        <?php
+                    };
+                    $renderFieldSlab = function (array $field, ?string $langCode = null, int $langIdx = 0) use ($entry) {
+                        $fieldName = $field['name'] ?? '';
+                        $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
+                        $fieldLabelFor = $langCode !== null
+                            ? 'field_' . $langCode . '_' . $fieldName
+                            : ($field['label_for_id'] ?? ('field_' . $fieldName));
+                        $fieldType = (string) ($field['type'] ?? '');
+                        ?>
+                        <div class="field-block entry-field" data-field-name="<?= htmlspecialchars($fieldName) ?>"<?= $fieldType !== '' ? ' data-fieldtype="' . htmlspecialchars($fieldType) . '"' : '' ?><?= $langCode !== null ? ' data-lang="' . htmlspecialchars($langCode) . '"' : '' ?>>
+                            <div class="field-header">
+                                <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
+                                    <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
+                                    <?php if (!empty($field['required'])): ?>
+                                        <span class="required" aria-label="<?= htmlspecialchars(__('admin.required')) ?>">*</span>
+                                    <?php endif; ?>
+                                </label>
+                            </div>
+                            <div class="field-control">
+                                <?php if (!empty($field['html'])): ?>
+                                    <?= $field['html'] ?>
+                                <?php elseif ($langCode !== null): ?>
+                                    <?php $fieldValue = $field['lang_value'] ?? ($entry[$langCode][$fieldName] ?? ''); ?>
+                                    <input type="text"
+                                           name="<?= htmlspecialchars($langCode . '[' . $fieldName . ']') ?>"
+                                           id="field_<?= htmlspecialchars($langCode . '_' . $fieldName) ?>"
+                                           value="<?= htmlspecialchars($fieldValue) ?>"
+                                           class="input"
+                                           <?= !empty($field['required']) && $langIdx === 0 ? 'required' : '' ?>>
+                                <?php else: ?>
+                                    <?php $fieldValue = $entry[$fieldName] ?? ''; ?>
+                                    <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars(is_scalar($fieldValue) ? (string) $fieldValue : '') ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
+                                <?php endif; ?>
+                            </div>
+                            <?php if ($fieldHelpText !== ''): ?>
+                                <p class="field-help field-subtitle"><?= htmlspecialchars($fieldHelpText) ?></p>
+                            <?php endif; ?>
+                            <div class="field-feedback error" role="alert" aria-live="polite"></div>
+                        </div>
+                        <?php
+                    };
+                    $isTitleField = static fn (array $field): bool => ($field['name'] ?? '') === 'title';
+                    ?>
+                    <?php if ($entryEditorHasLanguages): ?>
+                        <div class="language-tabs-container entry-language-tabs">
+                            <?php $firstLangLabel = birkly_locale_endonym((string) ($multilanguageLanguages[0] ?? '')); ?>
                             <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
+                                <?php
+                                $langFields = $languageFields[$langCode] ?? [];
+                                $hasTitle = (bool) array_filter($langFields, $isTitleField);
+                                ?>
                                 <div class="language-tab-content <?= $langIdx === 0 ? 'active' : '' ?>"
+                                     id="entry-lang-<?= htmlspecialchars($langCode) ?>"
                                      data-lang="<?= htmlspecialchars($langCode) ?>"
                                      role="tabpanel">
-                                    <?php foreach ($languageFields[$langCode] ?? [] as $field): ?>
-                                        <?php
-                                        $fieldName = $field['name'] ?? '';
-                                        $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
-                                        $fieldSubtitle = $fieldHelpText !== '' ? $fieldHelpText : (!empty($field['required']) ? __('admin.required') : '');
-                                        $fieldLabelFor = 'field_' . $langCode . '_' . $fieldName;
-                                        ?>
-                                        <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>" data-lang="<?= htmlspecialchars($langCode) ?>">
-                                            <div class="field-header">
-                                                <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
-                                                    <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
-                                                    <?php if (!empty($field['required'])): ?>
-                                                        <span class="required">*</span>
-                                                    <?php endif; ?>
-                                                </label>
-                                                <?php if ($fieldSubtitle !== ''): ?>
-                                                    <div class="field-subtitle"><?= htmlspecialchars($fieldSubtitle) ?></div>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="field-control">
-                                                <?php if (!empty($field['html'])): ?>
-                                                    <?= $field['html'] ?>
-                                                <?php else: ?>
-                                                    <?php $fieldValue = $field['lang_value'] ?? ($entry[$langCode][$fieldName] ?? ''); ?>
-                                                    <input type="text"
-                                                           name="<?= htmlspecialchars($langCode . '[' . $fieldName . ']') ?>"
-                                                           id="field_<?= htmlspecialchars($langCode . '_' . $fieldName) ?>"
-                                                           value="<?= htmlspecialchars($fieldValue) ?>"
-                                                           class="input"
-                                                           <?= !empty($field['required']) && $langIdx === 0 ? 'required' : '' ?>>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="field-feedback error" role="alert" aria-live="polite"></div>
-                                        </div>
+                                    <?php if (!$hasTitle): ?>
+                                        <?php $langIdx === 0 ? $renderSlugSlab() : $renderSlugMirror($firstLangLabel); ?>
+                                    <?php endif; ?>
+                                    <?php foreach ($langFields as $field): ?>
+                                        <?php $renderFieldSlab($field, (string) $langCode, (int) $langIdx); ?>
+                                        <?php if ($isTitleField($field)): ?>
+                                            <?php $langIdx === 0 ? $renderSlugSlab() : $renderSlugMirror($firstLangLabel); ?>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
                     <?php elseif (!empty($fields)): ?>
+                        <?php if (!array_filter($fields, $isTitleField)) { $renderSlugSlab(); } ?>
                         <?php foreach ($fields as $field): ?>
-                            <?php
-                            $fieldName = $field['name'] ?? '';
-                            $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
-                            $fieldSubtitle = $fieldHelpText !== '' ? $fieldHelpText : (!empty($field['required']) ? __('admin.required') : '');
-                            $fieldLabelFor = $field['label_for_id'] ?? ('field_' . $fieldName);
-                            ?>
-                            <div class="field-block" data-field-name="<?= htmlspecialchars($fieldName) ?>">
-                                <div class="field-header">
-                                    <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
-                                        <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
-                                        <?php if (!empty($field['required'])): ?>
-                                            <span class="required">*</span>
-                                        <?php endif; ?>
-                                    </label>
-                                    <?php if ($fieldSubtitle !== ''): ?>
-                                        <div class="field-subtitle"><?= htmlspecialchars($fieldSubtitle) ?></div>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="field-control">
-                                    <?php if (!empty($field['html'])): ?>
-                                        <?= $field['html'] ?>
-                                    <?php else: ?>
-                                        <?php
-                                        $fieldValue = $entry[$fieldName] ?? '';
-                                        ?>
-                                        <input type="text" name="<?= htmlspecialchars($fieldName) ?>" id="field_<?= htmlspecialchars($fieldName) ?>" value="<?= htmlspecialchars($fieldValue) ?>" class="input" <?= !empty($field['required']) ? 'required' : '' ?>>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="field-feedback error" role="alert" aria-live="polite"></div>
-                            </div>
+                            <?php $renderFieldSlab($field); ?>
+                            <?php if ($isTitleField($field)) { $renderSlugSlab(); } ?>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="empty-state">
+                        <?php $renderSlugSlab(); ?>
+                        <div class="empty">
                             <p><?= __('admin.no_fields_defined') ?></p>
                         </div>
                     <?php endif; ?>
                 </div>
             </div>
             
-            <!-- Right Sidebar -->
+            <!-- Rail: frames 24px apart -->
             <div class="editor-sidebar">
-                <div class="sidebar-tabs tabs-v2-root">
+                <section class="frame entry-publishing" aria-labelledby="entry-publishing-title">
+                    <div class="frame-head">
+                        <h2 class="frame-title" id="entry-publishing-title"><?= htmlspecialchars(__('admin.entry_editor_publishing')) ?></h2>
+                        <span class="status is-<?= htmlspecialchars($entryEditorStatus) ?>" id="entry-status-badge"><?= htmlspecialchars(__('admin.' . $entryEditorStatus)) ?></span>
+                    </div>
+                            <div class="info-item">
+                        <label for="status"><?= htmlspecialchars(__('admin.status')) ?></label>
+                        <select name="status" id="status" class="input">
+                            <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.unpublished')) ?></option>
+                            <option value="published" <?= ($entry['status'] ?? '') === 'published' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.published')) ?></option>
+                            <option value="scheduled" <?= ($entry['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.scheduled')) ?></option>
+                            <option value="pending_review" <?= ($entry['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.pending_review')) ?></option>
+                        </select>
+                        <p class="status-clarity field-help" id="status-clarity-text"><?= htmlspecialchars(__('admin.entry_editor_status_clarity_unpublished')) ?></p>
+                    </div>
+                    
+                    <!-- Scheduled: Show Publish At field -->
+                    <div class="form-group" id="publish-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? '' : 'hidden' ?>>
+                        <label for="published_at"><?= htmlspecialchars(__('admin.entry_editor_publish_at')) ?></label>
+                        <input type="datetime-local" name="published_at" id="published_at" class="input" 
+                               value="<?= !empty($entry['published_at']) ? date('Y-m-d\TH:i', strtotime($entry['published_at'])) : '' ?>"
+                               data-value="<?= htmlspecialchars($entry['published_at'] ?? '') ?>">
+                        <small class="form-text">
+                            <?= htmlspecialchars(__('admin.entry_editor_publish_at_help')) ?>
+                        </small>
+                    </div>
+                    
+                    <!-- Published: Show Unpublish At field -->
+                    <div class="form-group" id="expire-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'published' ? '' : 'hidden' ?>>
+                        <label for="expires_at"><?= htmlspecialchars(__('admin.entry_editor_unpublish_at')) ?></label>
+                        <input type="datetime-local" name="expires_at" id="expires_at" class="input"
+                               value="<?= !empty($entry['expires_at']) ? date('Y-m-d\TH:i', strtotime($entry['expires_at'])) : '' ?>"
+                               data-value="<?= htmlspecialchars($entry['expires_at'] ?? '') ?>">
+                        <small class="form-text">
+                            <?= htmlspecialchars(__('admin.entry_editor_unpublish_at_help')) ?>
+                        </small>
+                    </div>
+                    
+                    <!-- Pending Review: Show Reviewer selection -->
+                    <div class="form-group" id="reviewer-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
+                        <label for="reviewer"><?= htmlspecialchars(__('admin.entry_editor_notify_reviewer')) ?></label>
+                        <select name="reviewer" id="reviewer" class="input">
+                            <option value=""><?= htmlspecialchars(__('admin.entry_editor_select_reviewer')) ?></option>
+                            <?php
+                            // Load users for reviewer selection
+                            $users = [];
+                            $userFiles = glob(__DIR__ . '/../../users/*.json');
+                            foreach ($userFiles as $userFile) {
+                                $userData = json_decode(file_get_contents($userFile), true);
+                                if ($userData && (!isset($userData['type']) || $userData['type'] !== 'ai')) {
+                                    $users[] = $userData;
+                                }
+                            }
+                            
+                            $currentReviewer = $entry['reviewer'] ?? '';
+                            foreach ($users as $user):
+                                $userId = $user['id'] ?? '';
+                                $userEmail = $user['email'] ?? '';
+                                $userName = $user['name'] ?? $userEmail;
+                                $displayName = $userName . ($userEmail && $userName !== $userEmail ? ' (' . $userEmail . ')' : '');
+                                // Match by both ID and email (case-insensitive)
+                                $selected = (
+                                    (!empty($currentReviewer) && (
+                                        strtolower(trim($currentReviewer)) === strtolower(trim($userId)) ||
+                                        strtolower(trim($currentReviewer)) === strtolower(trim($userEmail))
+                                    ))
+                                ) ? 'selected' : '';
+                            ?>
+                                <option value="<?= htmlspecialchars($userId) ?>" <?= $selected ?>><?= htmlspecialchars($displayName) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <!-- Hidden input to preserve reviewer value when field is hidden -->
+                        <input type="hidden" name="reviewer_hidden" id="reviewer_hidden" value="<?= htmlspecialchars($currentReviewer) ?>">
+                        <small class="form-text">
+                            <?= htmlspecialchars(__('admin.entry_editor_reviewer_help')) ?>
+                        </small>
+                    </div>
+
+                    <?php if (!empty($can_review_entry)): ?>
+                        <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
+                            <div class="entry-review-actions__title"><?= __('admin.entry_editor_review_actions_title') ?></div>
+                            <div class="entry-review-actions__buttons">
+                                <button type="button" class="btn btn-secondary btn-sm" id="approve-entry"><?= htmlspecialchars(__('admin.approve')) ?></button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="request-changes"><?= htmlspecialchars(__('admin.request_changes')) ?></button>
+                                <button type="button" class="btn btn-danger btn-sm" id="reject-entry"><?= htmlspecialchars(__('admin.reject')) ?></button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                </section>
+
+                <section class="frame sidebar-tabs tabs-v2-root">
                     <div class="tabs tab-nav">
                         <button type="button" class="tab tab-btn active" data-tab="general"><?= htmlspecialchars(__('admin.general')) ?></button>
                         <button type="button" class="tab tab-btn" data-tab="templating"><?= htmlspecialchars(__('admin.templating')) ?></button>
                     </div>
-                    
+
                     <div class="tab-content">
-                        <!-- General Information Tab -->
                         <div class="tab-pane active" id="general-tab">
-                            <div class="form-group">
-                                <label for="slug"><?= htmlspecialchars(__('admin.col_editor_slug_label')) ?></label>
-                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_auto_ph')) ?>">
-                                <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($autoSlugChecked) ? '1' : '0' ?>">
-                                <label class="auto-slug-toggle">
-                                    <input type="checkbox" id="auto_slug_checkbox" <?= !empty($autoSlugChecked) ? 'checked' : '' ?>>
-                                    <?= htmlspecialchars(__('admin.col_editor_auto_generate_slug')) ?>
-                                </label>
-                                <small class="form-text">
-                                    <?= htmlspecialchars(__('admin.entry_editor_slug_help')) ?>
-                                </small>
-                                <div id="slug-unicode-hint" class="form-text slug-unicode-hint" hidden>
-                                    <?= __('admin.entry_editor_slug_unicode_hint') ?>
-                                </div>
                                 <div class="permalink-preview" id="permalink-preview">
                                     <div class="permalink-preview-label"><?= __('admin.entry_editor_permalink_preview') ?></div>
                                     <div class="permalink-preview-url">
@@ -281,92 +402,6 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <small class="form-text"><?= __('admin.entry_editor_discovery_seo_help') ?></small>
                                     </div>
                                 <?php endif; ?>
-                            </div>
-                            
-                            <div class="info-item u-pt-4 u-border-top">
-                                <label for="status"><?= htmlspecialchars(__('admin.status')) ?></label>
-                                <select name="status" id="status" class="input">
-                                    <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.unpublished')) ?></option>
-                                    <option value="published" <?= ($entry['status'] ?? '') === 'published' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.published')) ?></option>
-                                    <option value="scheduled" <?= ($entry['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.scheduled')) ?></option>
-                                    <option value="pending_review" <?= ($entry['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.pending_review')) ?></option>
-                                </select>
-                                <p class="status-clarity" id="status-clarity-text"><?= htmlspecialchars(__('admin.entry_editor_status_clarity_unpublished')) ?></p>
-                            </div>
-                            
-                            <!-- Scheduled: Show Publish At field -->
-                            <div class="form-group" id="publish-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? '' : 'hidden' ?>>
-                                <label for="published_at"><?= htmlspecialchars(__('admin.entry_editor_publish_at')) ?></label>
-                                <input type="datetime-local" name="published_at" id="published_at" class="input" 
-                                       value="<?= !empty($entry['published_at']) ? date('Y-m-d\TH:i', strtotime($entry['published_at'])) : '' ?>"
-                                       data-value="<?= htmlspecialchars($entry['published_at'] ?? '') ?>">
-                                <small class="form-text">
-                                    <?= htmlspecialchars(__('admin.entry_editor_publish_at_help')) ?>
-                                </small>
-                            </div>
-                            
-                            <!-- Published: Show Unpublish At field -->
-                            <div class="form-group" id="expire-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'published' ? '' : 'hidden' ?>>
-                                <label for="expires_at"><?= htmlspecialchars(__('admin.entry_editor_unpublish_at')) ?></label>
-                                <input type="datetime-local" name="expires_at" id="expires_at" class="input"
-                                       value="<?= !empty($entry['expires_at']) ? date('Y-m-d\TH:i', strtotime($entry['expires_at'])) : '' ?>"
-                                       data-value="<?= htmlspecialchars($entry['expires_at'] ?? '') ?>">
-                                <small class="form-text">
-                                    <?= htmlspecialchars(__('admin.entry_editor_unpublish_at_help')) ?>
-                                </small>
-                            </div>
-                            
-                            <!-- Pending Review: Show Reviewer selection -->
-                            <div class="form-group" id="reviewer-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
-                                <label for="reviewer"><?= htmlspecialchars(__('admin.entry_editor_notify_reviewer')) ?></label>
-                                <select name="reviewer" id="reviewer" class="input">
-                                    <option value=""><?= htmlspecialchars(__('admin.entry_editor_select_reviewer')) ?></option>
-                                    <?php
-                                    // Load users for reviewer selection
-                                    $users = [];
-                                    $userFiles = glob(__DIR__ . '/../../users/*.json');
-                                    foreach ($userFiles as $userFile) {
-                                        $userData = json_decode(file_get_contents($userFile), true);
-                                        if ($userData && (!isset($userData['type']) || $userData['type'] !== 'ai')) {
-                                            $users[] = $userData;
-                                        }
-                                    }
-                                    
-                                    $currentReviewer = $entry['reviewer'] ?? '';
-                                    foreach ($users as $user):
-                                        $userId = $user['id'] ?? '';
-                                        $userEmail = $user['email'] ?? '';
-                                        $userName = $user['name'] ?? $userEmail;
-                                        $displayName = $userName . ($userEmail && $userName !== $userEmail ? ' (' . $userEmail . ')' : '');
-                                        // Match by both ID and email (case-insensitive)
-                                        $selected = (
-                                            (!empty($currentReviewer) && (
-                                                strtolower(trim($currentReviewer)) === strtolower(trim($userId)) ||
-                                                strtolower(trim($currentReviewer)) === strtolower(trim($userEmail))
-                                            ))
-                                        ) ? 'selected' : '';
-                                    ?>
-                                        <option value="<?= htmlspecialchars($userId) ?>" <?= $selected ?>><?= htmlspecialchars($displayName) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <!-- Hidden input to preserve reviewer value when field is hidden -->
-                                <input type="hidden" name="reviewer_hidden" id="reviewer_hidden" value="<?= htmlspecialchars($currentReviewer) ?>">
-                                <small class="form-text">
-                                    <?= htmlspecialchars(__('admin.entry_editor_reviewer_help')) ?>
-                                </small>
-                            </div>
-
-                            <?php if (!empty($can_review_entry)): ?>
-                                <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
-                                    <div class="entry-review-actions__title"><?= __('admin.entry_editor_review_actions_title') ?></div>
-                                    <div class="entry-review-actions__buttons">
-                                        <button type="button" class="btn btn-secondary btn-sm" id="approve-entry"><?= htmlspecialchars(__('admin.approve')) ?></button>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes"><?= htmlspecialchars(__('admin.request_changes')) ?></button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry"><?= htmlspecialchars(__('admin.reject')) ?></button>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                            
                             <!-- Entry Information Section -->
                             <div class="entry-info-section">
                                 <?php if (!empty($entry['id'])): ?>
@@ -462,22 +497,6 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <?php if (!$isSubEntry && !empty($entry['id']) && !empty($collection['slug'])): ?>
-                                <div class="entry-revisions-section">
-                                    <div class="section-header">
-                                        <h4><?= htmlspecialchars(__('admin.entry_editor_revisions')) ?></h4>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="refresh-entry-revisions-btn"><?= htmlspecialchars(__('admin.refresh')) ?></button>
-                                    </div>
-                                    <p class="u-text-xs u-fg-secondary">
-                                        <?= htmlspecialchars(__('admin.entry_editor_revisions_help')) ?>
-                                    </p>
-                                    <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
-                                    <div id="entry-revisions-list" class="entry-revisions-list">
-                                        <div class="entry-revisions-empty"><?= htmlspecialchars(__('admin.entry_editor_js_loading_revisions')) ?></div>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                            <div id="sidebar-validation" class="sidebar-validation" hidden aria-live="polite"></div>
                         </div>
                         
                         <!-- Templating Tab -->
@@ -633,7 +652,21 @@ echo htmlspecialchars($collectionExample);
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
+                <?php if (!$isSubEntry && !empty($entry['id']) && !empty($collection['slug'])): ?>
+                    <section class="frame entry-revisions-section" aria-labelledby="entry-revisions-title">
+                        <div class="frame-head">
+                            <h2 class="frame-title" id="entry-revisions-title"><?= htmlspecialchars(__('admin.entry_editor_revisions')) ?></h2>
+                            <span class="count" id="entry-revisions-count" hidden></span>
+                            <button type="button" class="btn-icon" id="refresh-entry-revisions-btn" title="<?= htmlspecialchars(__('admin.refresh')) ?>" aria-label="<?= htmlspecialchars(__('admin.refresh')) ?>"><?= birkly_icon('refresh', ['size' => 13]) ?></button>
+                        </div>
+                        <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
+                        <div id="entry-revisions-list" class="entry-revisions-list">
+                            <div class="entry-revisions-empty"><?= htmlspecialchars(__('admin.entry_editor_js_loading_revisions')) ?></div>
+                        </div>
+                    </section>
+                <?php endif; ?>
+                <div id="sidebar-validation" class="signal sidebar-validation" hidden aria-live="polite"></div>
             </div>
         </div>
     </form>

@@ -241,6 +241,9 @@
         statusSelect.value = status;
         if (!opts.silent) {
             statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            // Keeps the rail badge and main action in step without marking the form dirty.
+            statusSelect.dispatchEvent(new CustomEvent('birkly:status-synced'));
         }
     }
 
@@ -278,12 +281,14 @@
             .replace(/^-+|-+$/g, '');
     }
 
+    // Scoped to the entry form: the page also holds other title inputs (feedback dialog).
+    // Multilanguage slugs follow the first language's title.
     function findTitleField() {
-        return document.getElementById('field-title')
-            || document.getElementById('field_title')
-            || document.querySelector('input[name="title"]')
-            || document.querySelector('.language-tab-content.active input[name$="[title]"]')
-            || document.querySelector('input[name$="[title]"]');
+        const form = document.getElementById('entry-form') || document;
+        return form.querySelector('#field-title, #field_title')
+            || form.querySelector('input[name="title"]')
+            || form.querySelector('.language-tab-content:first-child input[name$="[title]"]')
+            || form.querySelector('input[name$="[title]"]');
     }
 
     function getEntryIdFallback() {
@@ -389,6 +394,8 @@
             const fallbackId = getEntryIdFallback();
             slugField.value = title ? normalizeSlug(title) : normalizeSlug(fallbackId);
             updateSlugUnicodeHint();
+            // Not an input event: that would switch auto-slug off (listener below).
+            slugField.dispatchEvent(new CustomEvent('birkly:slug-generated', { bubbles: true }));
         }
 
         if (autoSlugCheckbox) {
@@ -1264,6 +1271,8 @@
                 : saveLabel('saving', 'Saving') + '…'
         );
 
+        const statusBeforeSave = getEntryStatusFromSidebar();
+        let saveSucceeded = false;
         if (forceStatus) {
             setSidebarStatus(forceStatus, { silent: true });
         }
@@ -1571,6 +1580,7 @@
                 
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
+                    saveSucceeded = true;
                     // Success! Even if HTTP status code is 400 (server bug)
                     const savedEntryId = data.data && data.data.id ? data.data.id : resolveEntryId(form, formData);
                     const isNewRegularEntry = !isSubEntry && !hadEntryIdBeforeSave && !!savedEntryId;
@@ -1638,6 +1648,13 @@
             } catch (error) {
                 console.error('Error saving entry:', error);
                 BirklyFeedback.toast(eeT('entry_editor_js_err_save_entry', 'Error saving entry: {message}', { message: error.message }), 'error')
+            }
+
+            if (!saveSucceeded) {
+                if (forceStatus) {
+                    setSidebarStatus(statusBeforeSave, { silent: true });
+                }
+                setEntryActionStatus('idle');
             }
     }
 
@@ -1934,8 +1951,12 @@
                 const langCode = this.dataset.lang;
                 
                 // Update buttons
-                languageTabBtns.forEach(b => b.classList.remove('active'));
+                languageTabBtns.forEach(b => {
+                    b.classList.remove('active');
+                    b.setAttribute('aria-selected', 'false');
+                });
                 this.classList.add('active');
+                this.setAttribute('aria-selected', 'true');
                 
                 // Update content
                 languageTabContents.forEach(content => {

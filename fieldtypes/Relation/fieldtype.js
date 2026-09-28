@@ -12,6 +12,12 @@ function relationContentApiUrl(query) {
   return normalized ? `${base}?${normalized}` : base;
 }
 
+function relationEscape(text) {
+  return String(text == null ? '' : text).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
 function relationCollectionKey(collection) {
   return collection.id || collection.slug || '';
 }
@@ -107,12 +113,11 @@ window.HaruFieldtypes['relation'] = {
     html += `<div class="relation-list" id="relation_list_${fieldName}"></div>`;
     html += `<input type="hidden" name="${fieldName}" id="field_${fieldName}_value" value="">`;
     html += `<div class="relation-controls">`;
-    html += `<button type="button" class="btn btn-primary select-relation-btn" data-field="${fieldName}" data-multiple="${isMulti}">`;
-    html += `<i class="icon-plus"></i> ${isMulti ? 'Add Relations' : 'Select Entry'}`;
+    const plusIcon = (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon('plus', { size: 13 }) : '';
+    html += `<button type="button" class="btn btn-secondary btn-sm select-relation-btn" data-field="${fieldName}" data-multiple="${isMulti}">`;
+    html += `${plusIcon}${isMulti ? 'Add entries' : 'Choose entry'}`;
     html += `</button>`;
-    html += `<button type="button" class="btn btn-danger remove-all-relation-btn" data-field="${fieldName}" style="display:none;">`;
-    html += `<i class="icon-trash"></i> Remove All`;
-    html += `</button>`;
+    html += `<button type="button" class="btn btn-ghost btn-sm remove-all-relation-btn" data-field="${fieldName}" hidden>Remove all</button>`;
     html += `</div>`;
     html += `</div>`;
     
@@ -135,6 +140,10 @@ window.HaruFieldtypes['relation'] = {
   },
   
   setValue: function(fieldName, value) {
+    const toggleRemoveAll = function (name, count) {
+      const btn = document.querySelector(`.remove-all-relation-btn[data-field="${name}"]`);
+      if (btn) btn.hidden = !(count > 0);
+    };
     const hiddenInputSelector = window.HaruFieldtypeConfig.getSelector('relation', 'hiddenInput', fieldName);
     const listSelector = window.HaruFieldtypeConfig.getSelector('relation', 'list', fieldName);
     
@@ -231,7 +240,8 @@ window.HaruFieldtypes['relation'] = {
     
     // Display relations
     if (relations.length === 0) {
-      list.innerHTML = '<div class="text-muted">No relations selected</div>';
+      list.innerHTML = '<div class="relation-empty">No linked entries yet</div>';
+      toggleRemoveAll(fieldName, 0);
       return;
     }
     
@@ -253,7 +263,8 @@ window.HaruFieldtypes['relation'] = {
     console.log('[Relation Field] Final entry IDs to fetch:', entryIds);
     
     if (entryIds.length === 0) {
-      list.innerHTML = '<div class="text-muted">No relations selected</div>';
+      list.innerHTML = '<div class="relation-empty">No linked entries yet</div>';
+      toggleRemoveAll(fieldName, 0);
       return;
     }
     
@@ -268,26 +279,23 @@ window.HaruFieldtypes['relation'] = {
       .then(data => {
         console.log('[Relation Field] API response:', data);
         if (data.status === 'ok' && data.data && Array.isArray(data.data.entries)) {
+          const removeIcon = (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon('x', { size: 13 }) : '×';
           list.innerHTML = relations.map(relation => {
-            const entry = data.data.entries.find(e => e.id === (relation.id || relation));
-            const title = entry ? entry.title : (relation.id || relation);
-            const collection = relation.collectionName || relation.collection || 'Unknown';
+            const id = relation.id || relation;
+            const entry = data.data.entries.find(e => e.id === id);
+            const title = entry ? entry.title : id;
+            const collection = relation.collectionName && relation.collectionName !== 'Unknown'
+              ? relation.collectionName
+              : (relation.collection && relation.collection !== 'unknown' ? relation.collection : '');
             return `<div class="relation-entry">
               <div class="relation-info">
-                <span class="relation-title">${title}</span>
-                <span class="collection-info">from ${collection}</span>
+                <span class="relation-title">${relationEscape(title)}</span>
+                ${collection ? `<span class="collection-info">${relationEscape(collection)}</span>` : ''}
               </div>
-              <button type="button" class="btn btn-sm btn-danger" onclick="window.HaruFieldtypes['relation'].removeRelation('${fieldName}', '${relation.id || relation}')">
-                <i class="icon-close"></i>
-              </button>
+              <button type="button" class="relation-remove" data-relation-remove="${relationEscape(id)}" data-field="${relationEscape(fieldName)}" title="Remove" aria-label="Remove ${relationEscape(title)}">${removeIcon}</button>
             </div>`;
           }).join('');
-          
-          // Show/hide remove all button
-          const removeAllBtn = document.querySelector(`[data-field="${fieldName}"].remove-all-relation-btn`);
-          if (removeAllBtn) {
-            removeAllBtn.style.display = relations.length > 0 ? 'inline-block' : 'none';
-          }
+          toggleRemoveAll(fieldName, relations.length);
         } else {
           list.innerHTML = '<div class="text-danger">Failed to load relations</div>';
         }
@@ -723,6 +731,12 @@ window.HaruFieldtypes['relation'] = {
       });
     }
     
+    const removeOne = e.target.closest('[data-relation-remove]');
+    if (removeOne) {
+      window.HaruFieldtypes['relation'].removeRelation(removeOne.getAttribute('data-field'), removeOne.getAttribute('data-relation-remove'));
+      return;
+    }
+
     const removeAllBtn = e.target.closest('.remove-all-relation-btn');
     if (removeAllBtn) {
       const fieldName = removeAllBtn.getAttribute('data-field');
@@ -796,23 +810,17 @@ if (document.readyState === 'loading') {
     initializeAllRelationFields();
 }
 
-// Initialize new fields as they're added
-if (!window.relationObserver) {
-    window.relationObserver = window.HaruFieldtypeInterface.createObserver((mutations) => {
+// Initialize new fields as they're added (native observer: this file loads before the fieldtype shim)
+if (!window.relationObserver && typeof MutationObserver !== 'undefined') {
+    window.relationObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const relationFields = window.HaruFieldtypeInterface.getElements('.relation-field', node, 'Relation observer');
-                    relationFields.forEach(field => {
-                        const fieldName = field.id.replace('relation_field_', '');
-                        console.log('Found new relation field:', fieldName);
-                        initRelationField(fieldName);
-                    });
-                }
+                if (node.nodeType !== Node.ELEMENT_NODE) return;
+                const fields = node.matches && node.matches('.relation-field') ? [node] : Array.from(node.querySelectorAll ? node.querySelectorAll('.relation-field') : []);
+                fields.forEach(field => initRelationField(field.id.replace('relation_field_', '')));
             });
         });
-    }, { childList: true, subtree: true }, 'relation');
-
+    });
     if (document.body) {
         window.relationObserver.observe(document.body, { childList: true, subtree: true });
     }

@@ -207,21 +207,24 @@
 /* Inside a slab: grey on white, so the field still reads as a field at rest */
 [data-birch] .slab .input,
 [data-birch] .setting-row .input,
-[data-birch] .field .input {
+[data-birch] .field .input,
+[data-birch] .entry-field .input {
   border-color: transparent;
   background: var(--surface-2);
 }
 
 [data-birch] .slab .input:hover:not(:focus),
 [data-birch] .setting-row .input:hover:not(:focus),
-[data-birch] .field .input:hover:not(:focus) {
+[data-birch] .field .input:hover:not(:focus),
+[data-birch] .entry-field .input:hover:not(:focus) {
   border-color: transparent;
   background: var(--surface-3);
 }
 
 [data-birch] .slab .input:focus,
 [data-birch] .setting-row .input:focus,
-[data-birch] .field .input:focus { background: var(--surface); border-color: var(--accent); }
+[data-birch] .field .input:focus,
+[data-birch] .entry-field .input:focus { background: var(--surface); border-color: var(--accent); }
 
 [data-birch] .input-group {
   display: flex;
@@ -253,6 +256,22 @@
   transform: translateY(-50%);
   color: var(--text-3);
   pointer-events: none;
+}
+
+/* ---------- Frame head ---------- */
+[data-birch] .frame-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-block-end: var(--s-4);
+}
+
+[data-birch] .frame-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
 }
 
 /* ---------- Search field ---------- */
@@ -386,6 +405,63 @@
   background: var(--accent);
   color: var(--on-accent);
 }
+
+/* The P56 checkbox switch (label.switch > input + .switch__slider) drawn as the
+   Birch ✕ | ✓ switch, so every form toggle keeps its native checkbox.
+   Masks are the pixel icons x and check (core/icon_data.php). */
+[data-birch] label.switch {
+  --switch-icon-x: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'><path d='M2 2h1v1h-1zM10 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM6 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1z'/></svg>");
+  --switch-icon-check: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges'><path d='M10 3h1v1h-1zM9 4h1v1h-1zM9 5h1v1h-1zM2 6h1v1h-1zM8 6h1v1h-1zM3 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM5 9h1v1h-1z'/></svg>");
+  position: relative;
+  display: inline-flex;
+  width: 48px;
+  height: 24px;
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+[data-birch] label.switch input[type="checkbox"]:not(:disabled) + .switch__slider,
+[data-birch] label.switch input[type="checkbox"] + .switch__slider {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+  width: auto;
+  border-radius: 0;
+  background: linear-gradient(to right, var(--surface-3) 50%, var(--surface-2) 50%);
+}
+
+[data-birch] label.switch input[type="checkbox"]:checked:not(:disabled) + .switch__slider,
+[data-birch] label.switch input[type="checkbox"]:checked + .switch__slider {
+  background: linear-gradient(to right, var(--accent-soft) 50%, var(--accent) 50%);
+}
+
+[data-birch] label.switch input[type="checkbox"] + .switch__slider::before,
+[data-birch] label.switch input[type="checkbox"] + .switch__slider::after {
+  content: "";
+  position: static;
+  flex: 1 1 0;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  -webkit-mask: var(--switch-icon-x) center / 13px 13px no-repeat;
+  mask: var(--switch-icon-x) center / 13px 13px no-repeat;
+}
+
+[data-birch] label.switch input[type="checkbox"] + .switch__slider::before { background-color: var(--text); }
+
+[data-birch] label.switch input[type="checkbox"] + .switch__slider::after {
+  -webkit-mask-image: var(--switch-icon-check);
+  mask-image: var(--switch-icon-check);
+  background-color: var(--text-3);
+}
+
+[data-birch] label.switch input[type="checkbox"]:checked + .switch__slider::before { transform: none; background-color: var(--accent-text); }
+[data-birch] label.switch input[type="checkbox"]:checked + .switch__slider::after { background-color: var(--on-accent); }
+[data-birch] label.switch:has(input[type="checkbox"]:focus-visible) { outline: var(--focus-outline); outline-offset: 1px; }
+[data-birch] label.switch input[type="checkbox"]:focus-visible + .switch__slider { outline: none; }
 
 /* ---------- Segmented, tabs, counts ---------- */
 [data-birch] .segmented {

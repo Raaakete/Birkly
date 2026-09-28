@@ -51,28 +51,36 @@ class Map extends BaseField {
             $lng = -0.09;
         }
         
+        $name = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
+        $address = htmlspecialchars((string) $address, ENT_QUOTES, 'UTF-8');
+        $icon = static fn (string $n): string => function_exists('birkly_icon') ? birkly_icon($n, ['size' => 13]) : '';
+        $searchIcon = $icon('search');
+        $pinIcon = $icon('map-pin');
+
         return <<<HTML
-        <div class="map-field" id="field_{$this->name}">
-            <div class="map-preview" id="map_{$this->name}" style="width: 100%; height: 300px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 12px;"></div>
-            <div class="map-controls">
-                <div class="map-inputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-                    <div class="form-group">
-                        <label for="map_lat_{$this->name}">Latitude</label>
-                        <input type="number" step="any" id="map_lat_{$this->name}" class="input" value="{$lat}" placeholder="51.505">
-                    </div>
-                    <div class="form-group">
-                        <label for="map_lng_{$this->name}">Longitude</label>
-                        <input type="number" step="any" id="map_lng_{$this->name}" class="input" value="{$lng}" placeholder="-0.09">
-                    </div>
+        <div class="map-field" id="field_{$name}">
+            <div class="map-preview" id="map_{$name}" hidden></div>
+            <div class="map-inputs">
+                <div class="map-input">
+                    <label for="map_lat_{$name}">Latitude</label>
+                    <input type="number" step="any" id="map_lat_{$name}" class="input is-mono" value="{$lat}" placeholder="51.505">
                 </div>
-                <div class="form-group">
-                    <label for="map_address_{$this->name}">Address (optional)</label>
-                    <input type="text" id="map_address_{$this->name}" class="input" value="{$address}" placeholder="Enter address or search...">
-                    <button type="button" class="btn btn-secondary" id="map_search_{$this->name}" style="margin-top: 8px;">Search Location</button>
+                <div class="map-input">
+                    <label for="map_lng_{$name}">Longitude</label>
+                    <input type="number" step="any" id="map_lng_{$name}" class="input is-mono" value="{$lng}" placeholder="-0.09">
                 </div>
-                <button type="button" class="btn btn-primary" id="map_get_location_{$this->name}">Get Current Location</button>
             </div>
-            <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value='{$this->encodeValue($location)}'>
+            <div class="map-input">
+                <label for="map_address_{$name}">Address</label>
+                <div class="map-address">
+                    <input type="text" id="map_address_{$name}" class="input" value="{$address}" placeholder="Street, city">
+                    <button type="button" class="btn btn-secondary btn-sm" id="map_search_{$name}">{$searchIcon}Search</button>
+                </div>
+            </div>
+            <div class="map-actions">
+                <button type="button" class="btn btn-ghost btn-sm" id="map_get_location_{$name}">{$pinIcon}Use my location</button>
+            </div>
+            <input type="hidden" name="{$name}" id="field_{$name}_value" value="{$this->encodeValue($location)}">
         </div>
         HTML;
     }
@@ -81,7 +89,7 @@ class Map extends BaseField {
         if (empty($location) || (!isset($location['lat']) && !isset($location[0]))) {
             return '';
         }
-        return json_encode($location);
+        return htmlspecialchars((string) json_encode($location), ENT_QUOTES, 'UTF-8');
     }
 
     public function validate($value): array {
@@ -122,26 +130,41 @@ class Map extends BaseField {
     }
 
     public function getCSS(): string {
-        return <<<CSS
+        return <<<'CSS'
         .map-field {
             display: flex;
             flex-direction: column;
-            gap: var(--space-3, 0.75rem);
+            gap: var(--s-3);
         }
         .map-preview {
-            background: var(--bg-secondary, #fafafa);
-            position: relative;
+            height: 240px;
+            overflow: hidden;
+            border-radius: var(--r);
+            background: var(--surface-2);
         }
-        .map-controls {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3, 0.75rem);
-        }
+        .map-preview[hidden] { display: none; }
         .map-inputs {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: var(--space-3, 0.75rem);
+            gap: var(--s-2);
         }
+        .map-input {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .map-input > label {
+            color: var(--text-3);
+            font: var(--weight-regular) var(--size-caption) / var(--lh-caption) var(--font-sans);
+        }
+        .map-address {
+            display: flex;
+            gap: var(--s-1);
+        }
+        .map-address .input { flex: 1 1 auto; min-width: 0; }
+        .map-address .btn { flex: none; height: var(--control); }
+        .map-actions { display: flex; }
         CSS;
     }
 
@@ -216,7 +239,7 @@ class Map extends BaseField {
         
         // Show coordinates
         $coords = number_format($lat, 6) . ', ' . number_format($lng, 6);
-        return '<span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($coords, ENT_QUOTES, 'UTF-8') . '</span>';
+        return '<span class="ft-list-text ft-list-mono">' . htmlspecialchars($coords, ENT_QUOTES, 'UTF-8') . '</span>';
     }
 
     public function getTableMinWidth(): string {
