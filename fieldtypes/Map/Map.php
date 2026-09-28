@@ -12,6 +12,14 @@ class Map extends BaseField {
         return 'Location';
     }
 
+    public function getIcon(): string {
+        return 'map-pin';
+    }
+
+    public function getDescription(): string {
+        return 'A location on a map';
+    }
+
     public function render(): string {
         $value = $this->value ?? '';
         

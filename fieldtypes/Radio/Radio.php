@@ -24,6 +24,14 @@ class Radio extends BaseField {
         return 'Selection';
     }
 
+    public function getIcon(): string {
+        return 'select';
+    }
+
+    public function getDescription(): string {
+        return 'One choice from a short list';
+    }
+
     public function render(): string {
         $optionsHtml = '';
         $layoutClass = $this->layout === 'horizontal' ? 'radio-group-horizontal' : 'radio-group-vertical';

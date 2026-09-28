@@ -24,6 +24,14 @@ class Code extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'code';
+    }
+
+    public function getDescription(): string {
+        return 'Code snippets in a monospace editor';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $rows = max(4, $this->rows);

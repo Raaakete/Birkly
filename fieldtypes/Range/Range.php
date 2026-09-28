@@ -30,6 +30,14 @@ class Range extends BaseField {
         return 'Numeric';
     }
 
+    public function getIcon(): string {
+        return 'sliders';
+    }
+
+    public function getDescription(): string {
+        return 'A number picked on a slider';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $value = htmlspecialchars($this->value ?? $this->min);

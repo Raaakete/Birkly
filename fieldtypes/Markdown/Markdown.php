@@ -21,6 +21,14 @@ class Markdown extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'news';
+    }
+
+    public function getDescription(): string {
+        return 'Formatted text written in Markdown';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $rows = max(3, $this->rows);

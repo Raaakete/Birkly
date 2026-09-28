@@ -581,6 +581,8 @@ function getCollectionEditorData() {
                     'type' => $ft['type'] ?? $ft['name'] ?? '',
                     'label' => $ft['label'] ?? ucwords(str_replace(['_', '-'], ' ', $ft['name'] ?? '')),
                     'category' => $ft['category'] ?? 'Misc',
+                    'icon' => $ft['icon'] ?? '',
+                    'description' => $ft['description'] ?? '',
                     'config' => $ft['config'] ?? []
                 ];
             }
@@ -634,9 +636,11 @@ function getCollectionEditorData() {
                                 
                                 $fieldtypes[] = [
                                     'name' => strtolower($fieldtypeName),
-                                    'label' => ucfirst($fieldtypeName),
+                                    'label' => $fieldtype->getTypeLabel() ?: ucfirst($fieldtypeName),
                                     'type' => $config['type'] ?? strtolower($fieldtypeName),
                                     'category' => $category,
+                                    'icon' => $fieldtype->getIcon(),
+                                    'description' => $fieldtype->getDescription(),
                                     'config' => $config
                                 ];
                             } catch (\Exception $e) {

@@ -12,6 +12,18 @@ class DynamicItems extends BaseField {
         return 'Misc';
     }
 
+    public function getTypeLabel(): string {
+        return 'Dynamic items';
+    }
+
+    public function getIcon(): string {
+        return 'layers';
+    }
+
+    public function getDescription(): string {
+        return 'Repeatable blocks of fields';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         

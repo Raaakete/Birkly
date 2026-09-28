@@ -37,6 +37,14 @@ class Text extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'type';
+    }
+
+    public function getDescription(): string {
+        return 'Titles, names and short labels';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $minLength = $this->minLength ? "minlength=\"{$this->minLength}\"" : '';

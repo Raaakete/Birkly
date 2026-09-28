@@ -12,6 +12,14 @@ class Toggle extends BaseField {
         return 'Selection';
     }
 
+    public function getIcon(): string {
+        return 'toggle';
+    }
+
+    public function getDescription(): string {
+        return 'An on or off switch';
+    }
+
     public function render(): string {
         $checked = $this->value ? 'checked' : '';
 

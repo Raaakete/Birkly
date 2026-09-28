@@ -27,6 +27,14 @@ class URL extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'link';
+    }
+
+    public function getDescription(): string {
+        return 'A web address';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $placeholder = htmlspecialchars($this->placeholder);

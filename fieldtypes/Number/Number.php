@@ -25,6 +25,14 @@ class Number extends BaseField {
         return 'Numeric';
     }
 
+    public function getIcon(): string {
+        return 'hash';
+    }
+
+    public function getDescription(): string {
+        return 'Whole or decimal numbers';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $min = $this->min !== null ? "min=\"{$this->min}\"" : '';

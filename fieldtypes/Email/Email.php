@@ -21,6 +21,14 @@ class Email extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'mail';
+    }
+
+    public function getDescription(): string {
+        return 'An email address';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $multiple = $this->multiple ? 'multiple' : '';
