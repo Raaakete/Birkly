@@ -31,6 +31,17 @@ function birkly_entry_breadcrumb_title(array $entry, bool $isNew = false): strin
     }
 
     $title = trim((string) ($entry['title'] ?? ''));
+    if ($title === '') {
+        // Multilanguage entries keep the title per language: en.title, de.title, …
+        foreach ($entry as $key => $value) {
+            if (is_string($key) && preg_match('/^[a-z]{2}(?:-[a-z]{2,4})?$/', $key) && is_array($value)) {
+                $title = trim((string) ($value['title'] ?? ''));
+                if ($title !== '') {
+                    break;
+                }
+            }
+        }
+    }
 
     return $title !== '' ? $title : __('admin.untitled');
 }
