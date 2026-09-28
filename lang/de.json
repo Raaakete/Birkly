@@ -2832,6 +2832,7 @@
         "media_folders": "Ordner",
         "media_list_view": "Listenansicht",
         "media_grid_view": "Rasteransicht",
-        "media_drop_title": "Dateien zum Hochladen ablegen"
+        "media_drop_title": "Dateien zum Hochladen ablegen",
+        "discovery_seo_social_preview": "Social-Media-Vorschau"
     }
 }

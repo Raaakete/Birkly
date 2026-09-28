@@ -2896,6 +2896,7 @@
         "media_folders": "Folders",
         "media_list_view": "List view",
         "media_grid_view": "Grid view",
-        "media_drop_title": "Drop files to upload"
+        "media_drop_title": "Drop files to upload",
+        "discovery_seo_social_preview": "Social preview"
     }
 }
