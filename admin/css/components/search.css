@@ -216,3 +216,87 @@ input.search-input:focus {
     max-height: calc(85vh - 8rem);
   }
 }
+
+/* ============================================
+   Birch (P96-M13): the overlay is a float — grey body, sheet shadow, one
+   6px radius; the query row is a white field; results are rows with an icon
+   well; the footer shows key caps.
+   ============================================ */
+.search-overlay-content {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: var(--shadow-sheet);
+}
+
+.search-input-wrapper {
+  margin: var(--s-3) var(--s-3) 0;
+  padding: 0 var(--s-2) 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.search-input-wrapper:focus-within { border-color: var(--accent); }
+.search-icon { color: var(--text-3); }
+input.search-input { height: 40px; color: var(--text); font-size: var(--size-body); }
+
+.search-results { padding: var(--s-3); }
+.search-empty-state,
+.search-loading { color: var(--text-3); font-size: var(--size-small); }
+
+.search-results-group + .search-results-group { margin-block-start: var(--s-3); }
+
+.search-results-group-header {
+  padding: 0 var(--s-1) var(--s-1);
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.search-results-list { gap: var(--s-1); }
+
+.search-result-item {
+  width: 100%;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.search-result-item:hover { background: var(--surface); box-shadow: 0 0 0 1px var(--line-strong); }
+.search-result-item.selected { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent-line); }
+
+.search-result-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.search-result-title { color: var(--text); font-size: var(--size-body); font-weight: var(--weight-semibold); }
+.search-result-subtitle { color: var(--text-3); font-size: var(--size-small); }
+
+.search-footer {
+  gap: var(--s-4);
+  padding: var(--s-2) var(--s-4);
+  border-block-start: 1px solid var(--line);
+  background: none;
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+.search-footer kbd {
+  margin-inline-end: 2px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-caption);
+}
