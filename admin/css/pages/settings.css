@@ -1072,9 +1072,9 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 .settings-shell .section-header > div:first-child { flex: 1 1 auto; min-width: 0; }
 
 .settings-shell .section-title,
-.settings-shell .tab-pane .card-header h2,
-.settings-shell .tab-pane .card-header > h3,
-.settings-shell .tab-pane .card-header .card-title {
+.settings-shell .settings-panels .card-header h2,
+.settings-shell .settings-panels .card-header > h3,
+.settings-shell .settings-panels .card-header .card-title {
   margin: 0;
   color: var(--text);
   font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
@@ -1085,7 +1085,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 .settings-shell .section-header .settings-help { margin-block-start: 2px; }
 
 /* Frames: a named group; its contents are slabs 4px apart */
-.settings-shell .tab-pane .card {
+.settings-shell .settings-panels .card {
   margin: 0;
   padding: var(--s-5);
   border: 1px solid var(--line);
@@ -1094,7 +1094,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   box-shadow: none;
 }
 
-.settings-shell .tab-pane .card-header {
+.settings-shell .settings-panels .card-header {
   display: flex;
   align-items: flex-start;
   gap: var(--s-2);
@@ -1104,10 +1104,10 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   background: none;
 }
 
-.settings-shell .tab-pane .card-header > :is(h2, h3, div:not(.card-actions), .card-heading) { flex: 1 1 auto; min-width: 0; }
-.settings-shell .tab-pane .card-header :is(.settings-help, .section-description) { margin-block-start: 2px; }
+.settings-shell .settings-panels .card-header > :is(h2, h3, div:not(.card-actions), .card-heading) { flex: 1 1 auto; min-width: 0; }
+.settings-shell .settings-panels .card-header :is(.settings-help, .section-description) { margin-block-start: 2px; }
 
-.settings-shell .tab-pane .card-actions {
+.settings-shell .settings-panels .card-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1115,36 +1115,36 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   margin-inline-start: auto;
 }
 
-.settings-shell .tab-pane .card-body {
+.settings-shell .settings-panels .card-body {
   display: flex;
   flex-direction: column;
   gap: var(--s-1);
   padding: 0;
 }
 
-.settings-shell .tab-pane .card-body > :is(.settings-help, .form-help, .section-description) { margin-block: 0 var(--s-2); }
-.settings-shell .tab-pane .card-body > :is(.settings-help, .form-help, .section-description):not(:first-child) { margin-block: var(--s-2) 0; }
-.settings-shell .tab-pane .card-body > .u-cluster { margin-block-start: var(--s-2); }
+.settings-shell .settings-panels .card-body > :is(.settings-help, .form-help, .section-description) { margin-block: 0 var(--s-2); }
+.settings-shell .settings-panels .card-body > :is(.settings-help, .form-help, .section-description):not(:first-child) { margin-block: var(--s-2) 0; }
+.settings-shell .settings-panels .card-body > .u-cluster { margin-block-start: var(--s-2); }
 
 /* Items inside a frame are slabs */
-.settings-shell .tab-pane .card :is(.card, .card--sunken),
-.settings-shell .tab-pane .card--padded,
-.settings-shell .tab-pane .domain-card {
+.settings-shell .settings-panels .card :is(.card, .card--sunken),
+.settings-shell .settings-panels .card--padded,
+.settings-shell .settings-panels .domain-card {
   padding: var(--s-4);
   border: 0;
   border-radius: var(--r);
   background: var(--surface);
 }
 
-.settings-shell .tab-pane .card .card .card-header { margin-block-end: var(--s-3); }
+.settings-shell .settings-panels .card .card .card-header { margin-block-end: var(--s-3); }
 
-.settings-shell .tab-pane .card .card .card-header :is(h3, h4, .card-title) {
+.settings-shell .settings-panels .card .card .card-header :is(h3, h4, .card-title) {
   font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
 }
 
-.settings-shell .tab-pane .card .card .card-body { gap: var(--s-2); }
+.settings-shell .settings-panels .card .card .card-body { gap: var(--s-2); }
 
-.settings-shell .tab-pane .card .u-grid-auto { gap: var(--s-1); }
+.settings-shell .settings-panels .card .u-grid-auto { gap: var(--s-1); }
 
 /* Setting row: label and help | value */
 .settings-shell .setting-row {
@@ -1193,14 +1193,14 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 
 .settings-shell .setting-value > :is(.input, select, textarea, input:not([type="checkbox"]):not([type="radio"])) { width: 100%; }
 
-.settings-shell .tab-pane .card .input {
+.settings-shell .settings-panels .card .input {
   border-color: transparent;
   background-color: var(--surface-2);
 }
 
-.settings-shell .tab-pane .card .input:hover:not(:focus):not(:disabled) { background-color: var(--surface-3); }
-.settings-shell .tab-pane .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
-.settings-shell .tab-pane .card .input:disabled { color: var(--text-3); }
+.settings-shell .settings-panels .card .input:hover:not(:focus):not(:disabled) { background-color: var(--surface-3); }
+.settings-shell .settings-panels .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+.settings-shell .settings-panels .card .input:disabled { color: var(--text-3); }
 
 .settings-shell .setting-value input[type="file"] {
   font-size: var(--size-small);
@@ -1210,14 +1210,14 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 .settings-shell .setting-value .logo-preview-img { border-radius: var(--r); background: var(--surface-2); }
 
 .settings-shell .setting-actions,
-.settings-shell .tab-pane .card-body > .u-cluster:has(> .btn) {
+.settings-shell .settings-panels .card-body > .u-cluster:has(> .btn) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
 }
 
-.settings-shell .tab-pane .signal .signal-text { margin: 0; }
+.settings-shell .settings-panels .signal .signal-text { margin: 0; }
 
 /* Choice rows (AI tools mode): slab with a radio, blue ring when chosen */
 .settings-shell .radio-card {
@@ -1314,16 +1314,16 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 .settings-shell .data-list-meta { color: var(--text-3); font-size: var(--size-small); }
 
 /* Tables: header on the canvas, each row a slab 4px apart */
-.settings-shell .tab-pane .table-container { overflow-x: auto; border: 0; background: none; }
+.settings-shell .settings-panels .table-container { overflow-x: auto; border: 0; background: none; }
 
-.settings-shell .tab-pane table.table {
+.settings-shell .settings-panels table.table {
   border-collapse: separate;
   border-spacing: 0 var(--s-1);
   margin-block-start: calc(var(--s-1) * -1);
   background: none;
 }
 
-.settings-shell .tab-pane table.table th {
+.settings-shell .settings-panels table.table th {
   padding: var(--s-1) var(--s-3);
   border: 0;
   background: none;
@@ -1333,18 +1333,18 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   text-transform: none;
 }
 
-.settings-shell .tab-pane table.table td {
+.settings-shell .settings-panels table.table td {
   padding: var(--s-2) var(--s-3);
   border: 0;
   background: var(--surface);
 }
 
-.settings-shell .tab-pane table.table td:first-child { border-start-start-radius: var(--r); border-end-start-radius: var(--r); }
-.settings-shell .tab-pane table.table td:last-child { border-start-end-radius: var(--r); border-end-end-radius: var(--r); }
-.settings-shell .tab-pane table.table td[colspan] { background: none; }
+.settings-shell .settings-panels table.table td:first-child { border-start-start-radius: var(--r); border-end-start-radius: var(--r); }
+.settings-shell .settings-panels table.table td:last-child { border-start-end-radius: var(--r); border-end-end-radius: var(--r); }
+.settings-shell .settings-panels table.table td[colspan] { background: none; }
 
 /* Empty and loading states */
-.settings-shell .tab-pane :is(.empty-state, .empty) {
+.settings-shell .settings-panels :is(.empty-state, .empty) {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1357,15 +1357,15 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   text-align: center;
 }
 
-.settings-shell .tab-pane :is(.empty-state, .empty) p { margin: 0; }
+.settings-shell .settings-panels :is(.empty-state, .empty) p { margin: 0; }
 
-.settings-shell .tab-pane .loading-state {
+.settings-shell .settings-panels .loading-state {
   padding: var(--s-3) 0;
   color: var(--text-3);
   font-size: var(--size-small);
 }
 
-.settings-shell .tab-pane .loading-state p { margin: 0; }
+.settings-shell .settings-panels .loading-state p { margin: 0; }
 
 /* Key-value lists (system version): label | value split by a hairline */
 .settings-shell .kv {
@@ -1455,7 +1455,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 
 /* One mint per view: the page bar's Save changes. Actions inside the panes
    (including the ones hosting-wizard.js and redirects.js render) are secondary. */
-.settings-shell .tab-pane .btn-primary {
+.settings-shell .settings-panels .btn-primary {
   --btn-hover: var(--btn-secondary-hover);
   --btn-hover-border: transparent;
   background: var(--btn-secondary-bg);
@@ -1472,31 +1472,31 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 .settings-shell .redirect-form > .setting-actions { margin-block-start: var(--s-2); }
 .settings-shell .table-container:has(tbody:empty) { display: none; }
 
-.settings-shell .tab-pane .card-header > :is(h2, h3, .card-heading, div:first-child:not(.card-actions)) { flex: 1 1 auto; min-width: 0; }
-.settings-shell .tab-pane .card-header > :not(:first-child):not(.card-actions) { flex: 0 0 auto; }
+.settings-shell .settings-panels .card-header > :is(h2, h3, .card-heading, div:first-child:not(.card-actions)) { flex: 1 1 auto; min-width: 0; }
+.settings-shell .settings-panels .card-header > :not(:first-child):not(.card-actions) { flex: 0 0 auto; }
 
 /* Fields: white on the canvas and in frames, grey inside a slab */
-.settings-shell .tab-pane .card .input {
+.settings-shell .settings-panels .card .input {
   border-color: var(--line);
   background-color: var(--surface);
 }
 
-.settings-shell .tab-pane .card .input:hover:not(:focus):not(:disabled) { border-color: var(--line-strong); background-color: var(--surface); }
+.settings-shell .settings-panels .card .input:hover:not(:focus):not(:disabled) { border-color: var(--line-strong); background-color: var(--surface); }
 
-.settings-shell .tab-pane :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input {
+.settings-shell .settings-panels :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input {
   border-color: transparent;
   background-color: var(--surface-2);
 }
 
-.settings-shell .tab-pane :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input:hover:not(:focus):not(:disabled) {
+.settings-shell .settings-panels :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input:hover:not(:focus):not(:disabled) {
   border-color: transparent;
   background-color: var(--surface-3);
 }
 
-.settings-shell .tab-pane .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+.settings-shell .settings-panels .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
 
 /* Danger: soft fill, sized to its label */
-.settings-shell .tab-pane .card-body > .btn-danger { align-self: flex-start; }
+.settings-shell .settings-panels .card-body > .btn-danger { align-self: flex-start; }
 
 /* Choice cards (analytics presets, email providers): blue ring when chosen */
 .settings-shell .analytics-preset-card { padding: var(--s-4); }
@@ -1554,3 +1554,48 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
 }
 
 [data-birch] .permission-cell:hover { background: var(--surface-2); }
+
+/* Grouped setting rows (notification preferences) */
+.settings-shell .setting-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.settings-shell .setting-group-title {
+  margin: var(--s-3) 0 var(--s-1);
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / var(--lh-caption) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.settings-shell .setting-group-title:first-child { margin-block-start: 0; }
+
+.settings-shell .settings-panels form.card-body { display: flex; flex-direction: column; gap: var(--s-1); }
+
+.settings-shell .avatar-preview-wrap img {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r);
+  object-fit: cover;
+}
+
+/* Activity and Updates pages */
+.settings-shell .activity-feed { display: flex; flex-direction: column; }
+.settings-shell .activity-body { display: flex; flex-direction: column; gap: var(--s-4); }
+.settings-shell .activity-page-filters { display: flex; gap: var(--s-2); }
+
+.settings-shell > .settings-stack .frame-head { justify-content: space-between; }
+.settings-shell .updates-version p { margin: 0 0 var(--s-2); }
+.settings-shell > .settings-stack > .signal .settings-list { margin-block-start: var(--s-1); }
+
+.settings-shell .settings-panels .card-header:has(> .card-description) { flex-wrap: wrap; }
+.settings-shell .settings-panels .card-header > .card-description:not(:first-child) { flex: 1 0 100%; order: 2; margin-block-start: 2px; }
+.settings-shell .activity-page-filters .input { width: auto; min-width: 150px; }
+.settings-shell > .settings-stack .slab { padding: var(--s-3) var(--s-4); }
+
+.settings-shell .feedback-filters { display: flex; gap: var(--s-2); }
+.settings-shell .feedback-filters .input { width: auto; min-width: 150px; }
+.settings-shell .feedback-body { display: flex; flex-direction: column; gap: var(--s-4); }
+.settings-shell .settings-panels .card-header:has(> .card-description) > :is(h2, h3):first-child { flex: 1 0 100%; }
