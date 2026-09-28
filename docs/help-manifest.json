@@ -55,7 +55,16 @@
                 "components",
                 "css",
                 "styling",
-                "theme"
+                "theme",
+                "birch",
+                "roles",
+                "slab",
+                "frame",
+                "density",
+                "icons",
+                "gestures",
+                "motion",
+                "animation"
             ],
             "docs_path": "01-admin/admin-design-language.html"
         },
@@ -1006,7 +1015,13 @@
                 "design language",
                 "tokens",
                 "fieldtype",
-                "admin page"
+                "admin page",
+                "birch",
+                "rename",
+                "migration",
+                "p56",
+                "adoption layer",
+                "icons"
             ],
             "docs_path": "06-plugin-economy/plugin-admin-styling.html"
         },
