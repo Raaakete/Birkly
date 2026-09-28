@@ -1475,10 +1475,18 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 }
 
 [data-birch] .file-pick {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--s-3);
   min-width: 0;
+}
+
+/* The styled file input rule outranks .u-sr-only; keep the hidden input 1 px */
+[data-birch] .file-pick > input[type="file"] {
+  width: 1px;
+  padding: 0;
+  border: 0;
 }
 
 [data-birch] .file-pick-name {
