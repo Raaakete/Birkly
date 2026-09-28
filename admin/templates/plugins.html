@@ -1,3 +1,4 @@
+<div class="hub-shell" data-birch>
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current" id="plugins-page-title">{page_title}</span></div>
@@ -12,10 +13,11 @@
         </button>
         <button type="button" class="tab plugins-tab" id="hub-tab-installed" data-tab="installed" role="tab" aria-controls="plugins-tab-installed" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_installed'}
+            <span class="count" id="plugins-installed-count" hidden>0</span>
         </button>
         <button type="button" class="tab plugins-tab" id="hub-tab-updates" data-tab="updates" role="tab" aria-controls="plugins-tab-updates" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_updates'}
-            <span class="badge badge-warning badge-sm" id="plugins-update-badge" title="{translate 'admin.updates_available'}" hidden>0</span>
+            <span class="count is-warning" id="plugins-update-badge" title="{translate 'admin.updates_available'}" hidden>0</span>
         </button>
         <button type="button" class="tab plugins-tab" id="hub-tab-licenses" data-tab="licenses" role="tab" aria-controls="plugins-tab-licenses" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_licenses'}
@@ -30,8 +32,8 @@
         <div id="marketplace-browse-view">
         <div class="main-actions-bar">
             <div class="main-actions-left">
-                <input type="search" id="marketplace-search" class="input marketplace-search" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
-                <p class="u-text-sm u-fg-secondary u-m-0" id="marketplace-result-count" hidden></p>
+                <span class="search-field marketplace-search"><?= birkly_icon('search') ?><input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" aria-label="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off"></span>
+                <p class="marketplace-result-count" id="marketplace-result-count" hidden></p>
             </div>
             <div class="main-actions-right">
                 <select id="marketplace-filter-type" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_type'}">
@@ -98,7 +100,7 @@
                         {translate 'admin.upload_site_pack'}
                     </button>
                 </div>
-                <div class="plugins-grid" id="installed-packs-grid">
+                <div class="plugins-grid list-rows" id="installed-packs-grid">
                     <div class="loading-state">
                         <p>{translate 'admin.loading_plugins'}</p>
                     </div>
@@ -109,7 +111,7 @@
                 <div class="section-header">
                     <h2 id="hub-installed-plugins-heading" class="section-title">{translate 'admin.hub_installed_plugins'}</h2>
                 </div>
-                <div class="plugins-grid" id="plugins-grid">
+                <div class="plugins-grid list-rows" id="plugins-grid">
                     <div class="loading-state">
                         <p>{translate 'admin.loading_plugins'}</p>
                     </div>
@@ -120,11 +122,11 @@
 
     <div class="tab-panel plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" aria-labelledby="hub-tab-updates" hidden>
         <div class="main-actions-bar">
-            <button class="btn btn-secondary" type="button" data-plugin-action="check-updates">
-                {translate 'admin.check_updates'}
-            </button>
+            <div class="main-actions-left">
+                <button class="btn btn-secondary" type="button" data-plugin-action="check-updates"><?= birkly_icon('refresh') ?>{translate 'admin.check_updates'}</button>
+            </div>
         </div>
-        <div class="plugins-grid" id="hub-updates-grid">
+        <div class="plugins-grid list-rows" id="hub-updates-grid">
             <div class="loading-state">
                 <p>{translate 'admin.loading_plugins'}</p>
             </div>
@@ -133,22 +135,32 @@
 
     <div class="tab-panel plugins-tab-panel" id="plugins-tab-licenses" role="tabpanel" aria-labelledby="hub-tab-licenses" hidden>
         <div class="hub-licenses-layout">
-            <section class="u-stack-3" aria-labelledby="hub-licenses-activate-heading">
-                <h2 id="hub-licenses-activate-heading" class="section-title">{translate 'admin.hub_activate_license'}</h2>
-                <p class="form-help u-m-0">{translate 'admin.hub_activate_license_hint'}</p>
-                <div class="hub-license-form u-stack-4">
-                    <div class="form-group">
-                        <label for="hub-license-key">{translate 'admin.license_key'}</label>
-                        <input type="text" id="hub-license-key" class="input" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
-                        <small class="form-help">{translate 'admin.license_key_help'}</small>
+            <section class="frame" aria-labelledby="hub-licenses-activate-heading">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h2 id="hub-licenses-activate-heading" class="frame-title">{translate 'admin.hub_activate_license'}</h2>
+                        <p class="frame-text">{translate 'admin.hub_activate_license_hint'}</p>
                     </div>
-                    <button type="button" class="btn btn-primary u-self-start" data-plugin-action="activate-license">
-                        {translate 'admin.hub_activate_license'}
-                    </button>
+                </div>
+                <div class="hub-license-form">
+                    <div class="form-group setting-row">
+                        <div class="setting-label">
+                            <label for="hub-license-key">{translate 'admin.license_key'}</label>
+                            <small class="form-help">{translate 'admin.license_key_help'}</small>
+                        </div>
+                        <div class="setting-value">
+                            <input type="text" id="hub-license-key" class="input is-mono" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="setting-actions">
+                        <button type="button" class="btn btn-primary" data-plugin-action="activate-license">{translate 'admin.hub_activate_license'}</button>
+                    </div>
                 </div>
             </section>
-            <section class="u-stack-3" aria-labelledby="hub-licenses-list-heading">
-                <h2 id="hub-licenses-list-heading" class="section-title">{translate 'admin.hub_bound_licenses'}</h2>
+            <section class="frame" aria-labelledby="hub-licenses-list-heading">
+                <div class="frame-head">
+                    <h2 id="hub-licenses-list-heading" class="frame-title">{translate 'admin.hub_bound_licenses'}</h2>
+                </div>
                 <div id="hub-licenses-grid">
                     <div class="loading-state">
                         <p>{translate 'admin.loading_plugins'}</p>
@@ -159,36 +171,50 @@
     </div>
 
     <div class="tab-panel plugins-tab-panel" id="plugins-tab-upload" role="tabpanel" aria-labelledby="hub-tab-upload" hidden>
-        <div class="hub-upload-panel u-stack-3" aria-labelledby="hub-upload-heading">
-            <h2 class="section-title" id="hub-upload-heading">{translate 'admin.upload_site_pack'}</h2>
-            <p class="form-help u-m-0">{translate 'admin.upload_site_pack_hint'}</p>
-            <form id="install-plugin-form" class="u-stack-4">
-                <div class="form-group">
-                    <label for="plugin-file">{translate 'admin.site_pack_zip_file'}</label>
-                    <input type="file" id="plugin-file" name="plugin_file" accept=".zip,application/zip" class="input">
-                    <small class="form-help">{translate 'admin.site_pack_zip_help'}</small>
+        <section class="frame hub-upload-panel" aria-labelledby="hub-upload-heading">
+            <div class="frame-head">
+                <div class="frame-head-body">
+                    <h2 class="frame-title" id="hub-upload-heading">{translate 'admin.upload_site_pack'}</h2>
+                    <p class="frame-text">{translate 'admin.upload_site_pack_hint'}</p>
                 </div>
-                <div class="form-group">
-                    <label for="pack-overwrite-mode">{translate 'admin.pack_overwrite_mode'}</label>
-                    <select id="pack-overwrite-mode" name="overwrite_mode" class="input">
-                        <option value="merge">{translate 'admin.pack_overwrite_merge'}</option>
-                        <option value="replace">{translate 'admin.pack_overwrite_replace'}</option>
-                        <option value="fresh-only">{translate 'admin.pack_overwrite_fresh_only'}</option>
-                    </select>
-                    <small class="form-help">{translate 'admin.pack_overwrite_help'}</small>
+            </div>
+            <form id="install-plugin-form" class="hub-upload-form">
+                <div class="form-group setting-row">
+                    <div class="setting-label">
+                        <label for="plugin-file">{translate 'admin.site_pack_zip_file'}</label>
+                        <small class="form-help">{translate 'admin.site_pack_zip_help'}</small>
+                    </div>
+                    <div class="setting-value">
+                        <input type="file" id="plugin-file" name="plugin_file" accept=".zip,application/zip">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="pack-include-demo-entries" name="include_demo_entries" value="1">
-                        {translate 'admin.pack_include_demo_entries'}
-                    </label>
-                    <small class="form-help">{translate 'admin.pack_include_demo_entries_help'}</small>
+                <div class="form-group setting-row">
+                    <div class="setting-label">
+                        <label for="pack-overwrite-mode">{translate 'admin.pack_overwrite_mode'}</label>
+                        <small class="form-help">{translate 'admin.pack_overwrite_help'}</small>
+                    </div>
+                    <div class="setting-value">
+                        <select id="pack-overwrite-mode" name="overwrite_mode" class="input">
+                            <option value="merge">{translate 'admin.pack_overwrite_merge'}</option>
+                            <option value="replace">{translate 'admin.pack_overwrite_replace'}</option>
+                            <option value="fresh-only">{translate 'admin.pack_overwrite_fresh_only'}</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="u-cluster">
+                <div class="form-group setting-row">
+                    <div class="setting-label">
+                        <label for="pack-include-demo-entries">{translate 'admin.pack_include_demo_entries'}</label>
+                        <small class="form-help">{translate 'admin.pack_include_demo_entries_help'}</small>
+                    </div>
+                    <div class="setting-value">
+                        <label class="switch"><input type="checkbox" id="pack-include-demo-entries" name="include_demo_entries" value="1"><span class="switch__slider"></span></label>
+                    </div>
+                </div>
+                <div class="setting-actions">
                     <button type="button" class="btn btn-primary" data-plugin-action="install-from-file">{translate 'admin.install_site_pack'}</button>
                 </div>
             </form>
-        </div>
+        </section>
     </div>
 </div>
 
@@ -389,9 +415,10 @@
 </div>
 
 <link rel="stylesheet" href="{plugins_css_url}">
+</div>
 <script src="{plugins_page_js_url}"></script>
 <script src="{birkly_url '/admin/js/plugin-ui.js'}"></script>
-<script>
+<script<?= birkly_csp_nonce_attr() ?>>
 window.PluginsPageTitles = {
     discover: {json discover_title},
     marketplace: {json discover_title},
