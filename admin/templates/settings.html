@@ -218,12 +218,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="card-body u-stack-4">
-              <div id="delivery-routing-options" class="u-stack-3" hidden>
-                <label class="checkbox-label">
-                  <input type="checkbox" id="delivery-alias-redirect">
-                  <?= __('admin.settings_delivery_alias_redirect_label') ?>
-                </label>
-                <p class="form-help"><?= __('admin.settings_delivery_alias_redirect_help') ?></p>
+              <div id="delivery-routing-options" class="form-group setting-row" hidden>
+                <div class="setting-label">
+                  <label for="delivery-alias-redirect"><?= __('admin.settings_delivery_alias_redirect_label') ?></label>
+                  <small class="form-help"><?= __('admin.settings_delivery_alias_redirect_help') ?></small>
+                </div>
+                <div class="setting-value">
+                  <label class="switch"><input type="checkbox" id="delivery-alias-redirect"><span class="switch__slider"></span></label>
+                </div>
               </div>
               <div id="delivery-matrix-content">
                 <div class="loading-state"><p><?= __('admin.loading_delivery_matrix') ?></p></div>
