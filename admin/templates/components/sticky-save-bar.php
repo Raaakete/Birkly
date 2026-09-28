@@ -15,14 +15,6 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
 ?>
 <div class="main-actions-bar main-actions-bar--sticky">
     <div class="main-actions-left">
-        <?php if ($stickySaveBarCancelUrl): ?>
-            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="btn btn-secondary"<?php if ($stickySaveBarCancelId): ?> id="<?= htmlspecialchars($stickySaveBarCancelId) ?>"<?php endif; ?>>
-                <?= htmlspecialchars($stickySaveBarCancelLabel) ?>
-            </a>
-        <?php endif; ?>
-        <?php if ($stickySaveBarExtraActionHtml): ?>
-            <?= $stickySaveBarExtraActionHtml ?>
-        <?php endif; ?>
         <button
             type="<?= $stickySaveBarForm ? 'submit' : 'button' ?>"
             class="<?= htmlspecialchars($stickySaveBarSaveClass) ?>"
@@ -33,6 +25,14 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
         </button>
         <?php if ($stickySaveBarAfterSaveHtml): ?>
             <?= $stickySaveBarAfterSaveHtml ?>
+        <?php endif; ?>
+        <?php if ($stickySaveBarExtraActionHtml): ?>
+            <?= $stickySaveBarExtraActionHtml ?>
+        <?php endif; ?>
+        <?php if ($stickySaveBarCancelUrl): ?>
+            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="btn btn-ghost"<?php if ($stickySaveBarCancelId): ?> id="<?= htmlspecialchars($stickySaveBarCancelId) ?>"<?php endif; ?>>
+                <?= htmlspecialchars($stickySaveBarCancelLabel) ?>
+            </a>
         <?php endif; ?>
     </div>
     <div class="main-actions-right">
