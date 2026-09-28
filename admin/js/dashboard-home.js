@@ -381,7 +381,7 @@
         if (!analytics || analytics.analytics_collecting === false || analytics.analytics_preset === 'off') {
             body.innerHTML = '<div class="advice dashed dashboard-advice"><p class="empty-title">' + esc(t('dash_analytics_off', 'Analytics is off')) + '</p>' +
                 '<p class="empty-text">' + esc(t('dash_analytics_off_help', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.')) + '</p>' +
-                '<a class="button is-small" href="' + esc(settings) + '">' + esc(t('dash_open_analytics', 'Open Analytics')) + '</a></div>';
+                '<a class="button is-small" href="' + esc(settings) + '">' + esc(t('dash_open_analytics', 'Open analytics')) + '</a></div>';
             foot.innerHTML = '';
             return;
         }
