@@ -692,6 +692,11 @@ body.ai-chat-window-open .guide-panel {
     inset-block-end: max(var(--s-4), env(safe-area-inset-bottom, 0px));
     inset-inline-end: max(var(--s-4), env(safe-area-inset-right, 0px));
   }
+
+  /* Phones have no side gutter for the stack; let the last row scroll clear of it */
+  body:has(.assist-chrome-stack) .main-content {
+    padding-block-end: calc(var(--s-4) + 3rem + 0.625rem + 3rem + var(--s-4));
+  }
 }
 
 /* ============================================
