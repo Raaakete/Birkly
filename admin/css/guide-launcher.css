@@ -598,7 +598,7 @@ body.ai-chat-window-open .guide-panel {
   flex-shrink: 0;
   border-radius: var(--r);
   font-size: var(--size-caption);
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-semibold);
   color: var(--accent-text);
   background: color-mix(in srgb, var(--mint) 14%, var(--surface-2));
 }
@@ -668,7 +668,7 @@ body.ai-chat-window-open .guide-panel {
 .guide-concepts--expanded .guide-concept-card__body {
   margin-block-end: var(--s-3);
   font-size: var(--size-small);
-  line-height: var(--leading-loose, 1.65);
+  line-height: var(--lh-body);
 }
 
 .guide-concept-card__link {

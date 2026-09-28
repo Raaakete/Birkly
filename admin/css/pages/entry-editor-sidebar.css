@@ -442,12 +442,12 @@
 }
 
 .entry-editor-action-status.is-saved {
-  color: var(--success-text, var(--text-2));
+  color: var(--success);
   font-weight: 500;
 }
 
 .entry-editor-action-status.is-published {
-  color: var(--success-text, var(--text));
+  color: var(--success);
   font-weight: 600;
 }
 
