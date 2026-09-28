@@ -213,27 +213,36 @@
 
 [data-birch] .input.is-mono { font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono); }
 
-/* Inside a slab: grey on white, so the field still reads as a field at rest */
+/* Inside a slab: grey on white, so the field still reads as a field at rest.
+   P56 markup still ships .select, .textarea and bare native controls; those
+   count when they sit directly in the field, not inside a fieldtype widget or
+   a menu. background-color keeps select chevrons. */
 [data-birch] .slab .input,
 [data-birch] .setting-row .input,
 [data-birch] .field .input,
-[data-birch] .entry-field .input {
+[data-birch] .entry-field .input,
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])),
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.select-box, .input-group) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])) {
   border-color: transparent;
-  background: var(--surface-2);
+  background-color: var(--surface-2);
 }
 
 [data-birch] .slab .input:hover:not(:focus),
 [data-birch] .setting-row .input:hover:not(:focus),
 [data-birch] .field .input:hover:not(:focus),
-[data-birch] .entry-field .input:hover:not(:focus) {
+[data-birch] .entry-field .input:hover:not(:focus),
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])):hover:not(:focus):not(:disabled),
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.select-box, .input-group) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])):hover:not(:focus):not(:disabled) {
   border-color: transparent;
-  background: var(--surface-3);
+  background-color: var(--surface-3);
 }
 
 [data-birch] .slab .input:focus,
 [data-birch] .setting-row .input:focus,
 [data-birch] .field .input:focus,
-[data-birch] .entry-field .input:focus { background: var(--surface); border-color: var(--accent); }
+[data-birch] .entry-field .input:focus,
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])):focus,
+[data-birch] :is(.slab, .field, .entry-field, .setting-value) > :is(.select-box, .input-group) > :is(.form-control, .select, .textarea, select:not([multiple]), textarea, input:is(:not([type]), [type="text"], [type="email"], [type="password"], [type="search"], [type="url"], [type="tel"], [type="number"], [type="date"], [type="time"], [type="datetime-local"])):focus { background-color: var(--surface); border-color: var(--accent); }
 
 [data-birch] .input-group {
   display: flex;
