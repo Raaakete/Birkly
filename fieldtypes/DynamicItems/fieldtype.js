@@ -96,12 +96,12 @@ window.HaruFieldtypes['dynamicitems'] = {
       <div id="${modalId}" class="dynamicitems-modal-overlay" data-dynamicitems-field="${this.escapeHtml(fieldName)}">
         <div class="dynamicitems-modal">
           <div class="dynamicitems-modal-header">
-            <h3>Add Block</h3>
+            <h3>Add block</h3>
             <button type="button" class="dynamicitems-modal-close" data-dynamicitems-action="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="dynamicitems-modal-body">
             <div class="dynamicitems-form-group">
-              <label>Field Type <span class="required">*</span></label>
+              <label>Field type <span class="required">*</span></label>
               <select id="block-fieldtype-select" class="input" required>
                 <option value="">Select a fieldtype...</option>
                 ${fieldtypeOptionsHtml}
@@ -112,7 +112,7 @@ window.HaruFieldtypes['dynamicitems'] = {
               <input type="text" id="block-label-input" class="input" placeholder="e.g., Title" required>
             </div>
             <div class="dynamicitems-form-group">
-              <label>API Name <span class="required">*</span></label>
+              <label>API name <span class="required">*</span></label>
               <input type="text" id="block-name-input" class="input" placeholder="e.g., title" required pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores">
               <small>Used in API responses. Only lowercase letters, numbers, and underscores.</small>
             </div>
@@ -129,7 +129,7 @@ window.HaruFieldtypes['dynamicitems'] = {
           </div>
           <div class="dynamicitems-modal-footer">
             <button type="button" class="btn btn-secondary" data-dynamicitems-action="modal-cancel">Cancel</button>
-            <button type="button" class="btn btn-primary" data-dynamicitems-action="modal-confirm">Add Block</button>
+            <button type="button" class="btn btn-primary" data-dynamicitems-action="modal-confirm">Add block</button>
           </div>
         </div>
       </div>
@@ -343,12 +343,8 @@ window.HaruFieldtypes['dynamicitems'] = {
           <span class="block-item-name">${this.escapeHtml(block.name)}</span>
         </div>
         <div class="block-item-actions">
-          <button type="button" class="btn btn-sm btn-secondary" data-dynamicitems-action="edit-block" data-block-idx="${idx}" title="Edit">
-            ✎ Edit
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" data-dynamicitems-action="remove-block" data-block-idx="${idx}" title="Remove">
-            × Remove
-          </button>
+          <button type="button" class="btn btn-sm" data-dynamicitems-action="edit-block" data-block-idx="${idx}">Edit</button>
+          <button type="button" class="btn btn-sm" data-dynamicitems-action="remove-block" data-block-idx="${idx}">Remove</button>
         </div>
       </div>
       <div class="block-item-content" id="${blockId}_content">

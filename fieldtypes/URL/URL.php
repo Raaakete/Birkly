@@ -50,8 +50,8 @@ class URL extends BaseField {
                 placeholder="{$placeholder}"
                 class="input url-input"
             >
-            <div class="url-preview" id="url_preview_{$this->name}" style="display:none;">
-                <a href="#" target="_blank" rel="noopener noreferrer" class="url-preview-link">Preview</a>
+            <div class="url-preview" id="url_preview_{$this->name}" hidden>
+                <a href="#" target="_blank" rel="noopener noreferrer" class="url-preview-link">Open link</a>
             </div>
         </div>
         HTML;
@@ -122,11 +122,11 @@ class URL extends BaseField {
                     if (!preview || !previewLink) return;
                     
                     if (url && isValidUrl(url)) {
-                        preview.style.display = 'block';
+                        preview.hidden = false;
                         previewLink.href = url;
-                        previewLink.textContent = url;
+                        previewLink.textContent = 'Open ' + url.replace(/^https?:\/\//, '');
                     } else {
-                        preview.style.display = 'none';
+                        preview.hidden = true;
                     }
                 }
                 
@@ -156,43 +156,16 @@ class URL extends BaseField {
 
     public function getCSS(): string {
         return <<<'CSS'
-        .url-field-wrapper {
-            position: relative;
-        }
-        
-        .url-input {
-            width: 100%;
-            padding: var(--space-2, 0.5rem);
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-sm, 0.375rem);
-            font-size: var(--font-size-base, 1rem);
-            background: var(--bg-primary, #ffffff);
-            color: var(--text-primary, #20221D);
-        }
-        
-        .url-input:focus {
-            border-color: var(--primary-500, #3b82f6);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .url-preview {
-            margin-top: 0.5rem;
-            padding: 0.5rem;
-            background: #f8f9fa;
-            border-radius: 4px;
-            font-size: 0.875rem;
-        }
-        
+        .url-preview { margin-block-start: 6px; }
+        .url-preview[hidden] { display: none; }
         .url-preview-link {
-            color: var(--primary);
+            color: var(--accent-text);
+            font-size: var(--size-small);
+            line-height: var(--lh-small);
             text-decoration: none;
-            word-break: break-all;
+            overflow-wrap: anywhere;
         }
-        
-        .url-preview-link:hover {
-            text-decoration: underline;
-        }
+        .url-preview-link:hover { text-decoration: underline; }
         CSS;
     }
 

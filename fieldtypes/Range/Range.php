@@ -135,96 +135,73 @@ class Range extends BaseField {
 
     public function getCSS(): string {
         return <<<'CSS'
+        /* Track is a well, the thumb is ink; the value sits in a mono well. */
         .range-field-wrapper {
             display: flex;
             flex-direction: column;
-            gap: var(--space-3, 0.75rem);
+            gap: var(--s-1);
         }
-        
         .range-input-group {
             display: flex;
             align-items: center;
-            gap: var(--space-4, 1rem);
+            gap: var(--s-3);
         }
-        
         .range-slider {
             flex: 1;
-            height: 6px;
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--border-medium, #e5e7eb);
+            height: 4px;
+            margin: 0;
+            border-radius: var(--r-pixel);
+            background: var(--surface-3);
             outline: none;
             -webkit-appearance: none;
+            appearance: none;
             cursor: pointer;
-            position: relative;
         }
-        
         .range-slider::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--border-medium, #e5e7eb);
+            height: 4px;
+            border-radius: var(--r-pixel);
+            background: var(--surface-3);
         }
-        
         .range-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: var(--radius-full, 50%);
-            background: var(--primary-500, #3b82f6);
+            width: 14px;
+            height: 14px;
+            margin-top: -5px;
+            border: 2px solid var(--surface);
+            border-radius: var(--r-inset);
+            background: var(--text);
             cursor: pointer;
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
-            border: 2px solid var(--bg-primary, #ffffff);
-            margin-top: -7px;
-            transition: all var(--transition-fast, 150ms ease);
         }
-        
-        .range-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.15);
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-        }
-        
         .range-slider::-moz-range-track {
-            width: 100%;
-            height: 6px;
-            border-radius: var(--radius-sm, 0.375rem);
-            background: var(--border-medium, #e5e7eb);
-            border: none;
+            height: 4px;
+            border: 0;
+            border-radius: var(--r-pixel);
+            background: var(--surface-3);
         }
-        
         .range-slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            border-radius: var(--radius-full, 50%);
-            background: var(--primary-500, #3b82f6);
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--surface);
+            border-radius: var(--r-inset);
+            background: var(--text);
             cursor: pointer;
-            border: 2px solid var(--bg-primary, #ffffff);
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
-            transition: all var(--transition-fast, 150ms ease);
         }
-        
-        .range-slider::-moz-range-thumb:hover {
-            transform: scale(1.15);
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-        }
-        
+        .range-slider:focus-visible { outline: var(--focus-outline); outline-offset: 4px; }
         .range-value {
-            min-width: 60px;
+            min-width: 44px;
+            padding: 2px var(--s-2);
+            border-radius: var(--r-inset);
+            background: var(--surface-2);
+            color: var(--text);
+            font: var(--weight-medium) var(--size-mono) / var(--lh-mono) var(--font-mono);
             text-align: center;
-            font-weight: 600;
-            font-size: var(--font-size-base, 1rem);
-            color: var(--primary-500, #3b82f6);
-            padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-            background: var(--primary-50, #eff6ff);
-            border-radius: var(--radius-sm, 0.375rem);
         }
-        
         .range-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 0.875rem;
-            color: var(--text-secondary, #72746F);
-            padding: 0 var(--space-1, 0.25rem);
+            color: var(--text-3);
+            font: var(--weight-regular) var(--size-caption) / var(--lh-caption) var(--font-mono);
         }
         CSS;
     }

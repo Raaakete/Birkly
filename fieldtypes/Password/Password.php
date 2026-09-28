@@ -52,7 +52,7 @@ class Password extends BaseField {
                 {$min}
                 value=""
             >
-            <p class="password-field-hint text-muted">Stored as a one-way hash. Leave blank when editing to keep the current password.</p>
+            <p class="password-field-hint">Stored as a one-way hash. Leave blank when editing to keep the current password.</p>
         </div>
         HTML;
     }
@@ -82,11 +82,13 @@ class Password extends BaseField {
         return <<<'CSS'
         .password-field {
             display: grid;
-            gap: var(--space-2, 0.5rem);
+            gap: 6px;
         }
         .password-field-hint {
             margin: 0;
-            font-size: 0.8125rem;
+            color: var(--text-3);
+            font-size: var(--size-small);
+            line-height: var(--lh-small);
         }
         CSS;
     }

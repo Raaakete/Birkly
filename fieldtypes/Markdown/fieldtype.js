@@ -131,7 +131,9 @@ window.HaruFieldtypes['markdown'] = {
     var preview = root.querySelector('.markdown-field-preview');
 
     buttons.forEach(function(button) {
-      button.classList.toggle('is-active', button.getAttribute('data-markdown-tab') === tabName);
+      var active = button.getAttribute('data-markdown-tab') === tabName;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
     if (!textarea || !preview) {

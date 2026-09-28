@@ -48,7 +48,8 @@ class Relation extends BaseField {
         // Properly escape for HTML attribute
         $valueJsonEscaped = htmlspecialchars($valueJson, ENT_QUOTES, 'UTF-8');
         $isMultiple = $this->multiple;
-        $selectText = $isMultiple ? 'Add Relations' : 'Select Entry';
+        $selectText = $isMultiple ? 'Add entries' : 'Choose entry';
+        $plusIcon = function_exists('birkly_icon') ? birkly_icon('plus', ['size' => 13]) : '';
         
         // Get filter and display options
         $filterOptions = json_encode($this->options['filters'] ?? []);
@@ -63,16 +64,12 @@ class Relation extends BaseField {
              data-sort='{$sortOptions}' 
              data-limit="{$limit}">
             <div class="relation-list" id="relation_list_{$this->name}">
-                <div class="text-muted">No relations selected</div>
+                <div class="relation-empty">No linked entries yet</div>
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJsonEscaped}">
             <div class="relation-controls">
-                <button type="button" class="btn btn-primary select-relation-btn" data-field="{$this->name}" data-multiple="{$isMultiple}">
-                    <i class="icon-plus"></i> {$selectText}
-                </button>
-                <button type="button" class="btn btn-danger remove-all-relation-btn" data-field="{$this->name}" style="display:none;">
-                    <i class="icon-trash"></i> Remove All
-                </button>
+                <button type="button" class="btn btn-secondary btn-sm select-relation-btn" data-field="{$this->name}" data-multiple="{$isMultiple}">{$plusIcon}{$selectText}</button>
+                <button type="button" class="btn btn-ghost btn-sm remove-all-relation-btn" data-field="{$this->name}" hidden>Remove all</button>
             </div>
         </div>
         HTML;
@@ -84,94 +81,72 @@ class Relation extends BaseField {
     }
     public function getCSS(): string {
         return <<<'CSS'
+        /* Linked entries are wells 4px apart; add and remove-all are quiet buttons. */
         .relation-field {
-            border: 1px solid var(--border-medium, #e5e7eb);
-            border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-4, 1rem);
-            background: var(--bg-secondary, #fafafa);
-            margin-bottom: var(--space-4, 1rem);
-        }
-        
-        .relation-list {
-            margin-bottom: var(--space-4, 1rem);
-            min-height: 60px;
-            padding: var(--space-3, 0.75rem);
-            background: var(--bg-primary, #ffffff);
-            border: 2px dashed var(--border-light, #f3f4f6);
-            border-radius: var(--radius-md, 0.5rem);
-            transition: all var(--transition-fast, 150ms ease);
-        }
-        
-        .relation-list:empty::before {
-            content: "No relations selected";
-            color: var(--text-secondary, #72746F);
-            font-style: italic;
-            text-align: center;
-            display: block;
-            padding: var(--space-5, 1.25rem);
-        }
-        
-        .relation-entry {
-            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-            background: var(--primary-50, #eff6ff);
-            border: 1px solid var(--primary-200, #bfdbfe);
-            border-radius: var(--radius-md, 0.5rem);
-            margin-bottom: var(--space-2, 0.5rem);
-            font-size: 0.875rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all var(--transition-fast, 150ms ease);
-        }
-        
-        .relation-entry:hover {
-            background: var(--primary-100, #dbeafe);
-            border-color: var(--primary-300, #93c5fd);
-        }
-        
-        .relation-entry:last-child {
-            margin-bottom: 0;
-        }
-        
-        .relation-info {
             display: flex;
             flex-direction: column;
-            gap: var(--space-1, 0.25rem);
+            gap: var(--s-2);
         }
-        
-        .relation-title {
-            font-weight: var(--font-medium, 500);
-            color: var(--text-primary, #20221D);
+        .relation-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-1);
         }
-        
+        .relation-empty {
+            color: var(--text-3);
+            font-size: var(--size-small);
+            line-height: var(--lh-small);
+        }
+        .relation-entry {
+            display: flex;
+            align-items: center;
+            gap: var(--s-3);
+            min-height: 36px;
+            padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3);
+            border-radius: var(--r);
+            background: var(--surface-2);
+        }
+        .relation-info {
+            display: flex;
+            flex: 1 1 auto;
+            align-items: baseline;
+            gap: var(--s-2);
+            min-width: 0;
+        }
+        .relation-entry .relation-title {
+            overflow: hidden;
+            margin: 0;
+            color: var(--text);
+            font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
         .collection-info {
-            font-size: 0.75rem;
-            color: var(--text-secondary, #72746F);
-            font-style: italic;
+            flex: none;
+            color: var(--text-3);
+            font-size: var(--size-small);
         }
-        
+        .relation-remove {
+            display: inline-flex;
+            flex: none;
+            align-items: center;
+            justify-content: center;
+            width: var(--control-sm);
+            height: var(--control-sm);
+            border: 0;
+            border-radius: var(--r);
+            background: none;
+            color: var(--text-3);
+            cursor: pointer;
+        }
+        .relation-remove:hover { background: var(--surface-3); color: var(--danger); }
         .relation-controls {
             display: flex;
-            gap: var(--space-3, 0.75rem);
             align-items: center;
+            gap: var(--s-1);
         }
-        
-        .select-relation-btn {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2, 0.5rem);
-            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-            font-weight: var(--font-medium, 500);
-        }
-        
-        .remove-all-relation-btn {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2, 0.5rem);
-            padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-        }
-        
-        /* Buttons use system button classes - .btn-sm is defined in system buttons.css */
+        .relation-controls .remove-all-relation-btn:hover { color: var(--danger); }
+        .relation-field [hidden] { display: none; }
 
         /* P62 follow-up: NEVER style global .modal / .card here — that forced
            every admin modal (incl. Send feedback) to display:flex on pages that
@@ -181,7 +156,7 @@ class Relation extends BaseField {
             inset: 0;
             width: 100%;
             height: 100%;
-            background: var(--overlay, var(--bg-overlay, rgba(0, 0, 0, 0.5)));
+            background: var(--overlay);
             display: none;
             align-items: center;
             justify-content: center;
@@ -194,15 +169,15 @@ class Relation extends BaseField {
         }
 
         #relationPickerModal .card {
-            background: var(--surface, var(--bg-primary, #ffffff));
+            background: var(--surface);
             border-radius: var(--radius-md, 0.5rem);
-            box-shadow: var(--elevation-3, var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1)));
+            box-shadow: var(--elevation-3, var(--shadow-xl);
             overflow: hidden;
         }
 
         #relationPickerModal .card-header {
-            background: var(--surface-sunken, var(--bg-secondary, #fafafa));
-            border-bottom: 1px solid var(--border-subtle, var(--border-light, #f3f4f6));
+            background: var(--surface-sunken);
+            border-bottom: 1px solid var(--border-subtle);
             padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
         }
 
@@ -211,8 +186,8 @@ class Relation extends BaseField {
         }
 
         #relationPickerModal .card-footer {
-            background: var(--surface-sunken, var(--bg-secondary, #fafafa));
-            border-top: 1px solid var(--border-subtle, var(--border-light, #f3f4f6));
+            background: var(--surface-sunken);
+            border-top: 1px solid var(--border-subtle);
             padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
         }
         
@@ -221,22 +196,21 @@ class Relation extends BaseField {
             padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
             border-radius: var(--radius-md, 0.5rem);
             margin-bottom: var(--space-2, 0.5rem);
-            border: 1px solid var(--border-medium, #e5e7eb);
+            border: 1px solid var(--border-medium);
             transition: all var(--transition-fast, 150ms ease);
-            background: var(--bg-primary, #ffffff);
+            background: var(--bg-primary);
         }
         
         .relation-picker-item:hover {
-            border-color: var(--primary-500, #3b82f6);
-            background: var(--primary-50, #eff6ff);
+            border-color: var(--primary-500);
+            background: var(--primary-50);
             transform: translateY(-1px);
-            box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.1));
+            box-shadow: var(--shadow-sm);
         }
         
         .relation-picker-item.selected {
-            background: var(--primary-100, #dbeafe);
-            border-color: var(--primary-500, #3b82f6);
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+            background: var(--primary-100);
+            border-color: var(--primary-500);
         }
         
         .relation-title {
@@ -246,7 +220,7 @@ class Relation extends BaseField {
         
         .relation-meta {
             font-size: 0.75rem;
-            color: var(--text-secondary, #72746F);
+            color: var(--text-secondary);
         }
         
         #relationPickerModal .flex {
@@ -284,44 +258,31 @@ class Relation extends BaseField {
         #relationPickerModal .input {
             width: 100%;
             padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-            border: 1px solid var(--border-medium, #e5e7eb);
+            border: 1px solid var(--border-medium);
             border-radius: var(--radius-sm, 0.375rem);
             font-size: 0.875rem;
-            background: var(--bg-primary, #ffffff);
-            color: var(--text-primary, #20221D);
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
         #relationPickerModal .input:focus {
             outline: none;
-            border-color: var(--primary-500, #3b82f6);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
         }
 
         #relationPickerModal .text-muted {
-            color: var(--text-secondary, #72746F);
+            color: var(--text-secondary);
         }
 
         #relationPickerModal .text-danger {
-            color: var(--error-500, #ef4444);
+            color: var(--error-500);
         }
 
-        /* Icon styles */
-        .relation-field .icon-plus::before,
-        #relationPickerModal .icon-plus::before {
-            content: "+";
-            font-weight: bold;
-        }
-
-        .relation-field .icon-trash::before,
-        #relationPickerModal .icon-trash::before {
-            content: "🗑";
-        }
-
-        .relation-field .icon-close::before,
+        .relation-picker-item.selected { box-shadow: 0 0 0 2px var(--accent); }
         #relationPickerModal .icon-close::before {
             content: "×";
             font-weight: bold;
-            font-size: 1rem;
         }
         CSS;
     }

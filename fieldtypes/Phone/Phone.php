@@ -68,7 +68,7 @@ class Phone extends BaseField {
     public function getCSS(): string {
         return <<<'CSS'
         .phone-field-invalid {
-            border-color: var(--error-500, #ef4444);
+            border-color: var(--danger);
         }
         CSS;
     }
