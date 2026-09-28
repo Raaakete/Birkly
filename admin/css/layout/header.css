@@ -24,41 +24,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--s-4);
   height: var(--chrome-row);
-  min-height: var(--chrome-row);
-  padding: 0 0 var(--chrome-stack-gap);
-  margin: 0 0 var(--chrome-content-gap);
-  border-block-end: none;
-  background: var(--canvas);
-  box-sizing: content-box;
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  background: none;
 }
 
-/* Soft cast below the chrome: strongest at bottom-centre, fades sideways */
+/* Dotted rule under the flat bar */
 .admin-topbar::after {
   content: "";
   position: absolute;
   inset-inline: 0;
   inset-block-start: 100%;
-  height: 1.75rem;
+  height: 1px;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 72% 100% at 50% 0%,
-    rgba(32, 34, 29, 0.13) 0%,
-    rgba(32, 34, 29, 0.06) 38%,
-    rgba(32, 34, 29, 0.02) 62%,
-    transparent 78%
-  );
-}
-
-[data-theme="dark"] .admin-topbar::after {
-  background: radial-gradient(
-    ellipse 72% 100% at 50% 0%,
-    rgba(0, 0, 0, 0.5) 0%,
-    rgba(0, 0, 0, 0.24) 38%,
-    rgba(0, 0, 0, 0.07) 62%,
-    transparent 78%
-  );
+  background-image: linear-gradient(to right, var(--line-strong) 1px, transparent 1px);
+  background-size: 3px 1px;
 }
 
 .admin-topbar-left {
@@ -86,34 +68,34 @@
 .breadcrumbs {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   min-width: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-xl);
+  color: var(--text-3);
+  font-size: var(--size-page-title);
+  line-height: var(--lh-page-title);
   font-weight: var(--weight-regular);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: var(--tracking-title);
 }
 
 .breadcrumbs a,
 .breadcrumb-item {
-  color: var(--text-secondary);
+  color: var(--text-3);
   text-decoration: none;
-  transition: color var(--motion-fast) var(--ease-out);
+  transition: color var(--dur-1) var(--ease);
 }
 
 .breadcrumbs a:hover,
-.breadcrumb-item:hover { color: var(--text-primary); }
+.breadcrumb-item:hover { color: var(--text); }
 
 .breadcrumbs .separator {
-  color: var(--text-tertiary);
+  color: var(--text-3);
   flex-shrink: 0;
 }
 
 /* The title segment */
 .breadcrumbs .current {
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
+  color: var(--text);
+  font-weight: var(--weight-semibold);
   min-width: 0;
 }
 
@@ -128,12 +110,7 @@
 
 .admin-topbar-breadcrumbs:not(.breadcrumbs) { display: none; }
 
-.admin-topbar-breadcrumbs.breadcrumbs {
-  display: flex;
-  gap: var(--space-2);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-regular);
-}
+.admin-topbar-breadcrumbs.breadcrumbs { display: flex; }
 
 .admin-topbar-breadcrumbs .breadcrumb-segment {
   flex-shrink: 0;
@@ -167,24 +144,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-lg);
-  height: var(--control-lg);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text-secondary);
+  width: var(--control);
+  height: var(--control);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-2);
   cursor: pointer;
-  box-sizing: border-box;
-  transition:
-    background-color var(--motion-fast) var(--ease-out),
-    color var(--motion-fast) var(--ease-out),
-    border-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
 
 .topbar-icon-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-default);
-  color: var(--text-primary);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 .topbar-icon-btn:focus-visible {
@@ -194,82 +167,40 @@
 
 .topbar-control-group {
   display: inline-flex;
-  align-items: stretch;
-  height: var(--control-lg);
+  align-items: center;
+  gap: var(--s-1);
   flex-shrink: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-sizing: border-box;
-  /* Clip square cells (esp. the avatar) to the group's radius — cells
-     themselves stay square with no border-radius. Menus need overflow when
-     open; :has() lifts the clip only while a trigger is expanded. */
-  overflow: hidden;
 }
 
-.topbar-control-group:has([aria-expanded="true"]) {
-  overflow: visible;
-}
-
-/* Each cell is a fixed square; wrappers keep position:relative so their
-   menus anchor correctly (never use display:contents here). */
 .topbar-control-group > .theme-switcher-wrap,
 .topbar-control-group > .theme-switcher-dropdown,
 .topbar-control-group > .notifications-wrapper,
-.topbar-control-group > .topbar-user-menu,
-.topbar-control-group > .topbar-icon-btn {
+.topbar-control-group > .topbar-user-menu {
   position: relative;
-  flex: 0 0 calc(var(--control-lg) - 2px);
-  width: calc(var(--control-lg) - 2px);
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  display: inline-flex;
 }
 
-.topbar-control-group .topbar-icon-btn,
 .topbar-control-group .user-menu-trigger,
-.topbar-control-group .theme-switcher-trigger,
-.topbar-control-group .topbar-user-menu .dropdown-trigger.user-menu-trigger {
+.topbar-control-group .theme-switcher-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
+  width: var(--control);
+  height: var(--control);
   min-width: 0;
   padding: 0;
   gap: 0;
-  border: none;
-  border-inline-end: 1px solid var(--border-subtle);
-  border-radius: 0; /* square cells — only .topbar-control-group is rounded */
-  background: transparent;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-2);
   box-shadow: none;
-  box-sizing: border-box;
+  cursor: pointer;
 }
 
-.topbar-control-group > *:last-child .topbar-icon-btn,
-.topbar-control-group > *:last-child .user-menu-trigger,
-.topbar-control-group > *:last-child .theme-switcher-trigger,
-.topbar-control-group > .topbar-icon-btn:last-child,
-.topbar-control-group > *:last-child .topbar-user-menu .dropdown-trigger.user-menu-trigger,
-.topbar-control-group .topbar-user-menu .dropdown-trigger.user-menu-trigger {
-  border-inline-end: none;
-}
-
-.topbar-control-group .topbar-icon-btn:hover,
-.topbar-control-group .user-menu-trigger:hover,
-.topbar-control-group .theme-switcher-trigger:hover {
-  background: var(--surface-hover);
-}
+.topbar-control-group .theme-switcher-trigger:hover { background: var(--surface-2); color: var(--text); }
 
 .topbar-control-group .birkly-icon { display: block; margin: 0; }
-
-/* Avatar fills its cell edge to edge — square; group radius does the rounding */
-.topbar-control-group .user-menu-trigger {
-  position: relative;
-  overflow: hidden;
-  border-radius: 0;
-}
 
 /* Compact trigger only — keep name/role/email visible in the open panel. */
 .topbar-control-group .user-menu-trigger .user-menu-info,
@@ -279,22 +210,18 @@
   display: none;
 }
 
-/* Trigger face only (class is never used in the open panel). */
+/* Avatar: a 28px ink square with 6px corners */
 .topbar-control-group .user-menu-trigger-face,
 .topbar-user-menu .user-menu-trigger .user-menu-trigger-face {
-  position: absolute;
-  inset: 0;
+  position: static;
   box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
+  width: var(--nav-row);
+  height: var(--nav-row);
   margin: 0;
   padding: 0;
-  border: none;
-  border-radius: 0;
+  border: 0;
+  border-radius: var(--r);
   object-fit: cover;
-  object-position: center;
 }
 
 .topbar-control-group .user-menu-trigger-face.user-avatar-initials,
@@ -306,7 +233,7 @@
 }
 
 .topbar-control-group .dropdown-menu {
-  inset-block-start: calc(100% + var(--space-2));
+  inset-block-start: calc(100% + var(--s-2));
   inset-block-end: auto;
 }
 
@@ -317,12 +244,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-lg);
-  height: var(--control-lg);
+  width: var(--control);
+  height: var(--control);
   padding: 0;
   gap: 0;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r);
   background: transparent;
   overflow: hidden;
   line-height: 1;
@@ -334,9 +261,8 @@
   justify-content: center;
   background: var(--text);
   color: var(--bg);
-  font-size: var(--text-sm);
+  font-size: var(--size-caption);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.02em;
 }
 
 .topbar-user-menu .dropdown-menu.user-menu-dropdown {
@@ -542,9 +468,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--s-2);
   width: 100%;
-  margin-block-end: var(--space-6);
+  margin-block-end: var(--s-4);
   min-width: 0;
   flex-wrap: wrap;
 }
@@ -654,7 +580,7 @@
 /* ============================================
    Responsive shell
    ============================================ */
-@media (max-width: 1279px) {
+@media (max-width: 1023px) {
   .admin-topbar {
     flex-wrap: wrap;
     gap: var(--space-2);
@@ -669,14 +595,14 @@
     z-index: var(--z-raised);
     display: inline-flex;
     flex-shrink: 0;
-    width: var(--control-lg);
-    height: var(--control-lg);
+    width: var(--control);
+    height: var(--control);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
   .admin-topbar-actions {
-    order: 1;
+    order: 2;
     margin-inline-start: auto;
     gap: var(--space-2);
     justify-content: flex-end;
@@ -684,15 +610,14 @@
   }
 
   .admin-topbar-left {
-    order: 2;
-    flex: 1 1 100%;
+    order: 1;
+    flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
   }
 }
 
 @media (max-width: 767px) {
-  .admin-topbar-breadcrumbs.breadcrumbs { font-size: var(--text-lg); }
 
   .page-header {
     height: auto;
