@@ -111,12 +111,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <small class="form-help"><?= __('admin.project_logo_help') ?></small>
                   </div>
                   <div class="setting-value">
-                    <input type="file" id="project-logo" name="project_logo" accept="image/*">
+                    <div class="file-pick">
+                      <input type="file" id="project-logo" name="project_logo" accept="image/*" class="u-sr-only">
+                      <button type="button" class="button is-small" data-file-pick="project-logo"><?= birkly_icon('upload') ?><span><?= htmlspecialchars(__('admin.file_pick_image')) ?></span></button>
+                      <span class="file-pick-name" data-file-pick-name="project-logo" data-empty="<?= htmlspecialchars(__('admin.file_pick_none')) ?>"><?= htmlspecialchars(__('admin.file_pick_none')) ?></span>
+                    </div>
                     <?php if (!empty($settings['branding']['logoPath'])): ?>
                     <div class="u-stack-2">
                       <p class="u-label"><?= __('admin.current_logo') ?></p>
                       <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
-                      <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger u-w-fit"><?= __('admin.remove_logo') ?></button>
+                      <button type="button" id="remove-logo-btn" class="button is-small is-danger u-w-fit"><?= __('admin.remove_logo') ?></button>
                     </div>
                     <?php endif; ?>
                     <div id="logo-preview" class="u-stack-2" hidden>

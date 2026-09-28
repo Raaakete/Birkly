@@ -1451,6 +1451,22 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   color: var(--text-2);
 }
 
+[data-birch] .file-pick {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+[data-birch] .file-pick-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--size-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 [data-birch] .list-row .row-title {
   display: flex;
   align-items: center;
