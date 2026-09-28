@@ -77,43 +77,60 @@ function createPermissionsGrid(containerId, permissions = {}) {
     }
 
     container.innerHTML = '';
+    container.classList.add('permission-matrix');
+    container.setAttribute('role', 'table');
+
+    const actionLabel = action => stT('settings_js_perm_' + action, action.charAt(0).toUpperCase() + action.slice(1));
+
+    const head = document.createElement('div');
+    head.className = 'permission-head';
+    head.setAttribute('role', 'row');
+    const corner = document.createElement('span');
+    corner.setAttribute('role', 'columnheader');
+    corner.textContent = stT('settings_js_perm_resource', 'Resource');
+    head.appendChild(corner);
+    availableActions.forEach(action => {
+        const cell = document.createElement('span');
+        cell.setAttribute('role', 'columnheader');
+        cell.textContent = actionLabel(action);
+        head.appendChild(cell);
+    });
+    container.appendChild(head);
 
     availableResources.forEach(resource => {
-        const section = document.createElement('div');
-        section.className = 'permission-section card card--sunken u-p-4 u-stack-2';
+        const resourceLabel = stT('settings_js_perm_' + resource, resource);
+        const row = document.createElement('div');
+        row.className = 'permission-row';
+        row.setAttribute('role', 'row');
 
-        const heading = document.createElement('h4');
-        heading.className = 'u-label';
-        heading.textContent = stT('settings_js_perm_' + resource, resource);
-        section.appendChild(heading);
-
-        const checkboxesDiv = document.createElement('div');
-        checkboxesDiv.className = 'permission-checkboxes u-stack-1';
-        section.appendChild(checkboxesDiv);
+        const name = document.createElement('span');
+        name.className = 'permission-name';
+        name.setAttribute('role', 'rowheader');
+        name.textContent = resourceLabel;
+        row.appendChild(name);
 
         availableActions.forEach(action => {
-            const label = document.createElement('label');
-            label.className = 'check';
+            const cell = document.createElement('label');
+            cell.className = 'permission-cell';
+            cell.setAttribute('role', 'cell');
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
+            checkbox.className = 'check';
             checkbox.name = `permissions[${resource}][]`;
             checkbox.value = action;
             checkbox.setAttribute('data-resource', resource);
+            checkbox.setAttribute('aria-label', resourceLabel + ': ' + actionLabel(action));
             checkbox.checked = hasPermission(permissions, resource, action);
             checkbox.addEventListener('click', function (e) {
                 e.stopPropagation();
             });
 
-            const span = document.createElement('span');
-            span.textContent = stT('settings_js_perm_' + action, action.charAt(0).toUpperCase() + action.slice(1));
-
-            label.appendChild(checkbox);
-            label.appendChild(span);
-            checkboxesDiv.appendChild(label);
+            cell.appendChild(checkbox);
+            row.appendChild(cell);
         });
 
-        container.appendChild(section);
+        container.appendChild(row);
     });
 }
 
@@ -787,8 +804,9 @@ window.migrateStorage = migrateStorage;
         if (!bar || !saveBtn) return;
 
         bar.classList.remove('is-hidden');
-        saveBtn.disabled = false;
-        saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save Settings');
+        saveBtn.hidden = !isTrackedGlobalTab(tabId || currentTab) && !hasDirtyTrackedTabs();
+        saveBtn.disabled = !hasDirtyTrackedTabs();
+        saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save changes');
 
         if (dirtyBadge) {
             dirtyBadge.hidden = !isCurrentTabDirtyForUi();
