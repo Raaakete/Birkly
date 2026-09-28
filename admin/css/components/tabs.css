@@ -366,6 +366,9 @@ summary.side-nav-group-title:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* line-height is 1 on nav items; the clip box needs room for descenders */
+  padding-block: 0.2em;
+  margin-block: -0.2em;
 }
 
 /* Sub-nav — indented list with a soft vertical guide; item bars sit on it */

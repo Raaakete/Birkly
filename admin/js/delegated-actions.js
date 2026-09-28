@@ -64,7 +64,24 @@
         }
     }
 
+    document.addEventListener('change', function (e) {
+        var input = e.target;
+        if (!input || input.type !== 'file' || !input.id) return;
+        var label = document.querySelector('[data-file-pick-name="' + input.id + '"]');
+        if (!label) return;
+        var names = input.files ? Array.prototype.map.call(input.files, function (f) { return f.name; }) : [];
+        label.textContent = names.length ? names.join(', ') : (label.getAttribute('data-empty') || '');
+    });
+
     document.addEventListener('click', function (e) {
+        var pickEl = e.target.closest('[data-file-pick]');
+        if (pickEl) {
+            e.preventDefault();
+            var fileInput = document.getElementById(pickEl.getAttribute('data-file-pick'));
+            if (fileInput) fileInput.click();
+            return;
+        }
+
         var dismissEl = e.target.closest('[data-modal-dismiss]');
         if (dismissEl) {
             e.preventDefault();

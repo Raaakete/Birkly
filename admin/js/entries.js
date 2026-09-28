@@ -1238,12 +1238,18 @@
         });
     }
 
+    // The sticky Actions column covers whatever sits under it, so the shade
+    // shows while columns remain hidden to its side, not after scrolling.
+    function hasHiddenColumns(viewport) {
+        return viewport.scrollWidth - viewport.clientWidth - Math.abs(viewport.scrollLeft) > 1;
+    }
+
     function initializeViewportScrollState() {
         document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
             if (viewport.dataset.entriesViewportBound === 'true') {
                 const table = viewport.closest('.entries-smart-table');
                 if (table) {
-                    table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
+                    table.classList.toggle('is-scrolled-x', hasHiddenColumns(viewport));
                 }
                 return;
             }
@@ -1252,10 +1258,11 @@
                 if (!table) {
                     return;
                 }
-                table.classList.toggle('is-scrolled-x', viewport.scrollLeft > 1);
+                table.classList.toggle('is-scrolled-x', hasHiddenColumns(viewport));
             };
             viewport.dataset.entriesViewportBound = 'true';
             viewport.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll, { passive: true });
             onScroll();
         });
     }

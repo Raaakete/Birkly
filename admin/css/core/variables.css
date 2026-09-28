@@ -172,6 +172,9 @@
   --serp-url: #006621;
   --serp-desc: #545454;
 
+  /* 12. Select chevron: the chev-down pixel icon as a background, filled --text-3 */
+  --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%2367696C'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
+
   /* Breakpoints — documentation only; literal values in @media (min-width): 640 / 768 / 1024 / 1280 / 1440 */
   --bp-sm: 640px;
   --bp-md: 768px;
@@ -219,6 +222,7 @@
   --serp-title: var(--accent-text);
   --serp-url: var(--success);
   --serp-desc: var(--text-2);
+  --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%23909296'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
   color-scheme: dark;
 }
 
@@ -262,6 +266,7 @@
     --serp-title: var(--accent-text);
     --serp-url: var(--success);
     --serp-desc: var(--text-2);
+    --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%23909296'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
     color-scheme: dark;
   }
 }

@@ -660,7 +660,7 @@ if ($action === 'create_test_notification') {
         'details' => [
             'collection' => 'test',
             'id' => 'test-' . time(),
-            'title' => 'Test Notification - ' . date('H:i:s'),
+            'title' => 'Test notification - ' . date('H:i:s'),
             'test' => true
         ]
     ];
