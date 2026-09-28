@@ -259,21 +259,7 @@
 }
 
 /* Bare selects outside .select-box (plugin and P56 markup) draw the chev-down
-   pixel icon instead of the P56 gradient triangle. Fill is --text-3 per theme. */
-:root {
-  --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%2367696C'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
-}
-
-:root[data-theme="dark"] {
-  --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%23909296'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
-}
-
-@media (prefers-color-scheme: dark) {
-  :root[data-theme="system"] {
-    --select-chev: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 13' shape-rendering='crispEdges' fill='%23909296'><path d='M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1z'/></svg>");
-  }
-}
-
+   pixel icon instead of the P56 gradient triangle. */
 [data-birch] select:where(:not([multiple], [size]:not([size="1"]), .select-box > *)),
 [data-birch] select.input:where(:not([multiple], [size]:not([size="1"]), .select-box > *)) {
   padding-inline-end: calc(var(--s-3) + var(--icon) + var(--s-2));
