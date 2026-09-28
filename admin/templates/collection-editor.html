@@ -1718,7 +1718,9 @@ document.addEventListener('DOMContentLoaded', function() {
         function renderCategory(category, items) {
             const categoryHeader = document.createElement('div');
             categoryHeader.className = 'fieldtype-category-header';
-            categoryHeader.textContent = category;
+            categoryHeader.textContent = String(category).split(' ').map(function(word, i) {
+                return i === 0 || word === word.toUpperCase() ? word : word.toLowerCase();
+            }).join(' ');
             fieldtypeGrid.appendChild(categoryHeader);
             const categoryGrid = document.createElement('div');
             categoryGrid.className = 'fieldtype-category-grid';
