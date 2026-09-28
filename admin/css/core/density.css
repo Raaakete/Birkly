@@ -1,33 +1,50 @@
 /* Admin display density (Account → Compact / Comfortable / Large).
-   Comfortable is the default (`default` in storage). Compact changes sizes
-   only; Large also raises type by one pixel. Whole pixels only. */
+   Comfortable is the default (`default` in storage) and lives in
+   core/variables.css. Compact tightens rows and steps type down one pixel;
+   Large raises both. Whole pixels only. */
 
 body[data-density="compact"] {
   --control: 28px;
   --control-sm: 24px;
+  --control-xs: 20px;
   --control-md: 28px;
+  --chrome-row: 36px;
+  --nav-row: 26px;
   --row-list: 32px;
   --row-table: 36px;
-  --card-h: 80px;
+  --card-h: 84px;
+  --sidebar-width: 216px;
+  --size-number: 26px;     --lh-number: 28px;
+  --size-page-title: 18px; --lh-page-title: 24px;
+  --size-title-l: 16px;    --lh-title-l: 22px;
+  --size-slab-title: 14px; --lh-slab-title: 20px;
+  --size-title: 13px;      --lh-title: 18px;
+  --size-body: 13px;       --lh-body: 20px;
+  --size-small: 12px;      --lh-small: 16px;
+  --size-caption: 11px;    --lh-caption: 16px;
+  --size-mono: 12px;       --lh-mono: 18px;
 }
 
 body[data-density="large"] {
-  --control: 36px;
-  --control-sm: 32px;
-  --control-md: 36px;
-  --nav-row: 32px;
-  --row-list: 48px;
-  --row-table: 56px;
-  --card-h: 116px;
-  --size-number: 28px;     --lh-number: 30px;
-  --size-page-title: 19px; --lh-page-title: 26px;
-  --size-title-l: 17px;    --lh-title-l: 24px;
-  --size-slab-title: 15px; --lh-slab-title: 22px;
-  --size-title: 14px;      --lh-title: 20px;
-  --size-body: 14px;       --lh-body: 21px;
-  --size-small: 13px;      --lh-small: 18px;
-  --size-caption: 12px;    --lh-caption: 16px;
-  --size-mono: 13px;       --lh-mono: 20px;
+  --control: 40px;
+  --control-sm: 34px;
+  --control-xs: 28px;
+  --control-md: 40px;
+  --chrome-row: 48px;
+  --nav-row: 36px;
+  --row-list: 52px;
+  --row-table: 60px;
+  --card-h: 128px;
+  --sidebar-width: 256px;
+  --size-number: 32px;     --lh-number: 36px;
+  --size-page-title: 22px; --lh-page-title: 30px;
+  --size-title-l: 19px;    --lh-title-l: 26px;
+  --size-slab-title: 17px; --lh-slab-title: 24px;
+  --size-title: 16px;      --lh-title: 22px;
+  --size-body: 16px;       --lh-body: 24px;
+  --size-small: 14px;      --lh-small: 20px;
+  --size-caption: 13px;    --lh-caption: 18px;
+  --size-mono: 14px;       --lh-mono: 22px;
 }
 
 body[data-density="compact"] .card-body,
