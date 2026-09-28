@@ -258,9 +258,15 @@
             let previousFocus = null;
             const showHandler = () => {
                 previousFocus = document.activeElement;
-                if (firstFocusable) {
-                    setTimeout(() => firstFocusable.focus(), 100);
-                }
+                setTimeout(() => {
+                    if (modal.contains(document.activeElement)) {
+                        return;
+                    }
+                    const target = modal.querySelector('[autofocus]') || firstFocusable;
+                    if (target) {
+                        target.focus();
+                    }
+                }, 100);
             };
             const hideHandler = () => {
                 if (previousFocus) {

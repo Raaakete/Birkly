@@ -511,7 +511,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
+  height: calc(var(--control) - 8px);
   padding: 0 var(--s-2);
   border: 0;
   border-radius: var(--r-inset);
@@ -1536,6 +1536,60 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   [data-birch] .list-row:has(> .row-actions > :is(.button, .btn) ~ :is(.button, .btn)) > .row-body { flex: 1 1 0; min-width: 0; }
   [data-birch] .list-row > .row-actions:has(> :is(.button, .btn) ~ :is(.button, .btn)) { flex: 1 1 100%; flex-wrap: wrap; margin-inline-start: 0; }
 }
+
+/* ---------- Page action rows on phones (admin/js/page-actions.js) ----------
+   The main action stays in the row; everything else sits in a More menu
+   that opens under the dots button at the row's end. */
+[data-birch] .page-more {
+  position: relative;
+  display: inline-flex;
+  margin-inline-start: auto;
+}
+
+[data-birch] .has-page-more {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+[data-birch] .has-page-more .page-more-unwrapped { display: contents; }
+[data-birch] .has-page-more .page-more-main { order: 1; flex: 0 1 auto; width: auto; }
+[data-birch] .has-page-more > .page-more { order: 3; }
+[data-birch] .has-page-more .page-more-keep { order: 4; flex: 1 1 100%; }
+
+[data-birch] .page-more-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--s-1));
+  inset-inline-end: 0;
+  z-index: var(--z-popover);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-1);
+  width: min(300px, calc(100vw - 2 * var(--gutter)));
+  padding: var(--s-2);
+}
+
+[data-birch] .page-more-menu[hidden] { display: none; }
+
+[data-birch] .page-more-menu > :is(button, a):not(.icon-button) {
+  justify-content: flex-start;
+  width: 100%;
+  border-color: transparent;
+  background: none;
+  box-shadow: none;
+}
+
+[data-birch] .page-more-menu > :is(button, a):not(.icon-button):hover { background: var(--surface-2); }
+[data-birch] .page-more-menu > :is(.search-field, .select-box, .segmented, select, .input) { width: 100%; }
+[data-birch] .page-more-menu > .segmented > button { flex: 1 1 0; justify-content: center; }
+[data-birch] .page-more-menu > .u-hidden + * { margin-block-start: 0; }
+[data-birch] .page-more-menu > .page-more-sep { width: 100%; margin: var(--s-1) 0; border: 0; border-block-start: 1px solid var(--line); }
+[data-birch] .page-more-menu > .dropdown-item { display: flex; align-items: center; gap: var(--s-2); min-height: var(--control-sm); padding: 0 var(--s-3); border-radius: var(--r-inset); color: var(--text); text-decoration: none; }
+[data-birch] .page-more-menu > .dropdown-item:hover { background: var(--surface-2); }
+[data-birch] .has-page-more .page-more-icon { order: 2; }
 
 /* ---------- Plugin pages on Birch (P96-M14) ----------
    Official plugins opt in with data-birch on their .plugin-page root and
