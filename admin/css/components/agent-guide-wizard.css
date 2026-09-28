@@ -22,7 +22,7 @@
 .ag-wizard-steps .tab:disabled {
   cursor: default;
   opacity: 1;
-  color: var(--text-tertiary);
+  color: var(--text-3);
 }
 
 /* ============================================
@@ -35,10 +35,10 @@
   width: 3.5rem;
   height: 3.5rem;
   margin-inline: auto;
-  border-radius: var(--radius-pill);
-  background: var(--success-surface);
-  color: var(--success-fg);
-  font-size: var(--text-2xl);
+  border-radius: var(--r);
+  background: var(--success-soft);
+  color: var(--success);
+  font-size: var(--size-number);
   font-weight: var(--weight-semibold);
 }
 
@@ -46,16 +46,16 @@
    success layout for its own save-success modal. The wizard itself now builds
    this panel from u-* helpers. */
 .ag-wizard-panel--success {
-  padding: var(--space-6) var(--space-4);
+  padding: var(--s-6) var(--s-4);
   text-align: center;
 }
 
 .ag-wizard-success-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--s-3);
   justify-content: center;
-  margin-block-start: var(--space-4);
+  margin-block-start: var(--s-4);
 }
 
 /* ============================================
@@ -71,6 +71,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  background: var(--overlay);
+  gap: var(--s-3);
+  background: var(--scrim);
 }

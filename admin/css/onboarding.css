@@ -20,8 +20,8 @@
 .onboarding-body {
   margin: 0;
   min-height: 100vh;
-  background: var(--canvas);
-  color: var(--text-primary);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .onboarding-wrapper {
@@ -30,7 +30,7 @@
   align-items: flex-start;
   width: 100%;
   min-height: 100vh;
-  padding: var(--space-8) var(--space-6);
+  padding: 32px var(--s-6);
   box-sizing: border-box;
 }
 
@@ -53,32 +53,32 @@
 
 .onboarding-header-title {
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-secondary);
+  letter-spacing: var(--tracking-title);
+  color: var(--text-2);
 }
 
 /* ---- Progress rail ---- */
 .progress-track {
   height: 0.1875rem;
-  border-radius: var(--radius-pill);
-  background: var(--surface-active);
+  border-radius: var(--r);
+  background: var(--surface-3);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   width: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r);
   background: var(--accent);
-  transition: width var(--motion-slow) var(--ease-out);
+  transition: width var(--dur-3) var(--ease);
 }
 
 .progress-steps {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-2);
+  gap: var(--s-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -89,7 +89,7 @@
   flex: 1 1 0;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -97,32 +97,32 @@
   width: 0.625rem;
   height: 0.625rem;
   flex-shrink: 0;
-  border: 2px solid var(--border-default);
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: var(--border-default);
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  background: var(--line);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
 }
 
 .progress-step.active .progress-step-dot,
 .progress-step.completed .progress-step-dot {
   background: var(--accent);
-  border-color: var(--accent-muted);
+  border-color: var(--accent-line);
 }
 
 .progress-step-label {
   max-width: 100%;
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  color: var(--text-tertiary);
+  color: var(--text-3);
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.progress-step.active .progress-step-label { color: var(--text-primary); }
-.progress-step.completed .progress-step-label { color: var(--text-secondary); }
+.progress-step.active .progress-step-label { color: var(--text); }
+.progress-step.completed .progress-step-label { color: var(--text-2); }
 
 /* ---- Step panel ---- */
 .onboarding-step { width: 100%; min-width: 0; }
@@ -130,13 +130,13 @@
 .onboarding-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--s-6);
   width: 100%;
-  padding: var(--space-8);
+  padding: 32px;
   box-sizing: border-box;
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
 }
 
 /* ---- Step header ---- */
@@ -144,10 +144,10 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
-.step-header--brand { flex-direction: row; align-items: center; gap: var(--space-4); }
+.step-header--brand { flex-direction: row; align-items: center; gap: var(--s-4); }
 .step-header--optional { align-items: center; text-align: center; }
 
 .step-brand-logo {
@@ -163,9 +163,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-lg);
-  height: var(--control-lg);
-  border-radius: var(--radius-md);
+  width: var(--chrome-row);
+  height: var(--chrome-row);
+  border-radius: var(--r);
   background: var(--accent-soft);
   color: var(--accent-text);
 }
@@ -174,56 +174,55 @@
   display: inline-flex;
   align-items: center;
   height: 1.375rem;
-  padding-inline: var(--space-2);
-  border: 1px solid var(--neutral-border);
-  border-radius: var(--radius-sm);
-  background: var(--neutral-surface);
-  color: var(--neutral-fg);
-  font-size: var(--text-2xs);
+  padding-inline: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0;
 }
 
 .step-title {
   margin: 0;
-  font-size: var(--text-xl);
+  font-size: var(--size-page-title);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
 }
 
 .step-subtitle {
   margin: 0;
   max-width: var(--measure-md);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
 /* ---- Welcome step ---- */
 .welcome-header h1 {
   margin: 0;
-  font-size: var(--text-2xl);
+  font-size: var(--size-number);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
 }
 
 .welcome-subtitle {
   margin: 0;
   max-width: var(--measure-md);
-  font-size: var(--text-md);
-  line-height: var(--leading-relaxed);
-  color: var(--text-secondary);
+  font-size: var(--size-slab-title);
+  line-height: 1.6;
+  color: var(--text-2);
 }
 
 /* ---- Forms ---- */
 .label-optional {
   font-weight: var(--weight-regular);
-  color: var(--text-tertiary);
+  color: var(--text-3);
 }
 
 /* Reserve the error row so the panel does not jump when validation fires */
@@ -235,7 +234,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--s-3);
 }
 
 .onboarding-actions--split,
@@ -243,14 +242,14 @@
 .onboarding-actions-right {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--s-3);
   margin-inline-start: auto;
 }
 
 /* ---- Choice grid — starter templates / use cases ---- */
 .use-case-grid {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--s-3);
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }
 
@@ -260,101 +259,69 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   text-align: start;
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
 }
 
-.use-case-card:hover:not(.use-case-card--disabled) { background: var(--surface-hover); }
+.use-case-card:hover:not(.use-case-card--disabled) { background: var(--surface-2); }
 .use-case-card:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
 }
 .use-case-card.selected {
-  border-color: var(--accent-focus);
-  background: var(--surface-selected);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
-.use-case-card span { font-size: var(--text-sm); color: var(--text-secondary); }
+.use-case-card span { font-size: var(--size-small); color: var(--text-2); }
 .use-case-card--disabled { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
 
 .starter-coming-soon {
   display: inline-flex;
   align-items: center;
-  margin-block-start: var(--space-1);
-  padding-inline: var(--space-2);
-  border: 1px solid var(--neutral-border);
-  border-radius: var(--radius-sm);
-  background: var(--neutral-surface);
-  color: var(--neutral-fg);
-  font-size: var(--text-2xs);
+  margin-block-start: var(--s-1);
+  padding-inline: var(--s-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-caption);
   font-style: normal;
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
+  letter-spacing: 0;
 }
 
 /* ---- Informational wells (install context, Ollama hint, MCP panel) ---- */
 .install-context-card,
 .ollama-hint-box {
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--text-secondary);
+  padding: var(--s-4);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
 .install-context-card p,
-.ollama-hint-box p { margin: 0 0 var(--space-2); }
+.ollama-hint-box p { margin: 0 0 var(--s-2); }
 .install-context-card p:last-child,
 .ollama-hint-box p:last-child { margin-block-end: 0; }
-.install-context-card a { color: var(--text-link); }
-
-/* ---- AI step ---- */
-.ai-mode-tabs {
-  display: flex;
-  gap: var(--space-1);
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.ai-mode-tab {
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              color var(--motion-fast) var(--ease-out);
-}
-
-.ai-mode-tab:hover { background: var(--surface-hover); }
-.ai-mode-tab.active { background: var(--accent-soft); color: var(--accent-text); }
-
-.ai-wizard-step > label {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-}
+.install-context-card a { color: var(--accent-text); }
 
 /* ---- Narrow screens ---- */
 @media (max-width: 639px) {
-  .onboarding-wrapper { padding: var(--space-5) var(--space-4); }
-  .onboarding-content { padding: var(--space-6) var(--space-5); }
+  .onboarding-wrapper { padding: var(--s-5) var(--s-4); }
+  .onboarding-content { padding: var(--s-6) var(--s-5); }
   .progress-step-label { display: none; }
 
   .onboarding-actions,
@@ -437,5 +404,3 @@
   border-radius: var(--r);
   background: var(--surface-2);
 }
-
-.ai-mode-tab { border-radius: var(--r); }

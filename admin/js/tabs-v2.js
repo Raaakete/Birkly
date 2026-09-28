@@ -31,7 +31,7 @@
 
     function getTabLabel(btn) {
         var clone = btn.cloneNode(true);
-        clone.querySelectorAll('svg, .update-badge, .tabs-v2-picker-ignore').forEach(function (el) {
+        clone.querySelectorAll('svg, .update-badge, .tabs-v2-picker-ignore, [hidden]').forEach(function (el) {
             el.remove();
         });
         return (clone.textContent || '').trim();

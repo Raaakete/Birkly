@@ -27,7 +27,7 @@
 .field-block {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 
@@ -36,15 +36,15 @@
 .field label,
 .form-group > label,
 .field-block > label {
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  line-height: var(--leading-snug);
+  color: var(--text-2);
+  line-height: 1.4;
 }
 
 .field-label .required,
 .field-required {
-  color: var(--danger-fg);
+  color: var(--danger);
   margin-inline-start: 0.125rem;
 }
 
@@ -52,25 +52,25 @@
 .form-help,
 .field-hint,
 .form-text {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
-  line-height: var(--leading-normal);
+  font-size: var(--size-small);
+  color: var(--text-3);
+  line-height: 1.5;
   max-width: var(--measure-sm);
 }
 
 .field-error,
 .form-error,
 .invalid-feedback {
-  font-size: var(--text-xs);
-  color: var(--danger-fg);
-  line-height: var(--leading-normal);
+  font-size: var(--size-small);
+  color: var(--danger);
+  line-height: 1.5;
 }
 
 /* Horizontal field row (label beside control) */
 .field-row {
   display: grid;
   grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--s-4);
   align-items: start;
 }
 @media (max-width: 767px) {
@@ -79,7 +79,7 @@
 
 .form-grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--s-4);
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
@@ -92,9 +92,9 @@ fieldset {
 
 legend {
   padding: 0;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   font-weight: var(--weight-semibold);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 /* ============================================
@@ -118,34 +118,34 @@ select,
 textarea {
   width: 100%;
   min-width: 0;
-  height: var(--control-md);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--field-border);
-  border-radius: var(--radius-sm);
+  height: var(--control);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  font-size: var(--size-body);
+  line-height: 1.5;
   box-sizing: border-box;
   transition:
-    border-color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
+    border-color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease);
 }
 
 textarea,
 .textarea {
   height: auto;
   min-height: 5.5rem;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--s-2) var(--s-3);
   resize: vertical;
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 .input:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus) {
-  border-color: var(--field-border-hover);
+  border-color: var(--line-strong);
 }
 
 .input:focus,
@@ -163,15 +163,15 @@ input[type="number"]:focus {
      the neutral border was meant to fix. Every OTHER control keeps the
      brand-coloured ring; only text fields sit next to the success/danger
      border-colour states closely enough for the confusion to matter. */
-  outline: 2px solid var(--field-border-focus);
+  outline: 2px solid var(--accent);
   outline-offset: 0;
-  border-color: var(--field-border-focus);
+  border-color: var(--accent);
 }
 
 .input::placeholder,
 textarea::placeholder,
 input::placeholder {
-  color: var(--text-tertiary);
+  color: var(--text-3);
   opacity: 1;
 }
 
@@ -182,8 +182,8 @@ input:disabled,
 .input[readonly],
 input[readonly],
 textarea[readonly] {
-  background: var(--surface-sunken);
-  color: var(--text-tertiary);
+  background: var(--surface-2);
+  color: var(--text-3);
   cursor: not-allowed;
 }
 
@@ -192,7 +192,7 @@ select,
 .select {
   appearance: none;
   -webkit-appearance: none;
-  padding-inline-end: var(--space-8);
+  padding-inline-end: 32px;
   background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
                     linear-gradient(135deg, currentColor 50%, transparent 50%);
   background-position: calc(100% - 1.05rem) 50%, calc(100% - 0.7rem) 50%;
@@ -204,7 +204,7 @@ select,
 select[multiple],
 select[size]:not([size="1"]) {
   height: auto;
-  padding: var(--space-2);
+  padding: var(--s-2);
   background-image: none;
 }
 
@@ -213,10 +213,10 @@ select[size]:not([size="1"]) {
 select.input-sm,
 .form-control-sm {
   height: var(--control-sm);
-  padding-inline: var(--space-2);
-  font-size: var(--text-sm);
+  padding-inline: var(--s-2);
+  font-size: var(--size-small);
 }
-.input-lg { height: var(--control-lg); }
+.input-lg { height: var(--chrome-row); }
 
 /* Search input with leading icon.
    Declared AFTER the shared control block above: that block's selector list
@@ -224,7 +224,7 @@ select.input-sm,
    equal specificity, so declaring this earlier left the icon gutter dead
    (P56-M7 finding). */
 .input-search,
-input[type="search"].input-search { padding-inline-start: var(--space-8); }
+input[type="search"].input-search { padding-inline-start: 32px; }
 
 .input-icon-wrap {
   position: relative;
@@ -235,10 +235,10 @@ input[type="search"].input-search { padding-inline-start: var(--space-8); }
 .input-icon-wrap > svg,
 .input-icon-wrap > .birkly-icon {
   position: absolute;
-  inset-inline-start: var(--space-3);
+  inset-inline-start: var(--s-3);
   width: 1rem;
   height: 1rem;
-  color: var(--text-tertiary);
+  color: var(--text-3);
   pointer-events: none;
 }
 
@@ -254,11 +254,11 @@ textarea.is-invalid,
 .was-validated input:invalid,
 .was-validated select:invalid,
 .was-validated textarea:invalid {
-  border-color: var(--danger-fg);
+  border-color: var(--danger);
 }
 
 .field-success-state .input,
-.input.is-valid { border-color: var(--success-fg); }
+.input.is-valid { border-color: var(--success); }
 
 /* ============================================
    File input — styled, was browser-default (P56 fix)
@@ -266,21 +266,21 @@ textarea.is-invalid,
 input[type="file"] {
   width: 100%;
   min-width: 0;
-  padding: var(--space-2);
-  border: 1px dashed var(--border-control);
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-  color: var(--text-secondary);
+  padding: var(--s-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   cursor: pointer;
   box-sizing: border-box;
-  transition: border-color var(--motion-fast) var(--ease-out),
-              background-color var(--motion-fast) var(--ease-out);
+  transition: border-color var(--dur-1) var(--ease),
+              background-color var(--dur-1) var(--ease);
 }
 
 input[type="file"]:hover:not(:disabled) {
-  border-color: var(--accent-focus);
+  border-color: var(--accent);
   background: var(--accent-soft);
 }
 
@@ -291,22 +291,22 @@ input[type="file"]:focus-visible {
 
 input[type="file"]::file-selector-button {
   height: var(--control-sm);
-  margin-inline-end: var(--space-3);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-sm);
+  margin-inline-end: var(--s-3);
+  padding-inline: var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease);
 }
 
 input[type="file"]::file-selector-button:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-control-hover);
+  background: var(--surface-2);
+  border-color: var(--text-3);
 }
 
 /* ============================================
@@ -316,25 +316,25 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not
 input[type="radio"]:not(.radio) {
   appearance: none;
   -webkit-appearance: none;
-  width: 1rem;
-  height: 1rem;
-  min-width: 1rem;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
   margin: 0;
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--line-strong);
   background: var(--surface);
   cursor: pointer;
   flex-shrink: 0;
   display: inline-grid;
   place-content: center;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check) { border-radius: 4px; }
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check) { border-radius: var(--r-inset); }
 input[type="radio"]:not(.radio) { border-radius: 50%; }
 
 input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):hover:not(:disabled),
-input[type="radio"]:not(.radio):hover:not(:disabled) { border-color: var(--border-control-hover); }
+input[type="radio"]:not(.radio):hover:not(:disabled) { border-color: var(--text-3); }
 
 input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):checked,
 input[type="radio"]:not(.radio):checked {
@@ -344,8 +344,8 @@ input[type="radio"]:not(.radio):checked {
 
 input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):checked::before {
   content: "";
-  width: 0.55rem;
-  height: 0.3rem;
+  width: 7px;
+  height: 4px;
   border: 2px solid var(--on-accent);
   border-block-start: none;
   border-inline-end: none;
@@ -358,15 +358,15 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not
 }
 input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):indeterminate::before {
   content: "";
-  width: 0.55rem;
+  width: 6px;
   height: 2px;
   background: var(--on-accent);
 }
 
 input[type="radio"]:not(.radio):checked::before {
   content: "";
-  width: 0.4rem;
-  height: 0.4rem;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--on-accent);
 }
@@ -381,7 +381,7 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not
 input[type="radio"]:not(.radio):disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--surface-sunken);
+  background: var(--surface-2);
 }
 
 /* Checkbox / radio rows */
@@ -390,14 +390,14 @@ input[type="radio"]:not(.radio):disabled {
 .radio-row {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--s-2);
   cursor: pointer;
 }
 .check > span,
 .checkbox-row > span {
-  font-size: var(--text-base);
-  color: var(--text-primary);
-  line-height: var(--leading-snug);
+  font-size: var(--size-body);
+  color: var(--text);
+  line-height: 1.4;
 }
 
 /* A single-line label wrapping its own checkbox/radio. Emitted by the entry
@@ -411,18 +411,18 @@ input[type="radio"]:not(.radio):disabled {
 .field-block > .radio-label {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-regular);
-  color: var(--text-primary);
-  line-height: var(--leading-snug);
+  color: var(--text);
+  line-height: 1.4;
   cursor: pointer;
 }
 
 .checkbox-label:has(input:disabled),
 .radio-label:has(input:disabled) {
-  color: var(--text-tertiary);
+  color: var(--text-3);
   cursor: not-allowed;
 }
 
@@ -439,8 +439,8 @@ input[type="range"] {
 }
 input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-active);
+  border-radius: var(--r);
+  background: var(--surface-3);
 }
 input[type="range"]::-webkit-slider-thumb {
   appearance: none;
@@ -448,19 +448,19 @@ input[type="range"]::-webkit-slider-thumb {
   width: 1rem;
   height: 1rem;
   margin-block-start: -0.375rem;
-  border: 1px solid var(--accent-muted);
+  border: 1px solid var(--accent-line);
   border-radius: 50%;
   background: var(--accent);
 }
 input[type="range"]::-moz-range-track {
   height: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-active);
+  border-radius: var(--r);
+  background: var(--surface-3);
 }
 input[type="range"]::-moz-range-thumb {
   width: 1rem;
   height: 1rem;
-  border: 1px solid var(--accent-muted);
+  border: 1px solid var(--accent-line);
   border-radius: 50%;
   background: var(--accent);
 }
@@ -487,11 +487,11 @@ input[type="range"]::-moz-range-thumb {
 
 /* Color input */
 input[type="color"] {
-  width: var(--control-md);
-  height: var(--control-md);
+  width: var(--control);
+  height: var(--control);
   padding: 2px;
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
   background: var(--surface);
   cursor: pointer;
 }

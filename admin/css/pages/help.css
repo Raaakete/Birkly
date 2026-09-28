@@ -19,7 +19,7 @@
 .help-page {
   max-width: var(--page-max);
   margin-inline: auto;
-  padding: var(--space-6);
+  padding: var(--s-6);
 }
 
 /* Article + nav rail. The rail leads on narrow screens because picking a
@@ -27,7 +27,7 @@
 .help-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--s-6);
   align-items: start;
 }
 
@@ -37,8 +37,8 @@
   .help-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 17.5rem); }
   .help-sidebar {
     position: sticky;
-    inset-block-start: var(--space-6);
-    max-height: calc(100vh - var(--space-12));
+    inset-block-start: var(--s-6);
+    max-height: calc(100vh - 48px);
     overflow-y: auto;
   }
 }
@@ -46,7 +46,7 @@
 /* Topic nav uses shared bar-indicator side-nav (components/tabs.css). */
 
 .help-sidebar .side-nav--track {
-  max-height: calc(100vh - var(--space-16));
+  max-height: calc(100vh - 64px);
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
@@ -61,14 +61,13 @@
 
 .help-code-lang {
   position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-3);
+  inset-block-start: var(--s-2);
+  inset-inline-end: var(--s-3);
   z-index: var(--z-raised);
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
 }
 
 /* Snapshot section headings ("Summary", "Beginner", …) get a colour-coded
@@ -76,7 +75,7 @@
 .help-doc-label {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .help-doc-label::before {
@@ -89,21 +88,11 @@
   background: var(--text);
 }
 
-.help-doc-label-beginner::before { background: var(--success-fg); }
-.help-doc-label-advanced::before { background: var(--info-fg); }
-.help-doc-label-further::before { background: var(--warning-fg); }
+.help-doc-label-beginner::before { background: var(--success); }
+.help-doc-label-advanced::before { background: var(--info); }
+.help-doc-label-further::before { background: var(--warning); }
 
-.help-link-muted { color: var(--text-secondary); }
-
-/* Legacy PHP doc fragments under admin/docs/*.php still mark up worked
-   examples with .example-box. They are no longer wired into help.js, but the
-   markup is outside this scope, so the class keeps a tokenised surface. */
-.prose .example-box {
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-}
+.help-link-muted { color: var(--text-2); }
 
 /* ============================================
    Birch (P96-M13): search field on the canvas, the article is one slab
@@ -128,10 +117,4 @@
   font-size: var(--size-caption);
   letter-spacing: 0;
   text-transform: none;
-}
-
-.help-page[data-birch] .prose .example-box {
-  border: 0;
-  border-radius: var(--r);
-  background: var(--surface-2);
 }

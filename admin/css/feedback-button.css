@@ -32,13 +32,13 @@
   width: 3rem;
   height: 3rem;
   border: 1px solid var(--mint);
-  border-radius: var(--radius-pill);
+  border-radius: var(--r);
   background: var(--mint);
   color: var(--on-mint);
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--shadow-float-2);
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
 }
 
 .feedback-floating-btn:hover { background: var(--mint-hover); border-color: var(--mint-hover); }
@@ -55,11 +55,11 @@
   justify-content: center;
   width: 1.25rem;
   height: 1.25rem;
-  margin-inline-start: var(--space-1);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-pill);
-  color: var(--text-secondary);
-  font-size: var(--text-2xs);
+  margin-inline-start: var(--s-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  color: var(--text-2);
+  font-size: var(--size-caption);
   font-weight: var(--weight-semibold);
   line-height: 1;
   text-decoration: none;
@@ -67,55 +67,55 @@
 }
 
 .contextual-help-link:hover {
-  background: var(--surface-hover);
-  border-color: var(--accent-border);
+  background: var(--surface-2);
+  border-color: var(--accent-line);
   color: var(--accent-text);
 }
 
 /* ---- 3. Help search ---- */
-.help-search-bar { margin-block-end: var(--space-6); }
+.help-search-bar { margin-block-end: var(--s-6); }
 .help-search-wrap { position: relative; max-width: var(--measure-sm); }
 
 .help-search-input {
   width: 100%;
-  height: var(--control-lg);
-  padding-inline: var(--space-10) var(--space-4);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-sm);
+  height: var(--chrome-row);
+  padding-inline: 40px var(--s-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
   background: var(--surface);
-  color: var(--text-primary);
+  color: var(--text);
   font-family: inherit;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
 }
 
 .help-search-input:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-outline-offset); }
 
 .help-search-wrap svg {
   position: absolute;
-  inset-inline-start: var(--space-3);
+  inset-inline-start: var(--s-3);
   inset-block-start: 50%;
   transform: translateY(-50%);
-  color: var(--text-tertiary);
+  color: var(--text-3);
   pointer-events: none;
 }
 
 .help-search-results {
   display: none;
-  margin-block-start: var(--space-3);
+  margin-block-start: var(--s-3);
   max-height: 15rem;
   overflow-y: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
 }
 
 .help-search-results.is-open { display: block; }
 
 .help-search-result-item {
   display: block;
-  padding: var(--space-3) var(--space-4);
-  border-block-end: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  padding: var(--s-3) var(--s-4);
+  border-block-end: 1px solid var(--line);
+  color: var(--text);
   text-decoration: none;
   cursor: pointer;
 }
@@ -123,25 +123,25 @@
 .help-search-result-item:last-child { border-block-end: none; }
 
 .help-search-result-item:hover,
-.help-search-result-item.is-active { background: var(--surface-hover); }
+.help-search-result-item.is-active { background: var(--surface-2); }
 
 .help-search-result-title { font-weight: var(--weight-semibold); }
-.help-search-result-keywords { font-size: var(--text-xs); color: var(--text-secondary); }
+.help-search-result-keywords { font-size: var(--size-small); color: var(--text-2); }
 
 /* ---- 4. Admin legal footer ---- */
 .admin-legal-footer {
   margin-block-start: auto;
-  padding-block-start: var(--space-4);
-  border-block-start: 1px solid var(--border-subtle);
+  padding-block-start: var(--s-4);
+  border-block-start: 1px solid var(--line);
 }
 
-.admin-legal-footer-text { margin: 0; font-size: var(--text-xs); color: var(--text-secondary); text-align: center; }
+.admin-legal-footer-text { margin: 0; font-size: var(--size-small); color: var(--text-2); text-align: center; }
 
-.admin-legal-footer a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
-.admin-legal-footer a:hover { color: var(--text-link); }
+.admin-legal-footer a { color: var(--text-2); text-decoration: underline; text-underline-offset: 2px; }
+.admin-legal-footer a:hover { color: var(--accent-text); }
 
 .feedback-privacy-notice .feedback-legal-link {
-  color: var(--text-link);
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 2px;
 }

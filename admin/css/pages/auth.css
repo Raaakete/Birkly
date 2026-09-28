@@ -26,11 +26,11 @@ body.auth-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-6);
-  background: var(--canvas);
-  color: var(--text-primary);
+  padding: var(--s-6);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
-  font-size: var(--text-base);
+  font-size: var(--size-body);
 }
 
 .auth-shell {
@@ -51,30 +51,30 @@ body.auth-page {
 
 .auth-title {
   margin: 0;
-  font-size: var(--text-2xl);
+  font-size: var(--size-number);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
 }
 
 .auth-subtitle {
   margin: 0;
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--text-2);
 }
 
 /* Auth pages are the one place a --control-lg field is right: a single
    focused task, no surrounding chrome competing for the row height. */
 .auth-form .input {
-  height: var(--control-lg);
+  height: var(--chrome-row);
 }
 
 /* One-time code / backup code — wide tracking so digits are countable */
 .auth-code-input {
-  height: var(--control-lg);
-  font-size: var(--text-lg);
+  height: var(--chrome-row);
+  font-size: var(--size-title-l);
   text-align: center;
   letter-spacing: 0.4em;
   text-indent: 0.4em;
@@ -86,19 +86,19 @@ body.auth-page {
 }
 
 .auth-footer {
-  border-block-start: 1px solid var(--border-subtle);
-  padding-block-start: var(--space-5);
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--s-5);
   text-align: center;
 }
 
 .auth-footer a {
-  color: var(--text-link);
+  color: var(--accent-text);
   text-decoration: none;
   font-weight: var(--weight-medium);
 }
 
 .auth-footer a:hover {
-  color: var(--text-link-hover);
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
@@ -108,28 +108,26 @@ body.auth-page {
 
 .auth-invite-details {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--s-3);
   margin: 0;
 }
 
 .auth-invite-detail {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--s-1);
 }
 
 .auth-invite-detail dt {
   margin: 0;
-  font-size: var(--text-xs);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .auth-invite-detail dd {
   margin: 0;
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  font-size: var(--size-small);
+  color: var(--text);
 }
 
 /* ============================================

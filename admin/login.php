@@ -257,7 +257,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
 </head>
-<body class="auth-page">
+<body class="auth-page" data-birch>
     <main class="auth-shell">
         <section class="card auth-card">
             <div class="card-body u-stack-6">
