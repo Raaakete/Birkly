@@ -63,7 +63,7 @@ function get_active_plugin_navigation(): array {
                         'id' => $pluginId,
                         'name' => $pluginData['navigation']['name'] ?? $pluginData['name'],
                         'page' => $pluginData['navigation']['page'] ?? $pluginId,
-                        'icon' => $pluginData['navigation']['icon'] ?? birkly_icon('gear', ['class' => 'nav-icon'])
+                        'icon' => (string) ($pluginData['navigation']['icon'] ?? '')
                     ];
                 }
             }
@@ -183,7 +183,7 @@ if (empty($userAvatar)) {
                                     ?>
                                     <li class="nav-item<?= $pluginAttention ? ' has-attention' : '' ?>" data-plugin-id="<?= htmlspecialchars((string) ($plugin['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                         <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($pluginTitle) ?>"<?= $pluginAttention ? ' aria-label="' . htmlspecialchars($pluginTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
-                                            <?= $plugin['icon'] ?>
+                                            <?= birkly_nav_icon((string) ($plugin['icon'] ?? '')) ?>
                                             <span class="nav-label"><?= htmlspecialchars($plugin['name']) ?></span>
                                             <span class="nav-attention-dot" aria-hidden="true"<?= $pluginAttention ? '' : ' hidden' ?>></span>
                                         </a>
@@ -207,7 +207,7 @@ if (empty($userAvatar)) {
                         ?>
                         <li class="nav-item<?= $pluginAttention ? ' has-attention' : '' ?>" data-plugin-id="<?= htmlspecialchars((string) ($plugin['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                             <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($pluginTitle) ?>"<?= $pluginAttention ? ' aria-label="' . htmlspecialchars($pluginTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
-                                <?= $plugin['icon'] ?>
+                                <?= birkly_nav_icon((string) ($plugin['icon'] ?? '')) ?>
                                 <span class="nav-label"><?= htmlspecialchars($plugin['name']) ?></span>
                                 <span class="nav-attention-dot" aria-hidden="true"<?= $pluginAttention ? '' : ' hidden' ?>></span>
                             </a>

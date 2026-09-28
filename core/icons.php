@@ -179,3 +179,22 @@ function birkly_icon(string $name, array $attrs = []): string
 {
     return birkly_icon_svg($name, $attrs);
 }
+
+/**
+ * Sidebar icon for a plugin nav item. `navigation.icon` / `sidebar.icon` is a
+ * registry name (drawn as a Birch icon with its gesture) or, as a fallback,
+ * the plugin's own inline <svg>. Anything else gets the default plugin icon.
+ */
+function birkly_nav_icon(string $icon): string
+{
+    $icon = trim($icon);
+    if (preg_match('/^[a-z0-9-]+$/', $icon) === 1) {
+        $markup = birkly_icon($icon, ['class' => 'nav-icon']);
+        if ($markup !== '') {
+            return $markup;
+        }
+    } elseif (str_starts_with($icon, '<svg')) {
+        return $icon;
+    }
+    return birkly_icon('sliders', ['class' => 'nav-icon']);
+}
