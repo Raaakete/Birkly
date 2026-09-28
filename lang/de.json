@@ -2902,6 +2902,8 @@
         "theme_dark": "Dunkel",
         "theme_auto": "Automatisch",
         "more_actions": "Weitere Aktionen",
-        "feedback_attachments_choose": "Dateien auswählen"
+        "feedback_attachments_choose": "Dateien auswählen",
+        "file_pick_image": "Bild auswählen",
+        "file_pick_none": "Keine Datei ausgewählt"
     }
 }

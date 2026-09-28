@@ -3590,6 +3590,7 @@ function syncSavedLogoState(generalForm, logoPath) {
     var logoInput = generalForm.querySelector('#project-logo');
     if (logoInput) {
         logoInput.value = '';
+        logoInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
     if (!logoPath) {

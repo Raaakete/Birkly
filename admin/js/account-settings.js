@@ -242,6 +242,7 @@ async function saveAccountProfile() {
         const avatarInput = form.querySelector('#account-avatar');
         if (avatarInput) {
             avatarInput.value = '';
+            avatarInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         return profileResult;
