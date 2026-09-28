@@ -77,6 +77,7 @@ $pageViewPermissions = [
     'user_tiers' => 'manage_users',
     'user_groups' => 'manage_users',
     'plugins' => 'manage_plugins',
+    'birch-kit' => 'manage_settings',
 
     // Account is always accessible to authenticated users
     'account' => null,
@@ -208,6 +209,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
             'feedback' => 'feedback.html',
+            'birch-kit' => 'birch-kit.php',
             'community_users' => null,
             'sample_plugin' => null,
         ];
@@ -517,6 +519,14 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         'error_file' => $e->getFile(),
                         'error_line' => $e->getLine(),
                     ]);
+                }
+            } elseif ($page === 'birch-kit') {
+                require_once __DIR__ . '/../core/developer_mode.php';
+                if (birkly_developer_mode_enabled()) {
+                    include $templatePath;
+                } else {
+                    echo '<div class="empty-state"><p class="empty-state-title">Developer mode is off</p>';
+                    echo '<p class="empty-state-text">Turn on Developer mode in Settings › System to open the Birch component kit.</p></div>';
                 }
             } elseif ($page === 'dashboard' || $page === 'media' || $page === 'account') {
                 // Pass query params so entry-editor receives collection/entry ids
