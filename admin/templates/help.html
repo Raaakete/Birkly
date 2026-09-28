@@ -8,16 +8,12 @@
     <div class="page-header-actions"></div>
 </div>
 
-<div class="help-page help-page-v1">
+<div class="help-page help-page-v1" data-birch>
     <div class="help-search-bar">
         <div class="help-search-wrap">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"></circle>
-                <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-            </svg>
-            <input type="search" id="help-search-input" class="help-search-input"
-                   placeholder="Search help"
-                   autocomplete="off" aria-label="Search help">
+            <span class="search-field help-search-field"><?= birkly_icon('search') ?><input type="search" id="help-search-input" class="input help-search-input"
+                   placeholder="{translate 'admin.help_search_placeholder'}"
+                   autocomplete="off" aria-label="{translate 'admin.help_search_placeholder'}"></span>
             <div id="help-search-results" class="help-search-results" role="listbox"></div>
         </div>
     </div>
@@ -30,8 +26,8 @@
         </div>
 
         <aside class="help-sidebar">
-            <nav class="side-nav side-nav--track" aria-label="Documentation">
-                <p class="side-nav-group-title">Documentation</p>
+            <nav class="side-nav side-nav--track" aria-label="{translate 'admin.documentation'}">
+                <p class="side-nav-group-title">{translate 'admin.documentation'}</p>
                 <div id="help-topic-nav-platform" class="u-stack-3"></div>
             </nav>
         </aside>

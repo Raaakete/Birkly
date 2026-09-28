@@ -104,3 +104,34 @@
   border-radius: var(--radius-md);
   background: var(--surface-sunken);
 }
+
+/* ============================================
+   Birch (P96-M13): search field on the canvas, the article is one slab
+   (the reading surface), the topic rail is canvas with the ink bar.
+   ============================================ */
+.help-page[data-birch] { padding: 0; }
+.help-page[data-birch] .help-search-bar { margin-block-end: var(--s-4); }
+.help-page[data-birch] .help-search-field { width: 100%; max-width: 360px; }
+.help-page[data-birch] .help-layout { gap: var(--s-6); }
+
+.help-page[data-birch] .help-content {
+  padding: var(--s-6) var(--s-6) var(--s-5);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.help-page[data-birch] .help-content .prose { max-width: 72ch; }
+.help-page[data-birch] .help-code-lang { letter-spacing: 0; text-transform: none; }
+
+.help-page[data-birch] .side-nav-group-title {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.help-page[data-birch] .prose .example-box {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
