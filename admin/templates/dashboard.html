@@ -63,21 +63,25 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
     </div>
 </div>
 
+<?php
+$dashRoot = function_exists('birkly_project_root') ? birkly_project_root() : dirname(__DIR__, 2);
+if (!function_exists('birkly_hosting_collect_registered_domain_hosts')) {
+    require_once $dashRoot . '/core/hosting_urls.php';
+}
+if (!function_exists('birkly_icon')) {
+    require_once $dashRoot . '/core/icons.php';
+}
+$dashUser = is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : [];
+$dashFirstName = trim((string) strtok(trim((string) ($dashUser['name'] ?? '')) ?: (string) strtok((string) ($dashUser['email'] ?? ''), '@'), ' '));
+$dashDomainCount = function_exists('birkly_hosting_collect_registered_domain_hosts') ? count(birkly_hosting_collect_registered_domain_hosts()) : 0;
+$dashIsAdmin = ($dashUser['role'] ?? '') === 'admin';
+?>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
     <div class="page-header-actions"></div>
 </div>
-
-<div class="main-actions-bar">
-    <div class="main-actions-left">
-        <button type="button" class="btn btn-secondary" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal">
-            <?= htmlspecialchars(__('admin.dashboard_customize_title')) ?>
-        </button>
-    </div>
-</div>
-
 
 <div id="dashboard-customize-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dashboard-customize-title">
     <div class="modal-content modal--md">
@@ -101,8 +105,16 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
     </div>
 </div>
 
-<div class="page-body u-stack-6">
-<?php if ($showOnboarding): ?>
+<div class="dashboard-home" data-birch>
+    <div class="dashboard-greeting">
+        <p class="dashboard-hello">
+            <strong id="dashboard-greeting" data-name="<?= htmlspecialchars($dashFirstName) ?>"><?= htmlspecialchars($dashFirstName !== '' ? $dashFirstName : __('admin.dashboard')) ?></strong>
+            <span class="dashboard-date" id="dashboard-date"></span>
+        </p>
+        <div class="dashboard-status" id="dashboard-status" data-domains="<?= (int) $dashDomainCount ?>" data-admin="<?= $dashIsAdmin ? '1' : '0' ?>"></div>
+    </div>
+
+    <?php if ($showOnboarding): ?>
     <details class="card welcome-dashboard" open id="onboarding-checklist-panel">
         <summary class="card-header">
             <span class="card-title"><?= __('admin.welcome_to_birkly_exclamation') ?></span>
@@ -138,6 +150,50 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
     </details>
 <?php endif; ?>
 
-    <!-- Widget API v2 renders the complete dashboard here (1× / 2× spans). -->
-    <div class="dashboard-widgets-grid" id="dashboard-widget-grid" aria-live="polite"></div>
+    <div class="metrics" id="dashboard-metrics" aria-live="polite" aria-busy="true">
+        <div class="metric"><span class="skeleton"></span></div>
+        <div class="metric"><span class="skeleton"></span></div>
+        <div class="metric"><span class="skeleton"></span></div>
+        <div class="metric"><span class="skeleton"></span></div>
+        <div class="metrics-customize">
+            <button type="button" class="icon-button" id="dashboard-metrics-customize" aria-haspopup="true" aria-expanded="false" aria-controls="dashboard-metrics-menu" aria-label="<?= htmlspecialchars(__('admin.dash_customize_metrics')) ?>" title="<?= htmlspecialchars(__('admin.dash_customize_metrics')) ?>"><?= birkly_icon('sliders') ?></button>
+            <div class="menu dashboard-metrics-menu" id="dashboard-metrics-menu" role="menu" hidden></div>
+        </div>
+    </div>
+
+    <div class="dashboard-columns">
+        <section class="frame dashboard-inbox" aria-label="<?= htmlspecialchars(__('admin.dash_needs_attention')) ?>">
+            <div class="tabs" role="tablist" id="dashboard-inbox-tabs">
+                <button type="button" role="tab" id="dashboard-tab-attention" aria-controls="dashboard-pane-attention" aria-selected="true"><?= __('admin.dash_needs_attention') ?> <span class="count is-warning" id="dashboard-attention-count" hidden>0</span></button>
+                <button type="button" role="tab" id="dashboard-tab-activity" aria-controls="dashboard-pane-activity" aria-selected="false" tabindex="-1"><?= __('admin.dash_tab_activity') ?></button>
+                <button type="button" role="tab" id="dashboard-tab-entries" aria-controls="dashboard-pane-entries" aria-selected="false" tabindex="-1"><?= __('admin.dash_tab_recent_entries') ?></button>
+            </div>
+            <div class="dashboard-pane" role="tabpanel" id="dashboard-pane-attention" aria-labelledby="dashboard-tab-attention"></div>
+            <div class="dashboard-pane" role="tabpanel" id="dashboard-pane-activity" aria-labelledby="dashboard-tab-activity" hidden></div>
+            <div class="dashboard-pane" role="tabpanel" id="dashboard-pane-entries" aria-labelledby="dashboard-tab-entries" hidden></div>
+        </section>
+
+        <section class="slab dashboard-traffic" aria-labelledby="dashboard-traffic-title">
+            <div class="dashboard-traffic-head">
+                <h2 class="dashboard-traffic-title" id="dashboard-traffic-title"><?= __('admin.dash_traffic') ?></h2>
+                <span class="chip"><?= __('admin.dash_last_30_days') ?></span>
+            </div>
+            <div class="tabs" role="tablist" id="dashboard-traffic-tabs">
+                <button type="button" role="tab" aria-selected="true" data-traffic="pages"><?= __('admin.dash_tab_entry_pages') ?></button>
+                <button type="button" role="tab" aria-selected="false" tabindex="-1" data-traffic="sources"><?= __('admin.dash_tab_sources') ?></button>
+                <button type="button" role="tab" aria-selected="false" tabindex="-1" data-traffic="countries"><?= __('admin.dash_tab_countries') ?></button>
+                <button type="button" role="tab" aria-selected="false" tabindex="-1" data-traffic="devices"><?= __('admin.dash_tab_devices') ?></button>
+            </div>
+            <div class="dashboard-traffic-body" id="dashboard-traffic-body" role="tabpanel"></div>
+            <div class="dashboard-traffic-foot" id="dashboard-traffic-foot"></div>
+        </section>
+    </div>
+
+    <section class="dashboard-plugins" id="dashboard-plugin-widgets" hidden>
+        <div class="dashboard-plugins-head">
+            <h2 class="dashboard-plugins-title"><?= __('admin.dash_from_plugins') ?></h2>
+            <button type="button" class="button is-quiet is-small" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal"><?= __('admin.dash_arrange') ?></button>
+        </div>
+        <div class="dashboard-widgets-grid" id="dashboard-widget-grid" aria-live="polite"></div>
+    </section>
 </div>

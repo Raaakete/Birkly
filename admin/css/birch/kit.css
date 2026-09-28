@@ -8,6 +8,11 @@
    enough weight to win over P56 element rules. Loaded last.
    ============================================ */
 
+/* The 4px slab stacking gap is for block flow; rows and grids use gap */
+[data-birch] :is(.metrics, .card-grid, .file-grid, .dashboard-columns, .kit-row, .kit-grid, .kit-choice, .kit-decisions, .kit-stack, .dashboard-rows) > * {
+  margin-block-start: 0;
+}
+
 /* ---------- Page chrome inside a Birch page ---------- */
 [data-birch] .page-bar {
   display: flex;
@@ -394,8 +399,16 @@
 
 [data-birch] .tabs {
   display: flex;
+  flex-wrap: nowrap;
   gap: var(--s-5);
+  overflow-x: auto;
+  scrollbar-width: none;
   border-block-end: 1px solid var(--line);
+}
+
+[data-birch] .tabs > * {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 [data-birch] .tabs > button,
@@ -638,11 +651,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+[data-birch] .ranked-label.is-text { font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans); }
+
 [data-birch] .ranked .meter { grid-column: 1 / -1; margin: 0; }
 [data-birch] .ranked .meter.is-muted > span { background: repeating-linear-gradient(to right, var(--text-3) 0 3px, transparent 3px 4px); }
 
 /* ---------- Rows and timeline ---------- */
-[data-birch] .row {
+[data-birch] .row,
+[data-birch] .task-row {
   display: flex;
   align-items: center;
   gap: var(--s-3);
@@ -861,6 +877,41 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 [data-birch] .menu-item.is-danger > .birkly-icon { color: var(--danger); }
 [data-birch] .menu-item .kbd,
 [data-birch] .menu-item .switch { margin-inline-start: auto; }
+
+[data-birch] .menu-note {
+  margin: 0;
+  padding: var(--s-2);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .list-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-block-start: var(--s-3);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .list-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-inline-start: auto;
+  color: var(--accent-text);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+}
+
+[data-birch] a.task-row,
+[data-birch] a.row {
+  color: inherit;
+  text-decoration: none;
+}
 
 [data-birch] .menu-rule {
   height: 1px;
