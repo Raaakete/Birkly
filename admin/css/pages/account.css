@@ -33,15 +33,15 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
-  margin-block-start: var(--space-2);
+  gap: var(--s-2);
+  margin-block-start: var(--s-2);
 }
 
 .avatar-preview-wrap img {
-  width: var(--space-16);
-  height: var(--space-16);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   object-fit: cover;
 }
 
@@ -49,7 +49,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 /* ============================================
@@ -60,15 +60,15 @@
   display: block;
   width: 12rem;
   height: 12rem;
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
 }
 
 .account-2fa-code-input {
-  height: var(--control-lg);
-  font-size: var(--text-xl);
+  height: var(--chrome-row);
+  font-size: var(--size-page-title);
   letter-spacing: 0.4em;
   text-align: center;
 }

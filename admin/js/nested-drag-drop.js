@@ -553,7 +553,7 @@
                     top: ${cardRect.top - containerRect.top}px;
                     width: 3px;
                     height: ${cardRect.height}px;
-                    background: var(--primary-500, #3b82f6);
+                    background: var(--mint-500);
                     pointer-events: none;
                     z-index: 1000;
                     box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
@@ -569,7 +569,7 @@
                     top: ${y}px;
                     width: 100%;
                     height: 3px;
-                    background: var(--primary-500, #3b82f6);
+                    background: var(--mint-500);
                     pointer-events: none;
                     z-index: 1000;
                     box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);

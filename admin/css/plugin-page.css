@@ -22,7 +22,7 @@
 .studio-ide.plugin-page {
   max-width: none;
   margin: 0;
-  padding: 0 0 var(--space-8);
+  padding: 0 0 32px;
 }
 
 .plugin-page-header { padding-inline: 0; }
@@ -44,19 +44,19 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-start;
-  gap: var(--space-2);
-  margin-block-end: var(--space-4);
+  gap: var(--s-2);
+  margin-block-end: var(--s-4);
 }
 
 .plugin-page .main-actions-bar {
   justify-content: flex-start;
-  margin-block-end: var(--space-4);
+  margin-block-end: var(--s-4);
 }
 
 .plugin-page .main-actions-bar .plugin-actions-left {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   margin-inline-end: auto;
 }
 
@@ -68,7 +68,7 @@
 .user-management-page.plugin-page .settings-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--s-4);
 }
 
 .user-management-page.plugin-page .settings-stack .card { margin: 0; }
@@ -76,47 +76,35 @@
 .user-management-page.plugin-page .settings-stack .section-header h2,
 .user-management-page.plugin-page .settings-stack .card-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--size-title-l);
 }
 
 .user-management-page.plugin-page .settings-stack .section-description,
 .user-management-page.plugin-page .settings-stack .field-help,
 .user-management-page.plugin-page .settings-stack .text-muted {
-  margin: 0 0 var(--space-3);
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.user-management-page.plugin-page .settings-stack .form-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
-}
-
-@media (min-width: 768px) {
-  .user-management-page.plugin-page .settings-stack .form-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  margin: 0 0 var(--s-3);
+  color: var(--text-2);
+  font-size: var(--size-small);
 }
 
 .user-management-page.plugin-page .settings-stack .form-group label {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--s-2);
   font-weight: var(--weight-medium);
 }
 
 .user-management-page.plugin-page .settings-stack .form-group small {
   display: block;
-  margin-block-start: var(--space-1);
+  margin-block-start: var(--s-1);
 }
 
 .user-management-page.plugin-page #profile-collection-settings {
-  margin-block-start: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  margin-block-start: var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
 }
 
 .user-management-page.plugin-page .settings-tab-panels .card { max-width: 100%; }
@@ -128,17 +116,17 @@
 .plugin-docs-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--s-6);
   align-items: start;
 }
 
 .plugin-docs-nav.side-nav {
   position: sticky;
-  top: var(--space-4);
+  top: var(--s-4);
 }
 
 .plugin-docs-nav .side-nav-group-title {
-  margin-block-start: var(--space-4);
+  margin-block-start: var(--s-4);
 }
 
 .plugin-docs-nav .side-nav-group-title:first-child {
@@ -163,16 +151,16 @@
 }
 
 .plugin-docs-content .markdown-content > * + * {
-  margin-block-start: var(--space-4);
+  margin-block-start: var(--s-4);
 }
 
 .plugin-docs-content .markdown-content h1,
 .plugin-docs-content .markdown-content h2,
 .plugin-docs-content .markdown-content h3,
 .plugin-docs-content .markdown-content h4 {
-  margin-block-start: var(--space-6);
-  margin-block-end: var(--space-2);
-  line-height: var(--leading-tight);
+  margin-block-start: var(--s-6);
+  margin-block-end: var(--s-2);
+  line-height: 1.25;
 }
 
 .plugin-docs-content .markdown-content h1:first-child,
@@ -184,18 +172,18 @@
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
   font-size: 0.9em;
   padding: 0.1em 0.35em;
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
+  border-radius: var(--r);
+  background: var(--surface-2);
 }
 
 .plugin-docs-pre {
   margin: 0;
-  padding: var(--space-4);
+  padding: var(--s-4);
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  font-size: var(--text-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--size-small);
 }
 
 .plugin-docs-pre code {
@@ -205,26 +193,26 @@
 
 .plugin-docs-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
 }
 
 .plugin-docs-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
 }
 
 .plugin-docs-table th,
 .plugin-docs-table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--s-2) var(--s-3);
+  border-bottom: 1px solid var(--line);
   text-align: start;
   vertical-align: top;
 }
 
 .plugin-docs-table th {
-  background: var(--surface-sunken);
+  background: var(--surface-2);
   font-weight: var(--weight-semibold);
 }
 
@@ -234,18 +222,18 @@
 
 .plugin-docs-callout {
   margin: 0;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--s-3) var(--s-4);
   border-inline-start: 3px solid var(--accent);
-  background: var(--surface-sunken);
-  color: var(--text-secondary);
+  background: var(--surface-2);
+  color: var(--text-2);
 }
 
 .plugin-docs-figure {
   display: block;
   max-width: 100%;
   height: auto;
-  margin: var(--space-2) 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  margin: var(--s-2) 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
 }

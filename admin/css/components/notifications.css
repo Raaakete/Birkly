@@ -38,14 +38,14 @@
 }
 
 .notification-badge--unread {
-  background: var(--danger-solid);
-  color: var(--ink-on-danger);
+  background: var(--danger);
+  color: var(--on-status);
 }
 
 .notification-badge--seen {
-  background: var(--neutral-surface);
-  color: var(--text-secondary);
-  border-color: var(--border-subtle);
+  background: var(--surface-2);
+  color: var(--text-2);
+  border-color: var(--line);
 }
 
 /* ============================================
@@ -59,7 +59,7 @@
 .dropdown-menu.notifications-dropdown {
   width: 24rem;
   min-width: auto;
-  max-width: calc(100vw - var(--space-8));
+  max-width: calc(100vw - 32px);
   max-height: 37.5rem;
   padding: 0;
   overflow: hidden;
@@ -73,7 +73,7 @@
   .dropdown-menu.notifications-dropdown.active {
     position: fixed;
     inset-block-start: calc(5rem + env(safe-area-inset-top, 0px));
-    inset-inline: var(--space-4);
+    inset-inline: var(--s-4);
     width: auto;
     max-width: none;
   }
@@ -83,17 +83,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-block-end: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-block-end: 1px solid var(--line);
+  background: var(--surface);
 }
 
 .notifications-header h3 {
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   font-weight: var(--weight-semibold);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 /* ============================================
@@ -110,19 +110,19 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-block-end: 1px solid var(--border-subtle);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-block-end: 1px solid var(--line);
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease);
 }
 
 .notification-item:hover {
-  background: var(--surface-hover);
+  background: var(--surface-2);
 }
 
 .notification-item.unread {
-  background: var(--surface-hover);
+  background: var(--surface-2);
 }
 
 .notification-item.unread::before {
@@ -131,7 +131,7 @@
   inset-block: 0;
   inset-inline-start: 0;
   width: 3px;
-  background: var(--accent-muted);
+  background: var(--accent-line);
 }
 
 .notification-icon {
@@ -139,11 +139,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--control-md);
-  height: var(--control-md);
-  border-radius: var(--radius-pill);
-  background: var(--neutral-surface);
-  font-size: var(--text-md);
+  width: var(--control);
+  height: var(--control);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--size-slab-title);
   line-height: 1;
 }
 
@@ -153,18 +153,18 @@
 }
 
 .notification-message {
-  margin-block-end: var(--space-1);
-  font-size: var(--text-base);
-  line-height: var(--leading-snug);
-  color: var(--text-primary);
+  margin-block-end: var(--s-1);
+  font-size: var(--size-body);
+  line-height: 1.4;
+  color: var(--text);
 }
 
 .notification-meta {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  gap: var(--s-2);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 .notification-user {
@@ -172,39 +172,39 @@
 }
 
 .notification-time {
-  color: var(--text-tertiary);
+  color: var(--text-3);
 }
 
 .notification-dot {
   flex-shrink: 0;
   width: 0.5rem;
   height: 0.5rem;
-  margin-block-start: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--accent-muted);
+  margin-block-start: var(--s-2);
+  border-radius: var(--r);
+  background: var(--accent-line);
 }
 
 .notifications-empty,
 .notifications-loading,
 .notifications-error {
-  padding: var(--space-8) var(--space-4);
+  padding: 32px var(--s-4);
   text-align: center;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 .notifications-error {
-  color: var(--danger-fg);
+  color: var(--danger);
 }
 
 .notifications-footer {
-  padding: var(--space-3) var(--space-4);
-  border-block-start: 1px solid var(--border-subtle);
-  background: var(--surface-sunken);
+  padding: var(--s-3) var(--s-4);
+  border-block-start: 1px solid var(--line);
+  background: var(--surface-2);
   text-align: center;
 }
 
 .notifications-footer a {
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
 }

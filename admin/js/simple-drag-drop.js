@@ -139,7 +139,7 @@
             const baseZIndex = this.itemSelector === '.collection-group' ? 10000 : 1000;
             this.dropIndicator.style.cssText = `
                 position: absolute;
-                background: var(--primary-500, #3b82f6);
+                background: var(--mint-500);
                 pointer-events: none;
                 z-index: ${baseZIndex};
                 display: none;

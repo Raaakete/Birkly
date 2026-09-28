@@ -36,7 +36,7 @@ class Checkbox extends BaseField {
         .checkbox-field-wrapper {
             display: flex;
             align-items: center;
-            min-height: var(--control-md, 2.5rem);
+            min-height: var(--control);
         }
         CSS;
     }

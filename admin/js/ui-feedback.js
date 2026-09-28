@@ -330,7 +330,7 @@
             var titleEl = modal.querySelector('#birkly-feedback-confirm-title');
             var messageEl = modal.querySelector('#birkly-feedback-confirm-message');
             var confirmBtn = modal.querySelector('[data-birkly-feedback-action="confirm"]');
-            var cancelBtn = modal.querySelector('[data-birkly-feedback-action="cancel"]');
+            var cancelBtn = modal.querySelector('.modal-footer [data-birkly-feedback-action="cancel"]');
 
             if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_confirm_title', 'Confirm');
             if (messageEl) messageEl.textContent = String(message ?? '');
@@ -381,7 +381,7 @@
             var messageEl = modal.querySelector('#birkly-feedback-prompt-message');
             var input = modal.querySelector('#birkly-feedback-prompt-input');
             var confirmBtn = modal.querySelector('[data-birkly-prompt-action="confirm"]');
-            var cancelBtn = modal.querySelector('[data-birkly-prompt-action="cancel"]');
+            var cancelBtn = modal.querySelector('.modal-footer [data-birkly-prompt-action="cancel"]');
 
             if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_input_required', 'Input required');
             if (messageEl) messageEl.textContent = String(message ?? '');
