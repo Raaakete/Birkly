@@ -1362,7 +1362,7 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 /* ---------- Setting rows and row lists (P96-M12) ----------
    A setting row is a slab split by a hairline into label and help | value.
    A row list is slabs 4px apart: icon or avatar · title and meta · actions. */
-[data-birch] .setting-label > :is(small, .form-help, .settings-help) {
+[data-birch] .setting-label > :is(small, .form-help, .settings-help, .field-help) {
   margin: 0;
   color: var(--text-3);
   font-size: var(--size-small);
@@ -1520,6 +1520,162 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 @media (max-width: 767px) {
   [data-birch] .setting-row { grid-template-columns: minmax(0, 1fr); }
   [data-birch] .setting-value { padding-block-start: 0; border-inline-start: 0; }
+}
+
+/* ---------- Plugin pages on Birch (P96-M14) ----------
+   Official plugins opt in with data-birch on their .plugin-page root and
+   still emit P56 cards, tables, stat tiles, empty states and field groups.
+   Inside that root they take the Birch roles: a top-level card is a frame,
+   anything nested (or in a stat grid) is a slab, table rows are slabs under
+   a canvas header, empty states are dashed. Plugins replace these classes
+   before M15 deletes the P56 aliases. */
+.plugin-page[data-birch] { display: flex; flex-direction: column; gap: var(--s-6); }
+.plugin-page[data-birch] .u-stack-6 { gap: var(--s-6); }
+
+.plugin-page[data-birch] .card {
+  margin: 0;
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: none;
+  box-shadow: none;
+}
+
+.plugin-page[data-birch] :is(.card .card, .card--sunken, .card--flush .card),
+.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > .card {
+  padding: var(--s-4);
+  border: 0;
+  background: var(--surface);
+}
+
+.plugin-page[data-birch] .card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.plugin-page[data-birch] .card-header > :is(h2, h3, .card-title, .card-heading) { flex: 1 1 auto; min-width: 0; margin: 0; }
+
+.plugin-page[data-birch] :is(.card-header h2, .card-header h3, .card-title, .section-title) {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.plugin-page[data-birch] :is(.card .card, .u-grid-auto-sm > .card, .u-grid-auto > .card) :is(.card-title, .card-header h3) {
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+.plugin-page[data-birch] .card-body,
+.plugin-page[data-birch] .card-footer { padding: 0; border: 0; background: none; }
+
+.plugin-page[data-birch] .card-footer { margin-block-start: var(--s-4); }
+
+/* Setting rows stack 4px apart, also where a P56 grid or stack still wraps them */
+.plugin-page[data-birch] :is(.card-body, .u-grid-2, .u-grid-auto-sm, .u-grid-auto, .form-grid, .u-stack-3, .u-stack-4):has(> .setting-row) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.plugin-page[data-birch] .card-body:has(> .setting-row) > :is(.field-help, .form-help, .settings-help, p):not(:first-child) { margin-block-start: var(--s-2); }
+.plugin-page[data-birch] .card-body:has(> .setting-row) > :is(.field-help, .form-help, .settings-help):first-child { margin-block-end: var(--s-2); }
+
+.plugin-page[data-birch] :is(.card-description, .field-help, .form-help, .settings-help, .section-description) {
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.plugin-page[data-birch] :is(.field, .form-group) > label:first-child,
+.plugin-page[data-birch] .field-label {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.plugin-page[data-birch] :is(.field, .form-group):not(.setting-row) { background: none; }
+
+/* Fields: white in a frame, grey inside a slab */
+.plugin-page[data-birch] .card .input { border-color: var(--line); background-color: var(--surface); }
+.plugin-page[data-birch] :is(.card .card, .card--sunken, .setting-row, .list-row) .input,
+.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > .card .input { border-color: transparent; background-color: var(--surface-2); }
+.plugin-page[data-birch] .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+
+/* Stat tiles: label, value in the number style */
+.plugin-page[data-birch] :is(.stat-label, .metric-label) {
+  color: var(--text-2);
+  font-size: var(--size-small);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.plugin-page[data-birch] :is(.stat-value, .metric-value) {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-number) / 1.1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tables: header on the canvas, each row a slab 4px apart */
+.plugin-page[data-birch] .table-container { overflow-x: auto; border: 0; background: none; box-shadow: none; }
+
+.plugin-page[data-birch] table.table {
+  border-collapse: separate;
+  border-spacing: 0 var(--s-1);
+  margin-block-start: calc(var(--s-1) * -1);
+  background: none;
+}
+
+.plugin-page[data-birch] table.table th {
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / var(--lh-caption) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.plugin-page[data-birch] table.table td {
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: var(--surface);
+}
+
+.plugin-page[data-birch] table.table td:first-child { border-start-start-radius: var(--r); border-end-start-radius: var(--r); }
+.plugin-page[data-birch] table.table td:last-child { border-start-end-radius: var(--r); border-end-end-radius: var(--r); }
+.plugin-page[data-birch] table.table tr:hover td { background: var(--surface); }
+.plugin-page[data-birch] table.table td[colspan] { background: none; }
+
+/* Empty and loading states */
+.plugin-page[data-birch] :is(.empty-state, .empty-state--compact) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.plugin-page[data-birch] :is(.empty-state, .empty-state--compact) p { margin: 0; }
+.plugin-page[data-birch] :is(.empty-state-title, .empty-state__title) { color: var(--text); font-weight: var(--weight-semibold); }
+.plugin-page[data-birch] .loading-state { color: var(--text-3); font-size: var(--size-small); }
+.plugin-page[data-birch] .main-actions-bar { margin: 0; }
+
+.plugin-page[data-birch] .callout {
+  border: 0;
+  border-radius: var(--r);
 }
 
 [data-birch] [hidden] { display: none; }
