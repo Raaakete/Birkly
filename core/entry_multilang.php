@@ -62,6 +62,28 @@ function birkly_entry_resolve_top_level_title(
 }
 
 /**
+ * The title to show for an entry: the top-level title, else the first language's
+ * (multilanguage entries keep it under en.title, de.title, …). Empty when none.
+ */
+function birkly_entry_display_title(array $entry): string
+{
+    $title = trim((string) ($entry['title'] ?? ''));
+    if ($title !== '') {
+        return $title;
+    }
+    foreach ($entry as $key => $value) {
+        if (is_string($key) && is_array($value) && preg_match('/^[a-z]{2}(?:-[a-z]{2,4})?$/', $key)) {
+            $title = trim((string) ($value['title'] ?? ''));
+            if ($title !== '') {
+                return $title;
+            }
+        }
+    }
+
+    return '';
+}
+
+/**
  * Whether a top-level title value is a placeholder (entry id) rather than real content.
  */
 function birkly_entry_title_is_placeholder(string $title, array $entry): bool
