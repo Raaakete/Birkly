@@ -486,6 +486,22 @@ try {
         throw new Exception('A collection with this slug already exists. Choose a different slug or open the existing collection to edit it.');
     }
     
+    // Validate field names before anything is written, so a rejected save leaves the collection untouched.
+    if (is_array($fields)) {
+        $reservedNames = array_flip(array_map('strtolower', birkly_entry_reserved_field_names()));
+        foreach ($fields as $fieldData) {
+            if (!is_array($fieldData) || empty($fieldData['name']) || empty($fieldData['type'])) {
+                continue;
+            }
+            $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', (string) $fieldData['name'])));
+            if (isset($reservedNames[$fieldName])) {
+                throw new Exception(
+                    'Field name "' . $fieldName . '" is reserved for entry metadata (slug, status, SEO, etc.). Choose a different name.'
+                );
+            }
+        }
+    }
+
     // Create collection directory if it doesn't exist
     if (!is_dir($collectionsPath)) {
         error_log("Creating collections directory: " . $collectionsPath);
@@ -752,12 +768,6 @@ try {
             error_log("Processing field ID: $fieldId, type: " . ($fieldData['type'] ?? 'missing') . ", keys: " . implode(', ', array_keys($fieldData)));
             
             $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldData['name'])));
-            $reservedNames = array_flip(array_map('strtolower', birkly_entry_reserved_field_names()));
-            if (isset($reservedNames[$fieldName])) {
-                throw new Exception(
-                    'Field name "' . $fieldName . '" is reserved for entry metadata (slug, status, SEO, etc.). Choose a different name.'
-                );
-            }
 
             $field = [
                 'name' => $fieldName,
