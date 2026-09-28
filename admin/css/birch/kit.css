@@ -1,0 +1,1100 @@
+/* ============================================
+   Birkly Admin — Birch v5 component kit
+   ============================================
+
+   Every piece on the Components board, built once from tokens. Surfaces
+   (fill, line, radius, shadow) come from roles.generated.css; this file adds
+   layout, type and state. Scoped to [data-birch] while pages migrate, with
+   enough weight to win over P56 element rules. Loaded last.
+   ============================================ */
+
+/* ---------- Page chrome inside a Birch page ---------- */
+[data-birch] .page-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--control);
+  margin-block-end: var(--s-4);
+}
+
+[data-birch] .page-bar-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-inline-start: auto;
+}
+
+[data-birch] .bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--control);
+  padding: 2px var(--s-2);
+  border-radius: var(--r);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-line);
+  margin-block-end: var(--s-4);
+}
+
+[data-birch] .bulk-bar-count {
+  padding-inline: var(--s-1) var(--s-2);
+  color: var(--accent-text);
+  font-size: var(--size-title);
+  font-weight: var(--weight-semibold);
+}
+
+[data-birch] .bulk-bar .button:last-child { margin-inline-start: auto; }
+
+/* ---------- Buttons ---------- */
+[data-birch] .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  height: var(--control);
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  font: var(--weight-medium) var(--size-title) / var(--lh-title) var(--font-sans);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+[data-birch] .button:hover { background: var(--surface-2); }
+
+[data-birch] .button.is-main {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--on-mint);
+}
+
+[data-birch] .button.is-main:hover,
+[data-birch] .button.is-main.is-hover {
+  border-color: var(--mint-hover);
+  background: var(--mint-hover);
+}
+
+[data-birch] .button.is-quiet {
+  border-color: transparent;
+  background: none;
+  color: var(--text-2);
+}
+
+[data-birch] .button.is-quiet:hover { background: var(--surface-2); color: var(--text); }
+
+[data-birch] .button.is-danger {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+[data-birch] .button.is-small {
+  height: var(--control-sm);
+  padding: 0 var(--s-2);
+  font-size: var(--size-small);
+}
+
+[data-birch] .button:disabled,
+[data-birch] .button[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+[data-birch] .button.is-busy { pointer-events: none; }
+[data-birch] .button.is-busy .birkly-icon { animation: birch-spin var(--dur-px) steps(8) infinite; }
+
+[data-birch] .button:focus-visible,
+[data-birch] .icon-button:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+[data-birch] .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+[data-birch] .icon-button:hover { background: var(--surface-2); color: var(--text); }
+
+@keyframes birch-spin { to { transform: rotate(360deg); } }
+
+/* ---------- Fields ---------- */
+[data-birch] .field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+[data-birch] .field-label {
+  color: var(--text);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+  font-weight: var(--weight-medium);
+}
+
+[data-birch] .field-help {
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .field-error {
+  color: var(--danger);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+/* A field takes the opposite of what it sits on: white on the canvas or a float */
+[data-birch] .input,
+[data-birch] .select-box select {
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--control);
+  margin: 0;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans);
+  box-shadow: none;
+  transition: border-color var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
+}
+
+[data-birch] .input::placeholder { color: var(--text-3); }
+[data-birch] .input:hover:not(:focus),
+[data-birch] .select-box select:hover:not(:focus) { border-color: var(--line-strong); }
+
+[data-birch] .input:focus,
+[data-birch] .select-box select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+[data-birch] .input.is-invalid,
+[data-birch] .input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+[data-birch] .input.is-mono { font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono); }
+
+/* Inside a slab: invisible until hover */
+[data-birch] .slab .input,
+[data-birch] .setting-row .input,
+[data-birch] .field .input {
+  border-color: transparent;
+  background: none;
+}
+
+[data-birch] .slab .input:hover:not(:focus),
+[data-birch] .setting-row .input:hover:not(:focus),
+[data-birch] .field .input:hover:not(:focus) {
+  border-color: transparent;
+  background: var(--surface-2);
+}
+
+[data-birch] .slab .input:focus,
+[data-birch] .setting-row .input:focus,
+[data-birch] .field .input:focus { background: var(--surface); }
+
+[data-birch] .input-group {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s-1);
+}
+
+[data-birch] .input-group .prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--s-2);
+  color: var(--text-3);
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+}
+
+[data-birch] .select-box { position: relative; }
+
+[data-birch] .select-box select {
+  appearance: none;
+  background-image: none;
+  padding-inline-end: calc(var(--s-3) + var(--icon) + var(--s-2));
+  cursor: pointer;
+}
+
+[data-birch] .select-box .birkly-icon {
+  position: absolute;
+  inset-inline-end: var(--s-3);
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+/* ---------- Checkbox, radio, switch ---------- */
+[data-birch] .choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
+  cursor: pointer;
+}
+
+[data-birch] .check,
+[data-birch] .radio {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+[data-birch] .check { border-radius: var(--r-inset); }
+[data-birch] .radio { border-radius: 50%; }
+
+[data-birch] .check:checked,
+[data-birch] .check:indeterminate,
+[data-birch] .radio:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+[data-birch] .check:checked::before {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border: 2px solid var(--on-accent);
+  border-block-start: 0;
+  border-inline-end: 0;
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+[data-birch] .check:indeterminate::before {
+  content: "";
+  width: 6px;
+  height: 2px;
+  background: var(--on-accent);
+}
+
+[data-birch] .radio:checked::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--on-accent);
+}
+
+[data-birch] .check:focus-visible,
+[data-birch] .radio:focus-visible,
+[data-birch] .switch:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Switch: two cells, × and ✓; the chosen cell is filled */
+[data-birch] .switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+[data-birch] .switch > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  color: var(--text-3);
+  transition: background-color var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+[data-birch] .switch[aria-checked="false"] > span:first-child {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+[data-birch] .switch[aria-checked="true"] > span:first-child {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+[data-birch] .switch[aria-checked="true"] > span:last-child {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- Segmented, tabs, counts ---------- */
+[data-birch] .segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+}
+
+[data-birch] .segmented > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-inset);
+  background: none;
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  cursor: pointer;
+}
+
+[data-birch] .segmented > button[aria-pressed="true"],
+[data-birch] .segmented > button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+}
+
+[data-birch] .count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-inset);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-birch] .count.is-accent { background: var(--accent-soft); color: var(--accent-text); }
+[data-birch] .count.is-warning { background: var(--warning-soft); color: var(--warning); }
+
+[data-birch] .tabs {
+  display: flex;
+  gap: var(--s-5);
+  border-block-end: 1px solid var(--line);
+}
+
+[data-birch] .tabs > button,
+[data-birch] .tabs > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin-block-end: -1px;
+  padding: 0;
+  border: 0;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--text-2);
+  font: var(--weight-regular) var(--size-slab-title) / var(--lh-slab-title) var(--font-sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+[data-birch] .tabs > [aria-selected="true"],
+[data-birch] .tabs > [aria-current="page"] {
+  border-block-end-color: var(--text);
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+/* ---------- Chips, status, language, avatars, key caps ---------- */
+[data-birch] .status {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+  white-space: nowrap;
+}
+
+[data-birch] .status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pixel);
+  background: currentColor;
+}
+
+[data-birch] .status.is-published,
+[data-birch] .status.is-success { background: var(--success-soft); color: var(--success); }
+[data-birch] .status.is-scheduled,
+[data-birch] .status.is-info { background: var(--info-soft); color: var(--info); }
+[data-birch] .status.is-warning { background: var(--warning-soft); color: var(--warning); }
+[data-birch] .status.is-failed,
+[data-birch] .status.is-danger { background: var(--danger-soft); color: var(--danger); }
+[data-birch] .status.is-archived { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
+[data-birch] .status.is-plain::before { display: none; }
+
+/* P56 gives .chip and .count their own fill; restate the well here */
+[data-birch] .chip,
+[data-birch] .lang,
+[data-birch] .tag,
+[data-birch] .count:not(.is-accent):not(.is-warning) { background: var(--surface-2); }
+
+[data-birch] .chip,
+[data-birch] .lang,
+[data-birch] .tag {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-inset);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+}
+
+[data-birch] .lang { font-family: var(--font-mono); }
+
+[data-birch] .missing {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-mono);
+}
+
+[data-birch] .avatar {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-semibold) var(--size-caption) / 1 var(--font-sans);
+}
+
+[data-birch] .avatar.is-accent { background: var(--accent-soft); color: var(--accent-text); box-shadow: inset 0 0 0 1px var(--accent-line); }
+[data-birch] .avatar.is-ink { background: var(--text); color: var(--bg); }
+
+[data-birch] .kbd {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+}
+
+/* ---------- Signals (alerts) ---------- */
+[data-birch] .signal {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+}
+
+[data-birch] .signal > .birkly-icon { margin-block-start: 3px; color: var(--warning); }
+[data-birch] .signal.is-info > .birkly-icon { color: var(--info); }
+[data-birch] .signal.is-success > .birkly-icon { color: var(--success); }
+[data-birch] .signal.is-danger > .birkly-icon { color: var(--danger); }
+
+[data-birch] .signal-body { flex: 1 1 auto; min-width: 0; }
+
+[data-birch] .signal-title {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+[data-birch] .signal-text {
+  margin: 0;
+  color: var(--text-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .signal > .button { flex-shrink: 0; }
+
+/* ---------- Metrics ---------- */
+[data-birch] .metrics {
+  display: flex;
+  gap: var(--s-1);
+  align-items: stretch;
+}
+
+[data-birch] .metric {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-3) var(--s-4);
+}
+
+[data-birch] .metric-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .metric-value {
+  margin-block-start: var(--s-1);
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-number) / var(--lh-number) var(--font-sans);
+  letter-spacing: var(--tracking-number);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-birch] .metric-value small {
+  color: var(--text-3);
+  font-size: var(--size-body);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0;
+}
+
+[data-birch] .metric-meta {
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+/* Stepped meter: 0px segments filling in whole steps */
+[data-birch] .meter {
+  --value: 0;
+  height: 3px;
+  margin-block-start: var(--s-2);
+  background: repeating-linear-gradient(to right, var(--line) 0 3px, transparent 3px 4px);
+}
+
+[data-birch] .meter > span {
+  display: block;
+  width: calc(var(--value) * 1%);
+  height: 100%;
+  background: repeating-linear-gradient(to right, var(--accent) 0 3px, transparent 3px 4px);
+  transition: width var(--dur-4) steps(10);
+}
+
+[data-birch] .metrics-customize { align-self: center; }
+
+/* ---------- Ranked bars ---------- */
+[data-birch] .ranked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-birch] .ranked li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px var(--s-3);
+}
+
+[data-birch] .ranked-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+}
+
+[data-birch] .ranked-value {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-birch] .ranked .meter { grid-column: 1 / -1; margin: 0; }
+[data-birch] .ranked .meter.is-muted > span { background: repeating-linear-gradient(to right, var(--text-3) 0 3px, transparent 3px 4px); }
+
+/* ---------- Rows and timeline ---------- */
+[data-birch] .row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-list);
+  padding: var(--s-2) var(--s-3);
+}
+
+[data-birch] .row-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+[data-birch] .row-icon.is-info { background: var(--info-soft); color: var(--info); }
+[data-birch] .row-icon.is-success { background: var(--success-soft); color: var(--success); }
+[data-birch] .row-icon.is-warning { background: var(--warning-soft); color: var(--warning); }
+
+[data-birch] .row-body { flex: 1 1 auto; min-width: 0; }
+
+[data-birch] .row-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+[data-birch] .row-meta {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+}
+
+[data-birch] .row-meta code,
+[data-birch] .mono { font-family: var(--font-mono); font-size: var(--size-mono); }
+
+[data-birch] .timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-birch] .timeline::before {
+  content: "";
+  position: absolute;
+  inset-block: 12px;
+  inset-inline-start: 11px;
+  width: 1px;
+  background: var(--line);
+}
+
+[data-birch] .timeline > li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+/* ---------- Cards ---------- */
+[data-birch] .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--s-2);
+}
+
+[data-birch] .collection-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: var(--card-h);
+  padding: var(--s-3) var(--s-4);
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+
+[data-birch] .collection-card:hover,
+[data-birch] .collection-card.is-hover { box-shadow: 0 0 0 1px var(--accent-line); }
+
+[data-birch] .collection-card-title {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+[data-birch] .collection-card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+body[data-density="compact"] [data-birch] .collection-card-text { display: none; }
+
+[data-birch] .collection-card-foot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  margin-block-start: auto;
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+[data-birch] .collection-card-foot strong {
+  color: var(--text);
+  font: var(--weight-semibold) 20px / 24px var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-birch] .collection-card.is-empty .collection-card-foot strong { color: var(--text-3); }
+
+[data-birch] .collection-card .icon-button {
+  position: absolute;
+  inset-block-start: var(--s-2);
+  inset-inline-end: var(--s-2);
+  opacity: 0;
+}
+
+[data-birch] .collection-card:hover .icon-button,
+[data-birch] .collection-card.is-hover .icon-button { opacity: 1; }
+
+/* ---------- Table ---------- */
+[data-birch] .table { display: flex; flex-direction: column; }
+
+[data-birch] .table-head,
+[data-birch] .table-row {
+  display: grid;
+  grid-template-columns: var(--table-columns, 32px minmax(0, 1fr) 140px);
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-3);
+}
+
+[data-birch] .table-head {
+  min-height: 32px;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .table-row { min-height: var(--row-table); }
+
+[data-birch] .table-row.is-selected,
+[data-birch] .table-row[aria-selected="true"] { background: var(--accent-soft); }
+
+/* ---------- Field definitions (collection builder) ---------- */
+[data-birch] .field-def {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: var(--s-2) var(--s-3);
+}
+
+[data-birch] .field-def .grip { color: var(--text-3); cursor: grab; }
+
+[data-birch] .field-def-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-inline-start: auto;
+  color: var(--text-2);
+  font-size: var(--size-small);
+}
+
+/* ---------- Menus ---------- */
+[data-birch] .menu,
+[data-birch] .popover { min-width: 200px; }
+
+[data-birch] .menu-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-2) var(--s-3);
+}
+
+[data-birch] .menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  width: 100%;
+  min-height: 28px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-inset);
+  background: none;
+  color: var(--text);
+  font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+[data-birch] .menu-item > .birkly-icon { color: var(--text-3); }
+[data-birch] .menu-item:hover,
+[data-birch] .menu-item.is-hover { background: var(--surface-2); }
+[data-birch] .menu-item.is-danger,
+[data-birch] .menu-item.is-danger > .birkly-icon { color: var(--danger); }
+[data-birch] .menu-item .kbd,
+[data-birch] .menu-item .switch { margin-inline-start: auto; }
+
+[data-birch] .menu-rule {
+  height: 1px;
+  margin: var(--s-1) calc(var(--s-1) * -1);
+  background: var(--line);
+}
+
+/* ---------- Sheet and dialog ---------- */
+[data-birch] .dialog,
+[data-birch] .sheet {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+[data-birch] .dialog-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+}
+
+[data-birch] .dialog-title {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+}
+
+[data-birch] .dialog-text {
+  margin: 2px 0 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .dialog-head .icon-button { margin-inline-start: auto; }
+
+[data-birch] .dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: 0 var(--s-5) var(--s-5);
+}
+
+[data-birch] .dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  background: var(--surface);
+}
+
+/* ---------- Empty state ---------- */
+[data-birch] .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-6);
+  color: var(--text-3);
+  text-align: center;
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+[data-birch] .empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+[data-birch] .empty-title {
+  margin: var(--s-1) 0 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+[data-birch] .empty-text {
+  max-width: 34ch;
+  margin: 0 0 var(--s-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+/* ---------- Tooltip, toast, skeleton ---------- */
+[data-birch] .tooltip,
+[data-birch] .toast {
+  position: static;
+  inset: auto;
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  border-radius: var(--r);
+  background: var(--ink-float);
+  color: var(--on-ink-float);
+  box-shadow: var(--shadow-float-2);
+}
+
+[data-birch] .tooltip {
+  padding: var(--s-1) var(--s-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .tooltip .kbd { background: color-mix(in oklch, var(--on-ink-float) 16%, transparent); color: var(--on-ink-float); }
+
+[data-birch] .toast {
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  font-size: var(--size-body);
+}
+
+[data-birch] .toast > .birkly-icon { color: var(--success); }
+
+[data-birch] .toast-action {
+  margin-inline-start: var(--s-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+[data-birch] .skeleton {
+  display: block;
+  height: 10px;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+}
+
+/* ---------- Kit page layout ---------- */
+[data-birch] .kit-section { margin-block-end: var(--s-6); }
+
+[data-birch] .kit-heading {
+  margin: 0 0 var(--s-3);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+}
+
+[data-birch] .kit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+[data-birch] .kit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--s-4);
+  align-items: start;
+}
+
+[data-birch] .kit-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+
+[data-birch] .kit-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+[data-birch] .kit-note {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .kit-row + .kit-row,
+[data-birch] .kit-row + .tabs,
+[data-birch] .kit-choice,
+[data-birch] .kit-choice + .kit-note { margin-block-start: var(--s-3); }
+
+[data-birch] .kit-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .kit-skeletons { gap: var(--s-2); max-width: 420px; margin-block-start: var(--s-3); }
+[data-birch] .kit-narrow { max-width: 720px; }
+[data-birch] .kit-pad { padding: var(--s-4); }
+[data-birch] .kit-table { --table-columns: 24px minmax(0, 1fr) 120px 80px; }
+[data-birch] .kit-menu { max-width: 260px; }
+[data-birch] .kit-dialog { max-width: 520px; }
+[data-birch] .timeline { margin-block-start: var(--s-4); }
+
+[data-birch] .kit-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+}
+
+/* ---------- Not-there-yet pieces ---------- */
+[data-birch] .add-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  margin-block-start: var(--s-1);
+  padding: var(--s-3);
+  color: var(--text-3);
+  font-size: var(--size-body);
+}
+
+[data-birch] .summary-note {
+  margin-block-start: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  color: var(--text-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .kit-decisions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+  gap: var(--s-4);
+}
