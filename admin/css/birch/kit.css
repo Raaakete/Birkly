@@ -207,21 +207,24 @@
 /* Inside a slab: grey on white, so the field still reads as a field at rest */
 [data-birch] .slab .input,
 [data-birch] .setting-row .input,
-[data-birch] .field .input {
+[data-birch] .field .input,
+[data-birch] .entry-field .input {
   border-color: transparent;
   background: var(--surface-2);
 }
 
 [data-birch] .slab .input:hover:not(:focus),
 [data-birch] .setting-row .input:hover:not(:focus),
-[data-birch] .field .input:hover:not(:focus) {
+[data-birch] .field .input:hover:not(:focus),
+[data-birch] .entry-field .input:hover:not(:focus) {
   border-color: transparent;
   background: var(--surface-3);
 }
 
 [data-birch] .slab .input:focus,
 [data-birch] .setting-row .input:focus,
-[data-birch] .field .input:focus { background: var(--surface); border-color: var(--accent); }
+[data-birch] .field .input:focus,
+[data-birch] .entry-field .input:focus { background: var(--surface); border-color: var(--accent); }
 
 [data-birch] .input-group {
   display: flex;
@@ -253,6 +256,22 @@
   transform: translateY(-50%);
   color: var(--text-3);
   pointer-events: none;
+}
+
+/* ---------- Frame head ---------- */
+[data-birch] .frame-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-block-end: var(--s-4);
+}
+
+[data-birch] .frame-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
 }
 
 /* ---------- Search field ---------- */
