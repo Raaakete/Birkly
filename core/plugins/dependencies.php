@@ -44,7 +44,7 @@ function check_plugin_dependencies($plugin_id) {
         // Check version
         if ($required_version !== '*') {
             $dep_version = $dep_plugin['version'] ?? '0.0.0';
-            if (!birkly_version_satisfies_constraint($dep_version, $required_version)) {
+            if (!birkly_version_satisfies_constraint($dep_version, birkly_minimum_version_constraint((string) $required_version))) {
                 $errors[] = "Plugin '{$dep_id}' version mismatch. Required: {$required_version}, Found: {$dep_version}";
             }
         }
@@ -78,7 +78,7 @@ function check_plugin_dependencies($plugin_id) {
             
             // Check version if specified
             if ($required_version !== '*' && isset($service_info['version'])) {
-                if (!birkly_version_satisfies_constraint((string) $service_info['version'], $required_version)) {
+                if (!birkly_version_satisfies_constraint((string) $service_info['version'], birkly_minimum_version_constraint((string) $required_version))) {
                     $errors[] = "Service '{$service_id}' version mismatch. Required: {$required_version}, Found: {$service_info['version']}";
                 }
             }

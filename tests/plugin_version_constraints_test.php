@@ -22,6 +22,21 @@ if (!birkly_version_satisfies_constraint('1.0.1-p86.2', '>=1.0.0')) {
     $errors[] = 'Pre-release CMS tag should satisfy >=1.0.0';
 }
 
+foreach ([
+    '1.0.0' => '>=1.0.0',
+    ' 1.2 ' => '>=1.2',
+    '^1.0.0' => '^1.0.0',
+    '=1.0.0' => '=1.0.0',
+    '>=2.0' => '>=2.0',
+    '*' => '*',
+    '' => '',
+] as $in => $want) {
+    $got = birkly_minimum_version_constraint((string) $in);
+    if ($got !== $want) {
+        $errors[] = 'minimum constraint for ' . var_export($in, true) . ' should be ' . $want . ', got ' . $got;
+    }
+}
+
 $commerceMetaPath = $root . '/plugins/commerce/plugin.json';
 if (!is_file($commerceMetaPath)) {
     $errors[] = 'commerce plugin.json missing for fixture';
@@ -65,6 +80,34 @@ unset($GLOBALS['__birkly_platform_config']);
 
 require_once $root . '/core/plugins.php';
 load_plugins();
+
+$fixtureDir = sys_get_temp_dir() . '/birkly-dep-fixture-' . getmypid();
+@mkdir($fixtureDir, 0755, true);
+file_put_contents($fixtureDir . '/plugin.json', json_encode([
+    'name' => 'Dependency fixture',
+    'version' => '1.0.0',
+    'dependencies' => ['plugins' => [
+        ['id' => 'fixture_dep_minimum', 'version' => '1.0.0', 'required' => false],
+        ['id' => 'fixture_dep_exact', 'version' => '=1.0.0', 'required' => false],
+    ]],
+]));
+$savedRegistry = $GLOBALS['birkly_plugins'] ?? null;
+$GLOBALS['birkly_plugins'] = [
+    'fixture_consumer' => ['path' => $fixtureDir, 'version' => '1.0.0', 'active' => true],
+    'fixture_dep_minimum' => ['version' => '1.0.109', 'active' => true],
+    'fixture_dep_exact' => ['version' => '1.0.109', 'active' => true],
+];
+$fixtureErrors = check_plugin_dependencies('fixture_consumer');
+if (array_filter($fixtureErrors, static fn ($m) => str_contains($m, 'fixture_dep_minimum')) !== []) {
+    $errors[] = 'bare dependency version 1.0.0 should accept 1.0.109: ' . implode('; ', $fixtureErrors);
+}
+if (array_filter($fixtureErrors, static fn ($m) => str_contains($m, 'fixture_dep_exact')) === []) {
+    $errors[] = 'explicit =1.0.0 dependency should reject 1.0.109';
+}
+$GLOBALS['birkly_plugins'] = $savedRegistry;
+@unlink($fixtureDir . '/plugin.json');
+@rmdir($fixtureDir);
+
 $GLOBALS['__birkly_platform_config'] = ['release_channel' => 'alpha'];
 file_put_contents($versionFile, "0.0.1\n");
 
