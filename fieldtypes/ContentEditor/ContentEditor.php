@@ -162,8 +162,8 @@ class ContentEditor extends BaseField {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <line x1="10" y1="8" x2="21" y2="8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
                             <line x1="10" y1="16" x2="21" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"></line>
-                            <text x="5" y="11" font-size="14" font-weight="800" fill="currentColor" text-anchor="middle" dominant-baseline="middle" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">1</text>
-                            <text x="5" y="19" font-size="14" font-weight="800" fill="currentColor" text-anchor="middle" dominant-baseline="middle" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">2</text>
+                            <text x="5" y="11" font-size="14" font-weight="800" fill="currentColor" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif">1</text>
+                            <text x="5" y="19" font-size="14" font-weight="800" fill="currentColor" text-anchor="middle" dominant-baseline="middle" font-family="system-ui, sans-serif">2</text>
                         </svg>
                     </button>
                     <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="blockquote" title="Blockquote - Create a blockquote">
