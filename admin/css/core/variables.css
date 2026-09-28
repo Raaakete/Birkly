@@ -47,6 +47,7 @@
   --ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · tooltip, toast */
   --on-ink-float: oklch(98.45% 0.0026 106.4); /* #FAFAF8 · 17.9:1 */
   --scrim: rgb(22 23 25 / 0.32);
+  --scroll-shade: rgb(32 34 29 / 0.12);
 
   /* Ramps for the few legacy call sites that read a step directly */
   --neutral-0: oklch(99.67% 0.0013 106.4); /* #FEFEFD */
@@ -211,6 +212,7 @@
   --ink-float: oklch(95.76% 0.0027 106.4); /* #F1F1EF */
   --on-ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · 16.6:1 */
   --scrim: rgb(0 0 0 / 0.56);
+  --scroll-shade: rgb(0 0 0 / 0.5);
   --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
   --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
   --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
@@ -253,6 +255,7 @@
     --ink-float: oklch(95.76% 0.0027 106.4); /* #F1F1EF */
     --on-ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · 16.6:1 */
     --scrim: rgb(0 0 0 / 0.56);
+    --scroll-shade: rgb(0 0 0 / 0.5);
     --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
     --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
     --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
