@@ -104,6 +104,22 @@ abstract class BaseField {
         return 'Misc'; // Default category
     }
 
+    // Birkly icon name shown in the collection builder (core/icon_data.php).
+    // Empty string lets the admin fall back to the generic fieldtype icon.
+    public function getIcon(): string {
+        return '';
+    }
+
+    // Sentence-case type name for the admin. Empty string falls back to the folder name.
+    public function getTypeLabel(): string {
+        return '';
+    }
+
+    // One-line, sentence-case hint shown in the Add a field dialog.
+    public function getDescription(): string {
+        return '';
+    }
+
     // Get field's configuration UI HTML for the collection editor
     // Fieldtypes should override this to provide their own configuration UI
     // Parameters:

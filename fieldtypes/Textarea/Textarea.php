@@ -21,6 +21,14 @@ class Textarea extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'align-left';
+    }
+
+    public function getDescription(): string {
+        return 'Plain paragraphs without formatting';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $placeholderText = $this->placeholder ?: 'Enter ' . strtolower($this->label ?: 'text');

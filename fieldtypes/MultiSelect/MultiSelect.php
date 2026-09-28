@@ -24,6 +24,18 @@ class MultiSelect extends BaseField {
         return 'Selection';
     }
 
+    public function getTypeLabel(): string {
+        return 'Multi-select';
+    }
+
+    public function getIcon(): string {
+        return 'list';
+    }
+
+    public function getDescription(): string {
+        return 'Several choices from a list';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         

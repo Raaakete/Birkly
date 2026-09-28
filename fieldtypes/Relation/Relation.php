@@ -20,6 +20,14 @@ class Relation extends BaseField {
     public function getCategory(): string {
         return 'Misc';
     }
+
+    public function getIcon(): string {
+        return 'users';
+    }
+
+    public function getDescription(): string {
+        return 'Links to entries in another collection';
+    }
     public function render(): string {
         $value = $this->value ?? [];
         

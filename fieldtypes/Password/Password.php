@@ -21,6 +21,14 @@ class Password extends BaseField {
         return 'Misc';
     }
 
+    public function getIcon(): string {
+        return 'lock';
+    }
+
+    public function getDescription(): string {
+        return 'A secret stored as a hash';
+    }
+
     public function isSensitive(): bool {
         return true;
     }

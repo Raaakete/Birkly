@@ -12,6 +12,14 @@ class File extends BaseField {
         return 'Media';
     }
 
+    public function getIcon(): string {
+        return 'content';
+    }
+
+    public function getDescription(): string {
+        return 'An uploaded file or image';
+    }
+
     public function render(): string {
         $value = $this->value ?? '';
         $fileId = $this->extractFileId($value);

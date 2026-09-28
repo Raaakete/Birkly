@@ -27,6 +27,18 @@ class DateTime extends BaseField {
         return 'Date & Time';
     }
 
+    public function getTypeLabel(): string {
+        return 'Date and time';
+    }
+
+    public function getIcon(): string {
+        return 'calendar';
+    }
+
+    public function getDescription(): string {
+        return 'A date with a time of day';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $value = htmlspecialchars($this->value ?? '');

@@ -1,70 +1,58 @@
 /**
- * Fieldtype icon registry — maps fieldtype keys to Birkly icon names.
+ * Fieldtype badges for the collection builder. Icons and labels come from the
+ * fieldtypes themselves (BaseField::getIcon()) via the getAvailableFieldtypes() rows.
  */
 (function () {
     'use strict';
 
     window.Birkly = window.Birkly || {};
 
-    var FIELD_TYPE_ICON_MAP = {
-        text: 'text-aa',
-        textarea: 'article',
-        contenteditor: 'layout',
-        markdown: 'article',
-        code: 'code',
-        number: 'hash',
-        range: 'sliders-horizontal',
-        date: 'calendar',
-        datetime: 'calendar-clock',
-        time: 'clock',
-        checkbox: 'check-square',
-        toggle: 'toggle-left',
-        radio: 'circle-dot',
-        select: 'caret-down',
-        multiselect: 'list-checks',
-        color: 'palette',
-        tags: 'tag',
-        email: 'envelope',
-        url: 'link',
-        phone: 'phone',
-        file: 'file-text',
-        gallery: 'squares-four',
-        map: 'map-pin',
-        relation: 'users',
-        dynamicitems: 'list',
-        oembed: 'play',
-        media: 'image'
-    };
-
     function normalizeFieldtypeKey(name) {
         return String(name || '').toLowerCase().replace(/[-_\s]/g, '');
     }
 
-    function resolveFieldtypeIconName(name) {
-        var key = normalizeFieldtypeKey(name);
-        return FIELD_TYPE_ICON_MAP[key] || 'stack';
+    function registry(fieldtypes) {
+        return fieldtypes || window.availableFieldtypes || window.fieldtypes || [];
     }
 
-    Birkly.fieldtypeIconName = resolveFieldtypeIconName;
+    function findFieldtype(name, fieldtypes) {
+        var key = normalizeFieldtypeKey(name);
+        if (!key) {
+            return null;
+        }
+        var list = registry(fieldtypes);
+        for (var i = 0; i < list.length; i++) {
+            var ft = list[i];
+            if (normalizeFieldtypeKey(ft.name) === key || normalizeFieldtypeKey(ft.type) === key) {
+                return ft;
+            }
+        }
+        return null;
+    }
 
-    Birkly.fieldtypeIcon = function fieldtypeIcon(name, opts) {
+    Birkly.findFieldtype = findFieldtype;
+
+    // Icon declared by the fieldtype (BaseField::getIcon()), or the generic one.
+    Birkly.fieldtypeIconName = function fieldtypeIconName(name, fieldtypes) {
+        var ft = findFieldtype(name, fieldtypes);
+        return ft && ft.icon ? String(ft.icon) : 'layers';
+    };
+
+    Birkly.fieldtypeIcon = function fieldtypeIcon(name, opts, fieldtypes) {
         opts = opts || {};
         if (!window.Birkly || typeof Birkly.icon !== 'function') {
             return '';
         }
-        return Birkly.icon(resolveFieldtypeIconName(name), opts);
+        return Birkly.icon(Birkly.fieldtypeIconName(name, fieldtypes), opts) || Birkly.icon('layers', opts);
     };
 
     Birkly.fieldtypeDisplayLabel = function fieldtypeDisplayLabel(name, fieldtypes) {
         if (!name) {
             return 'Select type';
         }
-        fieldtypes = fieldtypes || (window.availableFieldtypes || window.fieldtypes || []);
-        for (var i = 0; i < fieldtypes.length; i++) {
-            var ft = fieldtypes[i];
-            if (ft.name === name || ft.type === name) {
-                return String(ft.label || name);
-            }
+        var ft = findFieldtype(name, fieldtypes);
+        if (ft) {
+            return String(ft.label || name);
         }
         return String(name).charAt(0).toUpperCase() + String(name).slice(1);
     };
@@ -83,7 +71,7 @@
 
         var iconWrap = badge.querySelector('.fieldtype-type-icon');
         if (iconWrap) {
-            iconWrap.innerHTML = fieldtypeName ? Birkly.fieldtypeIcon(fieldtypeName, { size: 14, class: 'fieldtype-type-icon-svg' }) : '';
+            iconWrap.innerHTML = fieldtypeName ? Birkly.fieldtypeIcon(fieldtypeName, { size: 14, class: 'fieldtype-type-icon-svg' }, fieldtypes) : '';
         }
 
         var labelEl = badge.querySelector('.fieldtype-type-label');
