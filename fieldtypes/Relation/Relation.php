@@ -148,141 +148,84 @@ class Relation extends BaseField {
         .relation-controls .remove-all-relation-btn:hover { color: var(--danger); }
         .relation-field [hidden] { display: none; }
 
-        /* P62 follow-up: NEVER style global .modal / .card here — that forced
-           every admin modal (incl. Send feedback) to display:flex on pages that
-           load Relation (e.g. all-fieldtypes collections). Scope to the picker. */
+        /* Picker: a float over the scrim. Scoped to #relationPickerModal — never style
+           the global .modal / .card here (P62). Rows are slabs; selected is a blue ring. */
         #relationPickerModal.relation-picker-modal {
             position: fixed;
             inset: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--overlay);
+            z-index: var(--z-modal, 400);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: var(--z-modal, 400);
-            padding: var(--space-5, 1.25rem);
+            padding: var(--s-5);
+            background: var(--overlay);
         }
-
-        #relationPickerModal.relation-picker-modal.is-open {
-            display: flex;
-        }
-
-        #relationPickerModal .card {
-            background: var(--surface);
-            border-radius: var(--radius-md, 0.5rem);
-            box-shadow: var(--shadow-sheet);
-            overflow: hidden;
-        }
-
-        #relationPickerModal .card-header {
-            background: var(--surface-sunken);
-            border-bottom: 1px solid var(--border-subtle);
-            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-        }
-
-        #relationPickerModal .card-body {
-            padding: var(--space-5, 1.25rem);
-        }
-
-        #relationPickerModal .card-footer {
-            background: var(--surface-sunken);
-            border-top: 1px solid var(--border-subtle);
-            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-        }
-        
-        .relation-picker-item {
-            cursor: pointer;
-            padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-            border-radius: var(--radius-md, 0.5rem);
-            margin-bottom: var(--space-2, 0.5rem);
-            border: 1px solid var(--border-medium);
-            transition: all var(--transition-fast, 150ms ease);
-            background: var(--bg-primary);
-        }
-        
-        .relation-picker-item:hover {
-            border-color: var(--primary-500);
-            background: var(--primary-50);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-sm);
-        }
-        
-        .relation-picker-item.selected {
-            background: var(--primary-100);
-            border-color: var(--primary-500);
-        }
-        
-        .relation-title {
-            font-weight: var(--font-medium, 500);
-            margin-bottom: var(--space-1, 0.25rem);
-        }
-        
-        .relation-meta {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-        }
-        
-        #relationPickerModal .flex {
-            display: flex;
-        }
-
-        #relationPickerModal .justify-between {
-            justify-content: space-between;
-        }
-
-        #relationPickerModal .align-center {
-            align-items: center;
-        }
-
-        #relationPickerModal .gap-2 {
-            gap: var(--space-2, 0.5rem);
-        }
-
-        #relationPickerModal .gap-8 {
-            gap: var(--space-2, 0.5rem);
-        }
-
-        #relationPickerModal .h3 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin: 0;
-        }
-
-        #relationPickerModal .m-0 {
-            margin: 0;
-        }
-
-        /* Buttons use system button classes - no custom styles needed */
-
-        #relationPickerModal .input {
+        #relationPickerModal.relation-picker-modal.is-open { display: flex; }
+        #relationPickerModal .relation-picker-panel {
             width: 100%;
-            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-            border: 1px solid var(--border-medium);
-            border-radius: var(--radius-sm, 0.375rem);
-            font-size: 0.875rem;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            max-width: 640px;
+            max-height: 90vh;
         }
-
-        #relationPickerModal .input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent);
+        .relation-picker-body {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-3);
+            min-height: 0;
         }
-
-        #relationPickerModal .text-muted {
-            color: var(--text-secondary);
+        .relation-picker-bar {
+            display: grid;
+            grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+            gap: var(--s-2);
         }
-
-        #relationPickerModal .text-danger {
-            color: var(--error-500);
+        .relation-grid {
+            display: flex;
+            flex-direction: column;
+            gap: var(--s-1);
+            max-height: 50vh;
+            overflow-y: auto;
         }
-
+        .relation-grid.is-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: var(--s-2);
+        }
+        .relation-picker-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: var(--s-2) var(--s-3);
+            border: 0;
+            border-radius: var(--r);
+            background: var(--surface);
+            color: var(--text);
+            text-align: start;
+            cursor: pointer;
+        }
+        .relation-picker-item:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+        .relation-picker-item:focus-visible { outline: var(--focus-outline); outline-offset: 1px; }
         .relation-picker-item.selected { box-shadow: 0 0 0 2px var(--accent); }
-        #relationPickerModal .icon-close::before {
-            content: "×";
-            font-weight: bold;
+        .relation-picker-item .relation-title {
+            font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans);
+        }
+        .relation-meta {
+            color: var(--text-3);
+            font-size: var(--size-small);
+            line-height: var(--lh-small);
+        }
+        .relation-grid.is-compact .relation-meta { display: none; }
+        .relation-picker-empty {
+            padding: var(--s-6) var(--s-4);
+            border: 1px dashed var(--line-strong);
+            border-radius: var(--r);
+            color: var(--text-3);
+            font-size: var(--size-small);
+            text-align: center;
+        }
+        .relation-picker-empty.is-error { border-color: var(--danger); color: var(--danger); }
+        .relation-picker-count {
+            margin-inline-end: auto;
+            color: var(--text-3);
+            font-size: var(--size-small);
         }
         CSS;
     }
