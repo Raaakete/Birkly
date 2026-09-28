@@ -394,7 +394,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     ?>
     <link rel="shortcut icon" href="<?= htmlspecialchars($faviconUrl) ?>">
 </head>
-<body class="onboarding-body">
+<body class="onboarding-body" data-birch>
     <div class="onboarding-wrapper">
         <?php
         // Render onboarding page without sidebar
