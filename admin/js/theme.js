@@ -175,7 +175,7 @@ Birkly.Theme = {
 
         sidebar.querySelectorAll('.nav-links a').forEach((link) => {
             link.addEventListener('click', () => {
-                if (window.matchMedia('(max-width: 1279px)').matches) {
+                if (window.matchMedia('(max-width: 1023px)').matches) {
                     closeSidebar();
                 }
             });
@@ -188,7 +188,7 @@ Birkly.Theme = {
         });
 
         window.addEventListener('resize', () => {
-            if (window.matchMedia('(min-width: 1280px)').matches) {
+            if (window.matchMedia('(min-width: 1024px)').matches) {
                 closeSidebar();
             }
         });
@@ -197,16 +197,18 @@ Birkly.Theme = {
     initDesktopSidebarCollapse() {
         const STORAGE_KEY = 'birkly_sidebar_collapsed';
         const DESKTOP_QUERY = '(min-width: 1280px)';
-        const COMPACT_QUERY = '(min-width: 1280px) and (max-width: 1439px)';
+        const AUTO_RAIL_QUERY = '(min-width: 1024px) and (max-width: 1279px)';
         const toggle = document.getElementById('sidebar-collapse-toggle');
         if (!toggle) {
             return;
         }
 
-        const hasSavedPreference = () => localStorage.getItem(STORAGE_KEY) !== null;
-        const updateCollapseHint = () => {
-            const suggest = !hasSavedPreference() && window.matchMedia(COMPACT_QUERY).matches;
-            document.body.classList.toggle('sidebar-collapse-suggested', suggest);
+        const updateAutoRail = () => {
+            const rail = window.matchMedia(AUTO_RAIL_QUERY).matches;
+            if (rail !== document.body.classList.contains('sidebar-rail-auto')) {
+                document.body.classList.toggle('sidebar-rail-auto', rail);
+                document.dispatchEvent(new CustomEvent('birkly:layout-change'));
+            }
         };
 
         const applyCollapsed = (collapsed) => {
@@ -228,7 +230,7 @@ Birkly.Theme = {
         if (saved && window.matchMedia(DESKTOP_QUERY).matches) {
             applyCollapsed(true);
         }
-        updateCollapseHint();
+        updateAutoRail();
 
         toggle.addEventListener('click', () => {
             if (!window.matchMedia(DESKTOP_QUERY).matches) {
@@ -237,7 +239,6 @@ Birkly.Theme = {
             const next = !document.body.classList.contains('sidebar-collapsed');
             localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
             applyCollapsed(next);
-            updateCollapseHint();
         });
 
         window.addEventListener('resize', () => {
@@ -246,7 +247,7 @@ Birkly.Theme = {
             } else {
                 applyCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
             }
-            updateCollapseHint();
+            updateAutoRail();
         });
 
         this.initPluginsFlyout();
@@ -265,8 +266,9 @@ Birkly.Theme = {
         }
 
         const show = (target) => {
-            if (!document.body.classList.contains('sidebar-collapsed')
-                || !window.matchMedia(DESKTOP_QUERY).matches) {
+            const manualRail = document.body.classList.contains('sidebar-collapsed')
+                && window.matchMedia(DESKTOP_QUERY).matches;
+            if (!manualRail && !document.body.classList.contains('sidebar-rail-auto')) {
                 return;
             }
             const text = target.getAttribute('data-sidebar-tooltip') || target.getAttribute('title');
@@ -346,6 +348,11 @@ Birkly.Theme = {
         });
     }
 };
+
+// Set the 1024–1279 rail before first paint; initDesktopSidebarCollapse keeps it in sync.
+if (document.body && window.matchMedia) {
+    document.body.classList.toggle('sidebar-rail-auto', window.matchMedia('(min-width: 1024px) and (max-width: 1279px)').matches);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     Birkly.Theme.init();
