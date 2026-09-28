@@ -294,7 +294,6 @@
   padding: var(--s-1) var(--s-4);
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
   color: var(--text-3);
   list-style: none;

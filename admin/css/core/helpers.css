@@ -285,12 +285,11 @@
 .u-numeric { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
 .u-mono { font-family: var(--font-mono); }
 
-/* Uppercase micro-label — the ONLY sanctioned uppercase treatment */
+/* Micro-label: caption size, sentence case (Birch has no uppercase labels) */
 .u-label {
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   line-height: 1.4;
-  text-transform: uppercase;
   letter-spacing: 0;
   color: var(--text-3);
 }

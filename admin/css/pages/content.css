@@ -87,7 +87,6 @@
   margin: 0;
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
   color: var(--text-3);
 }

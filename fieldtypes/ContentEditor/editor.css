@@ -581,8 +581,6 @@
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .color-picker-wrapper {
@@ -2497,8 +2495,6 @@ details.content-editor-toggle summary::-webkit-details-marker {
 
 .content-editor-link-preview-site {
   font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--text-2);
   font-weight: 600;
   margin-bottom: var(--s-1);
@@ -2567,8 +2563,6 @@ details.content-editor-toggle summary::-webkit-details-marker {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   margin-bottom: var(--s-3);
 }
 
@@ -2802,8 +2796,6 @@ details.content-editor-toggle summary::-webkit-details-marker {
 .content-editor-table-inspector-section .content-editor-layout-inspector-subheader {
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--text-2);
   margin-top: 4px;
   padding-top: 8px;
@@ -2827,8 +2819,6 @@ details.content-editor-toggle summary::-webkit-details-marker {
 .ce-inspector-subheading {
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--text-2);
   margin-top: 4px;
   padding-top: 8px;

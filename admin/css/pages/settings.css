@@ -954,8 +954,6 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 .conn-provider-card-badge {
   font-size: var(--size-small);
   font-weight: var(--weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--text-3);
 }
 
