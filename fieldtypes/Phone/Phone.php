@@ -19,6 +19,14 @@ class Phone extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'phone';
+    }
+
+    public function getDescription(): string {
+        return 'A phone number';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $placeholder = htmlspecialchars($this->placeholder, ENT_QUOTES, 'UTF-8');

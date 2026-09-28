@@ -12,6 +12,14 @@ class Tags extends BaseField {
         return 'Content & Text';
     }
 
+    public function getIcon(): string {
+        return 'tag';
+    }
+
+    public function getDescription(): string {
+        return 'Free keywords for grouping';
+    }
+
     public function getLabelForId(): string {
         // The visible, focusable control is the inline tag input.
         return 'field_' . $this->name . '_input';

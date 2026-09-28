@@ -12,6 +12,14 @@ class Gallery extends BaseField {
         return 'Media';
     }
 
+    public function getIcon(): string {
+        return 'grid';
+    }
+
+    public function getDescription(): string {
+        return 'Several images in order';
+    }
+
     public function render(): string {
         $value = $this->value ?? [];
         

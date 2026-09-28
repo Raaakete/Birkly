@@ -1304,7 +1304,7 @@ echo htmlspecialchars($formCode);
                 <div class="fieldtype-title">
                     <span class="fieldtype-type" data-fieldtype="">
                         <span class="fieldtype-type-icon" aria-hidden="true"></span>
-                        <span class="fieldtype-type-label u-label">__TYPE__</span>
+                        <span class="fieldtype-type-label">__TYPE__</span>
                     </span>
                     <span class="fieldtype-name">__NAME__</span>
                 </div>
@@ -1810,17 +1810,19 @@ document.addEventListener('DOMContentLoaded', function() {
             return Birkly.fieldtypeIcon(name, {
                 size: size,
                 class: size >= 24 ? 'fieldtype-card-icon-svg' : 'fieldtype-type-icon-svg'
-            });
+            }, availableFieldtypes);
         }
         return '';
     }
 
     function renderFieldtypeTypeBadgeHtml(fieldtypeName, label) {
         const safeName = String(fieldtypeName || '');
-        const safeLabel = String(label || colEditorUi.selectType).toUpperCase();
+        const safeLabel = safeName && typeof Birkly.fieldtypeDisplayLabel === 'function'
+            ? Birkly.fieldtypeDisplayLabel(safeName, availableFieldtypes)
+            : String(label || colEditorUi.selectType);
         return '<span class="fieldtype-type" data-fieldtype="' + safeName.replace(/"/g, '&quot;') + '">' +
             '<span class="fieldtype-type-icon" aria-hidden="true">' + getFieldtypeIcon(safeName, 14) + '</span>' +
-            '<span class="fieldtype-type-label u-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
+            '<span class="fieldtype-type-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
             '</span>';
     }
     

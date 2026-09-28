@@ -21,6 +21,14 @@ class Color extends BaseField {
         return 'Selection';
     }
 
+    public function getIcon(): string {
+        return 'palette';
+    }
+
+    public function getDescription(): string {
+        return 'A colour value';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $value = htmlspecialchars($this->value ?? '#000000');

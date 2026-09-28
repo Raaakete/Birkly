@@ -234,14 +234,17 @@ function getAvailableFieldtypes() {
                     $config = $fieldtype->getAdminConfig();
                     $category = method_exists($fieldtype, 'getCategory') ? $fieldtype->getCategory() : 'Misc';
                     
+                    $typeLabel = method_exists($fieldtype, 'getTypeLabel') ? $fieldtype->getTypeLabel() : '';
                     $displayLabel = !empty($data['label'])
                         ? $data['label']
-                        : ucwords(str_replace(['_', '-'], ' ', $type));
+                        : ($typeLabel !== '' ? $typeLabel : ucwords(str_replace(['_', '-'], ' ', $type)));
                     $fieldtypes[] = [
                         'name' => $type,
                         'type' => $type,
                         'label' => $displayLabel,
                         'category' => $category,
+                        'icon' => method_exists($fieldtype, 'getIcon') ? $fieldtype->getIcon() : '',
+                        'description' => method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '',
                         'config' => $config
                     ];
                 } catch (Exception $e) {
@@ -287,9 +290,11 @@ function getAvailableFieldtypes() {
                     
                     $fieldtypes[] = [
                         'name' => strtolower($fieldtypeName),
-                        'label' => ucfirst($fieldtypeName),
+                        'label' => (method_exists($fieldtype, 'getTypeLabel') ? $fieldtype->getTypeLabel() : '') ?: ucfirst($fieldtypeName),
                         'type' => $config['type'] ?? strtolower($fieldtypeName),
                         'category' => $category,
+                        'icon' => method_exists($fieldtype, 'getIcon') ? $fieldtype->getIcon() : '',
+                        'description' => method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '',
                         'config' => $config
                     ];
                 } catch (Exception $e) {

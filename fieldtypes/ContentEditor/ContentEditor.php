@@ -62,6 +62,18 @@ class ContentEditor extends BaseField {
         return 'Content & Text';
     }
 
+    public function getTypeLabel(): string {
+        return 'Content editor';
+    }
+
+    public function getIcon(): string {
+        return 'template';
+    }
+
+    public function getDescription(): string {
+        return 'Formatted content built from blocks';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $rawValue = $this->value ?? '';
