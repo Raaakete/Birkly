@@ -505,7 +505,7 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'project', 'team-access', 'security', 'ai', 'integrations', 'analytics', 'system'
+        'general', 'site-delivery', 'project', 'team-access', 'security', 'ai', 'connections', 'integrations', 'analytics', 'system'
     ];
 
     var TAB_ALIASES = {
