@@ -159,6 +159,13 @@
   color: inherit;
 }
 
+/* A plugin's own inline svg sits in the same 13 px box as the Birch icons */
+.nav-link > svg:not(.birkly-icon) {
+  flex-shrink: 0;
+  width: var(--icon);
+  height: var(--icon);
+}
+
 .nav-links a .nav-label,
 .nav-link .nav-label {
   min-width: 0;
