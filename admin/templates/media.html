@@ -1,3 +1,4 @@
+<div class="media-page" data-birch>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs"><span class="current">{translate 'admin.media'}</span></div>
@@ -5,96 +6,85 @@
     <div class="page-header-actions"></div>
 </div>
 
-<div class="main-actions-bar">
-  <div class="main-actions-left">
-    <button type="button" class="btn btn-primary" data-media-action="upload">{translate 'admin.upload_media'}</button>
-    <button type="button" class="btn btn-secondary" data-media-action="create-folder">{translate 'admin.new_folder'}</button>
-    <div class="input-icon-wrap media-toolbar-search">
-      <span data-icon="magnifying-glass" data-icon-size="16" aria-hidden="true"></span>
-      <input type="search" id="media-search" placeholder="{translate 'admin.search_media'}" class="input input-search" aria-label="{translate 'admin.search_media'}">
-    </div>
-  </div>
-  <div class="main-actions-right">
-    <select id="type-filter" class="select media-toolbar-filter" aria-label="{translate 'admin.all_types'}">
-      <option value="">{translate 'admin.all_types'}</option>
-      <option value="image">{translate 'admin.images'}</option>
-      <option value="video">{translate 'admin.videos'}</option>
-      <option value="audio">{translate 'admin.audio'}</option>
-      <option value="document">{translate 'admin.documents'}</option>
-    </select>
-    <div class="segmented" role="group" aria-label="Media view">
-      <button type="button" class="segmented-item" id="media-view-grid" data-media-view="grid" aria-label="Grid view" aria-pressed="true" title="Grid view">
-        <span data-icon="squares-four" data-icon-size="16" aria-hidden="true"></span>
-      </button>
-      <button type="button" class="segmented-item" id="media-view-list" data-media-view="list" aria-label="List view" aria-pressed="false" title="List view">
-        <span data-icon="list" data-icon-size="16" aria-hidden="true"></span>
-      </button>
+<div class="page-bar" id="media-page-bar">
+  <button type="button" class="button is-main" data-media-action="upload"><?= birkly_icon('upload') ?>{translate 'admin.upload_media'}</button>
+  <button type="button" class="button" data-media-action="create-folder"><?= birkly_icon('plus') ?>{translate 'admin.new_folder'}</button>
+  <div class="page-bar-tools">
+    <label class="search-field media-search">
+      <?= birkly_icon('search') ?>
+      <input type="search" id="media-search" placeholder="{translate 'admin.search_media'}" class="input" aria-label="{translate 'admin.search_media'}">
+    </label>
+    <span class="select-box">
+      <select id="type-filter" aria-label="{translate 'admin.all_types'}">
+        <option value="">{translate 'admin.all_types'}</option>
+        <option value="image">{translate 'admin.images'}</option>
+        <option value="video">{translate 'admin.videos'}</option>
+        <option value="audio">{translate 'admin.audio'}</option>
+        <option value="document">{translate 'admin.documents'}</option>
+      </select>
+      <?= birkly_icon('chev-down') ?>
+    </span>
+    <div class="segmented" role="group" aria-label="{translate 'admin.media'}">
+      <button type="button" id="media-view-grid" data-media-view="grid" aria-label="{translate 'admin.media_grid_view'}" aria-pressed="true" title="{translate 'admin.media_grid_view'}"><?= birkly_icon('grid') ?></button>
+      <button type="button" id="media-view-list" data-media-view="list" aria-label="{translate 'admin.media_list_view'}" aria-pressed="false" title="{translate 'admin.media_list_view'}"><?= birkly_icon('list') ?></button>
     </div>
   </div>
 </div>
 
-<div class="media-page page-body u-stack-6">
-  <div id="media-bulk-toolbar" class="bulk-actions-toolbar" hidden>
-    <div class="bulk-actions-content">
-      <span class="bulk-actions-count"><span id="media-selected-count">0</span> {translate 'admin.selected'}</span>
-      <div class="bulk-actions-buttons">
-        <button type="button" class="btn btn-sm" data-media-action="move-selected">{translate 'admin.move_to_folder'}</button>
-        <button type="button" class="btn btn-sm btn-danger" data-media-action="delete-selected">{translate 'admin.delete'}</button>
-        <button type="button" class="btn btn-sm btn-secondary" data-media-action="clear-selection">{translate 'admin.cancel'}</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="media-layout">
-    <!-- Folder tree -->
-    <aside class="media-sidebar">
-      <nav class="side-nav side-nav--track media-tree" id="folder-tree" aria-label="{translate 'admin.media'}">
-        <div class="side-nav-group">
-          <div class="side-nav-item folder-item all" data-media-folder="all">
-            <span data-icon="archive" data-icon-size="16" aria-hidden="true"></span>
-            <span class="side-nav-label folder-name" data-text="{translate 'admin.all_media'}">{translate 'admin.all_media'}</span>
-          </div>
-          <div class="side-nav-item folder-item root" data-media-folder="">
-            <span data-icon="folder-root" data-icon-size="16" aria-hidden="true"></span>
-            <span class="side-nav-label folder-name" data-text="{translate 'admin.root_folder'}">{translate 'admin.root_folder'}</span>
-          </div>
-          <div id="folder-list-container"></div>
-        </div>
-      </nav>
-    </aside>
-
-    <!-- Assets -->
-    <main class="media-main u-stack-4">
-      <div class="media-current-folder u-cluster" id="media-breadcrumb" aria-label="Current folder"></div>
-      <div class="media-drop-zone" id="media-drop-zone" aria-hidden="true">
-        <div class="u-stack-1">
-          <strong>Drop files to upload</strong>
-          <span class="u-text-sm"><?= __('admin.media_upload_current_folder') ?></span>
-        </div>
-      </div>
-      <div class="media-grid" id="media-grid">
-        <div class="loading-state" aria-live="polite">
-          <p class="empty-state-text">{translate 'admin.loading_media'}</p>
-        </div>
-      </div>
-    </main>
-  </div>
+<div id="media-bulk-toolbar" class="bulk-bar" role="toolbar" aria-label="{translate 'admin.selected'}" hidden>
+  <span class="bulk-bar-count" role="status"><span id="media-selected-count">0</span> {translate 'admin.selected'}</span>
+  <button type="button" class="button is-small" data-media-action="move-selected"><?= birkly_icon('folder') ?>{translate 'admin.move_to_folder'}</button>
+  <button type="button" class="button is-small is-danger" data-media-action="delete-selected"><?= birkly_icon('trash') ?>{translate 'admin.delete'}</button>
+  <button type="button" class="button is-small is-quiet" data-media-action="clear-selection">{translate 'admin.cancel'}</button>
 </div>
 
-<!-- Upload Modal -->
+<div class="media-layout">
+  <aside class="media-sidebar">
+    <p class="media-folders-heading">{translate 'admin.media_folders'}</p>
+    <nav class="media-tree" id="folder-tree" aria-label="{translate 'admin.media_folders'}">
+      <div class="folder-item all" data-media-folder="all">
+        <?= birkly_icon('media') ?>
+        <span class="folder-name">{translate 'admin.all_media'}</span>
+        <span class="folder-count" id="media-total-count"></span>
+      </div>
+      <div class="folder-item root" data-media-folder="">
+        <?= birkly_icon('folder') ?>
+        <span class="folder-name">{translate 'admin.root_folder'}</span>
+      </div>
+      <div id="folder-list-container"></div>
+    </nav>
+  </aside>
+
+  <main class="media-main">
+    <div class="media-current-folder" id="media-breadcrumb" aria-label="Current folder"></div>
+    <div class="media-drop-zone dropzone" id="media-drop-zone" aria-hidden="true">
+      <?= birkly_icon('upload') ?>
+      <strong>{translate 'admin.media_drop_title'}</strong>
+      <span><?= __('admin.media_upload_current_folder') ?></span>
+    </div>
+    <div class="media-grid" id="media-grid">
+      <div class="loading-state" aria-live="polite">
+        <p class="empty-state-text">{translate 'admin.loading_media'}</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Upload: a float -->
 <div id="upload-modal" class="modal">
   <div class="modal-content modal--md">
     <div class="modal-header">
       <h3 class="modal-title">{translate 'admin.upload_media'}</h3>
-      <button type="button" class="modal-close" data-media-action="close-upload" aria-label="{translate 'admin.close'}">&times;</button>
+      <button type="button" class="modal-close" data-media-action="close-upload" aria-label="{translate 'admin.close'}"><?= birkly_icon('x') ?></button>
     </div>
     <div class="modal-body">
-      <form id="upload-form" class="u-stack-4" enctype="multipart/form-data">
-        <div class="field">
-          <label class="field-label" for="file-input">{translate 'admin.select_file'}</label>
+      <form id="upload-form" class="media-upload-form" enctype="multipart/form-data">
+        <label class="media-upload-drop dropzone" for="file-input">
+          <?= birkly_icon('upload') ?>
+          <span class="media-upload-drop-title">{translate 'admin.select_file'}</span>
           <input type="file" id="file-input" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv,.mp4,.m4v,.webm,.mov,.ogv,.mp3,.wav" required>
-        </div>
-        <div class="field">
+        </label>
+        <div class="field-group">
           <label class="field-label" for="upload-title">{translate 'admin.title_optional'}</label>
           <input type="text" id="upload-title" name="title" class="input" placeholder="{translate 'admin.enter_title'}">
         </div>
@@ -102,39 +92,36 @@
       </form>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-media-action="close-upload">{translate 'admin.cancel'}</button>
-      <button type="button" class="btn btn-primary" data-media-action="confirm-upload">{translate 'admin.upload'}</button>
+      <button type="button" class="button" data-media-action="close-upload">{translate 'admin.cancel'}</button>
+      <button type="button" class="button is-main" data-media-action="confirm-upload">{translate 'admin.upload'}</button>
     </div>
   </div>
 </div>
 
-<!-- Media Details Modal -->
-<div id="media-modal" class="modal">
-  <div class="modal-content modal--lg">
+<!-- Media detail: a side sheet -->
+<div id="media-modal" class="modal is-sheet">
+  <div class="modal-content">
     <div class="modal-header">
       <h3 class="modal-title" id="media-modal-title">{translate 'admin.media_details'}</h3>
-      <button type="button" class="modal-close" data-media-action="close-media" aria-label="{translate 'admin.close'}">&times;</button>
+      <button type="button" class="modal-close" data-media-action="close-media" aria-label="{translate 'admin.close'}"><?= birkly_icon('x') ?></button>
     </div>
     <div class="modal-body" id="media-modal-body">
       <!-- Content will be populated by JavaScript -->
     </div>
-    <div class="modal-footer modal-footer--split">
-      <button type="button" class="btn btn-danger" data-media-action="delete-media">{translate 'admin.delete'}</button>
-      <div class="u-cluster">
-        <button type="button" class="btn btn-secondary" data-media-action="open-move">{translate 'admin.move_to_folder'}</button>
-        <button type="button" class="btn btn-secondary" data-media-action="close-media">{translate 'admin.close'}</button>
-        <button type="button" class="btn btn-primary" data-media-action="save-media">{translate 'admin.save'}</button>
-      </div>
+    <div class="modal-footer">
+      <button type="button" class="button is-quiet is-danger" data-media-action="delete-media"><?= birkly_icon('trash') ?>{translate 'admin.delete'}</button>
+      <button type="button" class="button media-sheet-move" data-media-action="open-move"><?= birkly_icon('folder') ?>{translate 'admin.move_to_folder'}</button>
+      <button type="button" class="button is-main" data-media-action="save-media">{translate 'admin.save'}</button>
     </div>
   </div>
 </div>
 
-<!-- Move Media Modal -->
+<!-- Move: a float -->
 <div id="move-modal" class="modal">
   <div class="modal-content modal--sm">
     <div class="modal-header">
       <h3 class="modal-title">{translate 'admin.move_to_folder'}</h3>
-      <button type="button" class="modal-close" data-media-action="close-move" aria-label="{translate 'admin.close'}">&times;</button>
+      <button type="button" class="modal-close" data-media-action="close-move" aria-label="{translate 'admin.close'}"><?= birkly_icon('x') ?></button>
     </div>
     <div class="modal-body">
       <div class="folder-tree-move" id="folder-tree-move">
@@ -142,8 +129,9 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" data-media-action="close-move">{translate 'admin.cancel'}</button>
-      <button type="button" class="btn btn-primary" data-media-action="confirm-move">{translate 'admin.move'}</button>
+      <button type="button" class="button" data-media-action="close-move">{translate 'admin.cancel'}</button>
+      <button type="button" class="button is-main" data-media-action="confirm-move">{translate 'admin.move'}</button>
     </div>
   </div>
+</div>
 </div>
