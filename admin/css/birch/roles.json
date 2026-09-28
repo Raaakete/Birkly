@@ -1,0 +1,1295 @@
+{
+  "_comment": "Birch v5 role map (P96-M3). One entry per plain selector. `board` lists the Surfaces board selectors it replaces. Regenerate CSS: php scripts/build-birch-roles.php",
+  "roles": [
+    "canvas",
+    "frame",
+    "slab",
+    "well",
+    "dashed",
+    "signal",
+    "float",
+    "menu"
+  ],
+  "entries": [
+    {
+      "selector": ".block-palette",
+      "role": "canvas",
+      "name": "Block palette",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-wf-pal"
+      ]
+    },
+    {
+      "selector": ".card-grid",
+      "role": "canvas",
+      "name": "Collection groups, card grid and list",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-groups",
+        ".bk-cgrid",
+        ".bk-lgroup"
+      ]
+    },
+    {
+      "selector": ".check-list",
+      "role": "canvas",
+      "name": "Check list inside a field slab",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-who"
+      ]
+    },
+    {
+      "selector": ".collection-groups",
+      "role": "canvas",
+      "name": "Collection groups, card grid and list",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-groups",
+        ".bk-cgrid",
+        ".bk-lgroup"
+      ]
+    },
+    {
+      "selector": ".detail-pane",
+      "role": "canvas",
+      "name": "Collection list / permission detail",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-pl",
+        ".bk-um-pd"
+      ]
+    },
+    {
+      "selector": ".editor-layout",
+      "role": "canvas",
+      "name": "Two-column editor body",
+      "modules": [
+        "Dashboard",
+        "Entry",
+        "Collection",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-boxpanel"
+      ]
+    },
+    {
+      "selector": ".field-def-list",
+      "role": "canvas",
+      "name": "Field definition list",
+      "modules": [
+        "Collection"
+      ],
+      "board": [
+        ".bk-fclist"
+      ]
+    },
+    {
+      "selector": ".file-grid",
+      "role": "canvas",
+      "name": "File grid",
+      "modules": [
+        "Media"
+      ],
+      "board": [
+        ".bk-mgrid"
+      ]
+    },
+    {
+      "selector": ".group-heading",
+      "role": "canvas",
+      "name": "Group heading",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-gh"
+      ]
+    },
+    {
+      "selector": ".inspector",
+      "role": "canvas",
+      "name": "Inspector pane (hairline edge)",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-wf-isp"
+      ]
+    },
+    {
+      "selector": ".key-form",
+      "role": "canvas",
+      "name": "Key form column",
+      "modules": [
+        "Hub"
+      ],
+      "board": [
+        ".bk-hub-lform"
+      ]
+    },
+    {
+      "selector": ".list-foot",
+      "role": "canvas",
+      "name": "Card footer",
+      "modules": [
+        "Dashboard"
+      ],
+      "board": [
+        ".bk-tabfoot"
+      ]
+    },
+    {
+      "selector": ".list-group",
+      "role": "canvas",
+      "name": "Collection groups, card grid and list",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-groups",
+        ".bk-cgrid",
+        ".bk-lgroup"
+      ]
+    },
+    {
+      "selector": ".list-heading",
+      "role": "canvas",
+      "name": "Sub-heading inside a list",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-sl-g"
+      ]
+    },
+    {
+      "selector": ".master-list",
+      "role": "canvas",
+      "name": "Collection list / permission detail",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-pl",
+        ".bk-um-pd"
+      ]
+    },
+    {
+      "selector": ".metrics",
+      "role": "canvas",
+      "name": "KPI strip",
+      "modules": [
+        "Commerce",
+        "Automation",
+        "Settings",
+        "Dashboard",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-kts",
+        ".bk-se-kpis",
+        ".bk-stats",
+        ".bk-stattiles",
+        ".bk-card:has(>.bk-stats)"
+      ]
+    },
+    {
+      "selector": ".permission-matrix",
+      "role": "canvas",
+      "name": "Permission matrix",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-mx"
+      ]
+    },
+    {
+      "selector": ".pick-list",
+      "role": "canvas",
+      "name": "Pick list in a float",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-picks"
+      ]
+    },
+    {
+      "selector": ".side-nav",
+      "role": "canvas",
+      "name": "Folder list (current = ink bar)",
+      "modules": [
+        "Media",
+        "Discovery",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-mrail",
+        ".bk-gnav",
+        ".bk-sn"
+      ]
+    },
+    {
+      "selector": ".status-line",
+      "role": "canvas",
+      "name": "Agent Guide status line",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-agbar"
+      ]
+    },
+    {
+      "selector": ".table",
+      "role": "canvas",
+      "name": "Table (orders, automations, people)",
+      "modules": [
+        "Commerce",
+        "Automation",
+        "User",
+        "Entries",
+        "Media",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-otbl",
+        ".bk-tbl",
+        ".bk-stbl",
+        ".bk-ctbl",
+        ".bk-ru-tbl",
+        ".bk-ru-h"
+      ]
+    },
+    {
+      "selector": ".table-foot",
+      "role": "canvas",
+      "name": "Table footer / pagination",
+      "modules": [
+        "Commerce",
+        "Automation",
+        "User",
+        "Entries"
+      ],
+      "board": [
+        ".bk-or-foot",
+        ".bk-tf"
+      ]
+    },
+    {
+      "selector": ".table-head",
+      "role": "canvas",
+      "name": "Column header",
+      "modules": [
+        "all tables",
+        "Commerce",
+        "Automation",
+        "User",
+        "Settings"
+      ],
+      "board": [
+        ".bk-th",
+        ".bk-or-head .bk-or",
+        ".bk-sr-h",
+        ".bk-ir-h",
+        ".bk-au-h",
+        ".bk-um-h",
+        ".bk-se-drh",
+        ".bk-se-mxh",
+        ".bk-cr-h",
+        ".bk-kr-h",
+        ".bk-dr-rh",
+        ".bk-gr-h",
+        ".bk-ru-tbl",
+        ".bk-ru-h"
+      ]
+    },
+    {
+      "selector": ".toolbar",
+      "role": "canvas",
+      "name": "Plugin toolbar",
+      "modules": [
+        "Hub",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-hub-tools",
+        ".bk-ol-tools"
+      ]
+    },
+    {
+      "selector": ".workflow-board",
+      "role": "canvas",
+      "name": "Workflow board (dot grid)",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-wf-sc"
+      ]
+    },
+    {
+      "selector": ".fold-frame",
+      "role": "frame",
+      "name": "Foldable settings group",
+      "modules": [
+        "Settings",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-se-cg",
+        ".bk-disc"
+      ]
+    },
+    {
+      "selector": ".frame",
+      "role": "frame",
+      "name": "Settings group",
+      "modules": [
+        "Settings",
+        "Commerce",
+        "User",
+        "Automation",
+        "Entry",
+        "Collection",
+        "Discovery",
+        "Dashboard"
+      ],
+      "board": [
+        ".bk-sgrp",
+        ".bk-bx",
+        ".bk-boxpanel>.bk-card",
+        ".bk-se-dt",
+        ".bk-au-tg",
+        ".bk-tp[data-p=\"overview\"]>.bk-card",
+        ".bk-um-pr"
+      ]
+    },
+    {
+      "selector": ".analytics-card",
+      "role": "slab",
+      "name": "Analytics card",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-lc"
+      ]
+    },
+    {
+      "selector": ".chart",
+      "role": "slab",
+      "name": "Chart",
+      "modules": [
+        "Settings",
+        "Commerce",
+        "Dashboard"
+      ],
+      "board": [
+        ".bk-sgrp.bk-se-chart",
+        ".bk-rc-card",
+        ".bk-coh",
+        ".bk-card.bk-traffic"
+      ]
+    },
+    {
+      "selector": ".checklist",
+      "role": "slab",
+      "name": "Checklist",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-sgrp.bk-se-pc"
+      ]
+    },
+    {
+      "selector": ".choice-card",
+      "role": "slab",
+      "name": "Choice card",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-box"
+      ]
+    },
+    {
+      "selector": ".collect-strip",
+      "role": "slab",
+      "name": "Collect strip",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-sgrp.bk-se-cstrip"
+      ]
+    },
+    {
+      "selector": ".collection-card",
+      "role": "slab",
+      "name": "Collection card",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-cc"
+      ]
+    },
+    {
+      "selector": ".collection-row",
+      "role": "slab",
+      "name": "Collection row",
+      "modules": [
+        "Content"
+      ],
+      "board": [
+        ".bk-lr"
+      ]
+    },
+    {
+      "selector": ".collection-shortcut",
+      "role": "slab",
+      "name": "Collection shortcut",
+      "modules": [
+        "Dashboard"
+      ],
+      "board": [
+        ".bk-li"
+      ]
+    },
+    {
+      "selector": ".entry-field",
+      "role": "slab",
+      "name": "Schema field on the entry editor",
+      "modules": [
+        "Entry"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".field",
+      "role": "slab",
+      "name": "Field (label + value)",
+      "modules": [
+        "Entry",
+        "Collection",
+        "Discovery",
+        "Media"
+      ],
+      "board": [
+        ".bk-field"
+      ]
+    },
+    {
+      "selector": ".field-def",
+      "role": "slab",
+      "name": "Field definition row",
+      "modules": [
+        "Collection"
+      ],
+      "board": [
+        ".bk-fc"
+      ]
+    },
+    {
+      "selector": ".flow-card",
+      "role": "slab",
+      "name": "Signup flow card",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-fc"
+      ]
+    },
+    {
+      "selector": ".flow-diagram",
+      "role": "slab",
+      "name": "Delivery flow diagram",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-sgrp.bk-se-flow"
+      ]
+    },
+    {
+      "selector": ".health-strip",
+      "role": "slab",
+      "name": "Health strip",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-sgrp.bk-se-health"
+      ]
+    },
+    {
+      "selector": ".license-card",
+      "role": "slab",
+      "name": "License",
+      "modules": [
+        "Hub"
+      ],
+      "board": [
+        ".bk-hub-lic"
+      ]
+    },
+    {
+      "selector": ".line-item",
+      "role": "slab",
+      "name": "Refunded line",
+      "modules": [
+        "Commerce",
+        "User"
+      ],
+      "board": [
+        ".bk-rf-item",
+        ".bk-oli",
+        ".bk-um-mem"
+      ]
+    },
+    {
+      "selector": ".list-row",
+      "role": "slab",
+      "name": "List row",
+      "modules": [
+        "Settings",
+        "Commerce",
+        "User",
+        "Automation"
+      ],
+      "board": [
+        ".bk-se-ar",
+        ".bk-sl-b>.bk-si"
+      ]
+    },
+    {
+      "selector": ".media-card",
+      "role": "slab",
+      "name": "Media file card",
+      "modules": [
+        "Media"
+      ],
+      "board": [
+        ".bk-mc"
+      ]
+    },
+    {
+      "selector": ".metric",
+      "role": "slab",
+      "name": "Metric",
+      "modules": [
+        "Dashboard",
+        "Commerce",
+        "Automation",
+        "Settings"
+      ],
+      "board": [
+        ".bk-stat",
+        ".bk-kt",
+        ".bk-se-kpi"
+      ]
+    },
+    {
+      "selector": ".module-header",
+      "role": "slab",
+      "name": "Module switch header",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-ahead"
+      ]
+    },
+    {
+      "selector": ".nav-panel",
+      "role": "slab",
+      "name": "Sidebar panel (main, plugins, system)",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".permission-row",
+      "role": "slab",
+      "name": "Permission row",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-mxr"
+      ]
+    },
+    {
+      "selector": ".plugin-card",
+      "role": "slab",
+      "name": "Plugin card",
+      "modules": [
+        "Hub"
+      ],
+      "board": [
+        ".bk-hc"
+      ]
+    },
+    {
+      "selector": ".preview-card",
+      "role": "slab",
+      "name": "Search / social preview",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-prevcard"
+      ]
+    },
+    {
+      "selector": ".provider-card",
+      "role": "slab",
+      "name": "Provider",
+      "modules": [
+        "Hub"
+      ],
+      "board": [
+        ".bk-om-prov"
+      ]
+    },
+    {
+      "selector": ".revision-row",
+      "role": "slab",
+      "name": "Revision in the entry rail",
+      "modules": [
+        "Entry"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".rich-editor",
+      "role": "slab",
+      "name": "Rich-text editor",
+      "modules": [
+        "Entry"
+      ],
+      "board": [
+        ".bk-ed"
+      ]
+    },
+    {
+      "selector": ".row",
+      "role": "slab",
+      "name": "List row: icon or avatar, title and meta, trailing status or action",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".setting-row",
+      "role": "slab",
+      "name": "Setting row (label | value)",
+      "modules": [
+        "Settings",
+        "Commerce",
+        "User",
+        "Automation"
+      ],
+      "board": [
+        ".bk-setr"
+      ]
+    },
+    {
+      "selector": ".sheet-header",
+      "role": "slab",
+      "name": "Sheet header card (the thing being edited)",
+      "modules": [
+        "Settings"
+      ],
+      "board": [
+        ".bk-se-dh"
+      ]
+    },
+    {
+      "selector": ".signup-step",
+      "role": "slab",
+      "name": "Signup step",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-sr"
+      ]
+    },
+    {
+      "selector": ".slab",
+      "role": "slab",
+      "name": "One thing (role class)",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".switch-row",
+      "role": "slab",
+      "name": "Switch row (label + switch)",
+      "modules": [
+        "all"
+      ],
+      "board": [
+        ".bk-sw-row"
+      ]
+    },
+    {
+      "selector": ".table-row",
+      "role": "slab",
+      "name": "Table row",
+      "modules": [
+        "Entries",
+        "Media",
+        "Discovery",
+        "Commerce",
+        "Automation",
+        "User",
+        "Settings"
+      ],
+      "board": [
+        ".bk-tr",
+        ".bk-or",
+        ".bk-sr",
+        ".bk-au-r",
+        ".bk-um-r",
+        ".bk-se-dr"
+      ]
+    },
+    {
+      "selector": ".task-row",
+      "role": "slab",
+      "name": "Task / activity item",
+      "modules": [
+        "Dashboard",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-att"
+      ]
+    },
+    {
+      "selector": ".template-card",
+      "role": "slab",
+      "name": "Template card",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-au-tc"
+      ]
+    },
+    {
+      "selector": ".template-editor",
+      "role": "slab",
+      "name": "Template editor",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-ted"
+      ]
+    },
+    {
+      "selector": ".tier-card",
+      "role": "slab",
+      "name": "Tier card",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-tc"
+      ]
+    },
+    {
+      "selector": ".workflow-node",
+      "role": "slab",
+      "name": "Workflow step node",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-wn"
+      ]
+    },
+    {
+      "selector": ".chip",
+      "role": "well",
+      "name": "Chip",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".code",
+      "role": "well",
+      "name": "Code",
+      "modules": [
+        "Settings",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-se-code",
+        ".bk-li-th",
+        ".bk-code",
+        ".bk-ntth",
+        ".bk-ed-src"
+      ]
+    },
+    {
+      "selector": ".count",
+      "role": "well",
+      "name": "Count",
+      "modules": [
+        "all"
+      ],
+      "board": [
+        ".bk-count"
+      ]
+    },
+    {
+      "selector": ".cover",
+      "role": "well",
+      "name": "Cover image",
+      "modules": [
+        "Entry"
+      ],
+      "board": [
+        ".bk-cover"
+      ]
+    },
+    {
+      "selector": ".doc-product",
+      "role": "well",
+      "name": "Product inside the doc",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-prodcard"
+      ]
+    },
+    {
+      "selector": ".editor-toolbar",
+      "role": "well",
+      "name": "Editor toolbar",
+      "modules": [
+        "Entry",
+        "User"
+      ],
+      "board": [
+        ".bk-edbar"
+      ]
+    },
+    {
+      "selector": ".insert-tray",
+      "role": "well",
+      "name": "Insert-field tray / trigger pill",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-fp",
+        ".bk-au-pill"
+      ]
+    },
+    {
+      "selector": ".lang",
+      "role": "well",
+      "name": "Language code",
+      "modules": [
+        "Entries",
+        "Collection"
+      ],
+      "board": [
+        ".bk-lang"
+      ]
+    },
+    {
+      "selector": ".mini-stat",
+      "role": "well",
+      "name": "Tier stat / flow step",
+      "modules": [
+        "User"
+      ],
+      "board": [
+        ".bk-um-tu div",
+        ".bk-um-steps span"
+      ]
+    },
+    {
+      "selector": ".pill",
+      "role": "well",
+      "name": "Insert-field tray / trigger pill",
+      "modules": [
+        "Automation",
+        "User"
+      ],
+      "board": [
+        ".bk-fp",
+        ".bk-au-pill",
+        ".bk-um-tu div",
+        ".bk-um-steps span"
+      ]
+    },
+    {
+      "selector": ".prefix",
+      "role": "well",
+      "name": "Input prefix",
+      "modules": [
+        "Entry",
+        "Settings"
+      ],
+      "board": [
+        ".bk-pfx"
+      ]
+    },
+    {
+      "selector": ".preview-label",
+      "role": "well",
+      "name": "Preview label",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-prevcard-h"
+      ]
+    },
+    {
+      "selector": ".quote",
+      "role": "well",
+      "name": "Quote",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-quote"
+      ]
+    },
+    {
+      "selector": ".segmented",
+      "role": "well",
+      "name": "Segmented control",
+      "modules": [
+        "all"
+      ],
+      "board": [
+        ".bk-seg"
+      ]
+    },
+    {
+      "selector": ".tag",
+      "role": "well",
+      "name": "Tag",
+      "modules": [
+        "Entry",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-tag"
+      ]
+    },
+    {
+      "selector": ".thumb",
+      "role": "well",
+      "name": "Thumbnail",
+      "modules": [
+        "Media",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-mthumb",
+        ".bk-li-th",
+        ".bk-code",
+        ".bk-ntth"
+      ]
+    },
+    {
+      "selector": ".well",
+      "role": "well",
+      "name": "Part of one thing (role class)",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".add-row",
+      "role": "dashed",
+      "name": "Add another field",
+      "modules": [
+        "Collection",
+        "Commerce",
+        "User"
+      ],
+      "board": [
+        ".bk-addrow",
+        ".bk-sl-add"
+      ]
+    },
+    {
+      "selector": ".advice",
+      "role": "dashed",
+      "name": "Advice note",
+      "modules": [
+        "Settings",
+        "Commerce",
+        "User",
+        "Discovery",
+        "Automation"
+      ],
+      "board": [
+        ".bk-sh-note",
+        ".bk-callout-advice",
+        ".bk-au-many",
+        ".bk-au-fix",
+        ".bk-au-tplcta"
+      ]
+    },
+    {
+      "selector": ".blank-card",
+      "role": "dashed",
+      "name": "Blank template",
+      "modules": [
+        "Commerce"
+      ],
+      "board": [
+        ".bk-ntth-blank"
+      ]
+    },
+    {
+      "selector": ".dashed",
+      "role": "dashed",
+      "name": "Not there yet (role class)",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".dropzone",
+      "role": "dashed",
+      "name": "Drop zone",
+      "modules": [
+        "Entry",
+        "Media",
+        "Discovery"
+      ],
+      "board": [
+        ".bk-drop",
+        ".bk-dropzone"
+      ]
+    },
+    {
+      "selector": ".empty",
+      "role": "dashed",
+      "name": "Empty state",
+      "modules": [
+        "all",
+        "Commerce",
+        "User",
+        "Hub"
+      ],
+      "board": [
+        ".bk-empty",
+        ".bk-em",
+        ".bk-um-ge",
+        ".bk-sl-empty",
+        ".bk-hub-packs"
+      ]
+    },
+    {
+      "selector": ".missing",
+      "role": "dashed",
+      "name": "Missing translation",
+      "modules": [
+        "Entry",
+        "Entries"
+      ],
+      "board": [
+        ".bk-edbody-empty",
+        ".bk-lang-miss"
+      ]
+    },
+    {
+      "selector": ".summary-note",
+      "role": "dashed",
+      "name": "Refund summary",
+      "modules": [
+        "Commerce"
+      ],
+      "board": [
+        ".bk-rf-sum"
+      ]
+    },
+    {
+      "selector": ".check-row.is-attention",
+      "role": "signal",
+      "name": "Deprecated trigger / step with a problem / failing check",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-au-dep",
+        ".bk-wn.is-bad",
+        ".bk-au-ck-warn"
+      ]
+    },
+    {
+      "selector": ".metric.is-attention",
+      "role": "signal",
+      "name": "Incomplete section KPI",
+      "modules": [
+        "Discovery",
+        "Commerce"
+      ],
+      "board": [
+        ".bk-stattile-warn",
+        ".bk-kt-err"
+      ]
+    },
+    {
+      "selector": ".signal",
+      "role": "signal",
+      "name": "Alert",
+      "modules": [
+        "all",
+        "Automation",
+        "Discovery",
+        "Hub",
+        "User"
+      ],
+      "board": [
+        ".bk-alert",
+        ".bk-au-alert",
+        ".bk-callout-problem",
+        ".bk-om-alpha",
+        ".bk-ic-fix",
+        ".bk-hub-notice",
+        ".bk-um-del"
+      ]
+    },
+    {
+      "selector": ".step.is-todo",
+      "role": "signal",
+      "name": "Step still to do",
+      "modules": [
+        "Discovery"
+      ],
+      "board": [
+        ".bk-wfstep:not(.bk-wfstep-done)"
+      ]
+    },
+    {
+      "selector": ".table-row.is-attention",
+      "role": "signal",
+      "name": "Uncounted stock row",
+      "modules": [
+        "Commerce"
+      ],
+      "board": [
+        ".bk-ir[data-counted=\"false\"]"
+      ]
+    },
+    {
+      "selector": ".task-row.is-attention",
+      "role": "signal",
+      "name": "Attention item needing action",
+      "modules": [
+        "Commerce"
+      ],
+      "board": [
+        ".bk-at-warn",
+        ".bk-at-err"
+      ]
+    },
+    {
+      "selector": ".workflow-node.is-attention",
+      "role": "signal",
+      "name": "Deprecated trigger / step with a problem / failing check",
+      "modules": [
+        "Automation"
+      ],
+      "board": [
+        ".bk-au-dep",
+        ".bk-wn.is-bad",
+        ".bk-au-ck-warn"
+      ]
+    },
+    {
+      "selector": ".dialog",
+      "role": "float",
+      "name": "Dialog",
+      "modules": [
+        "Commerce",
+        "Automation"
+      ],
+      "board": [
+        ".bk-cmod"
+      ]
+    },
+    {
+      "selector": ".float",
+      "role": "float",
+      "name": "Float (role class)",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".sheet",
+      "role": "float",
+      "name": "Sheet (side)",
+      "modules": [
+        "Commerce",
+        "Settings",
+        "User",
+        "Automation"
+      ],
+      "board": [
+        ".bk-dr"
+      ]
+    },
+    {
+      "selector": ".menu",
+      "role": "menu",
+      "name": "Menu, dropdown, row menu",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    },
+    {
+      "selector": ".popover",
+      "role": "menu",
+      "name": "Popover and search results",
+      "modules": [
+        "all"
+      ],
+      "board": []
+    }
+  ]
+}

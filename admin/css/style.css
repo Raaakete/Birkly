@@ -25,6 +25,7 @@
 @import url('core/reset.css');
 @import url('core/typography.css');
 @import url('core/utilities.css');
+@import url('birch/roles.generated.css');
 
 /* ============================================
    Components
