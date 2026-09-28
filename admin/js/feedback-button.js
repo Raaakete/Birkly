@@ -17,7 +17,7 @@
         const modal = document.getElementById('feedback-submit-modal');
         const err = document.getElementById('feedback-submit-error');
         const ok = document.getElementById('feedback-submit-success');
-        if (err) { err.hidden = true; err.textContent = ''; }
+        if (err) { err.hidden = true; setMessage(err, ''); }
         if (ok) ok.hidden = true;
         if (modal) {
             modal.classList.add('show');
@@ -37,6 +37,19 @@
     function isFeedbackModalOpen() {
         const modal = document.getElementById('feedback-submit-modal');
         return !!(modal && modal.classList.contains('show'));
+    }
+
+    function setMessage(el, text) {
+        const target = el.querySelector('[data-feedback-message]') || el;
+        target.textContent = text;
+    }
+
+    function renderFileList() {
+        const input = document.getElementById('feedback-attachments');
+        const list = document.getElementById('feedback-attachments-list');
+        if (!input || !list) return;
+        const names = input.files ? Array.from(input.files).map((file) => file.name) : [];
+        list.textContent = names.length ? names.join(', ') : (list.dataset.empty || '');
     }
 
     function fbT(key, fallback) {
@@ -122,12 +135,13 @@
             }
 
             document.getElementById('feedback-submit-form')?.reset();
+            renderFileList();
             if (ok) ok.hidden = false;
             setTimeout(closeModal, 1800);
         } catch (error) {
             console.error('[Birkly feedback]', error);
             if (err) {
-                err.textContent = error.message;
+                setMessage(err, error.message);
                 err.hidden = false;
             }
         } finally {
@@ -142,6 +156,10 @@
 
         document.getElementById('feedback-floating-btn')?.addEventListener('click', openModal);
         document.getElementById('feedback-submit-form')?.addEventListener('submit', submitFeedback);
+        document.getElementById('feedback-attachments')?.addEventListener('change', renderFileList);
+        document.querySelector('[data-feedback-pick-files]')?.addEventListener('click', () => {
+            document.getElementById('feedback-attachments')?.click();
+        });
         document.querySelectorAll('[data-close-feedback-submit]').forEach((el) => {
             el.addEventListener('click', closeModal);
         });
