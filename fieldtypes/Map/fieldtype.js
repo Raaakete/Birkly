@@ -1,13 +1,18 @@
 /**
  * Map/Location Fieldtype JavaScript
  * Coordinates, address search and "use my location" work on their own; the
- * Leaflet map (OpenStreetMap, no API key) is shown only when Leaflet loads.
+ * Leaflet map (OpenStreetMap tiles, no API key) is shown once Leaflet loads.
  */
 (function() {
     'use strict';
 
-    const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    // Leaflet 1.9.4 (BSD-2) ships in this fieldtype: leaflet/.
+    function vendorUrl(file) {
+        const path = '/fieldtypes/Map/leaflet/' + file;
+        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
+    }
+    const LEAFLET_CSS = vendorUrl('leaflet.css');
+    const LEAFLET_JS = vendorUrl('leaflet.js');
     let leafletPromise = null;
 
     function loadLeaflet() {
