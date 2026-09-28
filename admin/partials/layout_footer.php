@@ -39,6 +39,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20260927-1')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/breadcrumb-truncate.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/page-actions.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <?php
     if (!function_exists('birkly_render_admin_script_tags')) {
         require_once __DIR__ . '/../../core/plugins/admin_asset_shelf.php';

@@ -103,7 +103,7 @@ Birkly.Theme = {
             const theme = btn.getAttribute('data-theme-option');
             const active = theme === this.currentTheme;
             btn.classList.toggle('active', active);
-            btn.setAttribute('aria-checked', active ? 'true' : 'false');
+            btn.setAttribute(btn.closest('.segmented') ? 'aria-pressed' : 'aria-checked', active ? 'true' : 'false');
         });
     },
 
@@ -172,6 +172,16 @@ Birkly.Theme = {
         if (backdrop) {
             backdrop.addEventListener('click', closeSidebar);
         }
+
+        sidebar.querySelectorAll('[data-drawer-action]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.drawerAction === 'logout' ? 'logout-btn' : 'topbar-search-btn');
+                closeSidebar();
+                if (target) {
+                    target.click();
+                }
+            });
+        });
 
         sidebar.querySelectorAll('.nav-links a').forEach((link) => {
             link.addEventListener('click', () => {

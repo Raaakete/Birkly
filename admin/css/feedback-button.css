@@ -7,9 +7,9 @@
    as a menu item. The button survives only as the fallback when that launcher
    is not mounted, so it is styled as a plain circular accent control.
 
-   The feedback modal, its form and the admin feedback list use .modal, .field,
-   .input, .select, .textarea, .table, .badge and .callout directly — nothing
-   here duplicates them.
+   The feedback dialog is a Birch float (.dialog head, body, foot) whose body
+   stacks slabs 4px apart; section 1b only lays those slabs out. The admin
+   feedback list uses the kit's tables and badges directly.
 
    NOTE for the design lead: the help-search, contextual-help-link and
    admin-legal-footer families below are the only definitions of those classes
@@ -46,6 +46,53 @@
 .feedback-floating-btn:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
+}
+
+/* ---- 1b. Feedback dialog ---- */
+.feedback-dialog { width: min(560px, calc(100vw - 2 * var(--s-4))); max-height: calc(100vh - 2 * var(--s-6)); }
+.feedback-dialog .dialog-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.feedback-dialog .feedback-privacy-notice a { color: var(--accent-text); }
+
+.feedback-slab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: var(--s-4);
+}
+
+.feedback-kind {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feedback-dialog .feedback-textarea {
+  height: auto;
+  min-height: 120px;
+  padding-block: var(--s-2);
+  resize: vertical;
+}
+
+.feedback-attach { flex-direction: row; align-items: center; }
+.feedback-attach-text { display: flex; flex: 1 1 auto; flex-direction: column; gap: 2px; min-width: 0; }
+.feedback-attach-text .field-help { overflow-wrap: anywhere; }
+
+.feedback-dialog label.feedback-contact.check {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s-3);
+  cursor: pointer;
+}
+
+.feedback-dialog label.feedback-contact.check > input { margin-block-start: 3px; }
+.feedback-dialog .field-help { max-width: none; }
+.feedback-contact-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.feedback-contact-label { color: var(--text); font-size: var(--size-body); line-height: var(--lh-body); }
+
+@media (max-width: 639px) {
+  .feedback-kind { grid-template-columns: minmax(0, 1fr); }
+  .feedback-attach { flex-wrap: wrap; }
 }
 
 /* ---- 2. Contextual help link — the "?" beside a section title ---- */

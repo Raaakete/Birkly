@@ -2960,6 +2960,12 @@
         "media_list_view": "List view",
         "media_grid_view": "Grid view",
         "media_drop_title": "Drop files to upload",
-        "discovery_seo_social_preview": "Social preview"
+        "discovery_seo_social_preview": "Social preview",
+        "theme_label": "Color theme",
+        "theme_light": "Light",
+        "theme_dark": "Dark",
+        "theme_auto": "Auto",
+        "more_actions": "More actions",
+        "feedback_attachments_choose": "Choose files"
     }
 }

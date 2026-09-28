@@ -18,6 +18,8 @@
    into .main-actions-bar + .section-header.
    ============================================ */
 
+/* Same height as the sidebar brand area, so the rule under the bar meets the
+   top edge of the first nav panel in every density */
 .admin-topbar {
   position: relative;
   z-index: var(--z-chrome);
@@ -25,8 +27,8 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--s-4);
-  height: var(--chrome-row);
-  margin: 0 0 var(--s-4);
+  height: calc(var(--chrome-row) + var(--s-4));
+  margin: 0 0 var(--s-5);
   padding: 0;
   background: none;
 }
@@ -582,10 +584,9 @@
    ============================================ */
 @media (max-width: 1023px) {
   .admin-topbar {
-    height: auto;
-    min-height: var(--chrome-row);
-    padding-block: var(--s-1);
-    flex-wrap: wrap;
+    height: var(--chrome-row);
+    padding-block: 0;
+    flex-wrap: nowrap;
     gap: var(--s-2);
     align-items: center;
     max-width: 100%;
@@ -620,8 +621,21 @@
   }
 }
 
+/* Phone: one row — menu, breadcrumb (truncates from the left), notifications.
+   Search, theme and account live in the drawer. */
 @media (max-width: 767px) {
   .developer-mode-badge { display: none; }
+
+  .admin-topbar {
+    flex-wrap: nowrap;
+    height: var(--chrome-row);
+    min-height: 0;
+    padding-block: 0;
+    margin-block-end: var(--s-4);
+  }
+
+  .admin-topbar :is(.admin-visit-project-btn, .theme-switcher-wrap, #topbar-search-btn, .topbar-user-menu) { display: none; }
+  .admin-topbar .admin-topbar-actions { width: auto; flex: 0 0 auto; gap: 0; }
 
 
   .page-header {

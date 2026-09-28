@@ -325,4 +325,4 @@ a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
 .btn-primary.btn-loading::after,
 .btn-primary.loading::after { color: var(--on-mint); }
 
-.admin-visit-project-btn { height: var(--chrome-row); }
+.admin-visit-project-btn { height: var(--control); }
