@@ -120,6 +120,10 @@ if (empty($userAvatar)) {
                     <span class="logo-name"><?= htmlspecialchars($projectName) ?></span>
                 </div>
             </div>
+            <button type="button" class="drawer-search" data-drawer-action="search">
+                <?= birkly_icon('magnifying-glass') ?>
+                <span><?= htmlspecialchars(__('admin.search')) ?></span>
+            </button>
             <nav class="sidebar-nav">
                 <!-- First Section: Main Navigation -->
                 <ul class="nav-links nav-panel" id="links-main">
@@ -263,6 +267,27 @@ if (empty($userAvatar)) {
                     </li>
                 </ul>
                 </nav>
+            <div class="drawer-tools">
+                <div class="segmented well drawer-theme" role="group" aria-label="<?= htmlspecialchars(__('admin.theme_label')) ?>">
+                    <button type="button" class="theme-option" data-theme-option="light"><?= birkly_icon('sun') ?><span><?= htmlspecialchars(__('admin.theme_light')) ?></span></button>
+                    <button type="button" class="theme-option" data-theme-option="dark"><?= birkly_icon('moon') ?><span><?= htmlspecialchars(__('admin.theme_dark')) ?></span></button>
+                    <button type="button" class="theme-option" data-theme-option="system"><?= birkly_icon('monitor') ?><span><?= htmlspecialchars(__('admin.theme_auto')) ?></span></button>
+                </div>
+                <div class="nav-panel drawer-account">
+                    <a class="drawer-account-link" href="<?= htmlspecialchars(admin_url('account')) ?>">
+                        <?php if (!empty($userAvatar)): ?>
+                        <img src="<?= htmlspecialchars((str_starts_with($userAvatar, 'http') || str_starts_with($userAvatar, '//')) ? $userAvatar : birkly_url($userAvatar)) ?>" alt="" class="drawer-avatar">
+                        <?php else: ?>
+                        <span class="drawer-avatar user-avatar-initials" aria-hidden="true"><?= htmlspecialchars($avatarInitials) ?></span>
+                        <?php endif; ?>
+                        <span class="drawer-account-text">
+                            <span class="drawer-account-name"><?= htmlspecialchars($userName) ?></span>
+                            <span class="drawer-account-email"><?= htmlspecialchars($userEmail) ?></span>
+                        </span>
+                    </a>
+                    <button type="button" class="drawer-logout" data-drawer-action="logout"><?= birkly_icon('sign-out') ?><span><?= htmlspecialchars(__('admin.logout')) ?></span></button>
+                </div>
+            </div>
             <button type="button" class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse sidebar">
                 <?= birkly_icon('chev-left2') ?>
                 <span class="sidebar-collapse-label">Collapse</span>

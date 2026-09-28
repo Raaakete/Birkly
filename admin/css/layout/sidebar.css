@@ -5,7 +5,8 @@
    Floating panels on the canvas: main, plugins, system. Rows are full width
    and square; the current page gets a 2px ink bar on the left, hover
    previews it in grey and nudges the label by 2px. The brand square sits on
-   the nav-icon centre line and shares the 40px line with the top bar.
+   the nav-icon centre line; the brand area and the top bar share one height,
+   so the top bar's rule meets the top of the first nav panel.
 
    Widths: 216px sidebar (>= 1280), 52px rail when collapsed by hand,
    64px rail at 1024–1279, drawer below 1024.
@@ -57,13 +58,13 @@
 }
 
 /* ============================================
-   Brand — 40px line shared with the top bar
+   Brand — same height as the top bar
    ============================================ */
 #admin-sidebar .sidebar-header {
   display: flex;
   align-items: center;
-  height: var(--chrome-row);
-  margin: 0 0 var(--s-4);
+  height: calc(var(--chrome-row) + var(--s-4));
+  margin: 0;
   padding: 0;
   color: var(--text);
 }
@@ -405,6 +406,85 @@ body.sidebar-open { overflow: hidden; }
     pointer-events: auto;
     transition: transform var(--dur-3) var(--ease);
   }
+}
+
+/* ============================================
+   Phone drawer: search, theme and account move here from the top bar
+   ============================================ */
+.drawer-search,
+.drawer-tools { display: none; }
+
+@media (max-width: 767px) {
+  .drawer-search {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    width: var(--panel-width);
+    height: var(--control);
+    margin: 0 0 var(--s-2);
+    padding: 0 var(--s-3);
+    border: 0;
+    border-radius: var(--r);
+    background: var(--surface);
+    color: var(--text-3);
+    font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .drawer-search:hover { color: var(--text-2); }
+
+  .drawer-tools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-2);
+    width: var(--panel-width);
+    margin-block-start: var(--s-4);
+  }
+
+  .drawer-theme { display: flex; }
+  .drawer-theme > button { flex: 1 1 0; justify-content: center; height: var(--control-xs); }
+
+  .drawer-account { display: flex; flex-direction: column; padding: var(--s-1) 0; }
+
+  .drawer-account-link,
+  .drawer-logout {
+    display: flex;
+    align-items: center;
+    gap: var(--s-3);
+    min-height: var(--nav-row);
+    padding: var(--s-1) var(--nav-pad);
+    border: 0;
+    background: none;
+    color: var(--text-2);
+    font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .drawer-account-link:hover,
+  .drawer-logout:hover { color: var(--text); }
+
+  .drawer-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 var(--nav-row);
+    width: var(--nav-row);
+    height: var(--nav-row);
+    border-radius: var(--r);
+    object-fit: cover;
+    font-size: var(--size-caption);
+  }
+
+  .drawer-account-text { display: flex; flex-direction: column; min-width: 0; }
+  .drawer-account-name { color: var(--text); font-weight: var(--weight-medium); }
+  .drawer-account-name,
+  .drawer-account-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drawer-account-email { color: var(--text-3); font-size: var(--size-small); line-height: var(--lh-small); }
+  .drawer-logout { color: var(--danger); }
+  .drawer-logout:hover { color: var(--danger); }
 }
 
 @media (max-width: 639px) {
