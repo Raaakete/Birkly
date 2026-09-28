@@ -181,7 +181,6 @@
   color: var(--text-2);
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
 }
 
@@ -299,7 +298,6 @@
   font-size: var(--size-caption);
   font-style: normal;
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
 }
 

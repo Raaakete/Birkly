@@ -169,7 +169,6 @@
   gap: var(--s-3);
   color: var(--text-3);
   font-size: var(--size-caption);
-  text-transform: uppercase;
   letter-spacing: 0;
 }
 .divider-labelled::before,

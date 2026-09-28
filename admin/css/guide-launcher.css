@@ -383,8 +383,6 @@ body.ai-chat-window-open .guide-panel {
   margin: 0 0 var(--s-1);
   font-size: var(--size-caption);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--accent-text);
 }
 
@@ -548,8 +546,6 @@ body.ai-chat-window-open .guide-panel {
   border-radius: var(--r);
   font-size: var(--size-caption);
   font-weight: var(--weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   color: var(--accent-text);
   background: color-mix(in srgb, var(--mint) 12%, var(--surface-2));
 }

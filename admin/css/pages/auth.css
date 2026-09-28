@@ -121,8 +121,6 @@ body.auth-page {
   margin: 0;
   font-size: var(--size-small);
   font-weight: var(--weight-medium);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-2);
 }
 

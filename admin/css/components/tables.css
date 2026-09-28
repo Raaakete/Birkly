@@ -3,7 +3,7 @@
    ============================================
 
    Density (brief §2.3): body row 40px, compact 32px, header 36px.
-   Header is a sunken band with an uppercase micro-label.
+   Header is a sunken band with a sentence-case micro-label.
    Numeric columns must carry u-numeric (tabular figures).
 
      <div class="table-container">
@@ -48,7 +48,6 @@
   text-align: start;
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
   color: var(--text-3);
   white-space: nowrap;
@@ -335,7 +334,6 @@
   text-align: start;
   font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  text-transform: uppercase;
   letter-spacing: 0;
   color: var(--text-3);
   white-space: nowrap;
