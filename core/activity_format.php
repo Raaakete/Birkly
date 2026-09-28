@@ -239,6 +239,25 @@ function birkly_activity_event_icon(string $event): string
     return $icons[$event] ?? '📌';
 }
 
+/**
+ * Pixel icon name for an activity event (Birch rows draw these; `icon` keeps the emoji for older clients).
+ */
+function birkly_activity_event_icon_name(string $event): string
+{
+    $byEmoji = [
+        '📝' => 'pencil', '✏️' => 'pencil', '🗑️' => 'trash', '📁' => 'folder', '✅' => 'check', '❌' => 'x',
+        '⏰' => 'clock', '⏳' => 'clock', '👁️' => 'eye', '👤' => 'user', '🛡️' => 'shield', '✉️' => 'mail',
+        '📨' => 'inbox', '🔓' => 'lock', '🔒' => 'lock', '🚪' => 'log-out', '📷' => 'media', '📄' => 'content',
+        '⚙️' => 'sliders', '⬇️' => 'download', '⬆️' => 'upload', '🔗' => 'link', '🔀' => 'branch', '🧩' => 'layers',
+        '🚫' => 'stop', '🌐' => 'globe',
+    ];
+    if (birkly_activity_str_starts_with($event, 'webhook_')) {
+        return 'webhook';
+    }
+
+    return $byEmoji[birkly_activity_event_icon($event)] ?? 'dots';
+}
+
 function birkly_activity_project_group(string $event): string
 {
     if (birkly_activity_str_starts_with($event, 'project_git_')) {
@@ -622,15 +641,15 @@ function birkly_activity_build_href(string $event, array $details, array $target
     }
 
     if ($type === 'user') {
-        return birkly_admin_url('settings', ['section' => 'users']);
+        return birkly_admin_url('settings', ['tab' => 'team-access']);
     }
 
     if ($type === 'role') {
-        return birkly_admin_url('settings', ['section' => 'roles']);
+        return birkly_admin_url('settings') . '#roles';
     }
 
     if (birkly_activity_str_starts_with($event, 'webhook_')) {
-        return birkly_admin_url('webhooks');
+        return birkly_admin_url('settings') . '#webhooks';
     }
 
     if (in_array($event, ['domain_auth_failed', 'domain_permission_denied', 'domain_registered', 'domain_updated', 'domain_deleted'], true)) {
@@ -757,6 +776,7 @@ function birkly_activity_format_item(
         'summary' => $message,
         'detail_summary' => $detailSummary,
         'icon' => birkly_activity_event_icon($event),
+        'icon_name' => birkly_activity_event_icon_name($event),
         'color' => birkly_activity_event_color($event),
         'timestamp' => $timestamp,
         'details' => $details,

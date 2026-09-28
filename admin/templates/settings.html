@@ -56,7 +56,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
       </button>
     </div>
 
-    <div class="settings-tab-panels">
+    <div class="settings-tab-panels settings-panels">
       <?php
       // UI Injection Point: settings_before_tabs
       if (function_exists('render_ui_injections')) {
@@ -654,7 +654,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div id="team-invitations-list" class="data-list" hidden></div>
           </div>
           </section></div>
-          <div class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
+          <div id="roles" class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
           <div class="card-header">
             <h2><?= __('admin.role_management') ?></h2>
             <button class="btn btn-primary" data-admin-action="openAddRoleModal">
@@ -915,7 +915,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <p class="settings-help"><?= __('admin.settings_integrations_api_doc_help') ?></p>
           </div>
         </section>
-<section class="card">
+<section class="card" id="webhooks">
   <div class="card-header">
             <div>
               <h2><?= __('admin.webhooks') ?></h2>

@@ -538,6 +538,7 @@ window.migrateStorage = migrateStorage;
         webhooks: 'integrations',
         security: 'security',
         'users-roles': 'team-access',
+        roles: 'team-access',
         monitoring: 'system',
         storage: 'system',
         api: 'integrations',

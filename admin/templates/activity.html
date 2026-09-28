@@ -1,4 +1,4 @@
-<!-- Activity Feed Page -->
+<div class="settings-shell activity-shell" data-birch>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
@@ -13,7 +13,7 @@
 <div class="activity-page">
     <div class="main-actions-bar">
         <div class="main-actions-left">
-            <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
+            <button class="btn btn-secondary" id="refresh-activity"><?= birkly_icon('refresh') ?>{translate 'admin.refresh'}</button>
         </div>
         <div class="main-actions-right u-nowrap-flex activity-page-filters">
             <select id="category-filter" class="input u-w-auto">
@@ -22,18 +22,18 @@
                 <option value="users">{translate 'admin.users'}</option>
                 <option value="system">{translate 'admin.system'}</option>
             </select>
-            <select id="severity-filter" class="input u-w-auto" aria-label="Severity">
-                <option value="all">All severity</option>
-                <option value="info">Info</option>
-                <option value="success">Success</option>
-                <option value="warning">Warning</option>
-                <option value="danger">Danger</option>
+            <select id="severity-filter" class="input u-w-auto" aria-label="{translate 'admin.activity_severity'}">
+                <option value="all">{translate 'admin.activity_all_severities'}</option>
+                <option value="info">{translate 'admin.activity_severity_info'}</option>
+                <option value="success">{translate 'admin.activity_severity_success'}</option>
+                <option value="warning">{translate 'admin.activity_severity_warning'}</option>
+                <option value="danger">{translate 'admin.activity_severity_danger'}</option>
             </select>
         </div>
     </div>
 
-    <div class="page-body u-stack-4">
-        <div id="activity-feed" class="u-stack-3">
+    <div class="page-body activity-body">
+        <div id="activity-feed" class="activity-feed">
             <div class="loading-state">
                 <p>{translate 'admin.loading_activity'}...</p>
             </div>
@@ -45,5 +45,5 @@
     </div>
 </div>
 
-<!-- Initialize Activity JavaScript (M3-T4: no inline logic in template) -->
+</div>
 {include_script 'activity.js'}
