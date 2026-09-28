@@ -63,7 +63,7 @@ if (!$cancelUrl) {
         $cancelUrl = admin_url('content');
     }
 }
-?><div class="collection-editor-page">
+?><div class="collection-editor-page" data-birch>
     <div class="page-header">
         <div class="page-header-left">
         <div class="breadcrumbs">
@@ -135,7 +135,7 @@ if (!$cancelUrl) {
                     <?php endif; ?>
                     
                     <!-- Collection/Sub-Collection Title (Required, First Field) -->
-                    <div class="field-block" data-field-name="name">
+                    <div class="field-block collection-basics" data-field-name="name">
                         <div class="field-header">
                             <div class="field-title"><?= $isSubCollection ? __('admin.col_editor_sub_collection_name') : __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
@@ -292,8 +292,11 @@ if (!$cancelUrl) {
                     <?php else: ?>
                     
                     <!-- Custom Fieldtypes -->
-                    <div class="fields-section">
-                        <h2 class="section-title"><?= __('admin.col_editor_collection_fields_title') ?></h2>
+                    <div class="fields-section frame">
+                        <div class="fields-section-head">
+                            <h2 class="section-title"><?= __('admin.col_editor_collection_fields_title') ?> <span class="count" id="fields-count"><?= count($fields ?? []) ?></span></h2>
+                            <button type="button" class="button is-small" data-add-field-proxy="add-field-btn"><?= birkly_icon('plus') ?><?= __('admin.col_editor_add_field') ?></button>
+                        </div>
                         <p class="section-description"><?= __('admin.col_editor_section_desc_collection_fields') ?></p>
                         
                         <div id="fields-container">
@@ -384,9 +387,9 @@ if (!$cancelUrl) {
                             <?php endif; ?>
                         </div>
                         
-                        <button type="button" id="add-field-btn" class="btn btn-secondary">
-                            <?= birkly_icon('plus', ['size' => 16]) ?>
-                            Add Field
+                        <button type="button" id="add-field-btn" class="add-row dashed">
+                            <?= birkly_icon('plus') ?>
+                            <?= __('admin.col_editor_add_another_field') ?>
                         </button>
                     </div>
                     
@@ -1353,17 +1356,21 @@ echo htmlspecialchars($formCode);
 </script>
 
 <!-- Fieldtype Selection Modal -->
-<div id="fieldtype-selector-modal" class="modal">
+<div id="fieldtype-selector-modal" class="modal fieldtype-dialog" data-birch>
     <div class="modal-content modal--lg">
         <div class="modal-header">
-            <h2><?= __('admin.col_editor_select_field_type_modal') ?></h2>
-            <button type="button" class="btn-icon modal-close" id="close-fieldtype-modal">
-                <?= birkly_icon('x', ['size' => 16]) ?>
+            <div>
+                <h2 class="dialog-title"><?= __('admin.col_editor_select_field_type_modal') ?></h2>
+                <p class="dialog-text"><?= __('admin.col_editor_select_field_type_help') ?></p>
+            </div>
+            <button type="button" class="icon-button modal-close" id="close-fieldtype-modal" aria-label="<?= htmlspecialchars(__('admin.close')) ?>">
+                <?= birkly_icon('x') ?>
             </button>
         </div>
         <div class="modal-body">
-            <div class="fieldtype-search">
+            <div class="fieldtype-search search-field">
                 <label class="u-sr-only" for="fieldtype-search-input"><?= htmlspecialchars(__('admin.col_editor_fieldtype_search_label'), ENT_QUOTES, 'UTF-8') ?></label>
+                <?= birkly_icon('search') ?>
                 <input type="search" id="fieldtype-search-input" class="input" placeholder="<?= htmlspecialchars(__('admin.col_editor_fieldtype_search_placeholder'), ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
                 <p id="fieldtype-search-empty" class="field-help" hidden><?= htmlspecialchars(__('admin.col_editor_fieldtype_search_empty'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
@@ -1375,6 +1382,7 @@ echo htmlspecialchars($formCode);
 </div>
 
 <link rel="stylesheet" href="<?= birkly_url('/admin/css/pages/collection-editor.css') ?>">
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/collection-editor-birch.js')) ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 
 <!-- Collection save success modal (P50) -->
 <div id="col-save-success-modal" class="modal col-save-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="col-save-success-title" aria-describedby="col-save-success-message">
@@ -1723,7 +1731,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 fieldtypeCard.tabIndex = 0;
                 fieldtypeCard.innerHTML = `
                     <div class="fieldtype-card-icon">${getFieldtypeIcon(ft.name)}</div>
-                    <div class="fieldtype-card-name">${ft.label || ft.name}</div>
+                    <div class="fieldtype-card-text">
+                        <div class="fieldtype-card-name">${ft.label || ft.name}</div>
+                        ${ft.description ? `<div class="fieldtype-card-desc">${String(ft.description).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}</div>` : ''}
+                    </div>
                 `;
                 fieldtypeCard.addEventListener('click', function() {
                     const selectedFieldtype = this.dataset.fieldtype;
