@@ -337,44 +337,12 @@ function admin_media_server_upload_limit_message(): string
  */
 function admin_media_extension_mime_map(): array
 {
-    return [
-        'jpg' => 'image/jpeg',
-        'jpeg' => 'image/jpeg',
-        'png' => 'image/png',
-        'gif' => 'image/gif',
-        'webp' => 'image/webp',
-        'svg' => 'image/svg+xml',
-        'mp4' => 'video/mp4',
-        'm4v' => 'video/mp4',
-        'webm' => 'video/webm',
-        'ogv' => 'video/ogg',
-        'mov' => 'video/quicktime',
-        'mp3' => 'audio/mpeg',
-        'wav' => 'audio/wav',
-        'ogg' => 'audio/ogg',
-        'pdf' => 'application/pdf',
-        'doc' => 'application/msword',
-        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'xls' => 'application/vnd.ms-excel',
-        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'ppt' => 'application/vnd.ms-powerpoint',
-        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'zip' => 'application/zip',
-        'rar' => 'application/x-rar-compressed',
-    ];
+    return birkly_media_extension_mime_map();
 }
 
 function admin_media_allowed_mime_types(): array
 {
-    return [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-        'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
-        'audio/mpeg', 'audio/wav', 'audio/ogg',
-        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'application/zip', 'application/x-rar-compressed',
-    ];
+    return birkly_media_allowed_mime_types();
 }
 
 /**

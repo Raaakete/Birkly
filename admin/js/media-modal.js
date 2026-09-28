@@ -160,7 +160,7 @@ window.Birkly.MediaModal = {
                 </div>
                 <div class="modal-body media-picker-body">
                     <div class="media-upload-section">
-                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.mov,.mp3,.wav" hidden>
+                        <input type="file" id="birkly-media-modal-upload" accept="${birklyMediaModalEscapeHtml((window.Birkly && Birkly.mediaUploadAccept) || '')}" hidden>
                         <button type="button" class="button" data-media-modal-action="upload-trigger">${birklyMediaModalIcon('upload', 13)}Upload new media</button>
                     </div>
                     <div class="media-picker-grid" id="birkly-media-modal-grid">
