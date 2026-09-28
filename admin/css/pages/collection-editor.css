@@ -411,3 +411,332 @@
 .collection-editor-page .form-group[hidden],
 .collection-editor-page .field-block[hidden],
 .collection-editor-page .info-item[hidden] { display: none; }
+
+/* ============================================
+   Birch collection builder (P96-M9)
+   Basics and fields on the canvas; each field is a slab row that opens on
+   click; the rail is a frame; Add a field is a float.
+   ============================================ */
+.collection-editor-page[data-birch] .editor-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: var(--s-4);
+}
+
+@media (max-width: 1023px) {
+  .collection-editor-page[data-birch] .editor-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+[data-birch] .collection-basics {
+  gap: 6px;
+  padding: var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+[data-birch] .collection-basics .field-title {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+[data-birch] .collection-basics .input {
+  border-color: transparent;
+  background: none;
+  padding-inline: 0;
+  font-size: var(--size-slab-title);
+}
+
+[data-birch] .collection-basics .input:hover { background: var(--surface-2); padding-inline: var(--s-2); }
+[data-birch] .collection-basics .input:focus { background: var(--surface); padding-inline: var(--s-2); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+[data-birch] .fields-section.frame { margin-block-start: var(--s-4); }
+
+[data-birch] .fields-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+[data-birch] .fields-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+}
+
+[data-birch] .fields-section .section-description {
+  margin: 2px 0 var(--s-4);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+/* Field rows */
+[data-birch] #fields-container,
+[data-birch] #sub-collection-fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .fieldtype-section {
+  margin: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+[data-birch] .fieldtype-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+[data-birch] .fieldtype-header:focus-visible { outline: var(--focus-outline); outline-offset: -2px; }
+
+[data-birch] .fieldtype-header-main {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+[data-birch] .fieldtype-drag-handle { color: var(--text-3); cursor: grab; }
+
+[data-birch] .fieldtype-title {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+[data-birch] .fieldtype-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+/* Type chip sits on the right, like the builder concept */
+[data-birch] .fieldtype-type {
+  order: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  margin-inline-start: auto;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+[data-birch] .fieldtype-type-label { text-transform: none; letter-spacing: 0; font: inherit; }
+
+[data-birch] .fieldtype-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+[data-birch] .fieldtype-summary { margin-inline-end: var(--s-2); }
+
+[data-birch] .fieldtype-header-actions .btn-icon {
+  width: var(--control-sm);
+  height: var(--control-sm);
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-3);
+}
+
+[data-birch] .fieldtype-header-actions .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+[data-birch] .fieldtype-header-actions .remove-field-btn:hover { color: var(--danger); }
+
+[data-birch] .fieldtype-section.is-collapsed > .fieldtype-body { display: none; }
+
+[data-birch] .fieldtype-body {
+  padding: var(--s-4);
+  border-block-start: 1px solid var(--line);
+  background: none;
+}
+
+[data-birch] .fieldtype-body label,
+[data-birch] .field-config-section > label {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+[data-birch] .fields-section .add-row { width: 100%; font: inherit; cursor: pointer; }
+[data-birch] .fields-section .add-row:hover { color: var(--text); border-color: var(--text-3); }
+
+/* Rail */
+[data-birch] .editor-sidebar .sidebar-tabs {
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+
+[data-birch] .editor-sidebar .tab-content {
+  margin-block-start: var(--s-3);
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: none;
+}
+
+[data-birch] .editor-sidebar .card-section {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+[data-birch] .editor-sidebar label,
+[data-birch] .editor-sidebar .info-item > label,
+[data-birch] .editor-sidebar .form-label {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+[data-birch] .editor-sidebar .section-title {
+  margin: var(--s-2) 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+[data-birch] .editor-sidebar .field-help,
+[data-birch] .editor-sidebar small,
+[data-birch] .editor-sidebar .form-text {
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+/* Add a field — a float */
+.fieldtype-dialog[data-birch] .modal-content {
+  max-width: 720px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: var(--shadow-sheet);
+  overflow: hidden;
+}
+
+.fieldtype-dialog[data-birch] .modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-5) var(--s-4);
+  border: 0;
+  background: none;
+}
+
+.fieldtype-dialog[data-birch] .modal-body { padding: 0 var(--s-5) var(--s-5); }
+
+.fieldtype-dialog[data-birch] .fieldtype-search {
+  width: 100%;
+  margin-block-end: var(--s-4);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-category-header {
+  margin: var(--s-4) 0 var(--s-2);
+  padding: 0;
+  border: 0;
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-category-header:first-child { margin-block-start: 0; }
+
+.fieldtype-dialog[data-birch] .fieldtype-category-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s-1);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-card {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: none;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-card:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+.fieldtype-dialog[data-birch] .fieldtype-card:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-outline-offset); }
+
+.fieldtype-dialog[data-birch] .fieldtype-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-card-icon svg,
+.fieldtype-dialog[data-birch] .fieldtype-card-icon .birkly-icon {
+  flex: none;
+  width: var(--icon);
+  min-width: var(--icon);
+  height: var(--icon);
+  opacity: 1;
+  color: var(--text-2);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-card-text { min-width: 0; }
+
+.fieldtype-dialog[data-birch] .fieldtype-card-name {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+.fieldtype-dialog[data-birch] .fieldtype-card-desc {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+}
+
+.fieldtype-dialog[data-birch] [hidden] { display: none; }

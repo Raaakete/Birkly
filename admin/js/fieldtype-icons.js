@@ -57,16 +57,16 @@
 
     Birkly.fieldtypeDisplayLabel = function fieldtypeDisplayLabel(name, fieldtypes) {
         if (!name) {
-            return 'SELECT TYPE';
+            return 'Select type';
         }
         fieldtypes = fieldtypes || (window.availableFieldtypes || window.fieldtypes || []);
         for (var i = 0; i < fieldtypes.length; i++) {
             var ft = fieldtypes[i];
             if (ft.name === name || ft.type === name) {
-                return String(ft.label || name).toUpperCase();
+                return String(ft.label || name);
             }
         }
-        return String(name).toUpperCase();
+        return String(name).charAt(0).toUpperCase() + String(name).slice(1);
     };
 
     Birkly.updateFieldtypeTypeBadge = function updateFieldtypeTypeBadge(fieldElement, fieldtypeName, fieldtypes) {
