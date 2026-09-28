@@ -272,7 +272,9 @@
         const pendingCount = Number(pending?.total || 0);
         if (pendingCount > 0) {
             rows.push(row({
-                title: t('dash_review_waiting', '{count} entries waiting for review', { count: number(pendingCount) }),
+                title: pendingCount === 1
+                    ? t('dash_review_waiting_one', '1 entry waiting for review')
+                    : t('dash_review_waiting', '{count} entries waiting for review', { count: number(pendingCount) }),
                 meta: esc(t('dash_review_waiting_help', 'Submitted by editors and ready for a decision.')),
                 icon: 'inbox', tone: 'info',
                 action: t('dash_action_review', 'Review'),
@@ -281,7 +283,9 @@
         }
         if (drafts > 0) {
             rows.push(row({
-                title: t('dash_drafts_to_finish', '{count} drafts to finish', { count: number(drafts) }),
+                title: drafts === 1
+                    ? t('dash_drafts_to_finish_one', '1 draft to finish')
+                    : t('dash_drafts_to_finish', '{count} drafts to finish', { count: number(drafts) }),
                 meta: esc(t('dash_drafts_to_finish_help', 'Unpublished entries across your collections.')),
                 icon: 'pencil',
                 action: t('dash_action_open', 'Open'),
@@ -292,7 +296,9 @@
         const accountEvents = (security?.activity || []).filter((a) => new Date(a.timestamp).getTime() >= week).length;
         if (accountEvents > 0) {
             rows.push(row({
-                title: t('dash_account_events', '{count} account events', { count: number(accountEvents) }),
+                title: accountEvents === 1
+                    ? t('dash_account_event_one', '1 account event')
+                    : t('dash_account_events', '{count} account events', { count: number(accountEvents) }),
                 meta: esc(t('dash_account_events_help', 'Recent sign-ins and account changes.')),
                 icon: 'shield',
                 action: t('dash_action_review', 'Review'),
