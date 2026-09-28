@@ -2896,6 +2896,12 @@
         "media_list_view": "Listenansicht",
         "media_grid_view": "Rasteransicht",
         "media_drop_title": "Dateien zum Hochladen ablegen",
-        "discovery_seo_social_preview": "Social-Media-Vorschau"
+        "discovery_seo_social_preview": "Social-Media-Vorschau",
+        "theme_label": "Farbschema",
+        "theme_light": "Hell",
+        "theme_dark": "Dunkel",
+        "theme_auto": "Automatisch",
+        "more_actions": "Weitere Aktionen",
+        "feedback_attachments_choose": "Dateien auswählen"
     }
 }
