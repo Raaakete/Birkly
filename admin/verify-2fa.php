@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="assets/birkly_favicon.svg">
 </head>
-<body class="auth-page">
+<body class="auth-page" data-birch>
     <main class="auth-shell">
         <section class="card auth-card">
             <div class="card-body u-stack-6">
