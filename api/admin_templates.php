@@ -3466,23 +3466,15 @@ function getPluginsData() {
         $tab = 'discover';
     }
 
-    $titles = [
-        'discover' => __('admin.hub_tab_discover'),
-        'installed' => __('admin.hub_tab_installed'),
-        'updates' => __('admin.hub_tab_updates'),
-        'licenses' => __('admin.hub_tab_licenses'),
-        'upload' => __('admin.hub_tab_upload'),
-    ];
-
     return [
         'active_tab' => $tab,
-        'page_title' => $titles[$tab] ?? __('admin.marketplace'),
-        'discover_title' => $titles['discover'],
-        'marketplace_title' => $titles['discover'],
-        'installed_title' => $titles['installed'],
-        'updates_title' => $titles['updates'],
-        'licenses_title' => $titles['licenses'],
-        'upload_title' => $titles['upload'],
+        'page_title' => __('admin.marketplace'),
+        'discover_title' => __('admin.marketplace'),
+        'marketplace_title' => __('admin.marketplace'),
+        'installed_title' => __('admin.marketplace'),
+        'updates_title' => __('admin.marketplace'),
+        'licenses_title' => __('admin.marketplace'),
+        'upload_title' => __('admin.marketplace'),
         'plugins_css_url' => birkly_admin_asset_url('/admin/css/pages/plugins.css'),
         'plugins_page_js_url' => birkly_admin_asset_url('/admin/js/plugins-page.js'),
         'i18n' => [

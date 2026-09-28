@@ -87,20 +87,18 @@
 
     function renderPluginSkeletonCards(count) {
         var n = count || 6;
-        var cards = '';
+        var rows = '';
         for (var i = 0; i < n; i++) {
-            cards +=
-                '<div class="card plugin-card" aria-hidden="true">' +
+            rows +=
+                '<div class="list-row plugin-row" aria-hidden="true">' +
+                '<span class="hub-brand skeleton"></span>' +
+                '<div class="row-body">' +
                 '<div class="skeleton skeleton-title"></div>' +
                 '<div class="skeleton skeleton-text"></div>' +
-                '<div class="skeleton skeleton-text"></div>' +
-                '<div class="u-grid-2 u-gap-2 u-mt-2">' +
-                '<div class="skeleton skeleton-row"></div>' +
-                '<div class="skeleton skeleton-row"></div>' +
                 '</div>' +
                 '</div>';
         }
-        return cards;
+        return rows;
     }
 
     function renderMarketplaceSkeletonCards(count) {
@@ -866,6 +864,24 @@
         return '<span class="badge badge-sm ' + tone + '">' + escapeHtml(t(labelKey, normalized)) + '</span>';
     }
 
+    function renderStabilityStatus(distribution, noticeText) {
+        var normalized = String(distribution || 'stable').toLowerCase();
+        if (normalized === 'stable') {
+            return '';
+        }
+        var tone = normalized === 'alpha' ? 'is-danger' : 'is-warning';
+        return '<span class="status ' + tone + '" title="' + escapeHtml(noticeText || '') + '">' +
+            escapeHtml(t('marketplace_stability_' + normalized, normalized)) + '</span>';
+    }
+
+    function hubBrandSquare(name, iconUrl) {
+        if (iconUrl) {
+            return '<img class="hub-brand" src="' + escapeHtml(iconUrl) + '" alt="" loading="lazy">';
+        }
+        var initial = String(name || '?').charAt(0).toUpperCase();
+        return '<span class="hub-brand" aria-hidden="true">' + escapeHtml(initial) + '</span>';
+    }
+
     function defaultDistributionNotice(distribution) {
         var normalized = String(distribution || 'stable').toLowerCase();
         if (normalized === 'alpha') {
@@ -974,11 +990,14 @@
             return '';
         }
         var noticeText = resolveOfferDistributionNoticeText(offer, distribution);
-        var tone = distribution === 'alpha' ? 'callout-danger' : 'callout-warning';
+        var tone = distribution === 'alpha' ? ' is-danger' : '';
+        var icon = window.Birkly && typeof window.Birkly.icon === 'function' ? window.Birkly.icon('alert') : '';
         return (
-            '<div class="callout ' + tone + ' callout--block u-text-sm">' +
-            '<div class="u-cluster u-gap-2 u-mb-1">' + renderStabilityBadge(distribution) + '</div>' +
-            '<div class="u-m-0">' + renderMarketplaceNoticeMarkdown(noticeText) + '</div>' +
+            '<div class="signal offer-distribution-notice' + tone + '">' + icon +
+            '<div class="signal-body">' +
+            '<p class="signal-title">' + escapeHtml(t('marketplace_stability_' + distribution, distribution)) + '</p>' +
+            '<p class="signal-text">' + renderMarketplaceNoticeMarkdown(noticeText) + '</p>' +
+            '</div>' +
             '</div>'
         );
     }
@@ -1681,10 +1700,7 @@
                     escapeHtml(state.plugin_id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                 );
             }
-            return (
-                '<button type="button" class="btn btn-sm btn-secondary" disabled>' +
-                escapeHtml(t('installed', 'Installed')) + '</button>'
-            );
+            return '<span class="status is-success">' + escapeHtml(t('installed', 'Installed')) + '</span>';
         }
 
         var planId = row.kind === 'subscription' ? row.id : null;
@@ -2176,10 +2192,7 @@
                     escapeHtml(t('update', 'Update')) + '</button>'
                 );
             }
-            return (
-                '<button type="button" class="btn btn-sm btn-secondary" disabled>' +
-                escapeHtml(t('installed', 'Installed')) + '</button>'
-            );
+            return '<span class="status is-success">' + escapeHtml(t('installed', 'Installed')) + '</span>';
         }
 
         if (free) {
@@ -2258,6 +2271,13 @@
         return html;
     }
 
+    function setInstalledCount(count) {
+        var el = document.getElementById('plugins-installed-count');
+        if (!el) return;
+        el.textContent = String(count);
+        el.hidden = count <= 0;
+    }
+
     function setUpdateBadge(count) {
         var badge = document.getElementById('plugins-update-badge');
         if (!badge) return;
@@ -2273,68 +2293,64 @@
         var health = plugin.health || {};
         var healthStatus = health.status || 'unknown';
         var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
-        var healthTone = HEALTH_BADGE_TONES[healthStatus] || 'badge-neutral';
         var offerSlug = resolvePluginOfferSlug(plugin);
         var hasMarketplaceOffer = !!(plugin.has_marketplace_offer || offerSlug);
         var reviewStatus = reviewStatusMap[plugin.id] || {};
         var reviewChip = options.hideReview ? '' : renderPluginReviewChip(plugin.id, offerSlug, reviewStatus);
         var pluginNameHtml = offerSlug
-            ? '<button type="button" class="btn btn-link" data-plugin-action="open-offer" data-offer-slug="' +
+            ? '<button type="button" class="plugin-row-name" data-plugin-action="open-offer" data-offer-slug="' +
                 escapeHtml(offerSlug) + '">' + escapeHtml(plugin.name) + '</button>'
-            : escapeHtml(plugin.name);
-        var detailsButton = offerSlug
-            ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-offer" data-offer-slug="' +
-                escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
-            : '';
+            : '<span class="plugin-row-name">' + escapeHtml(plugin.name) + '</span>';
         var offerDistribution = resolvePluginOfferDistribution(plugin, update);
         var stabilityForBadge = hasUpdate
             ? mergeReleaseStability(offerDistribution, update.latest_stability)
             : offerDistribution;
+        var stabilityNotice = resolveOfferDistributionNoticeText({
+            slug: offerSlug,
+            distribution: stabilityForBadge,
+            distribution_notice: update.offer_distribution_notice || '',
+        }, stabilityForBadge);
+        var cached = offerSlug ? findCachedOffer(offerSlug) : null;
+        var healthStatusHtml = healthStatus === 'healthy' || healthStatus === 'unknown'
+            ? ''
+            : '<span class="status ' + (healthStatus === 'error' ? 'is-danger' : 'is-warning') + '" title="' +
+                escapeHtml(healthTitle || healthStatus) + '">' + escapeHtml(formatPluginHealthLabel(healthStatus)) + '</span>';
         return (
-            '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
-            '<div class="u-split u-align-start u-gap-3">' +
-            '<div class="u-stack-1 u-min-w-0">' +
-            '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
-            (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml(t('hub_plugin_update_badge', 'Update: v{version}').replace('{version}', update.latest_version || '')) + '</span>' : '') +
-            renderStabilityBadge(stabilityForBadge) +
+            '<div class="list-row plugin-row' + (hasUpdate ? ' has-update' : '') + '">' +
+            hubBrandSquare(plugin.name, cached && cached.icon_url) +
+            '<div class="row-body">' +
+            '<div class="row-title">' + pluginNameHtml + renderStabilityStatus(stabilityForBadge, stabilityNotice) + healthStatusHtml +
+            (hasUpdate ? '<span class="status is-info">' + escapeHtml(t('hub_plugin_update_badge', 'Update: v{version}').replace('{version}', update.latest_version || '')) + '</span>' : '') +
             '</div>' +
-            '<div class="u-cluster u-gap-1 u-shrink-0">' +
-            '<span class="badge badge-sm ' + healthTone + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
-            escapeHtml(formatPluginHealthLabel(healthStatus)) +
-            '</span>' +
-            '<span class="status-badge badge-sm ' + (active ? 'status-active' : 'status-inactive') + '">' +
-            (active ? escapeHtml(t('active', 'Active')) : escapeHtml(t('inactive', 'Inactive'))) +
-            '</span>' +
-            '</div>' +
-            '</div>' +
-            (plugin.description ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(plugin.description) + '</p>' : '') +
-            (offerDistribution !== 'stable'
-                ? renderOfferDistributionNotice({
-                    slug: offerSlug,
-                    distribution: offerDistribution,
-                    distribution_notice: update.offer_distribution_notice || '',
-                })
-                : '') +
-            '<div class="u-cluster u-gap-2">' +
-            '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
+            (plugin.description ? '<p class="row-meta plugin-row-text">' + escapeHtml(plugin.description) + '</p>' : '') +
+            '<div class="plugin-row-chips">' +
+            '<span class="tag mono">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
             (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="tag">Hub</span>' : '') +
-            (plugin.license_ref ? '<span class="chip u-mono" title="' + escapeHtml(t('hub_license_ref', 'License ref')) + '">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
+            (plugin.license_ref ? '<span class="tag mono" title="' + escapeHtml(t('hub_license_ref', 'License ref')) + '">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
             reviewChip +
             '</div>' +
-            '<div class="u-cluster u-mt-auto u-pt-2">' +
-            detailsButton +
+            '</div>' +
+            '<div class="row-actions">' +
+            (options.hideManage ? '' : '<span class="status ' + (active ? 'is-success' : 'is-archived') + '">' +
+                (active ? escapeHtml(t('active', 'Active')) : escapeHtml(t('inactive', 'Inactive'))) + '</span>') +
+            (offerSlug
+                ? '<button type="button" class="btn btn-sm btn-ghost" data-plugin-action="open-offer" data-offer-slug="' +
+                    escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
+                : '') +
             (hasUpdate
-                ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
+                ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                 : '') +
             (options.hideManage ? '' :
                 (plugin.has_settings
                     ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-settings" data-plugin-id="' +
                         escapeHtml(plugin.id) + '">' + escapeHtml(t('settings', 'Settings')) + '</button>'
                     : '') +
-                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
-                (active ? 'Deactivate' : 'Activate') +
+                '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
+                escapeHtml(active ? t('deactivate', 'Deactivate') : t('activate', 'Activate')) +
                 '</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('delete', 'Delete')) + '</button>') +
+                '<button type="button" class="icon-button is-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '" title="' + escapeHtml(t('delete', 'Delete')) + '" aria-label="' + escapeHtml(t('delete', 'Delete') + ' ' + plugin.name) + '">' +
+                (window.Birkly && typeof window.Birkly.icon === 'function' ? window.Birkly.icon('trash') : '×') +
+                '</button>') +
             '</div>' +
             '</div>'
         );
@@ -2367,23 +2383,21 @@
             var collections = Array.isArray(pack.installed_collections) ? pack.installed_collections : [];
             var source = pack.source || '';
             return (
-                '<div class="card plugin-card">' +
-                '<div class="u-stack-1">' +
-                '<h3 class="card-title">' + escapeHtml(title) + '</h3>' +
-                '<span class="badge badge-warning badge-sm u-self-start">' +
-                escapeHtml(t('marketplace_type_template', 'Site pack')) +
-                '</span>' +
-                '</div>' +
-                '<div class="u-cluster u-gap-2">' +
-                (pack.version ? '<span class="chip u-numeric">v' + escapeHtml(pack.version) + '</span>' : '') +
-                (source ? '<span class="tag">' + escapeHtml(source) + '</span>' : '') +
-                (pack.project_site ? '<span class="chip">' + escapeHtml(t('hub_pack_has_project', 'Includes project files')) + '</span>' : '') +
-                '</div>' +
+                '<div class="list-row plugin-row">' +
+                hubBrandSquare(title, '') +
+                '<div class="row-body">' +
+                '<div class="row-title"><span class="plugin-row-name">' + escapeHtml(title) + '</span>' +
+                '<span class="status is-plain">' + escapeHtml(t('marketplace_type_template', 'Site pack')) + '</span></div>' +
                 (collections.length
-                    ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(t('hub_pack_collections', 'Collections')) + ': ' +
-                        escapeHtml(collections.join(', ')) + '</p>'
+                    ? '<p class="row-meta plugin-row-text">' + escapeHtml(t('hub_pack_collections', 'Collections')) + ': ' + escapeHtml(collections.join(', ')) + '</p>'
                     : '') +
-                '<div class="u-cluster u-mt-auto u-pt-2">' +
+                '<div class="plugin-row-chips">' +
+                (pack.version ? '<span class="tag mono">v' + escapeHtml(pack.version) + '</span>' : '') +
+                (source ? '<span class="tag">' + escapeHtml(source) + '</span>' : '') +
+                (pack.project_site ? '<span class="tag">' + escapeHtml(t('hub_pack_has_project', 'Includes project files')) + '</span>' : '') +
+                '</div>' +
+                '</div>' +
+                '<div class="row-actions">' +
                 '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="replace-all-pack" data-pack-slug="' +
                 escapeHtml(slug) + '">' + escapeHtml(t('hub_pack_replace_all', 'Replace all')) + '</button>' +
                 '</div>' +
@@ -2421,6 +2435,7 @@
         grid.innerHTML = installedPlugins.map(function (plugin) {
             return renderPluginCard(plugin);
         }).join('');
+        setInstalledCount(installedPlugins.length);
     }
 
     function renderUpdatesPanel() {
@@ -3128,19 +3143,20 @@
                 '<article class="card card--interactive marketplace-offer-card" role="button" tabindex="0" data-offer-slug="' + escapeHtml(slug) + '">' +
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
-                '<div class="u-stack-1">' +
-                '<h3 class="card-title">' +
-                '<button type="button" class="btn btn-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
+                '<h3 class="marketplace-offer-title">' +
+                '<button type="button" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
                 '</button>' +
                 '</h3>' +
                 renderOfferCardProvider(offer) +
+                '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+                '<p class="marketplace-offer-stats">' + renderOfferRatingStat(offer.rating_summary) +
+                '<span aria-hidden="true">·</span><span class="u-numeric">' + escapeHtml(formatDownloads(offer.download_count)) + '</span></p>' +
                 '</div>' +
-                '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(offer.summary || '') + '</p>' +
-                renderOfferMetaRows(offer) +
-                '<div class="u-cluster u-pt-2">' +
-                renderOfferActionButtons(offer, true) +
-                '</div>' +
+                '<div class="marketplace-offer-foot">' +
+                '<div class="marketplace-offer-price"><strong class="u-numeric">' + escapeHtml(formatPrice(offer)) + '</strong>' +
+                (offer.latest_version ? '<span class="u-numeric">v' + escapeHtml(offer.latest_version) + '</span>' : '') + '</div>' +
+                '<div class="marketplace-offer-actions">' + renderOfferActionButtons(offer, true) + '</div>' +
                 '</div>' +
                 '</article>'
             );
