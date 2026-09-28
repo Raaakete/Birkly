@@ -1008,3 +1008,549 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-
   .conn-wizard-step-indicator { flex: 1 1 100%; }
   .conn-wizard .input-with-action { flex-direction: column; }
 }
+
+/* ============================================
+   Birch settings (P96-M12)
+   ============================================
+   .settings-shell[data-birch] wraps the page. Page bar (Save changes, find a
+   setting, view activity) on the canvas, then text tabs. Each group is a
+   frame; setting rows are slabs split by a hairline into label | value, 4px
+   apart; lists are row slabs. Cards that JS still renders (domain cards,
+   system connections, sunken info cards) are slabs inside their frame.
+   ============================================ */
+
+.settings-shell .main-actions-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.settings-shell .settings-search { width: 240px; }
+
+.settings-shell .main-actions-tools .btn .birkly-icon,
+.settings-shell .card-header .btn .birkly-icon,
+.settings-shell .section-header .btn .birkly-icon { margin-inline-end: 6px; }
+
+.settings-shell .settings-tabs .tabs { margin-block-end: var(--s-6); }
+
+.settings-shell .tabs > .tab--dirty::after {
+  width: 6px;
+  height: 6px;
+  border-radius: 0;
+  background: var(--warning);
+}
+
+.settings-shell .settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.settings-shell .settings-pane-section { margin: 0; }
+.settings-shell .settings-pane-section:empty { display: none; }
+
+.settings-shell .settings-help,
+.settings-shell .section-description,
+.settings-shell .card-description {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+/* Canvas heading above a group of frames */
+.settings-shell .section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  border: 0;
+}
+
+.settings-shell .section-header > div:first-child { flex: 1 1 auto; min-width: 0; }
+
+.settings-shell .section-title,
+.settings-shell .tab-pane .card-header h2,
+.settings-shell .tab-pane .card-header > h3,
+.settings-shell .tab-pane .card-header .card-title {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.settings-shell .section-header .settings-help { margin-block-start: 2px; }
+
+/* Frames: a named group; its contents are slabs 4px apart */
+.settings-shell .tab-pane .card {
+  margin: 0;
+  padding: var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: none;
+  box-shadow: none;
+}
+
+.settings-shell .tab-pane .card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-4);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.settings-shell .tab-pane .card-header > :is(h2, h3, div:not(.card-actions), .card-heading) { flex: 1 1 auto; min-width: 0; }
+.settings-shell .tab-pane .card-header :is(.settings-help, .section-description) { margin-block-start: 2px; }
+
+.settings-shell .tab-pane .card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin-inline-start: auto;
+}
+
+.settings-shell .tab-pane .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: 0;
+}
+
+.settings-shell .tab-pane .card-body > :is(.settings-help, .form-help, .section-description) { margin-block: 0 var(--s-2); }
+.settings-shell .tab-pane .card-body > :is(.settings-help, .form-help, .section-description):not(:first-child) { margin-block: var(--s-2) 0; }
+.settings-shell .tab-pane .card-body > .u-cluster { margin-block-start: var(--s-2); }
+
+/* Items inside a frame are slabs */
+.settings-shell .tab-pane .card :is(.card, .card--sunken),
+.settings-shell .tab-pane .card--padded,
+.settings-shell .tab-pane .domain-card {
+  padding: var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .tab-pane .card .card .card-header { margin-block-end: var(--s-3); }
+
+.settings-shell .tab-pane .card .card .card-header :is(h3, h4, .card-title) {
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+.settings-shell .tab-pane .card .card .card-body { gap: var(--s-2); }
+
+.settings-shell .tab-pane .card .u-grid-auto { gap: var(--s-1); }
+
+/* Setting row: label and help | value */
+.settings-shell .setting-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 32%) minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .setting-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-3) var(--s-4);
+}
+
+.settings-shell .setting-label > label {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-medium) var(--size-title) / var(--lh-title) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.settings-shell .setting-label > :is(small, .form-help, .settings-help) {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.settings-shell .setting-value {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-2) var(--s-4);
+  border-inline-start: 1px solid var(--line);
+}
+
+.settings-shell .setting-value > :is(.input, select, textarea, input:not([type="checkbox"]):not([type="radio"])) { width: 100%; }
+
+.settings-shell .tab-pane .card .input {
+  border-color: transparent;
+  background-color: var(--surface-2);
+}
+
+.settings-shell .tab-pane .card .input:hover:not(:focus):not(:disabled) { background-color: var(--surface-3); }
+.settings-shell .tab-pane .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+.settings-shell .tab-pane .card .input:disabled { color: var(--text-3); }
+
+.settings-shell .setting-value input[type="file"] {
+  font-size: var(--size-small);
+  color: var(--text-2);
+}
+
+.settings-shell .setting-value .logo-preview-img { border-radius: var(--r); background: var(--surface-2); }
+
+.settings-shell .setting-actions,
+.settings-shell .tab-pane .card-body > .u-cluster:has(> .btn) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.settings-shell .tab-pane .signal .signal-text { margin: 0; }
+
+/* Choice rows (AI tools mode): slab with a radio, blue ring when chosen */
+.settings-shell .radio-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin: 0;
+  padding: var(--s-3) var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.settings-shell .radio-card:has(input:checked) { box-shadow: inset 0 0 0 1px var(--accent-line); background: var(--accent-soft); }
+.settings-shell .radio-card strong { font-weight: var(--weight-semibold); }
+.settings-shell .form-group.u-stack-3:has(> .radio-card) { display: flex; flex-direction: column; gap: var(--s-1); margin: 0; }
+
+/* Rows: people, roles, invitations, connections */
+.settings-shell .list-rows,
+.settings-shell .data-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-shell .list-row,
+.settings-shell .data-list > .data-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-list);
+  margin: 0;
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .list-row .row-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.settings-shell .list-row .row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--s-3);
+  white-space: normal;
+}
+
+.settings-shell .row-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--s-1);
+  margin-inline-start: auto;
+}
+
+.settings-shell .row-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-shell .row-sublist > li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.settings-shell .row-sublist .birkly-icon { color: var(--text-3); }
+
+.settings-shell .role-permissions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-block-start: var(--s-2);
+}
+
+.settings-shell .tag-detail { color: var(--text-3); }
+
+.settings-shell .data-list-main { display: flex; flex-direction: column; min-width: 0; }
+.settings-shell .data-list-title { color: var(--text); font-weight: var(--weight-medium); }
+.settings-shell .data-list-meta { color: var(--text-3); font-size: var(--size-small); }
+
+/* Tables: header on the canvas, each row a slab 4px apart */
+.settings-shell .tab-pane .table-container { overflow-x: auto; border: 0; background: none; }
+
+.settings-shell .tab-pane table.table {
+  border-collapse: separate;
+  border-spacing: 0 var(--s-1);
+  margin-block-start: calc(var(--s-1) * -1);
+  background: none;
+}
+
+.settings-shell .tab-pane table.table th {
+  padding: var(--s-1) var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / var(--lh-caption) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.settings-shell .tab-pane table.table td {
+  padding: var(--s-2) var(--s-3);
+  border: 0;
+  background: var(--surface);
+}
+
+.settings-shell .tab-pane table.table td:first-child { border-start-start-radius: var(--r); border-end-start-radius: var(--r); }
+.settings-shell .tab-pane table.table td:last-child { border-start-end-radius: var(--r); border-end-end-radius: var(--r); }
+.settings-shell .tab-pane table.table td[colspan] { background: none; }
+
+/* Empty and loading states */
+.settings-shell .tab-pane :is(.empty-state, .empty) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.settings-shell .tab-pane :is(.empty-state, .empty) p { margin: 0; }
+
+.settings-shell .tab-pane .loading-state {
+  padding: var(--s-3) 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+.settings-shell .tab-pane .loading-state p { margin: 0; }
+
+/* Key-value lists (system version): label | value split by a hairline */
+.settings-shell .kv {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0;
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.settings-shell .kv-key,
+.settings-shell .kv-value { padding: var(--s-1) 0; border-block-start: 1px solid var(--line); }
+.settings-shell .kv-key { padding-inline-end: var(--s-4); color: var(--text-3); }
+.settings-shell .kv-value { color: var(--text); font-family: var(--font-mono); font-size: var(--size-mono); overflow-wrap: anywhere; }
+
+/* Code blocks are wells */
+.settings-shell .domains-code-block {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-2);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .domains-code-pre {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: var(--s-3);
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text);
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+}
+
+.settings-shell .settings-list { color: var(--text-2); font-size: var(--size-small); }
+
+/* Project workspace: tree and preview are slabs; the editor is a well */
+.settings-shell .project-files-layout { gap: var(--s-1); }
+
+.settings-shell .project-file-tree-wrap,
+.settings-shell .project-file-preview-wrap {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .project-file-preview-wrap .u-border-bottom { border-color: var(--line); }
+.settings-shell .project-file-entry:hover { background: var(--surface-2); }
+
+.settings-shell .project-file-editor,
+.settings-shell .project-file-preview {
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--size-mono);
+}
+
+.settings-shell .project-activity-filters { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-block-end: var(--s-2); }
+.settings-shell .project-activity-filters .btn.is-active { background: var(--surface-3); color: var(--text); }
+
+.settings-shell .project-activity-item {
+  padding: var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.settings-shell .project-activity-list { display: flex; flex-direction: column; gap: var(--s-1); }
+
+@media (max-width: 767px) {
+  .settings-shell .setting-row { grid-template-columns: minmax(0, 1fr); }
+  .settings-shell .setting-value { padding-block-start: 0; border-inline-start: 0; }
+  .settings-shell .settings-search { width: 100%; }
+}
+
+.settings-shell .setting-value.setting-inline {
+  flex-direction: row;
+  align-items: center;
+}
+
+.settings-shell .setting-value.setting-inline > .input { flex: 1 1 auto; width: auto; min-width: 0; }
+.settings-shell .setting-value.setting-inline > .btn { flex-shrink: 0; }
+
+/* One mint per view: the page bar's Save changes. Actions inside the panes
+   (including the ones hosting-wizard.js and redirects.js render) are secondary. */
+.settings-shell .tab-pane .btn-primary {
+  --btn-hover: var(--btn-secondary-hover);
+  --btn-hover-border: transparent;
+  background: var(--btn-secondary-bg);
+  border-color: var(--line-strong);
+  color: var(--text-primary);
+}
+
+.settings-shell .redirect-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.settings-shell .redirect-form > .setting-actions { margin-block-start: var(--s-2); }
+.settings-shell .table-container:has(tbody:empty) { display: none; }
+
+.settings-shell .tab-pane .card-header > :is(h2, h3, .card-heading, div:first-child:not(.card-actions)) { flex: 1 1 auto; min-width: 0; }
+.settings-shell .tab-pane .card-header > :not(:first-child):not(.card-actions) { flex: 0 0 auto; }
+
+/* Fields: white on the canvas and in frames, grey inside a slab */
+.settings-shell .tab-pane .card .input {
+  border-color: var(--line);
+  background-color: var(--surface);
+}
+
+.settings-shell .tab-pane .card .input:hover:not(:focus):not(:disabled) { border-color: var(--line-strong); background-color: var(--surface); }
+
+.settings-shell .tab-pane :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input {
+  border-color: transparent;
+  background-color: var(--surface-2);
+}
+
+.settings-shell .tab-pane :is(.setting-row, .card .card, .card--sunken, .card--padded, .domain-card, .list-row) .input:hover:not(:focus):not(:disabled) {
+  border-color: transparent;
+  background-color: var(--surface-3);
+}
+
+.settings-shell .tab-pane .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+
+/* Danger: soft fill, sized to its label */
+.settings-shell .tab-pane .card-body > .btn-danger { align-self: flex-start; }
+
+/* Choice cards (analytics presets, email providers): blue ring when chosen */
+.settings-shell .analytics-preset-card { padding: var(--s-4); }
+.settings-shell .analytics-preset-card.is-selected {
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.settings-shell #project-overview-content:not(:has(> .loading-state)) {
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+/* Permission matrix: action names on the canvas, one slab per resource */
+[data-birch] .permission-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .permission-matrix > :is(.permission-head, .permission-row) {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) repeat(4, 72px);
+  align-items: center;
+}
+
+[data-birch] .permission-head {
+  padding: 0 var(--s-4);
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / var(--lh-caption) var(--font-sans);
+}
+
+[data-birch] .permission-head > :not(:first-child),
+[data-birch] .permission-cell { justify-self: center; }
+
+[data-birch] .permission-row {
+  min-height: var(--row-list);
+  padding: 0 var(--s-4);
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+[data-birch] .permission-name { color: var(--text); font-weight: var(--weight-medium); }
+
+[data-birch] .permission-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+[data-birch] .permission-cell:hover { background: var(--surface-2); }

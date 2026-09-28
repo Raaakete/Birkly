@@ -1,4 +1,5 @@
 <?php ?>
+<div class="settings-shell" data-birch>
 <div class="page-header settings-page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
@@ -7,15 +8,15 @@
 
 <?php
 $stickySaveBarSaveId = 'global-save-settings-btn';
-$stickySaveBarSaveLabel = __('admin.save_settings');
+$stickySaveBarSaveLabel = __('admin.save_changes');
 $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="badge badge-warning" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 $stickySaveBarRightHtml = ''
     . '<label class="u-hidden" for="settings-search-input">' . htmlspecialchars(__('admin.settings_search_settings')) . '</label>'
-    . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="' . htmlspecialchars(__('admin.settings_search_settings')) . '" autocomplete="off">'
-    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="btn btn-secondary btn-sm">' . htmlspecialchars(__('admin.settings_view_activity')) . '</a>';
+    . '<span class="search-field settings-search">' . birkly_icon('search') . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="' . htmlspecialchars(__('admin.settings_search_settings')) . '" autocomplete="off"></span>'
+    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="btn btn-ghost">' . birkly_icon('history') . htmlspecialchars(__('admin.settings_view_activity')) . '</a>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
@@ -24,43 +25,33 @@ include __DIR__ . '/components/sticky-save-bar.php';
   <div class="settings-tabs tabs-v2-root">
     <div class="tabs">
       <button type="button" class="tab active" data-tab="general" data-settings-search="general project branding timezone language media uploads">
-        <?= birkly_icon('gear', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.general'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.general') ?></span>
       </button>
       <button type="button" class="tab" data-tab="site-delivery" data-settings-search="site delivery domains hosting urls redirects analytics public site tracking">
-        <?= birkly_icon('stack', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_site_delivery'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_site_delivery') ?></span>
       </button>
       <button type="button" class="tab" data-tab="project" data-settings-search="project files editor upload download delete rendering ssr render mode cache git sync push pull remote activity website workspace">
-        <?= birkly_icon('folder', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_project'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_project') ?></span>
       </button>
       <button type="button" class="tab" data-tab="team-access" data-settings-search="team access users roles invitations admins editors permissions">
-        <?= birkly_icon('users', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_team_access'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_team_access') ?></span>
       </button>
       <button type="button" class="tab" data-tab="security" data-settings-search="security sessions passwords csrf two-factor 2fa denylist plugins">
-        <?= birkly_icon('shield', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_security'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_security') ?></span>
       </button>
       <button type="button" class="tab" data-tab="ai" data-settings-search="ai assistant mcp connections service agents outbound personal connector built-in chat provider">
-        <?= birkly_icon('sparkle', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.ai_integrations'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.ai_integrations') ?></span>
       </button>
       <button type="button" class="tab" data-tab="connections" data-settings-search="connections email smtp resend postmark ses mailgun log sender provider">
-        <?= birkly_icon('envelope', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_connections'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_connections') ?></span>
       </button>
       <button type="button" class="tab" data-tab="integrations" data-settings-search="integrations api webhooks">
-        <?= birkly_icon('link', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_integrations'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_integrations') ?></span>
       </button>
       <button type="button" class="tab" data-tab="analytics" data-settings-search="analytics presets insights tracking privacy consent minimal standard advanced reports">
-        <?= birkly_icon('gauge', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.settings_tab_analytics'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_tab_analytics') ?></span>
       </button>
       <button type="button" class="tab" data-tab="system" data-settings-search="system storage monitoring database updates version danger rebuild maintenance activity developer mode export template">
-        <?= birkly_icon('monitor', ['size' => 16]) ?>
         <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.system'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.system') ?></span>
       </button>
     </div>
@@ -82,42 +73,56 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2><?= __('admin.site_identity') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                <div class="form-grid">
-                  <div class="form-group">
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="project-name"><?= __('admin.project_name') ?></label>
-                    <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
                     <small class="form-help"><?= __('admin.project_name_help') ?></small>
                   </div>
-                  <div class="form-group">
-                    <label for="site-timezone"><?= __('admin.timezone') ?></label>
-                    <select id="site-timezone" name="siteTimezone" class="input">
+                  <div class="setting-value">
+                    <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
+                  </div>
+                </div>
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="site-timezone"><?= __('admin.timezone') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <select id="site-timezone" name="siteTimezone" class="input">
                       <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
                       <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>><?= __('admin.settings_timezone_eastern') ?></option>
                       <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>><?= __('admin.settings_timezone_central') ?></option>
                       <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>><?= __('admin.settings_timezone_mountain') ?></option>
                       <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>><?= __('admin.settings_timezone_pacific') ?></option>
                     </select>
+                    </div>
+                  </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="project-description"><?= __('admin.project_description') ?></label>
+                    <small class="form-help"><?= __('admin.optional_description_help') ?></small>
+                  </div>
+                  <div class="setting-value">
+                    <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
-                  <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
-                  <small class="form-help"><?= __('admin.optional_description_help') ?></small>
-                </div>
-                <div class="form-group">
-                  <label for="project-logo"><?= __('admin.project_logo') ?></label>
-                  <input type="file" id="project-logo" name="project_logo" accept="image/*">
-                  <small class="form-help"><?= __('admin.project_logo_help') ?></small>
-                  <?php if (!empty($settings['branding']['logoPath'])): ?>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="project-logo"><?= __('admin.project_logo') ?></label>
+                    <small class="form-help"><?= __('admin.project_logo_help') ?></small>
+                  </div>
+                  <div class="setting-value">
+                    <input type="file" id="project-logo" name="project_logo" accept="image/*">
+                    <?php if (!empty($settings['branding']['logoPath'])): ?>
                     <div class="u-stack-2">
                       <p class="u-label"><?= __('admin.current_logo') ?></p>
                       <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
                       <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger u-w-fit"><?= __('admin.remove_logo') ?></button>
                     </div>
-                  <?php endif; ?>
-                  <div id="logo-preview" class="u-stack-2" hidden>
+                    <?php endif; ?>
+                    <div id="logo-preview" class="u-stack-2" hidden>
                     <p class="u-label"><?= __('admin.preview') ?></p>
                     <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
+                  </div>
                   </div>
                 </div>
                 </div>
@@ -154,31 +159,45 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       $createThumbnails = true;
                   }
                 ?>
-                <div class="form-grid">
-                  <div class="form-group">
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
+                  </div>
+                  <div class="setting-value">
                     <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
                   </div>
-                  <div class="form-group">
-                    <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
-                    <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
-                  </div>
                 </div>
-                <div class="form-grid">
-                  <div class="form-group">
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="media-image-quality"><?= __('admin.image_quality_percent') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
+                    </div>
+                  </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
+                  </div>
+                  <div class="setting-value">
                     <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
                   </div>
-                  <div class="form-group">
-                    <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
-                    <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
-                  </div>
                 </div>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>>
-                    <span><?= __('admin.create_thumbnails_automatically') ?></span>
-                  </label>
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="media-thumbnail-height"><?= __('admin.thumbnail_height_px') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <input type="number" id="media-thumbnail-height" name="mediaThumbnailHeight" class="input" value="<?= htmlspecialchars((string) $thumbHeight) ?>" min="50" max="1000">
+                    </div>
+                  </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="media-create-thumbnails"><?= __('admin.create_thumbnails_automatically') ?></label>
+                  </div>
+                  <div class="setting-value">
+                    <label class="switch"><input type="checkbox" id="media-create-thumbnails" name="mediaCreateThumbnails" <?= !empty($createThumbnails) ? 'checked' : '' ?>><span class="switch__slider"></span></label>
+                  </div>
                 </div>
                 </div>
               </section>
@@ -282,9 +301,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="settings-stack">
           <section class="card">
-            <div class="card-header">
-              <h3 class="card-title"><?= __('admin.hosting_urls') ?></h3>
-            </div>
             <div class="card-body u-stack-4">
             <div id="hosting-wizard-mount"></div>
             <p data-hosting-project-link class="form-help" hidden><?= __('admin.settings_project_manage_files_before') ?><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>"><?= __('admin.settings_project_manage_files_link') ?></a><?= __('admin.settings_project_manage_files_after') ?></p>
@@ -316,21 +332,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div id="project-overview-content" class="u-stack-3">
               <div class="loading-state"><p><?= __('admin.loading_project_info') ?></p></div>
             </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="project-show-visit-button">
-                <?= __('admin.settings_project_visit_header_label') ?>
-              </label>
-              <small class="form-help"><?= __('admin.settings_project_visit_header_help') ?></small>
+            <div class="form-group setting-row">
+              <div class="setting-label">
+                <label for="project-show-visit-button"><?= __('admin.settings_project_visit_header_label') ?></label>
+                <small class="form-help"><?= __('admin.settings_project_visit_header_help') ?></small>
+              </div>
+              <div class="setting-value">
+                <label class="switch"><input type="checkbox" id="project-show-visit-button"><span class="switch__slider"></span></label>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="project-visit-url-format"><?= __('admin.settings_project_visit_url_label') ?></label>
-              <select id="project-visit-url-format" class="input">
+            <div class="form-group setting-row">
+              <div class="setting-label">
+                <label for="project-visit-url-format"><?= __('admin.settings_project_visit_url_label') ?></label>
+                <small class="form-help" id="project-visit-url-format-help"><?= __('admin.settings_project_visit_url_help') ?></small>
+              </div>
+              <div class="setting-value">
+                <select id="project-visit-url-format" class="input">
                 <option value="auto"><?= __('admin.settings_project_render_auto') ?></option>
                 <option value="directory"><?= __('admin.settings_project_visit_directory') ?></option>
                 <option value="index"><?= __('admin.settings_project_visit_index') ?></option>
               </select>
-              <small class="form-help" id="project-visit-url-format-help"><?= __('admin.settings_project_visit_url_help') ?></small>
+              </div>
             </div>
             <div class="u-cluster">
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm"><?= __('admin.domains') ?></a>
@@ -409,31 +431,39 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="card-body u-stack-4">
-            <div class="form-grid">
-              <div class="form-group">
+            <div class="form-group setting-row">
+              <div class="setting-label">
                 <label for="project-hosting-type"><?= __('admin.settings_project_hosting_from_delivery') ?></label>
+                <small id="project-hosting-type-help" class="form-help"><?= __('admin.settings_hosting_type_help_before') ?><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting', ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_hosting_type_help_link') ?></a><?= __('admin.settings_hosting_type_help_after') ?></small>
+              </div>
+              <div class="setting-value">
                 <select id="project-hosting-type" class="input" disabled aria-disabled="true" aria-describedby="project-hosting-type-help">
                   <option value="birkly"><?= __('admin.settings_project_hosting_birkly') ?></option>
                   <option value="external"><?= __('admin.settings_project_hosting_external') ?></option>
                 </select>
                 <input type="hidden" id="project-hosting-type-value" value="birkly">
-                <small id="project-hosting-type-help" class="form-help"><?= __('admin.settings_hosting_type_help_before') ?><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting', ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.settings_hosting_type_help_link') ?></a><?= __('admin.settings_hosting_type_help_after') ?></small>
               </div>
-              <div class="form-group">
-                <label for="project-render-mode"><?= __('admin.settings_project_render_mode_label') ?></label>
-                <select id="project-render-mode" class="input">
+            </div>
+              <div class="form-group setting-row">
+                <div class="setting-label">
+                  <label for="project-render-mode"><?= __('admin.settings_project_render_mode_label') ?></label>
+                  <small class="form-help"><?= __('admin.settings_render_mode_help') ?></small>
+                </div>
+                <div class="setting-value">
+                  <select id="project-render-mode" class="input">
                   <option value="server" selected><?= __('admin.settings_project_render_server_default') ?></option>
                   <option value="auto"><?= __('admin.settings_project_render_auto_short') ?></option>
                   <option value="client"><?= __('admin.settings_project_render_client') ?></option>
                 </select>
-                <small class="form-help"><?= __('admin.settings_render_mode_help') ?></small>
+                </div>
               </div>
-            </div>
-            <div class="form-grid">
-              <div class="form-group">
+            <div class="form-group setting-row">
+              <div class="setting-label">
                 <label for="project-ssr-cache-ttl"><?= __('admin.settings_project_cache_ttl_label') ?></label>
-                <input type="number" id="project-ssr-cache-ttl" class="input" min="0" max="86400" step="1" inputmode="numeric">
                 <small class="form-help"><?= __('admin.settings_cache_ttl_help') ?></small>
+              </div>
+              <div class="setting-value">
+                <input type="number" id="project-ssr-cache-ttl" class="input" min="0" max="86400" step="1" inputmode="numeric">
               </div>
             </div>
             <p class="form-help" id="project-rendering-external-note" role="status" aria-live="polite" hidden><?= __('admin.settings_rendering_external_note') ?></p>
@@ -532,13 +562,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <p class="settings-help">
             <?= __('admin.settings_users_cms_help_prefix') ?><strong><?= __('admin.settings_site_users_label') ?></strong><?= __('admin.settings_users_cms_help_suffix') ?>
           </p>
-          <div class="u-grid-auto-lg">
+          <div class="list-rows team-users">
             <?php if (empty($users)): ?>
-              <div class="empty-state empty-state--compact">
-                <p class="empty-state__description"><?= __('admin.no_users_found') ?></p>
-                <div class="empty-state__action">
-                  <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
-                </div>
+              <div class="empty">
+                <p class="empty-text"><?= __('admin.no_users_found') ?></p>
+                <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
               </div>
             <?php else: ?>
               <?php foreach ($users as $user):
@@ -556,89 +584,54 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     ? $teamAvatar
                     : birkly_url($teamAvatar);
                 }
+                $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
+                $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
+                $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
+                $userRole = (string) ($user['role'] ?? 'viewer');
               ?>
-                <div class="card">
-                  <div class="card-header">
-                    <?php if ($teamAvatarUrl !== ''): ?>
-                      <img src="<?= htmlspecialchars($teamAvatarUrl) ?>" alt="" class="avatar" width="40" height="40">
-                    <?php else: ?>
-                      <div class="avatar" aria-hidden="true"><?= htmlspecialchars($userInitial) ?></div>
+                <div class="list-row team-user">
+                  <?php if ($teamAvatarUrl !== ''): ?>
+                    <img src="<?= htmlspecialchars($teamAvatarUrl) ?>" alt="" class="avatar" width="28" height="28">
+                  <?php else: ?>
+                    <span class="avatar<?= $userRole === 'admin' ? ' is-accent' : '' ?>" aria-hidden="true"><?= htmlspecialchars($userInitial) ?></span>
+                  <?php endif; ?>
+                  <div class="row-body">
+                    <div class="row-title">
+                      <span class="u-truncate"><?= htmlspecialchars($userLabel) ?></span>
+                      <span class="tag"><?= htmlspecialchars($userRole) ?></span>
+                    </div>
+                    <div class="row-meta">
+                      <?php if ($userSubtitle !== ''): ?><span class="u-truncate"><?= htmlspecialchars($userSubtitle) ?></span><?php endif; ?>
+                      <span><?= __('admin.last_login') ?> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : __('admin.never') ?></span>
+                      <span><?= __('admin.created') ?> <?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : __('admin.unknown') ?></span>
+                    </div>
+                    <?php if ($hasAiConnections): ?>
+                    <ul class="row-sublist" aria-label="<?= htmlspecialchars(__('admin.settings_team_ai_connections_label')) ?>">
+                      <?php foreach ($byoaiConnections as $connection):
+                        $connectedAt = $connection['created_at'] ?? '';
+                        $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
+                      ?>
+                        <li><?= birkly_icon('sparkle') ?><span><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span><span class="row-meta"><?= __('admin.settings_connection_meta_outbound', ['connected' => $connectedLabel]) ?></span></li>
+                      <?php endforeach; ?>
+                      <?php foreach ($mcpSessions as $session):
+                        $connectedAt = $session['connected_at'] ?? '';
+                        $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
+                      ?>
+                        <li><?= birkly_icon('link') ?><span><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span><span class="row-meta"><?= __('admin.settings_connection_meta_mcp', ['connected' => $connectedLabel]) ?></span></li>
+                      <?php endforeach; ?>
+                    </ul>
                     <?php endif; ?>
-                    <div class="u-stack-1 u-min-w-0 u-fill">
-                      <h4 class="card-title u-text-base u-truncate"><?= htmlspecialchars($userLabel) ?></h4>
-                      <?php if ($userSubtitle !== ''): ?>
-                        <p class="card-description u-truncate"><?= htmlspecialchars($userSubtitle) ?></p>
-                      <?php endif; ?>
-                      <span class="badge <?= ($user['role'] ?? 'viewer') === 'admin' ? 'badge-accent' : 'badge-neutral' ?> u-w-fit"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
-                    </div>
-                    <div class="card-actions">
-                      <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
-                        <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
-                      </button>
-                      <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.settings_delete_user_btn')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_user_aria') . ' ' . $userLabel) ?>">
-                        <?= birkly_icon('trash', ['size' => 16]) ?>
-                      </button>
-                    </div>
                   </div>
-                  <div class="card-body u-stack-3">
-                    <div class="u-stack-1 u-text-sm">
-                      <div class="u-split">
-                        <span class="u-fg-secondary"><?= __('admin.created') ?></span>
-                        <span><?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : __('admin.unknown') ?></span>
-                      </div>
-                      <div class="u-split">
-                        <span class="u-fg-secondary"><?= __('admin.last_login') ?></span>
-                        <span><?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : __('admin.never') ?></span>
-                      </div>
-                    </div>
-                    <?php
-                      $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
-                      $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
-                      $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
-                    ?>
-                    <div class="u-stack-2">
-                      <p class="u-label"><?= __('admin.settings_team_ai_connections_label') ?></p>
-                      <?php if (!$hasAiConnections): ?>
-                        <p class="u-text-sm u-fg-tertiary"><?= __('admin.settings_team_ai_connections_none') ?></p>
-                      <?php else: ?>
-                        <ul class="data-list data-list--flush data-list--compact">
-                          <?php foreach ($byoaiConnections as $connection):
-                            $connectedAt = $connection['created_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
-                          ?>
-                            <li class="data-list-item">
-                              <span class="data-list-main">
-                                <span class="data-list-title"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
-                                <span class="data-list-meta"><?= __('admin.settings_connection_meta_outbound', ['connected' => $connectedLabel]) ?></span>
-                              </span>
-                            </li>
-                          <?php endforeach; ?>
-                          <?php foreach ($mcpSessions as $session):
-                            $connectedAt = $session['connected_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
-                          ?>
-                            <li class="data-list-item">
-                              <span class="data-list-main">
-                                <span class="data-list-title"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
-                                <span class="data-list-meta"><?= __('admin.settings_connection_meta_mcp', ['connected' => $connectedLabel]) ?></span>
-                              </span>
-                            </li>
-                          <?php endforeach; ?>
-                        </ul>
-                        <?php if (!empty($mcpSessions)): ?>
-                        <button
-                          type="button"
-                          class="btn btn-secondary btn-sm"
-                          data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'
-                        >
-                          Revoke MCP access
-                        </button>
-                        <?php endif; ?>
-                        <?php if (!empty($byoaiConnections)): ?>
-                        <p class="u-text-sm u-fg-secondary"><?= __('admin.settings_manage_builtin_assistant_keys_before') ?><strong><?= __('admin.settings_ai') ?></strong><?= __('admin.settings_manage_builtin_assistant_keys_after') ?></p>
-                        <?php endif; ?>
-                      <?php endif; ?>
-                    </div>
+                  <div class="row-actions">
+                    <?php if (!empty($mcpSessions)): ?>
+                    <button type="button" class="btn btn-secondary btn-sm" data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'><?= __('admin.settings_revoke_mcp_access') ?></button>
+                    <?php endif; ?>
+                    <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
+                      <?= birkly_icon('pencil') ?>
+                    </button>
+                    <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.settings_delete_user_btn')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_user_aria') . ' ' . $userLabel) ?>">
+                      <?= birkly_icon('trash') ?>
+                    </button>
                   </div>
                 </div>
               <?php endforeach; ?>
@@ -666,41 +659,33 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <h2><?= __('admin.role_management') ?></h2>
             <button class="btn btn-primary" data-admin-action="openAddRoleModal">
               <?= birkly_icon('plus', ['size' => 16]) ?>
-              Add Role
+              <?= __('admin.settings_add_role_btn') ?>
             </button>
           </div>
     <div class="card-body u-stack-4">
-          <div class="u-grid-auto">
+          <div class="list-rows team-roles">
             <?php foreach ($settings['roles'] ?? [] as $role): ?>
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title"><?= htmlspecialchars($role['name']) ?></h3>
-                <div class="card-actions">
-                  <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.edit_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
-                    <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
-                  </button>
-                  <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.delete_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
-                    <?= birkly_icon('trash', ['size' => 16]) ?>
-                  </button>
-                </div>
-              </div>
-              <div class="card-body u-stack-4">
-              <p class="card-description"><?= htmlspecialchars($role['description']) ?></p>
-              <div class="u-stack-3">
+            <div class="list-row team-role">
+              <span class="row-icon"><?= birkly_icon('shield') ?></span>
+              <div class="row-body">
+                <div class="row-title"><?= htmlspecialchars($role['name']) ?></div>
+                <?php if (!empty($role['description'])): ?><div class="row-meta"><?= htmlspecialchars($role['description']) ?></div><?php endif; ?>
+                <div class="role-permissions">
                 <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
                   $resourceLabel = $resource === '*' ? __('admin.all_resources') : ucfirst(str_replace('_', ' ', (string) $resource));
                   $actionList = is_array($actions) ? $actions : [$actions];
                 ?>
-                <div class="u-stack-2">
-                  <div class="u-label"><?= htmlspecialchars($resourceLabel) ?></div>
-                  <div class="u-cluster">
-                    <?php foreach ($actionList as $action): ?>
-                    <span class="badge badge-neutral"><?= htmlspecialchars((string) $action) ?></span>
-                    <?php endforeach; ?>
-                  </div>
-                </div>
+                  <span class="tag"><?= htmlspecialchars($resourceLabel) ?> <span class="tag-detail"><?= htmlspecialchars(implode(', ', array_map('strval', $actionList))) ?></span></span>
                 <?php endforeach; ?>
+                </div>
               </div>
+              <div class="row-actions">
+                <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.edit_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
+                  <?= birkly_icon('pencil') ?>
+                </button>
+                <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.delete_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
+                  <?= birkly_icon('trash') ?>
+                </button>
               </div>
             </div>
             <?php endforeach; ?>
@@ -719,37 +704,53 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2><?= __('admin.session_security') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                <div class="form-grid">
-                  <div class="form-group">
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
+                  </div>
+                  <div class="setting-value">
                     <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
                   </div>
-                  <div class="form-group">
-                    <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
-                    <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
-                  </div>
                 </div>
-                <div class="form-grid">
-                  <div class="form-group">
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="security-max-login-attempts"><?= __('admin.max_login_attempts') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
+                    </div>
+                  </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
+                  </div>
+                  <div class="setting-value">
                     <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
                   </div>
-                  <div class="form-group">
-                    <label for="security-lockout-time"><?= __('admin.settings_security_lockout_label') ?></label>
-                    <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
+                </div>
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="security-lockout-time"><?= __('admin.settings_security_lockout_label') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <input type="number" id="security-lockout-time" name="securityLockoutTime" class="input" value="<?= htmlspecialchars(isset($settings['security']['lockout_time']) ? ($settings['security']['lockout_time'] / 60) : ($settings['security']['lockoutTime'] ?? '15')) ?>" min="5" max="1440">
+                    </div>
+                  </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="security-require-strong-password"><?= __('admin.settings_require_strong_password') ?></label>
+                  </div>
+                  <div class="setting-value">
+                    <label class="switch"><input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>><span class="switch__slider"></span></label>
                   </div>
                 </div>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>>
-                    <span><?= __('admin.settings_require_strong_password') ?></span>
-                  </label>
-                </div>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>>
-                    <span><?= __('admin.enable_csrf_protection') ?></span>
-                  </label>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="security-enable-csrf"><?= __('admin.enable_csrf_protection') ?></label>
+                  </div>
+                  <div class="setting-value">
+                    <label class="switch"><input type="checkbox" id="security-enable-csrf" name="securityEnableCsrf" <?= ($settings['security']['enable_csrf'] ?? true) ? 'checked' : '' ?>><span class="switch__slider"></span></label>
+                  </div>
                 </div>
                 </div>
               </section>
@@ -762,16 +763,22 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
                 <div class="card-body u-stack-4">
                 <p class="settings-help"><?= __('admin.settings_security_2fa_policy_help') ?></p>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>>
-                    <span><?= __('admin.settings_security_require_2fa_label') ?></span>
-                  </label>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="security-require-2fa"><?= __('admin.settings_security_require_2fa_label') ?></label>
+                  </div>
+                  <div class="setting-value">
+                    <label class="switch"><input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>><span class="switch__slider"></span></label>
+                  </div>
                 </div>
-                <div class="form-group">
-                  <label for="security-require-2fa-grace-days"><?= __('admin.settings_security_2fa_grace_label') ?></label>
-                  <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
-                  <p class="settings-help"><?= __('admin.settings_security_2fa_grace_help') ?></p>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="security-require-2fa-grace-days"><?= __('admin.settings_security_2fa_grace_label') ?></label>
+                    <p class="settings-help"><?= __('admin.settings_security_2fa_grace_help') ?></p>
+                  </div>
+                  <div class="setting-value">
+                    <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
+                  </div>
                 </div>
                 </div>
               </section>
@@ -792,15 +799,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   ?>
                   <div class="form-group u-stack-3">
                     <label class="radio-card">
-                      <input type="radio" name="securityAiToolsMode" value="normal" <?= $aiToolsMode === 'normal' ? 'checked' : '' ?>>
+                      <input type="radio" class="radio" name="securityAiToolsMode" value="normal" <?= $aiToolsMode === 'normal' ? 'checked' : '' ?>>
                       <span><strong><?= __('admin.settings_security_ai_mode_normal_strong') ?></strong><?= __('admin.settings_security_ai_mode_normal_after') ?></span>
                     </label>
                     <label class="radio-card">
-                      <input type="radio" name="securityAiToolsMode" value="read_only_chat" <?= $aiToolsMode === 'read_only_chat' ? 'checked' : '' ?>>
+                      <input type="radio" class="radio" name="securityAiToolsMode" value="read_only_chat" <?= $aiToolsMode === 'read_only_chat' ? 'checked' : '' ?>>
                       <span><strong><?= __('admin.settings_security_ai_mode_readonly_strong') ?></strong><?= __('admin.settings_security_ai_mode_readonly_after') ?></span>
                     </label>
                     <label class="radio-card">
-                      <input type="radio" name="securityAiToolsMode" value="disabled" <?= $aiToolsMode === 'disabled' ? 'checked' : '' ?>>
+                      <input type="radio" class="radio" name="securityAiToolsMode" value="disabled" <?= $aiToolsMode === 'disabled' ? 'checked' : '' ?>>
                       <span><strong><?= __('admin.settings_security_ai_mode_disabled_strong') ?></strong><?= __('admin.settings_security_ai_mode_disabled_after') ?><code>tools/list</code><?= __('admin.settings_security_ai_mode_disabled_after_code') ?></span>
                     </label>
                   </div>
@@ -812,34 +819,42 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <section class="card">
                 <div class="card-header">
                   <h2><?= __('admin.plugin_security_denylist') ?></h2>
+                  <div class="card-actions">
+                    <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
+                      <?= birkly_icon('plus', ['size' => 16]) ?>
+                      <?= __('admin.settings_security_denylist_add_custom_pattern') ?>
+                    </button>
+                  </div>
                 </div>
                 <div class="card-body u-stack-4">
                 <p class="settings-help"><?= __('admin.settings_security_denylist_help') ?></p>
-                <div class="u-cluster-3 u-align-end">
-                  <div class="form-group u-fill">
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="denylist-collection-select"><?= __('admin.settings_security_denylist_protect_collection') ?></label>
+                  </div>
+                  <div class="setting-value setting-inline">
                     <select id="denylist-collection-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_collections')) ?></option>
                     </select>
+                    <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
+                      <?= __('admin.settings_security_denylist_add_collection') ?>
+                    </button>
                   </div>
-                  <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
-                    <?= __('admin.settings_security_denylist_add_collection') ?>
-                  </button>
-                  <div class="form-group u-fill">
+                </div>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
                     <label for="denylist-plugin-select"><?= __('admin.settings_security_denylist_deny_plugin_space') ?></label>
+                    <small class="form-help"><?= __('admin.settings_security_denylist_spaces_help') ?></small>
+                  </div>
+                  <div class="setting-value setting-inline">
                     <select id="denylist-plugin-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_plugins')) ?></option>
                     </select>
+                    <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
+                      <?= __('admin.settings_security_denylist_add_plugin') ?>
+                    </button>
                   </div>
-                  <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
-                    <?= __('admin.settings_security_denylist_add_plugin') ?>
-                  </button>
-                  <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
-                    <?= birkly_icon('plus', ['size' => 16]) ?>
-                    <?= __('admin.settings_security_denylist_add_custom_pattern') ?>
-                  </button>
                 </div>
-                <p class="settings-help"><?= __('admin.settings_security_denylist_spaces_help') ?></p>
                 <div id="denylist-management">
                   <div class="loading-state"><p><?= __('admin.loading_denylist') ?></p></div>
                 </div>
@@ -962,13 +977,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
                 <p class="form-help"><?= __('admin.settings_analytics_legal_disclaimer') ?></p>
                 <div id="analytics-consent-fields" class="u-stack-3" hidden>
-                  <div class="form-group">
-                    <label for="analytics-consent-text"><?= __('admin.settings_analytics_consent_label') ?></label>
-                    <textarea id="analytics-consent-text" name="analytics_consent_text" class="input" rows="3"></textarea>
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="analytics-consent-text"><?= __('admin.settings_analytics_consent_label') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <textarea id="analytics-consent-text" name="analytics_consent_text" class="input" rows="3"></textarea>
+                    </div>
                   </div>
-                  <div class="form-group">
-                    <label for="analytics-retention-days"><?= __('admin.settings_analytics_retention_label') ?></label>
-                    <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="<?= htmlspecialchars(__('admin.settings_analytics_retention_ph')) ?>">
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
+                      <label for="analytics-retention-days"><?= __('admin.settings_analytics_retention_label') ?></label>
+                    </div>
+                    <div class="setting-value">
+                      <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="<?= htmlspecialchars(__('admin.settings_analytics_retention_ph')) ?>">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1033,11 +1056,13 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div id="developer-system-info" class="card card--sunken">
                   <div class="card-body"><div class="loading-state"><p><?= __('admin.loading_system_info') ?></p></div></div>
                 </div>
-                <div class="form-group">
-                  <label class="checkbox-label">
-                    <input type="checkbox" id="developer-export-include-content">
-                    <span><?= __('admin.settings_developer_export_include') ?></span>
-                  </label>
+                <div class="form-group setting-row">
+                  <div class="setting-label">
+                    <label for="developer-export-include-content"><?= __('admin.settings_developer_export_include') ?></label>
+                  </div>
+                  <div class="setting-value">
+                    <label class="switch"><input type="checkbox" id="developer-export-include-content"><span class="switch__slider"></span></label>
+                  </div>
                 </div>
                 <div class="u-cluster">
                   <button type="button" class="btn btn-primary" id="developer-export-btn"><?= __('admin.settings_developer_export_btn') ?></button>
@@ -1105,11 +1130,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <div class="u-cluster" id="update-actions" hidden>
                       <button type="button" class="btn btn-primary" id="download-update-btn">
                         <?= birkly_icon('import', ['size' => 16]) ?>
-                        Download Update
+                        <?= __('admin.updates_js_download_update_btn') ?>
                       </button>
                       <button type="button" class="btn btn-secondary" id="check-updates-btn">
                         <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
-                        Check Again
+                        <?= __('admin.check_again') ?>
                       </button>
                     </div>
                   </div>
@@ -1128,58 +1153,76 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                   <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
-                  <div class="form-grid">
-                    <div class="form-group">
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
                       <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
+                      <small><?= __('admin.changing_storage_backend_warning') ?></small>
+                    </div>
+                    <div class="setting-value">
                       <select id="storage-backend" name="storage_backend" class="input">
                         <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>><?= __('admin.settings_storage_flatfile') ?></option>
                         <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>><?= __('admin.settings_storage_mysql') ?></option>
                         <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>><?= __('admin.settings_storage_postgresql') ?></option>
                         <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>><?= __('admin.settings_storage_sqlite_soon') ?></option>
                       </select>
-                      <small><?= __('admin.changing_storage_backend_warning') ?></small>
                     </div>
                   </div>
 
                   <div id="database-config" class="u-stack-4" <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? '' : 'hidden' ?>>
-                    <div class="form-grid">
-                      <div class="form-group">
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
                         <label for="db-host"><?= __('admin.database_host') ?></label>
+                      </div>
+                      <div class="setting-value">
                         <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
                       </div>
-                      <div class="form-group">
-                        <label for="db-port"><?= __('admin.database_port') ?></label>
-                        <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
-                      </div>
                     </div>
+                      <div class="form-group setting-row">
+                        <div class="setting-label">
+                          <label for="db-port"><?= __('admin.database_port') ?></label>
+                        </div>
+                        <div class="setting-value">
+                          <input type="number" id="db-port" name="db_port" value="<?= htmlspecialchars((string) $dbPort) ?>" class="input" placeholder="<?= $storageDriver === 'postgresql' ? '5432' : '3306' ?>">
+                        </div>
+                      </div>
 
-                    <div class="form-grid">
-                      <div class="form-group">
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
                         <label for="db-name"><?= __('admin.database_name') ?></label>
+                      </div>
+                      <div class="setting-value">
                         <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
                       </div>
-                      <div class="form-group">
-                        <label for="db-user"><?= __('admin.settings_db_user_label') ?></label>
-                        <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
-                      </div>
                     </div>
+                      <div class="form-group setting-row">
+                        <div class="setting-label">
+                          <label for="db-user"><?= __('admin.settings_db_user_label') ?></label>
+                        </div>
+                        <div class="setting-value">
+                          <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
+                        </div>
+                      </div>
 
-                    <div class="form-grid">
-                      <div class="form-group">
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
                         <label for="db-password"><?= __('admin.database_password') ?></label>
+                      </div>
+                      <div class="setting-value">
                         <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
                       </div>
-                      <div class="form-group">
-                        <label for="db-prefix"><?= __('admin.settings_db_table_prefix_label') ?></label>
-                        <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
-                      </div>
                     </div>
-
-                    <div class="form-grid">
-                      <div class="form-group">
-                        <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
-                        <small id="db-test-result" class="u-ml-4" aria-live="polite"></small>
+                      <div class="form-group setting-row">
+                        <div class="setting-label">
+                          <label for="db-prefix"><?= __('admin.settings_db_table_prefix_label') ?></label>
+                        </div>
+                        <div class="setting-value">
+                          <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
+                        </div>
                       </div>
+
+                    <div class="setting-actions">
+                      <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
+                      <small id="db-test-result" class="form-help" aria-live="polite"></small>
                     </div>
                   </div>
                   </div>
@@ -1191,13 +1234,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                   <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.migration_help') ?></p>
-                  <div class="form-grid">
-                    <div class="form-group">
-                      <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
-                      <small id="migration-status" class="u-ml-4" aria-live="polite"></small>
-                      <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
+                  <div class="signal">
+                    <?= birkly_icon('alert') ?>
+                    <div class="signal-body">
+                      <p class="signal-text"><?= __('admin.backup_data_before_migrating') ?></p>
                     </div>
+                    <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
                   </div>
+                  <small id="migration-status" class="form-help" aria-live="polite"></small>
                   </div>
                 </section>
               </form>
@@ -1209,18 +1253,24 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                   <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
-                  <div class="form-grid">
-                    <div class="form-group">
+                  <div class="form-group setting-row">
+                    <div class="setting-label">
                       <label for="monitoring-alert-email"><?= __('admin.alert_email') ?></label>
-                      <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
                       <small class="form-help"><?= __('admin.alert_email_help') ?></small>
                     </div>
-                    <div class="form-group">
-                      <label for="monitoring-alert-webhook"><?= __('admin.alert_webhook_url') ?></label>
-                      <input type="url" id="monitoring-alert-webhook" name="monitoringAlertWebhookUrl" class="input" value="<?= htmlspecialchars($monitoringAlertWebhookUrl) ?>" placeholder="https://hooks.example.com/health">
-                      <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
+                    <div class="setting-value">
+                      <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
                     </div>
                   </div>
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
+                        <label for="monitoring-alert-webhook"><?= __('admin.alert_webhook_url') ?></label>
+                        <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
+                      </div>
+                      <div class="setting-value">
+                        <input type="url" id="monitoring-alert-webhook" name="monitoringAlertWebhookUrl" class="input" value="<?= htmlspecialchars($monitoringAlertWebhookUrl) ?>" placeholder="https://hooks.example.com/health">
+                      </div>
+                    </div>
                   </div>
                 </section>
               </form>
@@ -1649,6 +1699,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
       </div>
     </div>
   </div>
+</div>
 </div>
 
 <?php
