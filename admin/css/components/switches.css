@@ -65,10 +65,10 @@
   position: absolute;
   inset: 0;
   display: block;
-  border-radius: var(--radius-pill);
-  background-color: var(--control-track);
+  border-radius: var(--r);
+  background-color: var(--surface-3);
   cursor: pointer;
-  transition: background-color var(--motion-base) var(--ease-out);
+  transition: background-color var(--dur-2) var(--ease);
 }
 
 .switch__slider::before {
@@ -79,9 +79,9 @@
   width: var(--switch-knob);
   height: var(--switch-knob);
   border-radius: 50%;
-  background-color: var(--control-knob);
-  box-shadow: var(--elevation-1);
-  transition: transform var(--motion-base) var(--ease-out);
+  background-color: var(--surface);
+  box-shadow: none;
+  transition: transform var(--dur-2) var(--ease);
 }
 
 /* ---- Checked ---- */
@@ -97,7 +97,7 @@
 
 /* ---- Hover ---- */
 .switch:hover input[type="checkbox"]:not(:disabled) + .switch__slider {
-  background-color: var(--control-track-hover);
+  background-color: var(--line-strong);
 }
 
 .switch:hover input[type="checkbox"]:checked:not(:disabled) + .switch__slider {

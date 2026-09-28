@@ -537,11 +537,11 @@
             if (this.axis === 'horizontal') {
                 this.dropIndicator.style.width = '3px';
                 this.dropIndicator.style.height = '100%';
-                this.dropIndicator.style.background = 'var(--primary-500, #3b82f6)';
+                this.dropIndicator.style.background = 'var(--mint-500)';
             } else {
                 this.dropIndicator.style.height = '3px';
                 this.dropIndicator.style.width = '100%';
-                this.dropIndicator.style.background = 'var(--primary-500, #3b82f6)';
+                this.dropIndicator.style.background = 'var(--mint-500)';
             }
             
             this.dropIndicator.style.display = 'none';

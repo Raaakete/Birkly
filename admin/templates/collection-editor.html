@@ -2089,7 +2089,7 @@ document.addEventListener('DOMContentLoaded', function() {
         navigator.clipboard.writeText(text).then(function() {
             const originalHTML = button.innerHTML;
             button.innerHTML = '<?= birkly_icon('check', ['size' => 14]) ?>';
-            button.style.color = 'var(--success-600)';
+            button.style.color = 'var(--success)';
             setTimeout(function() {
                 button.innerHTML = originalHTML;
                 button.style.color = '';
@@ -2541,7 +2541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 navigator.clipboard.writeText(apiKey).then(function() {
                     const originalHTML = this.innerHTML;
                     this.innerHTML = '<?= birkly_icon('check', ['size' => 14]) ?>';
-                    this.style.color = 'var(--success-600)';
+                    this.style.color = 'var(--success)';
                     const btn = this;
                     setTimeout(function() {
                         btn.innerHTML = originalHTML;

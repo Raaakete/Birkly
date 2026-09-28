@@ -482,19 +482,19 @@
 .info-item {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
 }
 
 .info-item label {
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
 }
 
 .info-item span {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  font-size: var(--size-small);
+  color: var(--text);
 }

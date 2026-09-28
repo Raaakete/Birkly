@@ -341,7 +341,7 @@
 
         var progress = document.createElement('div');
         progress.className = 'bulk-progress';
-        progress.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--bg-elevated);padding:var(--space-3);border-radius:var(--radius-sm,8px);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1000;';
+        progress.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--surface);padding:var(--s-3);border-radius:var(--r);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1000;';
         progress.textContent = t('entries_bulk_updating_fields', 'Updating field values…');
         document.body.appendChild(progress);
 

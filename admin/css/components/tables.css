@@ -20,8 +20,8 @@
   overflow-x: auto;
   overscroll-behavior-x: contain;
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
 }
 
 /* Inside a flush card the container supplies no chrome of its own */
@@ -36,55 +36,55 @@
   width: 100%;
   border-collapse: collapse;
   border-spacing: 0;
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  font-size: var(--size-small);
+  color: var(--text);
 }
 
 .table thead th {
   height: 2.25rem;
-  padding: 0 var(--space-4);
-  background: var(--surface-sunken);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: 0 var(--s-4);
+  background: var(--surface-2);
+  border-block-end: 1px solid var(--line);
   text-align: start;
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
 .table tbody td {
   height: 2.5rem;
-  padding: var(--space-2) var(--space-4);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: var(--s-2) var(--s-4);
+  border-block-end: 1px solid var(--line);
   vertical-align: middle;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .table tbody tr:last-child td { border-block-end: none; }
 
 .table tbody tr {
-  transition: background-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease);
 }
 
 .table tbody tr:hover,
 .table--hover tbody tr:hover,
-.table-row:hover { background: var(--surface-hover); }
+.table-row:hover { background: var(--surface-2); }
 
 .table tbody tr.is-selected,
-.table tbody tr[aria-selected="true"] { background: var(--surface-selected); }
+.table tbody tr[aria-selected="true"] { background: var(--accent-soft); }
 
 /* Primary cell text */
 .table .cell-title,
 .table td .title {
   font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .table .cell-muted,
 .table td .muted {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* Numeric / date columns */
@@ -101,10 +101,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-1);
+  gap: var(--s-1);
 }
 
-.table tbody tr .cell-actions { opacity: 0.55; transition: opacity var(--motion-fast) var(--ease-out); }
+.table tbody tr .cell-actions { opacity: 0.55; transition: opacity var(--dur-1) var(--ease); }
 .table tbody tr:hover .cell-actions,
 .table tbody tr:focus-within .cell-actions { opacity: 1; }
 
@@ -114,14 +114,14 @@
 .table .col-drag { width: 2rem; }
 
 /* ---- Modifiers ---- */
-.table--compact tbody td { height: 2rem; padding-block: var(--space-1); }
+.table--compact tbody td { height: 2rem; padding-block: var(--s-1); }
 .table--compact thead th { height: 2rem; }
 
 .table--bordered th,
-.table--bordered td { border: 1px solid var(--border-subtle); }
+.table--bordered td { border: 1px solid var(--line); }
 
-.table--striped tbody tr:nth-child(even) { background: var(--surface-sunken); }
-.table--striped tbody tr:nth-child(even):hover { background: var(--surface-hover); }
+.table--striped tbody tr:nth-child(even) { background: var(--surface-2); }
+.table--striped tbody tr:nth-child(even):hover { background: var(--surface-2); }
 
 /* Sticky header inside a scrolling container */
 .table--sticky thead th {
@@ -134,9 +134,9 @@
 .table th[aria-sort],
 .table th.sortable { cursor: pointer; user-select: none; }
 .table th[aria-sort]:hover,
-.table th.sortable:hover { color: var(--text-secondary); }
+.table th.sortable:hover { color: var(--text-2); }
 .table th[aria-sort="ascending"],
-.table th[aria-sort="descending"] { color: var(--text-primary); }
+.table th[aria-sort="descending"] { color: var(--text); }
 
 /* ============================================
    Entries smart table — specialization of .table
@@ -144,7 +144,7 @@
 .entries-smart-table {
   width: 100%;
   min-width: 0;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
 }
 
 /* Horizontal scroll viewport. The actions column parks at the right edge and
@@ -252,7 +252,7 @@
 
 .entries-smart-table .cell-title .title-text {
   font-weight: var(--weight-semibold);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 /* Rows of chips and thumbnails are allowed to breathe — they are not text */
@@ -262,9 +262,9 @@
 }
 
 .entries-smart-table .entry-slug-meta {
-  margin-block-start: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  margin-block-start: var(--s-1);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 .entries-smart-table .head-actions,
@@ -275,8 +275,8 @@
   width: 7rem;
   min-width: 7rem;
   max-width: 7rem;
-  padding: var(--space-2);
-  border-inline-start: 1px solid var(--border-subtle);
+  padding: var(--s-2);
+  border-inline-start: 1px solid var(--line);
   background: var(--surface);
   text-align: center;
 }
@@ -288,7 +288,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-wrap: nowrap;
   height: 100%;
 }
@@ -297,14 +297,14 @@
 .entries-smart-table .cell-actions-more {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--s-1);
   flex-wrap: nowrap;
 }
 
 .entries-smart-table .cell-actions-more {
-  margin-inline-start: var(--space-1);
-  padding-inline-start: var(--space-2);
-  border-inline-start: 1px solid var(--border-subtle);
+  margin-inline-start: var(--s-1);
+  padding-inline-start: var(--s-2);
+  border-inline-start: 1px solid var(--line);
 }
 
 /* Below --bp-md, stop forcing fixed columns and let the viewport scroll */
@@ -317,8 +317,8 @@
 }
 
 .entries-smart-table .head-actions {
-  height: var(--control-md);
-  background: var(--surface-sunken);
+  height: var(--control);
+  background: var(--surface-2);
 }
 
 /* Actions column is always sticky (set above) so row actions stay reachable
@@ -342,37 +342,37 @@
 
 .entries-smart-table thead th {
   height: 2.25rem;
-  padding: 0 var(--space-3);
-  background: var(--surface-sunken);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: 0 var(--s-3);
+  background: var(--surface-2);
+  border-block-end: 1px solid var(--line);
   text-align: start;
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
   white-space: nowrap;
 }
 
 .entries-smart-table tbody td {
   height: 2.75rem;
-  padding: var(--space-2) var(--space-3);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: var(--s-2) var(--s-3);
+  border-block-end: 1px solid var(--line);
   vertical-align: middle;
 }
 
-.entries-smart-table tbody tr:hover { background: var(--surface-hover); }
+.entries-smart-table tbody tr:hover { background: var(--surface-2); }
 .entries-smart-table tbody tr:last-child td { border-block-end: none; }
 
 .entries-smart-table.is-scrolled-x { box-shadow: inset 8px 0 8px -8px rgba(32, 34, 29, 0.12); }
 
 .table-row.dragging:not(.drop-target) {
   opacity: 0.85;
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--shadow-float-2);
 }
 .table-row.drag-over {
   background: var(--accent-soft);
-  outline: 1px solid var(--accent-focus);
+  outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
 
@@ -382,11 +382,11 @@
 .bulk-actions-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
   background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r);
 }
 
 .bulk-actions-toolbar[hidden] {
@@ -397,13 +397,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--s-4);
   width: 100%;
 }
 
 .bulk-actions-count {
   flex-shrink: 0;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
   color: var(--accent-text);
   font-variant-numeric: tabular-nums;
@@ -412,7 +412,7 @@
 .bulk-actions-buttons {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-wrap: wrap;
 }
 
@@ -432,16 +432,16 @@
 .bulk-actions-row--field-edit .custom-select-trigger,
 .bulk-actions-field-form .custom-select-trigger {
   height: var(--control-sm);
-  padding-inline: var(--space-2);
-  font-size: var(--text-sm);
+  padding-inline: var(--s-2);
+  font-size: var(--size-small);
 }
 
 .bulk-actions-buttons .input,
 .bulk-actions-row--field-edit .input,
 .bulk-actions-field-form .input {
   height: var(--control-sm);
-  padding-inline: var(--space-2);
-  font-size: var(--text-sm);
+  padding-inline: var(--s-2);
+  font-size: var(--size-small);
   min-width: 8rem;
 }
 
@@ -454,7 +454,7 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -492,14 +492,14 @@
 .entries-smart-table .sub-entry-count-badge {
   min-width: 1.125rem;
   height: 1.125rem;
-  padding-inline: var(--space-1);
+  padding-inline: var(--s-1);
 }
 
 .ft-list-text {
   max-width: 18rem;
   overflow: hidden;
-  color: var(--text-primary);
-  font-size: var(--text-sm);
+  color: var(--text);
+  font-size: var(--size-small);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -511,16 +511,16 @@
 
 .ft-list-empty,
 .ft-list-muted {
-  color: var(--text-tertiary);
-  font-size: var(--text-sm);
+  color: var(--text-3);
+  font-size: var(--size-small);
 }
 
-.ft-list-muted { font-size: var(--text-xs); }
+.ft-list-muted { font-size: var(--size-small); }
 
 .reviewer-indicator {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: var(--text-2xs);
-  color: var(--text-tertiary);
+  gap: var(--s-1);
+  font-size: var(--size-caption);
+  color: var(--text-3);
 }

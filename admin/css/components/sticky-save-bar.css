@@ -13,8 +13,8 @@
    ============================================ */
 
 .main-actions-bar--sticky {
-  --sticky-save-bar-control: var(--control-md);
-  --sticky-save-bar-padding-y: var(--space-2);
+  --sticky-save-bar-control: var(--control);
+  --sticky-save-bar-padding-y: var(--s-2);
   --sticky-save-bar-padding-x: 0;
   position: sticky;
   position: -webkit-sticky;
@@ -23,29 +23,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--s-3);
   width: 100%;
-  margin-block-end: var(--space-6);
+  margin-block-end: var(--s-6);
   padding: var(--sticky-save-bar-padding-y) var(--sticky-save-bar-padding-x);
-  background: var(--canvas);
+  background: var(--bg);
   border-block-end: 1px solid transparent;
-  box-shadow: var(--elevation-0);
+  box-shadow: none;
   transition:
-    padding var(--motion-slow) var(--ease-out),
-    border-color var(--motion-base) var(--ease-out),
-    box-shadow var(--motion-slow) var(--ease-out);
+    padding var(--dur-3) var(--ease),
+    border-color var(--dur-2) var(--ease),
+    box-shadow var(--dur-3) var(--ease);
 }
 
 .main-actions-bar--sticky.is-stuck {
-  --sticky-save-bar-padding-y: var(--space-3);
-  --sticky-save-bar-padding-x: var(--space-4);
-  border-block-end-color: var(--border-subtle);
-  box-shadow: var(--elevation-1);
+  --sticky-save-bar-padding-y: var(--s-3);
+  --sticky-save-bar-padding-x: var(--s-4);
+  border-block-end-color: var(--line);
+  box-shadow: none;
 }
 
 @media (min-width: 768px) {
   .main-actions-bar--sticky.is-stuck {
-    --sticky-save-bar-padding-x: var(--space-5);
+    --sticky-save-bar-padding-x: var(--s-5);
   }
 }
 
@@ -56,18 +56,18 @@
 
 .main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-left,
 .main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-right {
-  animation: sticky-save-controls-enter var(--motion-slow) var(--ease-out) both;
+  animation: sticky-save-controls-enter var(--dur-3) var(--ease) both;
 }
 
 .main-actions-bar--sticky.is-stuck.is-stuck-enter .main-actions-right {
-  animation-delay: var(--motion-fast);
+  animation-delay: var(--dur-1);
 }
 
 .main-actions-bar--sticky .main-actions-left,
 .main-actions-bar--sticky .main-actions-right {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-wrap: nowrap;
 }
 
@@ -81,7 +81,7 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 
@@ -92,9 +92,9 @@
   max-width: 17.5rem;
   height: var(--sticky-save-bar-control);
   margin: 0;
-  padding: 0 var(--space-3);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  padding: 0 var(--s-3);
+  font-size: var(--size-body);
+  line-height: 1.5;
 }
 
 .main-actions-bar--sticky .main-actions-tools .btn,
@@ -109,7 +109,7 @@
 .main-actions-bar--sticky .main-actions-message {
   margin: 0;
   min-width: 0;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
 }
 
 @media (max-width: 767px) {
@@ -119,7 +119,7 @@
   }
 
   .main-actions-bar--sticky.is-stuck {
-    --sticky-save-bar-padding-x: var(--space-3);
+    --sticky-save-bar-padding-x: var(--s-3);
   }
 
   .main-actions-bar--sticky .main-actions-left,

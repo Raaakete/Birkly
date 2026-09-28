@@ -3348,7 +3348,7 @@ function testDatabaseConnection() {
     
     if (!resultEl) return;
     resultEl.textContent = stT('settings_js_testing_connection', 'Testing...');
-    resultEl.style.color = 'var(--text-secondary)';
+    resultEl.style.color = 'var(--text-2)';
     
     fetch(apiUrl('/api/settings.php?action=test_database'), {
         method: 'POST',
@@ -3370,15 +3370,15 @@ function testDatabaseConnection() {
     .then(data => {
         if (data.status === 'ok') {
             resultEl.textContent = '✓ Connection successful';
-            resultEl.style.color = 'var(--success-600)';
+            resultEl.style.color = 'var(--success)';
         } else {
             resultEl.textContent = '✗ ' + (data.message || 'Connection failed');
-            resultEl.style.color = 'var(--error-600)';
+            resultEl.style.color = 'var(--danger)';
         }
     })
     .catch(error => {
         resultEl.textContent = '✗ Error: ' + error.message;
-        resultEl.style.color = 'var(--error-600)';
+        resultEl.style.color = 'var(--danger)';
     });
 }
 
@@ -3418,7 +3418,7 @@ async function migrateStorage() {
     }
     if (statusEl) {
         statusEl.textContent = stT('settings_js_migration_in_progress', 'Migration in progress...');
-        statusEl.style.color = 'var(--text-secondary)';
+        statusEl.style.color = 'var(--text-2)';
     }
     
     try {
@@ -3454,21 +3454,21 @@ async function migrateStorage() {
             showMessage(successMessage, 'success');
             if (statusEl) {
                 statusEl.textContent = '✓ ' + successMessage;
-                statusEl.style.color = 'var(--success-600)';
+                statusEl.style.color = 'var(--success)';
             }
         } else {
             const failureMessage = data.message || stT('error_unknown', 'Unknown error');
             showMessage(stT('settings_js_migration_failed', 'Migration failed:') + ' ' + failureMessage, 'error');
             if (statusEl) {
                 statusEl.textContent = '✗ ' + failureMessage;
-                statusEl.style.color = 'var(--error-600)';
+                statusEl.style.color = 'var(--danger)';
             }
         }
     } catch (error) {
         showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         if (statusEl) {
             statusEl.textContent = '✗ ' + error.message;
-            statusEl.style.color = 'var(--error-600)';
+            statusEl.style.color = 'var(--danger)';
         }
     } finally {
         if (migrateBtn) {

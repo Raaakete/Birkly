@@ -21,7 +21,7 @@
    Scales down (1→2→3) and up (5→6) from that. */
 .dashboard-widgets-grid {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--s-6);
   grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
 }
@@ -97,9 +97,9 @@
 .dash-row-arrow {
   display: inline-flex;
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--text-3);
   opacity: 0;
-  transition: opacity var(--motion-fast) var(--ease-out);
+  transition: opacity var(--dur-1) var(--ease);
 }
 a.data-list-item:hover .dash-row-arrow,
 a.data-list-item:focus-visible .dash-row-arrow {
@@ -111,7 +111,7 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .dash-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--s-3);
 }
 
 /* Long feeds scroll inside their widget instead of stretching the grid row. */
@@ -127,7 +127,7 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .dashboard-widget-picker {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -136,28 +136,28 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .dashboard-widget-picker__item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
   cursor: grab;
 }
 
 .dashboard-widget-picker__item--dragging {
   z-index: var(--z-dragging);
   opacity: 0.55;
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--shadow-float-2);
   cursor: grabbing;
 }
 
 .dashboard-widget-picker__item--drag-over {
-  border-color: var(--accent-focus);
+  border-color: var(--accent);
   background: var(--accent-soft);
 }
 
 .dashboard-widget-picker__handle {
-  color: var(--text-tertiary);
+  color: var(--text-3);
   line-height: 1;
   user-select: none;
 }
@@ -166,10 +166,10 @@ a.data-list-item:focus-visible .dash-row-arrow {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   min-width: 0;
   font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 /* ============================================
@@ -185,7 +185,7 @@ a.data-list-item:focus-visible .dash-row-arrow {
 }
 
 .checklist-item.completed {
-  color: var(--text-tertiary);
+  color: var(--text-3);
 }
 
 /* ============================================
@@ -198,22 +198,22 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .analytics-report__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  gap: var(--space-4);
+  gap: var(--s-4);
 }
 
 .analytics-report__section h4 {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-2xs);
+  margin: 0 0 var(--s-2);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
 }
 
 .analytics-report__list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -222,8 +222,8 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .analytics-report__list li {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-3);
-  font-size: var(--text-sm);
+  gap: var(--s-3);
+  font-size: var(--size-small);
 }
 
 .analytics-report__label {
@@ -231,24 +231,24 @@ a.data-list-item:focus-visible .dash-row-arrow {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .analytics-report__value {
   flex-shrink: 0;
-  color: var(--text-secondary);
+  color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
 
 .analytics-report__footnote {
   margin: 0;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
 }
 
 /* First-visit welcome modal — highlight AI setup card */
 .onboarding-welcome-ai-highlight {
-  border: 2px solid var(--accent-primary, var(--color-primary));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary, var(--color-primary)) 25%, transparent);
+  border: 2px solid var(--accent-primary, var(--mint));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary, var(--mint)) 25%, transparent);
 }
 
 .onboarding-welcome-ai-badge {
