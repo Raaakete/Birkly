@@ -119,15 +119,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.375rem;
-  height: 1.375rem;
+  width: var(--icon-l);
+  height: var(--icon-l);
   flex-shrink: 0;
 }
 
-/* Three icons share one box and morph between launcher states:
-   idle  → plus
-   menu  → sparkle (AI)
-   chat  → plus rotated 45° (reads as close / X) */
+/* Three icons share one box and swap between launcher states
+   (idle: plus, menu: sparkle, chat: x). Pixel icons are never scaled or
+   rotated: the outgoing one fades while the incoming one rises 2 px. */
 .assist-fab-icon-slot {
   position: absolute;
   inset: 0;
@@ -136,45 +135,18 @@
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.45) rotate(-90deg);
+  color: var(--accent-text);
+  translate: 0 2px;
   transition:
-    opacity var(--dur-3) var(--ease),
-    transform var(--dur-3) var(--ease);
+    opacity var(--dur-2) var(--ease),
+    translate var(--dur-2) steps(2, end);
 }
 
-.assist-fab-wrap.fab-idle .assist-fab-icon-plus {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-  color: var(--accent-text);
-}
-
-.assist-fab-wrap.fab-menu .assist-fab-icon-plus {
-  opacity: 0;
-  transform: scale(0.45) rotate(90deg);
-}
-.assist-fab-wrap.fab-menu .assist-fab-icon-sparkle {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-  color: var(--accent-text);
-}
-
-/* Plus morphs into an X by rotating 45° — no hard swap to a different glyph */
-.assist-fab-wrap.fab-chat .assist-fab-icon-plus {
-  opacity: 1;
-  transform: scale(1) rotate(45deg);
-  color: var(--accent-text);
-}
-.assist-fab-wrap.fab-chat .assist-fab-icon-sparkle,
+.assist-fab-wrap.fab-idle .assist-fab-icon-plus,
+.assist-fab-wrap.fab-menu .assist-fab-icon-sparkle,
 .assist-fab-wrap.fab-chat .assist-fab-icon-close {
-  opacity: 0;
-  transform: scale(0.45) rotate(90deg);
-}
-
-.assist-fab-wrap.fab-idle .assist-fab-icon-sparkle,
-.assist-fab-wrap.fab-idle .assist-fab-icon-close,
-.assist-fab-wrap.fab-menu .assist-fab-icon-close {
-  opacity: 0;
-  transform: scale(0.45) rotate(-90deg);
+  opacity: 1;
+  translate: none;
 }
 
 .assist-fab-label {
