@@ -3,39 +3,34 @@ if (!function_exists('birkly_build_info')) {
     require_once __DIR__ . '/../../core/build_info.php';
 }
 ?>
-<div class="content-page">
+<div class="content-page" data-birch>
     <div class="page-header">
         <div class="page-header-left">
             <div class="breadcrumbs"><span class="current"><?= __('admin.content') ?></span></div>
         </div>
         <div class="page-header-actions"></div>
     </div>
-    
-    <div class="main-actions-bar">
-        <div class="main-actions-left">
-            <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('collection-editor')) ?>"><?= __('admin.new_collection') ?></a>
-            <button class="btn btn-secondary" id="new-group-btn"><?= __('admin.new_group') ?></button>
-        </div>
-        <div class="main-actions-right">
-            <div class="content-view-toggle" role="group" aria-label="Content view">
-                <button type="button" class="btn-icon" id="content-view-grid" data-content-view="grid" aria-label="Grid view" title="Grid view">
-                    <?= birkly_icon('squares-four', ['size' => 16]) ?>
-                </button>
-                <button type="button" class="btn-icon" id="content-view-list" data-content-view="list" aria-label="List view" title="List view">
-                    <?= birkly_icon('list', ['size' => 16]) ?>
-                </button>
+
+    <div class="page-bar">
+        <a class="button is-main" href="<?= htmlspecialchars(admin_url('collection-editor')) ?>"><?= birkly_icon('plus') ?><?= __('admin.new_collection') ?></a>
+        <button type="button" class="button" id="new-group-btn"><?= birkly_icon('folder') ?><?= __('admin.new_group') ?></button>
+        <div class="page-bar-tools">
+            <label class="search-field">
+                <?= birkly_icon('search') ?>
+                <input type="search" class="input" id="collections-filter" aria-label="<?= htmlspecialchars(__('admin.content_filter_collections')) ?>">
+            </label>
+            <div class="segmented well content-view-toggle" role="group" aria-label="<?= htmlspecialchars(__('admin.content_view')) ?>">
+                <button type="button" id="content-view-grid" data-content-view="grid" aria-pressed="true" aria-label="<?= htmlspecialchars(__('admin.content_view_grid')) ?>" title="<?= htmlspecialchars(__('admin.content_view_grid')) ?>"><?= birkly_icon('grid') ?></button>
+                <button type="button" id="content-view-list" data-content-view="list" aria-pressed="false" aria-label="<?= htmlspecialchars(__('admin.content_view_list')) ?>" title="<?= htmlspecialchars(__('admin.content_view_list')) ?>"><?= birkly_icon('list') ?></button>
             </div>
+            <button type="button" class="button is-quiet" id="collapse-all-groups"><?= birkly_icon('chev-updown') ?><span><?= __('admin.content_collapse_all') ?></span></button>
         </div>
     </div>
 
     <script type="application/json" id="content-data"><?php echo json_encode($content_bootstrap ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?></script>
 
-    <div class="page-body u-stack-6">
-        <div id="collections-container" class="collections-container">
-            <div class="loading-state" data-collections-loading>
-                <p><?= __('admin.loading') ?></p>
-            </div>
-        </div>
+    <div id="collections-container" class="collections-container collection-groups" aria-live="polite">
+        <span class="skeleton"></span>
     </div>
 </div>
 
