@@ -254,3 +254,123 @@ a.data-list-item:focus-visible .dash-row-arrow {
 .onboarding-welcome-ai-badge {
   align-self: flex-start;
 }
+
+/* ============================================
+   Birch home (P96-M8) — greeting, metric bar, inbox, traffic
+   ============================================ */
+[data-birch] .dashboard-greeting {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-block-end: var(--s-4);
+}
+
+[data-birch] .dashboard-hello {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--size-slab-title);
+  line-height: var(--lh-slab-title);
+}
+
+[data-birch] .dashboard-hello strong { font-weight: var(--weight-semibold); }
+
+[data-birch] .dashboard-date {
+  margin-inline-start: var(--s-2);
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+[data-birch] .dashboard-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+[data-birch] .dashboard-health { gap: var(--s-1); background: var(--surface); color: var(--text-2); }
+[data-birch] .dashboard-health .birkly-icon { color: var(--success); }
+
+.dashboard-home[data-birch] > .metrics { margin-block-end: var(--s-4); }
+
+[data-birch] .metrics-customize {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+[data-birch] .dashboard-metrics-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--s-1));
+  inset-inline-end: 0;
+  z-index: var(--z-popover);
+  width: 260px;
+}
+
+[data-birch] .dashboard-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: var(--s-4);
+  align-items: start;
+}
+
+@media (max-width: 1023px) {
+  [data-birch] .dashboard-columns { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-home[data-birch] > .metrics { flex-wrap: wrap; }
+  .dashboard-home[data-birch] > .metrics > .metric { flex-basis: calc(50% - var(--s-1)); }
+}
+
+[data-birch] .dashboard-inbox .tabs,
+[data-birch] .dashboard-traffic .tabs { margin-block-end: var(--s-3); }
+
+[data-birch] .dashboard-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .dashboard-traffic { padding: var(--s-4); }
+
+[data-birch] .dashboard-traffic-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: var(--s-3);
+}
+
+[data-birch] .dashboard-traffic-title {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-slab-title) / var(--lh-slab-title) var(--font-sans);
+}
+
+[data-birch] .dashboard-traffic .tabs > button { font-size: var(--size-body); }
+
+[data-birch] .dashboard-traffic-foot .list-foot {
+  padding-block-start: var(--s-3);
+  border-block-start: 1px solid var(--line);
+}
+
+[data-birch] .dashboard-advice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  text-align: center;
+}
+
+[data-birch] .dashboard-plugins { margin-block-start: var(--s-6); }
+
+[data-birch] .dashboard-plugins-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: var(--s-3);
+}
+
+[data-birch] .dashboard-plugins-title {
+  margin: 0;
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+}
