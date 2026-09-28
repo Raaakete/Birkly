@@ -57,11 +57,21 @@ function birkly_plugin_birkly_constraint_from_metadata(array $metadata): ?string
         return null;
     }
 
-    if (preg_match('/^[<>=!~^]/', $legacy) === 1) {
-        return $legacy;
+    return birkly_minimum_version_constraint($legacy);
+}
+
+/**
+ * A bare version in plugin.json ("1.0.0") means "at least this version";
+ * explicit operators (^, ~, >=, =, …) are kept as written.
+ */
+function birkly_minimum_version_constraint(string $constraint): string
+{
+    $constraint = trim($constraint);
+    if ($constraint === '' || $constraint === '*' || preg_match('/^[<>=!~^]/', $constraint) === 1) {
+        return $constraint;
     }
 
-    return '>=' . $legacy;
+    return '>=' . $constraint;
 }
 
 /**
