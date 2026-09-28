@@ -80,15 +80,15 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --size-display: 56px;    --lh-display: 60px;
-  --size-number: 26px;     --lh-number: 28px;
-  --size-page-title: 18px; --lh-page-title: 24px;
-  --size-title-l: 16px;    --lh-title-l: 22px;
-  --size-slab-title: 14px; --lh-slab-title: 20px;
-  --size-title: 13px;      --lh-title: 18px;
-  --size-body: 13px;       --lh-body: 20px;
-  --size-small: 12px;      --lh-small: 16px;
-  --size-caption: 11px;    --lh-caption: 16px;
-  --size-mono: 12px;       --lh-mono: 18px;
+  --size-number: 28px;     --lh-number: 32px;
+  --size-page-title: 19px; --lh-page-title: 26px;
+  --size-title-l: 17px;    --lh-title-l: 24px;
+  --size-slab-title: 15px; --lh-slab-title: 22px;
+  --size-title: 14px;      --lh-title: 20px;
+  --size-body: 14px;       --lh-body: 21px;
+  --size-small: 13px;      --lh-small: 18px;
+  --size-caption: 12px;    --lh-caption: 16px;
+  --size-mono: 13px;       --lh-mono: 20px;
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -114,14 +114,14 @@
   --r-pixel: 0;
 
   /* 5. Sizes that follow density (core/density.css) */
-  --control: 32px;
-  --control-sm: 28px;
-  --control-xs: 24px;
-  --chrome-row: 40px;
-  --nav-row: 28px;
-  --row-list: 40px;
-  --row-table: 48px;
-  --card-h: 100px;
+  --control: 34px;
+  --control-sm: 30px;
+  --control-xs: 26px;
+  --chrome-row: 44px;
+  --nav-row: 30px;
+  --row-list: 44px;
+  --row-table: 52px;
+  --card-h: 108px;
   --icon: 13px;
   --icon-l: 26px;
 
@@ -156,7 +156,7 @@
   --z-tooltip: 700;
 
   /* 10. Shell */
-  --sidebar-width: 216px;
+  --sidebar-width: 232px;
   --sidebar-rail: 52px;
   --sidebar-rail-auto: 64px;
   --measure-sm: 42ch;
