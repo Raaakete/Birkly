@@ -1845,7 +1845,30 @@
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
+    // Inside Discovery the editor is embedded on the Agent Guide tab only; its first-visit
+    // explainer and setup wizard wait until that tab is showing.
+    function agentGuideVisible() {
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed) return true;
+        var tab = document.getElementById('disc-tab-agent-guide');
+        return !embed.hidden && (!tab || tab.getAttribute('aria-selected') === 'true');
+    }
+
     function maybeShowSetup(data) {
+        if (!agentGuideVisible()) {
+            state.deferredSetupData = data;
+            if (!state.setupListenerBound) {
+                state.setupListenerBound = true;
+                document.addEventListener('birkly:discovery-zone', function (event) {
+                    if (event.detail && event.detail.zone === 'agent-guide' && state.deferredSetupData && agentGuideVisible()) {
+                        var pending = state.deferredSetupData;
+                        state.deferredSetupData = null;
+                        maybeShowSetup(pending);
+                    }
+                });
+            }
+            return;
+        }
         state.pendingWizardAfterIntro = shouldAutoOpenSetupWizard(data);
         maybeAutoShowAboutModal();
         if (state.pendingWizardAfterIntro && aboutModalSeen()) {

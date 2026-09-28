@@ -7,7 +7,7 @@
         </div>
         <div class="u-cluster">
             <button type="button" class="btn btn-sm btn-secondary" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
-            <a class="btn btn-sm btn-primary" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
+            <a class="btn btn-sm btn-secondary" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
             <button type="button" class="btn btn-sm btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
         </div>
     </div>
@@ -163,7 +163,7 @@
 
                         <div class="ap-assist-panel u-stack-2 active" data-assist-panel="auto" role="tabpanel">
                             <p class="form-help">{translate 'admin.ai_presence_assist_auto_hint'}</p>
-                            <button type="button" class="btn btn-primary u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
+                            <button type="button" class="btn btn-secondary u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
                             <button type="button" class="btn btn-sm btn-secondary u-w-full" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
                             <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
                             <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
@@ -177,7 +177,7 @@
                             <select id="ap-assist-collections" class="input" multiple size="6" aria-describedby="ap-assist-build-hint"></select>
                             <p id="ap-assist-collections-empty" class="form-help" hidden>{translate 'admin.ai_presence_assist_no_collections'}</p>
                             <p id="ap-assist-build-hint" class="form-help">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
-                            <button type="button" class="btn btn-sm btn-primary u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
                             <div class="u-cluster u-mt-3 u-pt-3 u-border-top">
                                 <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
                                 <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
@@ -465,7 +465,7 @@
                 <div class="tab-content" data-tab-content="products">
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_products_lede'}</p>
                     <div class="main-actions-bar">
-                        <button type="button" class="btn btn-primary btn-sm" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
                     </div>
                     <div id="ap-products-list" class="u-grid-auto u-mt-6"></div>
                     <p id="ap-products-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_products_empty'}</p>
@@ -474,7 +474,7 @@
                 <div class="tab-content" data-tab-content="claims">
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_claims_lede'}</p>
                     <div class="main-actions-bar">
-                        <button type="button" class="btn btn-primary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
                         <button type="button" class="btn btn-secondary btn-sm" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
                         <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-evidence">{translate 'admin.ai_presence_add_cms_evidence'}</button>
                     </div>
@@ -495,7 +495,7 @@
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_media_help'}</p>
                     <div class="card u-p-6 u-stack-4">
                         <div class="u-cluster-3">
-                            <button type="button" class="btn btn-primary btn-sm" id="ap-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="ap-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
                             <select id="ap-media-represents" class="input">
                                 <option value="brand">{translate 'admin.ai_presence_media_brand'}</option>
                                 <option value="product">{translate 'admin.ai_presence_media_product'}</option>
@@ -774,7 +774,7 @@
             </div>
             <div class="u-cluster-3 u-mt-3">
                 <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
-                <button type="button" class="btn btn-primary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
             </div>
             <div id="ap-preview-answer" class="ai-presence-preview-result u-mt-6"></div>
             <ul id="ap-preview-sources" class="ai-presence-item-list u-mt-3"></ul>

@@ -135,9 +135,26 @@
         return null;
     }
 
+    // One page bar above the tabs: the active pack's Publish / Save draft.
+    function mountPageBars() {
+        var slot = $('#disc-page-bars');
+        var agBar = $('#disc-ag-bar');
+        if (slot && agBar && agBar.parentNode !== slot) {
+            slot.appendChild(agBar);
+        }
+    }
+
+    function syncPageBars(zone) {
+        zone = zone || state.activeZone;
+        var packs = (state.status && state.status.packs) || {};
+        var seoBar = $('#disc-seo-bar');
+        var agBar = $('#disc-ag-bar');
+        if (seoBar) seoBar.hidden = !(zone === 'seo' && packs.seo && packs.seo.enabled);
+        if (agBar) agBar.hidden = !(zone === 'agent-guide' && packs.agent_guide && packs.agent_guide.enabled);
+    }
+
     function syncApEmbed(zone) {
         var embed = $('#disc-ap-embed');
-        var sticky = document.querySelector('#disc-ap-embed .main-actions-bar--sticky');
         if (!embed) return;
 
         var agOn = state.status && state.status.packs && state.status.packs.agent_guide && state.status.packs.agent_guide.enabled;
@@ -146,7 +163,8 @@
 
         embed.hidden = !showEmbed;
         // Agent Guide publish bar only on the Agent Guide tab — WebMCP saves inline via its own API.
-        if (sticky) sticky.hidden = !showEmbed || zone !== 'agent-guide';
+        syncPageBars(zone);
+        document.dispatchEvent(new CustomEvent('birkly:discovery-zone', { detail: { zone: zone, embedVisible: showEmbed } }));
 
         if (!showEmbed || !state.apReady) return;
 
@@ -222,12 +240,12 @@
         box.innerHTML = '';
         SEO_SURFACE_GROUPS.forEach(function (group) {
             var heading = document.createElement('h4');
-            heading.className = 'disc-surfaces-group-title u-m-0 u-mb-2 u-text-sm u-weight-semibold';
+            heading.className = 'disc-surfaces-group-title';
             heading.textContent = t(group.labelKey, group.label);
             box.appendChild(heading);
             group.items.forEach(function (item) {
                 var label = document.createElement('label');
-                label.className = 'checkbox-label u-block u-mb-2';
+                label.className = 'checkbox-label disc-surface';
                 var checked = surfaces[item.key] !== false;
                 label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(t(item.labelKey, item.label));
                 box.appendChild(label);
@@ -397,6 +415,7 @@
             }
             if (config) config.hidden = !(pack && pack.enabled);
         });
+        syncPageBars();
 
         var agStatus = $('#disc-agent-guide-status');
         if (agStatus && data.packs.agent_guide) {
@@ -650,7 +669,7 @@
             if (filter === 'redirect') {
                 emptyMsg = t('discovery_seo_url_map_empty_redirects', 'No redirects yet.');
             }
-            tbody.innerHTML = '<tr><td colspan="5" class="u-fg-secondary">' + escapeHtml(emptyMsg) + '</td></tr>';
+            tbody.innerHTML = '<tr class="disc-url-empty"><td colspan="5">' + escapeHtml(emptyMsg) + '</td></tr>';
         } else {
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
@@ -669,23 +688,23 @@
                     : (row.title || '—');
                 var actions = '';
                 if (row.type === 'redirect') {
-                    actions = '<button type="button" class="btn btn-ghost btn-sm" data-redirect-edit="'
+                    actions = '<button type="button" class="button is-small is-quiet" data-redirect-edit="'
                         + escapeHtml(String(row.redirect_index)) + '">'
                         + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>'
-                        + ' <button type="button" class="btn btn-ghost btn-sm" data-redirect-delete="'
+                        + ' <button type="button" class="button is-small is-quiet" data-redirect-delete="'
                         + escapeHtml(String(row.redirect_index)) + '">'
                         + escapeHtml(t('discovery_seo_redirect_remove', 'Remove')) + '</button>';
                 } else {
-                    actions = '<button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">'
+                    actions = '<button type="button" class="button is-small is-quiet" data-url-edit="' + escapeHtml(row.key || '') + '">'
                         + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>';
                     if (row.live_url) {
-                        actions += ' <a class="btn btn-ghost btn-sm" href="' + escapeHtml(row.live_url) + '" target="_blank" rel="noopener">'
+                        actions += ' <a class="button is-small is-quiet" href="' + escapeHtml(row.live_url) + '" target="_blank" rel="noopener">'
                             + escapeHtml(t('discovery_seo_open_live', 'Open page')) + '</a>';
                     }
                 }
                 tr.innerHTML = '<td>' + fileCell + '</td>'
                     + '<td>' + listingCell + '</td>'
-                    + '<td><span class="badge">' + escapeHtml(rowTypeLabel(row.type)) + '</span></td>'
+                    + '<td><span class="chip">' + escapeHtml(rowTypeLabel(row.type)) + '</span></td>'
                     + '<td>' + escapeHtml(googleTitle) + '</td>'
                     + '<td class="cell-actions">' + actions + '</td>';
                 tbody.appendChild(tr);
@@ -816,7 +835,7 @@
                 + '<div class="u-text-sm u-fg-secondary u-mt-1">' + escapeHtml(t('discovery_seo_bindings_summary_field', 'Summary field:')) + ' ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
                 + pattern
                 + '</button>'
-                + '<button type="button" class="btn btn-ghost btn-sm disc-binding-card__remove" data-binding-delete="'
+                + '<button type="button" class="button is-small is-quiet disc-binding-card__remove" data-binding-delete="'
                 + escapeHtml(binding.id || '') + '">' + escapeHtml(t('discovery_seo_bindings_remove', 'Remove')) + '</button>';
             list.appendChild(card);
         });
@@ -1114,6 +1133,7 @@
 
     function init() {
         if (!document.querySelector('.disc-hub')) return;
+        mountPageBars();
         initHubZones();
         bindPackToggles();
         bindSeoActions();
