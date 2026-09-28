@@ -588,8 +588,10 @@
             });
     }
 
+    // Core widgets became the Birch home (dashboard-home.js); plugin widgets
+    // stay here until their headline numbers move into metrics (P96-M14).
     function widgetsForDisplay() {
-        return dashboardState.widgets.filter(widget => !widget.hidden);
+        return dashboardState.widgets.filter(widget => !widget.hidden && widget.source === 'plugin');
     }
 
     function widgetSizeClass(size) {
@@ -841,6 +843,8 @@
                 dashboardState.widgets = payload?.data?.widgets || [];
                 dashboardState.layout = payload?.data?.layout || dashboardState.layout;
                 renderWidgets();
+                const pluginArea = document.getElementById('dashboard-plugin-widgets');
+                if (pluginArea) pluginArea.hidden = widgetsForDisplay().length === 0;
             })
             .catch(function () { grid.innerHTML = errorState(t('dash_unable_load_widgets', 'Unable to load dashboard widgets.')); });
     }

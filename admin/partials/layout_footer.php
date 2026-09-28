@@ -15,6 +15,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
 ?>
 
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/icon.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/money.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/activity-rows.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/i18n.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
@@ -48,6 +49,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
         echo '<script src="' . htmlspecialchars(birkly_url('/admin/js/dashboard-widgets.js'), ENT_QUOTES, 'UTF-8') . '?v=' . $__birklyAssetVersion . '"' . $__birklyScriptNonceAttr . '></script>' . "\n";
         echo birkly_render_admin_script_tags($birklyAdminPage);
         echo '<script src="' . htmlspecialchars(birkly_url('/admin/js/dashboard.js'), ENT_QUOTES, 'UTF-8') . '?v=' . $__birklyAssetVersion . '"' . $__birklyScriptNonceAttr . '></script>' . "\n";
+        echo '<script src="' . htmlspecialchars(birkly_url('/admin/js/dashboard-home.js'), ENT_QUOTES, 'UTF-8') . '?v=' . $__birklyAssetVersion . '"' . $__birklyScriptNonceAttr . '></script>' . "\n";
     } else {
         echo birkly_render_admin_script_tags($birklyAdminPage);
     }

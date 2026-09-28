@@ -250,42 +250,58 @@ if ($action === 'save_layout') {
     }
 }
 
+if ($action === 'metrics') {
+    try {
+        require_once __DIR__ . '/../core/dashboard_metrics.php';
+        $bar = birkly_dashboard_metrics(is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : []);
+        ob_clean();
+        echo json_encode(['status' => 'ok', 'data' => $bar]);
+    } catch (Throwable $e) {
+        error_log('Error in dashboard metrics: ' . $e->getMessage());
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Failed to load metrics']);
+    }
+    ob_end_flush();
+    exit;
+}
+
+if ($action === 'save_metrics') {
+    if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+        ob_clean();
+        http_response_code(405);
+        echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+        ob_end_flush();
+        exit;
+    }
+    if (!validate_csrf_token((string) ($input['_csrf'] ?? ''))) {
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        ob_end_flush();
+        exit;
+    }
+    try {
+        require_once __DIR__ . '/../core/dashboard_metrics.php';
+        $user = is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : [];
+        $availableIds = array_column(birkly_dashboard_metrics($user)['available'], 'id');
+        $pins = is_array($input['pinned'] ?? null) ? $input['pinned'] : [];
+        $saved = birkly_save_dashboard_metric_pins($user, $pins, $availableIds);
+        $bar = birkly_dashboard_metrics(is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : []);
+        ob_clean();
+        echo json_encode(['status' => $saved ? 'ok' : 'error', 'data' => $bar]);
+    } catch (Throwable $e) {
+        error_log('Error in dashboard save_metrics: ' . $e->getMessage());
+        ob_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Failed to save metrics']);
+    }
+    ob_end_flush();
+    exit;
+}
+
 if ($action === 'stats') {
     try {
-        // Get core stats
-        require_once __DIR__ . '/../core/storage/StorageFactory.php';
-        $storage = get_storage();
-        
-        $collections = $storage->list('collections');
-        $collectionCount = count($collections);
-        $totalEntries = 0;
-        $published = 0;
-        $drafts = 0;
-    
-        // Count entries and their status
-        foreach ($collections as $collectionDir) {
-            $entries = $storage->list("collections/$collectionDir/entries");
-            foreach ($entries as $entryFile) {
-                $entry = $storage->read("collections/$collectionDir/entries/$entryFile");
-                if ($entry) {
-                    $totalEntries++;
-                    $status = $entry['status'] ?? 'draft';
-                    if ($status === 'published') {
-                        $published++;
-                    } else {
-                        $drafts++;
-                    }
-                }
-            }
-        }
-        
-        $stats = [
-            'collections' => $collectionCount,
-            'total_entries' => $totalEntries,
-            'published' => $published,
-            'drafts' => $drafts
-        ];
-        
+        require_once __DIR__ . '/../core/dashboard_metrics.php';
+        $stats = birkly_dashboard_content_stats();
+
         // Collect additional stats from plugins
     $active_plugins = get_active_plugins();
     foreach ($active_plugins as $plugin_id => $plugin) {
