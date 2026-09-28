@@ -47,23 +47,25 @@
   inset-block-end: calc(var(--assist-fab-size) + var(--guide-launcher-gap));
   z-index: calc(var(--z-drawer) + 2);
   transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift))));
-  transition: transform 0.72s cubic-bezier(0.22, 1.35, 0.36, 1);
+  transition: transform var(--dur-3) var(--ease);
 }
 
+/* Bounce and float move in whole pixels, one frame per keyframe, so the
+   pixel icon inside stays sharp. */
 #guide-launcher-mount.is-bouncing {
-  animation: guide-launcher-bounce 0.78s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: guide-launcher-bounce calc(var(--dur-frame) * 5) steps(1, end);
 }
 
 #guide-launcher-mount.has-guide-attention {
-  animation: guide-launcher-attention-float 2.4s ease-in-out infinite;
+  animation: guide-launcher-attention-float calc(var(--dur-px) * 2) steps(1, end) infinite;
 }
 
 @keyframes guide-launcher-bounce {
-  0% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
-  38% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 0.35rem)); }
-  58% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) + 0.12rem)); }
-  78% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 0.06rem)); }
-  100% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
+  0% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 2px)); }
+  20% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 4px)); }
+  40% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 2px)); }
+  60% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) + 1px)); }
+  80%, 100% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
 }
 
 .assist-fab-wrap.fab-menu {
@@ -114,7 +116,7 @@ body.ai-chat-window-open .assist-fab-wrap {
   );
   opacity: 0.55;
   pointer-events: none;
-  animation: guide-launcher-halo 3.2s ease-in-out infinite;
+  animation: guide-launcher-halo calc(var(--dur-px) * 3) var(--ease) infinite;
 }
 
 .guide-launcher-btn__focus-ring {
@@ -136,13 +138,11 @@ body.ai-chat-window-open .assist-fab-wrap {
 
 .guide-launcher-btn__focus-ring::before {
   border-color: color-mix(in srgb, var(--mint) 55%, transparent);
-  animation: guide-launcher-orbit 2.4s linear infinite;
 }
 
 .guide-launcher-btn__focus-ring::after {
   inset: 0.12rem;
   border-color: color-mix(in srgb, var(--mint) 30%, transparent);
-  animation: guide-launcher-orbit 2.4s linear infinite reverse;
 }
 
 .guide-launcher-btn:focus-visible .guide-launcher-btn__focus-ring {
@@ -174,20 +174,15 @@ body.ai-chat-window-open .assist-fab-wrap {
     var(--shadow-float-2),
     0 0 0 3px color-mix(in srgb, var(--mint) 28%, transparent),
     0 0 1.25rem color-mix(in srgb, var(--mint) 35%, transparent);
-  animation: guide-launcher-attention 2s var(--ease) infinite;
 }
 
 .guide-launcher-btn.is-attention .guide-launcher-btn__halo {
   opacity: 0.9;
-  animation: guide-launcher-halo-attention 2s ease-in-out infinite;
+  animation: guide-launcher-halo-attention calc(var(--dur-px) * 2) var(--ease) infinite;
 }
 
 .guide-launcher-btn.is-attention .guide-launcher-btn__focus-ring {
   opacity: 0.9;
-}
-
-.guide-launcher-btn.is-attention:hover {
-  animation: guide-launcher-attention 2s var(--ease) infinite;
 }
 
 .guide-launcher-btn.is-open {
@@ -201,48 +196,19 @@ body.ai-chat-window-open .assist-fab-wrap {
 }
 
 @keyframes guide-launcher-halo {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(1.06); }
-}
-
-@keyframes guide-launcher-orbit {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes guide-launcher-attention {
-  0%, 100% { transform: scale(1); }
-  35% { transform: scale(1.06); }
-  55% { transform: scale(0.97); }
-  75% { transform: scale(1.03); }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.75; }
 }
 
 @keyframes guide-launcher-halo-attention {
-  0%, 100% { opacity: 0.65; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.12); }
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
 }
 
 @keyframes guide-launcher-attention-float {
-  0%, 100% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
-  50% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 0.2rem)); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #guide-launcher-mount,
-  #guide-launcher-mount.is-bouncing,
-  #guide-launcher-mount.has-guide-attention,
-  .guide-launcher-btn__halo,
-  .guide-launcher-btn__focus-ring::before,
-  .guide-launcher-btn__focus-ring::after,
-  .guide-launcher-btn.is-attention {
-    animation: none;
-    transition-duration: 0.01ms;
-  }
-
-  .guide-launcher-btn:focus-visible .guide-launcher-btn__focus-ring {
-    opacity: 1;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 35%, transparent);
-  }
+  0%, 75%, 100% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
+  25%, 62.5% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 1px)); }
+  37.5%, 50% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 2px)); }
 }
 
 /* ---- Panel shell ---- */
@@ -264,19 +230,19 @@ body.ai-chat-window-open .assist-fab-wrap {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(var(--s-2)) scale(0.98);
+  transform: translateY(var(--s-2));
   transition:
     opacity var(--dur-2) var(--ease),
     transform var(--dur-2) var(--ease),
     visibility var(--dur-2),
-    inset-block-end 0.72s cubic-bezier(0.22, 1.35, 0.36, 1);
+    inset-block-end var(--dur-3) var(--ease);
 }
 
 .guide-panel.is-open {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
-  transform: translateY(0) scale(1);
+  transform: none;
 }
 
 body.ai-chat-window-open .guide-panel {

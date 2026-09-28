@@ -198,7 +198,7 @@
     var(--surface-2) 50%,
     transparent 100%
   );
-  animation: skeleton-sweep 1.4s ease-in-out infinite;
+  animation: skeleton-sweep var(--dur-px) steps(8, end) infinite;
 }
 
 @keyframes skeleton-sweep {
@@ -218,7 +218,7 @@
   border: 2px solid var(--line);
   border-block-start-color: var(--accent-text);
   border-radius: 50%;
-  animation: u-spin 0.6s linear infinite;
+  animation: u-spin calc(var(--dur-frame) * 5) linear infinite;
   flex-shrink: 0;
 }
 .spinner-lg { width: 1.5rem; height: 1.5rem; border-width: 2px; }
