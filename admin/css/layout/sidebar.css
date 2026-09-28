@@ -1,25 +1,20 @@
 /* ============================================
-   Birkly Admin — Shell + sidebar (P56)
+   Birkly Admin — Shell + sidebar (Birch v5)
    ============================================
 
-   LOCKED PATTERN (P56-D2). Preserved exactly:
-   - .sidebar / .sidebar-body / .sidebar-header / .sidebar-nav / .nav-links /
-     .nav-item / .nav-link / .nav-icon / .nav-label / .nav-section /
-     .sidebar-footer / .sidebar-collapse-toggle / .sidebar-backdrop
-   - three nav groups (#links-main, #links-plugins, #links-settings)
-   - .active semantics from is_nav_active()
-   - borderless-on-canvas chrome with white nav boxes
-   - desktop collapse to icon rail (body.sidebar-collapsed + localStorage)
-   - mobile drawer + backdrop, birkly:layout-change
+   Floating panels on the canvas: main, plugins, system. Rows are full width
+   and square; the current page gets a 2px ink bar on the left, hover
+   previews it in grey and nudges the label by 2px. The brand square sits on
+   the nav-icon centre line and shares the 40px line with the top bar.
 
-   Changed under the brief: re-tokenized to the new scales, the ~30 defensive
-   !important declarations removed (the page CSS they guarded against no
-   longer targets the sidebar), the active rail unified to mint in BOTH
-   themes, and the dead .sidebar-footer user-menu block deleted (the user
-   menu lives in the topbar).
+   Widths: 216px sidebar (>= 1280), 52px rail when collapsed by hand,
+   64px rail at 1024–1279, drawer below 1024.
 
-   This sidebar's "panels on a tinted canvas" logic is the source of the
-   whole P56 design language — see brief §0.
+   Hooks kept for JS and templates: .sidebar, .sidebar-body, .sidebar-header,
+   .sidebar-nav, .nav-links, .nav-item, .nav-link, .nav-icon, .nav-label,
+   .nav-section, .sidebar-footer, .sidebar-collapse-toggle, .sidebar-backdrop,
+   #links-main, #links-plugins, #links-settings, body.sidebar-collapsed,
+   body.sidebar-rail-auto, .sidebar.open.
    ============================================ */
 
 .admin-layout {
@@ -30,285 +25,221 @@
   max-width: 100%;
   overflow-x: clip;
   overflow-y: visible;
-  background: var(--canvas);
+  background: var(--bg);
 }
 
-/* Sidebar scrolls with the page (P33-D1) — no inner scroll container */
+/* Stays in view so collapse and the program label are pinned to the bottom */
 .sidebar {
+  --nav-pad: var(--s-3);
+  --panel-width: calc(var(--sidebar-width) - var(--gutter));
+  position: sticky;
+  inset-block-start: 0;
   display: flex;
   flex-direction: column;
   width: var(--sidebar-width);
-  min-height: 100vh;
-  align-self: stretch;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  align-self: flex-start;
   flex-shrink: 0;
-  padding: var(--shell-edge-padding);
-  padding-inline-end: 0;
-  justify-content: flex-start;
-  background: var(--canvas);
-  border-inline-end: none;
-  transition:
-    width var(--motion-base) var(--ease-out),
-    transform var(--motion-base) var(--ease-out);
+  padding: var(--gutter) 0 var(--s-4) var(--gutter);
+  background: var(--bg-side);
+  transition: width var(--dur-3) var(--ease);
 }
 
 .sidebar-body {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-width: 0;
+  width: var(--panel-width);
   display: flex;
   flex-direction: column;
-}
-
-.sidebar-body .sidebar-nav { flex: 0 0 auto; }
-
-.sidebar-body > .sidebar-collapse-toggle {
-  flex-shrink: 0;
-  margin-block-start: var(--space-3);
+  transition: width var(--dur-3) var(--ease);
 }
 
 /* ============================================
-   Brand row — same height and bottom gap as .admin-topbar so the first nav
-   item lines up with the first line of page content.
-   Scoped to #admin-sidebar so page CSS cannot restyle it.
+   Brand — 40px line shared with the top bar
    ============================================ */
 #admin-sidebar .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   height: var(--chrome-row);
-  min-height: var(--chrome-row);
-  margin: 0 0 var(--chrome-stack-gap);
+  margin: 0 0 var(--s-4);
   padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-primary);
-  box-sizing: border-box;
+  color: var(--text);
 }
 
 #admin-sidebar .sidebar-header .logo,
 #admin-sidebar .sidebar-header .branding-logo {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--s-3);
   width: 100%;
-  height: 100%;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  min-width: 0;
+  /* Square centre sits within half a pixel of the 13px icon centre */
+  padding-inline-start: calc(var(--nav-pad) - 7px);
 }
 
 #admin-sidebar .sidebar-header .logo-mark {
   display: block;
-  width: var(--chrome-row);
-  height: var(--chrome-row);
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
+  flex: 0 0 var(--nav-row);
+  width: var(--nav-row);
+  height: var(--nav-row);
+  border-radius: var(--r);
+  background: var(--text);
   overflow: hidden;
 }
 
-/* Logo fills the mark edge-to-edge (uploaded branding or default Birkly icon). */
-#admin-sidebar .sidebar-header .logo .logo-img,
-#admin-sidebar .sidebar-header .branding-logo img,
 #admin-sidebar .sidebar-header .logo-mark .logo-img {
+  display: block;
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
-  object-position: center;
 }
 
-/* Brand wordmark is one of the two places 700 weight survives */
-#admin-sidebar .sidebar-header .logo .logo-name,
-#admin-sidebar .sidebar-header .branding-logo .logo-name {
+#admin-sidebar .sidebar-header .logo-name {
   min-width: 0;
-  color: var(--text-primary);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-  letter-spacing: -0.02em;
-  background: transparent;
+  color: var(--text);
+  font-size: var(--size-title);
+  line-height: var(--lh-title);
+  font-weight: var(--weight-semibold);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: opacity var(--dur-3) var(--ease);
 }
 
 /* ============================================
-   Nav groups — white panels floating on the canvas
+   Panels
    ============================================ */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.nav-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  gap: var(--s-2);
   min-width: 0;
 }
 
 .nav-section { margin: 0; }
 
-.nav-section-header { padding: 0 var(--space-2) var(--space-1); }
-
-.nav-section-title,
-.nav-links li.nav-section {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+.nav-links {
+  list-style: none;
+  margin: 0;
+  padding: var(--s-1) 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.nav-item { background: transparent; }
+.nav-item { position: relative; }
 
 .nav-links a,
 .nav-link {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  height: var(--control-md);
-  padding-inline: var(--space-4);
+  gap: var(--s-3);
+  height: var(--nav-row);
+  padding-inline: var(--nav-pad);
+  border: 0;
   border-radius: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-base);
+  background: none;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
   font-weight: var(--weight-regular);
   text-decoration: none;
-  min-width: 0;
-  transition:
-    background-color var(--motion-fast) var(--ease-out),
-    color var(--motion-fast) var(--ease-out);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease);
 }
 
 .nav-links a .nav-icon,
-.nav-links a > svg {
-  width: var(--icon);
-  height: var(--icon);
+.nav-link .nav-icon {
   flex-shrink: 0;
+  color: inherit;
 }
 
-.nav-links a .nav-label {
+.nav-links a .nav-label,
+.nav-link .nav-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: transform var(--dur-1) var(--ease), opacity var(--dur-3) var(--ease);
 }
 
-/* P61 — plugin activity attention (mint; not color-only: title/aria also set) */
-.nav-links a {
-  position: relative;
-}
-.nav-links a .nav-attention-dot {
-  flex-shrink: 0;
-  width: 0.4rem;
-  height: 0.4rem;
-  margin-inline-start: auto;
-  border-radius: 50%;
-  background: var(--status-dot-ok, var(--mint-200, var(--accent)));
-}
-
-.nav-links a:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-/* Hover rail — greyish left border (inactive items). Active keeps mint. */
-.nav-links a:hover::before {
+/* Ink bar: hover previews it in grey, the current page shows it in ink */
+.nav-links a::before,
+.nav-link::before {
   content: "";
   position: absolute;
   inset-inline-start: 0;
   inset-block: 0;
   width: 2px;
-  border-radius: 0;
-  background: var(--border-default);
+  border-radius: var(--r-pixel);
+  background: transparent;
+  transition: background-color var(--dur-1) var(--ease);
 }
 
-.nav-links a:focus-visible {
+.nav-links a:hover,
+.nav-link:hover { color: var(--text); }
+
+.nav-links a:hover::before,
+.nav-link:hover::before { background: var(--line-strong); }
+
+.nav-links a:hover .nav-label,
+.nav-link:hover .nav-label { transform: translateX(2px); }
+
+.nav-links a.active,
+.nav-links li.active > a {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.nav-links a.active::before,
+.nav-links li.active > a::before { background: var(--text); }
+
+.nav-links a:focus-visible,
+.nav-link:focus-visible {
   outline: var(--focus-outline);
   outline-offset: -2px;
 }
 
-/* Active item — neutral surface + medium weight + a single mint rail.
-   Mint in BOTH themes (brief §7.1): the accent appears exactly once in the
-   shell, which is the whole point of the restrained-accent principle. */
-.nav-links li.active a,
-.nav-links a.active {
-  background: var(--surface-selected);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
+/* Plugin activity: a 6px blue square (title and aria-label carry the text) */
+.nav-links a .nav-attention-dot,
+.nav-link .nav-attention-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-inline-start: auto;
+  border-radius: var(--r-pixel);
+  background: var(--accent);
 }
 
-.nav-links li.active a::before,
-.nav-links a.active::before,
-.nav-links li.active a:hover::before,
-.nav-links a.active:hover::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: 0;
-  inset-block: 0;
-  width: 2px;
-  border-radius: 0;
-  background: var(--text);
-}
-
-.nav-links li.active a .nav-icon,
-.nav-links a.active .nav-icon { color: var(--accent-text); }
+/* The flyout trigger is only for the rail; the plugin list shows inline */
+#links-plugins-rail { display: none; }
 
 /* ============================================
-   Footer + collapse toggle
+   Bottom: collapse, version, program
    ============================================ */
-.sidebar-footer {
-  margin-block-start: auto;
-  padding-block-start: var(--space-3);
-  flex-shrink: 0;
-}
-
-.sidebar-program-label {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-secondary);
-  text-align: center;
-}
-
-.sidebar-program-label-short { display: none; }
-
 .sidebar-collapse-toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+  gap: var(--s-3);
   width: 100%;
-  height: var(--control-md);
-  padding-inline: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md); /* match .nav-links boxes */
-  background: transparent;
-  color: var(--text-secondary);
+  height: var(--nav-row);
+  margin-block-start: auto;
+  padding-inline: var(--nav-pad);
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-3);
   font-family: inherit;
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
   cursor: pointer;
-  transition:
-    color var(--motion-fast) var(--ease-out),
-    border-color var(--motion-fast) var(--ease-out);
+  transition: color var(--dur-1) var(--ease);
 }
 
-.sidebar-collapse-toggle:hover {
-  background: transparent;
-  border-color: var(--border-default);
-  color: var(--text-primary);
-}
+.sidebar-collapse-toggle:hover { color: var(--text); }
 
 .sidebar-collapse-toggle:focus-visible {
   outline: var(--focus-outline);
@@ -317,204 +248,165 @@
 
 .sidebar-collapse-toggle svg {
   flex-shrink: 0;
-  transition: transform var(--motion-fast) var(--ease-out);
+  transition: transform var(--dur-3) var(--ease);
 }
 
-body.sidebar-collapsed .sidebar-collapse-toggle svg { transform: rotate(180deg); }
+body.sidebar-collapsed .sidebar-collapse-toggle svg { transform: scaleX(-1); }
 
-/* Below --bp-xl an unset preference is a non-disruptive hint; a saved
-   preference always wins. Keep transparent — border weight carries the hint. */
-body.sidebar-collapse-suggested .sidebar-collapse-toggle {
-  border-color: var(--border-default);
-  background: transparent;
+.sidebar-footer {
+  flex-shrink: 0;
+  width: var(--panel-width);
+  padding: var(--s-1) var(--nav-pad) 0;
+  transition: width var(--dur-3) var(--ease);
 }
 
-body.sidebar-collapse-suggested .sidebar-collapse-label::after {
-  content: " for more space";
-  color: var(--text-tertiary);
-  font-weight: var(--weight-regular);
+.sidebar-program-label {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+  white-space: nowrap;
+}
+
+.sidebar-program-label-full {
+  display: inline-block;
+  vertical-align: top;
+  transition: opacity var(--dur-3) var(--ease);
+}
+
+.sidebar-program-label-short { display: none; }
+
+/* ============================================
+   Rails: collapsed by hand (52px) and automatic at 1024–1279 (64px)
+   ============================================ */
+/* Icons sit on whole pixels: 19px in the 52px rail, 25px in the 64px rail */
+body.sidebar-collapsed .sidebar { --panel-width: var(--sidebar-rail); --nav-pad: 19px; }
+body.sidebar-rail-auto .sidebar { --panel-width: var(--sidebar-rail-auto); --nav-pad: 25px; }
+
+body.sidebar-collapsed .sidebar,
+body.sidebar-rail-auto .sidebar {
+  width: calc(var(--gutter) + var(--panel-width));
+}
+
+body.sidebar-collapsed #admin-sidebar .sidebar-header .logo,
+body.sidebar-rail-auto #admin-sidebar .sidebar-header .logo {
+  padding-inline-start: calc((var(--panel-width) - var(--nav-row)) / 2);
+}
+
+body.sidebar-collapsed #admin-sidebar .sidebar-header .logo-name,
+body.sidebar-rail-auto #admin-sidebar .sidebar-header .logo-name,
+body.sidebar-collapsed .nav-links a .nav-label,
+body.sidebar-rail-auto .nav-links a .nav-label,
+body.sidebar-collapsed .sidebar-collapse-label,
+body.sidebar-collapsed .sidebar-program-label-full,
+body.sidebar-rail-auto .sidebar-program-label-full {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+}
+
+body.sidebar-collapsed .nav-links a,
+body.sidebar-rail-auto .nav-links a { gap: 0; }
+
+body.sidebar-collapsed .nav-links a .nav-attention-dot,
+body.sidebar-rail-auto .nav-links a .nav-attention-dot {
+  position: absolute;
+  inset-block-start: var(--s-1);
+  inset-inline-end: var(--s-2);
+  margin: 0;
+}
+
+body.sidebar-collapsed .sidebar-program-label-short,
+body.sidebar-rail-auto .sidebar-program-label-short { display: inline; }
+
+body.sidebar-collapsed .sidebar-footer,
+body.sidebar-rail-auto .sidebar-footer {
+  padding-inline: 0;
+  text-align: center;
+}
+
+body.sidebar-collapsed .sidebar-collapse-toggle { gap: 0; }
+
+/* Rail tooltips: an ink float beside the rail */
+.sidebar-rail-tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r);
+  background: var(--ink-float);
+  box-shadow: var(--shadow-float-2);
+  color: var(--on-ink-float);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.nav-plugins-flyout {
+  position: fixed;
+  z-index: var(--z-popover);
+  min-width: 12rem;
+  padding: var(--s-1);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-menu);
+}
+
+.nav-plugins-flyout-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .sidebar-collapse-toggle { display: none; }
 }
 
 /* ============================================
-   Mobile drawer
+   Drawer below 1024
    ============================================ */
 .sidebar-backdrop {
   display: none;
   position: fixed;
   inset: 0;
   z-index: var(--z-backdrop);
-  background: var(--overlay);
+  background: var(--scrim);
 }
 
 .sidebar-backdrop.visible { display: block; }
 
 body.sidebar-open { overflow: hidden; }
 
-/* ============================================
-   Desktop collapsed rail (>= --bp-xl, persistent sidebar only)
-   ============================================ */
-@media (min-width: 1280px) {
-  .sidebar-collapse-toggle { display: flex; }
-
-  body.sidebar-collapsed .sidebar {
-    width: calc(var(--shell-edge-padding) + var(--sidebar-width-collapsed));
-  }
-
-  body.sidebar-collapsed #admin-sidebar .sidebar-header { justify-content: center; }
-
-  body.sidebar-collapsed #admin-sidebar .sidebar-header .logo-name { display: none; }
-
-  body.sidebar-collapsed #admin-sidebar .sidebar-header .logo,
-  body.sidebar-collapsed #admin-sidebar .sidebar-header .branding-logo {
-    justify-content: center;
-    width: auto;
-  }
-
-  body.sidebar-collapsed .nav-section-header { display: none; }
-
-  body.sidebar-collapsed .nav-links a {
-    justify-content: center;
-    padding-inline: 0;
-    gap: 0;
-  }
-
-  body.sidebar-collapsed .nav-links a .nav-label { display: none; }
-
-  body.sidebar-collapsed .nav-links a .nav-attention-dot {
-    position: absolute;
-    inset-block-start: 0.35rem;
-    inset-inline-end: 0.35rem;
-    margin-inline-start: 0;
-  }
-
-  body.sidebar-collapsed .sidebar-program-label-full { display: none; }
-  body.sidebar-collapsed .sidebar-program-label-short { display: inline; }
-
-  body.sidebar-collapsed .sidebar-collapse-toggle .sidebar-collapse-label { display: none; }
-  body.sidebar-collapsed .sidebar-collapse-toggle { padding-inline: 0; }
-
-  /* P69 — collapsed rail: icon-only plugin list (flyout rail hidden; tooltips via JS) */
-  #links-plugins-rail {
-    display: none;
-  }
-
-  body.sidebar-collapsed #nav-plugins-section > #links-plugins {
-    display: block;
-  }
-
-  body.sidebar-collapsed .nav-plugins-flyout-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    color: inherit;
-    font: inherit;
-    padding: var(--space-2);
-    border-radius: var(--radius-md);
-  }
-
-  body.sidebar-collapsed .nav-plugins-flyout-trigger:hover,
-  body.sidebar-collapsed .nav-plugins-flyout-trigger[aria-expanded="true"] {
-    background: var(--surface-sunken);
-    color: var(--text-primary);
-  }
-
-  body.sidebar-collapsed .nav-plugins-flyout-trigger .nav-label {
-    display: none;
-  }
-
-  .nav-plugins-flyout-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-  }
-
-  .nav-plugins-flyout-hub .nav-link {
-    background: var(--surface-sunken);
-  }
-
-  .nav-plugins-flyout {
-    position: fixed;
-    z-index: var(--z-popover);
-    min-width: 12rem;
-    max-width: 16rem;
-    padding: var(--space-2);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    background: var(--surface-raised);
-    box-shadow: var(--elevation-3);
-  }
-
-  .nav-plugins-flyout-list .nav-link {
-    justify-content: flex-start;
-    gap: var(--space-3);
-    padding-inline: var(--space-3);
-  }
-
-  .nav-plugins-flyout-list .nav-label {
-    display: inline;
-  }
-
-}
-
-/* Collapsed rail tooltips — fixed layer (not clipped by .nav-links overflow) */
-.sidebar-rail-tooltip {
-  position: fixed;
-  z-index: var(--z-popover);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--elevation-2);
-  color: var(--text-primary);
-  font-size: var(--text-xs);
-  line-height: var(--leading-tight);
-  white-space: nowrap;
-  pointer-events: none;
-  transform: translateY(-50%);
-}
-
-/* Drawer mode below --bp-xl */
-@media (max-width: 1279px) {
+@media (max-width: 1023px) {
   .sidebar-collapse-toggle { display: none; }
 
   .sidebar {
     position: fixed;
     inset-block-start: 0;
     inset-inline-start: 0;
+    z-index: var(--z-drawer);
     height: 100vh;
     max-height: 100vh;
     overflow-y: auto;
-    z-index: var(--z-drawer);
-    padding-inline-end: var(--shell-edge-padding);
-    box-shadow: var(--elevation-3);
+    padding-inline-end: var(--gutter);
+    width: calc(var(--sidebar-width) + var(--gutter));
+    background: var(--bg);
+    box-shadow: var(--shadow-sheet);
     transform: translateX(-100%);
     visibility: hidden;
     pointer-events: none;
+    transition: transform var(--dur-3) var(--ease), visibility 0s linear var(--dur-3);
   }
 
   .sidebar.open {
     transform: translateX(0);
     visibility: visible;
     pointer-events: auto;
-  }
-
-  .sidebar-toggle {
-    display: inline-flex;
-    flex-shrink: 0;
+    transition: transform var(--dur-3) var(--ease);
   }
 }
 
-/* Shell edge padding steps down with viewport */
-@media (max-width: 1279px) { .admin-layout { --shell-edge-padding: var(--space-8); } }
-@media (max-width: 1023px) { .admin-layout { --shell-edge-padding: var(--space-6); } }
-@media (max-width: 767px) { .admin-layout { --shell-edge-padding: var(--space-4); } }
-
 @media (max-width: 639px) {
-  body.sidebar-collapsed .sidebar { width: var(--sidebar-width); }
+  .admin-layout { --gutter: var(--s-4); }
 }
