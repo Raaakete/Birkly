@@ -24,7 +24,7 @@ function resolveMediaItemUrl(url) {
   const state = {
     currentMedia: [],
     currentMediaItem: null,
-    currentFolder: '',
+    currentFolder: 'all',
     folderData: [],
     selectedMoveFolder: '',
     selectedIds: new Set(),
@@ -293,16 +293,14 @@ function resolveMediaItemUrl(url) {
     const breadcrumb = document.getElementById('media-breadcrumb');
     if (!breadcrumb) return;
 
-    if (state.currentFolder === 'all') {
-      breadcrumb.innerHTML = '<span class="breadcrumb-item is-current">All media</span>';
+    // The folder list already says where you are; the path only helps inside a folder.
+    breadcrumb.hidden = state.currentFolder === 'all' || !state.currentFolder;
+    if (breadcrumb.hidden) {
+      breadcrumb.innerHTML = '';
       return;
     }
 
-    breadcrumb.innerHTML = '<button type="button" class="breadcrumb-item" data-media-folder="">Root</button>';
-
-    if (!state.currentFolder) {
-      return;
-    }
+    breadcrumb.innerHTML = '<button type="button" class="breadcrumb-item" data-media-folder="">' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '</button>';
 
     const parts = state.currentFolder.split('/');
     let path = '';
@@ -340,27 +338,27 @@ function resolveMediaItemUrl(url) {
 
     state.folderData.forEach(function (folder) {
       const folderItem = document.createElement('div');
-      folderItem.className = 'side-nav-item folder-item';
+      folderItem.className = 'folder-item';
       folderItem.dataset.path = folder.path || '';
-      folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
+      folderItem.style.setProperty('--level', String(folder.level || 0));
       folderItem.addEventListener('click', async function () {
         navigateToFolder(folder.path || '');
       });
 
       folderItem.innerHTML =
-        icon('folder', { size: 16 }) +
-        '<span class="side-nav-label folder-name" data-text="' + escapeHtml(folder.name || '') + '">' + escapeHtml(folder.name || '') + '</span>' +
-        '<span class="badge badge-count">' + escapeHtml(folder.count || 0) + '</span>';
+        icon('folder') +
+        '<span class="folder-name">' + escapeHtml(folder.name || '') + '</span>' +
+        '<span class="folder-count">' + escapeHtml(folder.count || 0) + '</span>';
 
       const actions = document.createElement('div');
       actions.className = 'folder-actions';
 
       const addButton = document.createElement('button');
       addButton.type = 'button';
-      addButton.className = 'btn-icon btn-icon-xs';
+      addButton.className = 'icon-button is-small';
       addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
       addButton.title = 'Create subfolder';
-      addButton.innerHTML = icon('plus', { size: 12 });
+      addButton.innerHTML = icon('plus');
       addButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         createSubfolder(folder.path || '');
@@ -368,10 +366,10 @@ function resolveMediaItemUrl(url) {
 
       const renameButton = document.createElement('button');
       renameButton.type = 'button';
-      renameButton.className = 'btn-icon btn-icon-xs btn-icon--edit';
+      renameButton.className = 'icon-button is-small';
       renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
       renameButton.title = 'Rename folder';
-      renameButton.innerHTML = icon('pencil-simple', { size: 12 });
+      renameButton.innerHTML = icon('pencil');
       renameButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         renameFolder(folder.path || '');
@@ -379,10 +377,10 @@ function resolveMediaItemUrl(url) {
 
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
-      deleteButton.className = 'btn-icon btn-icon-xs btn-icon--danger';
+      deleteButton.className = 'icon-button is-small is-danger';
       deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
       deleteButton.title = 'Delete folder';
-      deleteButton.innerHTML = icon('trash', { size: 12 });
+      deleteButton.innerHTML = icon('trash');
       deleteButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         deleteFolderWithOptions(folder.path || '');
@@ -425,10 +423,10 @@ function resolveMediaItemUrl(url) {
 
     const rootItem = document.createElement('button');
     rootItem.type = 'button';
-    rootItem.className = 'side-nav-item folder-item-move';
+    rootItem.className = 'folder-item-move';
     rootItem.innerHTML =
-      icon('folder-root', { size: 16 }) +
-      '<span class="side-nav-label" data-text="' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '">' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '</span>';
+      icon('folder') +
+      '<span class="folder-name">' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '</span>';
     rootItem.addEventListener('click', async function () {
       selectMoveFolder('');
     });
@@ -437,12 +435,12 @@ function resolveMediaItemUrl(url) {
     state.folderData.forEach(function (folder) {
       const folderItem = document.createElement('button');
       folderItem.type = 'button';
-      folderItem.className = 'side-nav-item folder-item-move';
+      folderItem.className = 'folder-item-move';
       folderItem.dataset.path = folder.path || '';
-      folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
+      folderItem.style.setProperty('--level', String(folder.level || 0));
       folderItem.innerHTML =
-        icon('folder', { size: 16 }) +
-        '<span class="side-nav-label" data-text="' + escapeHtml(folder.name || '') + '">' + escapeHtml(folder.name || '') + '</span>';
+        icon('folder') +
+        '<span class="folder-name">' + escapeHtml(folder.name || '') + '</span>';
       folderItem.addEventListener('click', async function () {
         selectMoveFolder(folder.path || '');
       });
@@ -457,7 +455,8 @@ function resolveMediaItemUrl(url) {
     document.querySelectorAll('.folder-item-move').forEach(function (item) {
       const path = item.dataset.path || '';
       const selected = path === state.selectedMoveFolder || (!state.selectedMoveFolder && !item.dataset.path);
-      item.classList.toggle('selected', selected);
+      item.classList.toggle('is-selected', selected);
+      item.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
   }
 
@@ -470,6 +469,10 @@ function resolveMediaItemUrl(url) {
 
       if (result.status === 'ok' && Array.isArray(result.data)) {
         state.currentMedia = result.data.map(normalizeMediaItem);
+        if (state.currentFolder === 'all') {
+          const total = document.getElementById('media-total-count');
+          if (total) total.textContent = String(state.currentMedia.length);
+        }
         pruneSelection();
         renderMediaCollection(getFilteredMedia());
       } else {
@@ -511,7 +514,7 @@ function resolveMediaItemUrl(url) {
           title: mdT('media_empty_library_title', 'Your media library is empty'),
           hint: mdT('media_empty_library_hint', 'Upload images and files to use in entries and templates.'),
           primary: {
-            label: mdT('upload_media', 'Upload Media'),
+            label: mdT('upload_media', 'Upload media'),
             onClick: uploadMedia,
           },
           secondary: {
@@ -537,15 +540,21 @@ function resolveMediaItemUrl(url) {
     updateSelectionToolbar();
   }
 
+  function mediaTypeLabel(item) {
+    const source = String(item.name || item.url || '');
+    const ext = String(item.ext || (source.indexOf('.') !== -1 ? source.split('.').pop() : '') || item.category || 'file');
+    return ext.toUpperCase();
+  }
+
   function createMediaCard(item) {
     const card = document.createElement('article');
-    card.className = 'card card--interactive media-card';
+    card.className = 'media-card';
     card.dataset.mediaId = item.id;
     card.classList.toggle('is-selected', state.selectedIds.has(item.id));
 
     const preview = document.createElement('button');
     preview.type = 'button';
-    preview.className = 'media-card__preview';
+    preview.className = 'media-card-thumb thumb';
     preview.setAttribute('aria-label', 'Open ' + (item.name || 'media item'));
     preview.innerHTML = getMediaThumbnailHTML(item);
     bindThumbnailFallback(preview);
@@ -553,14 +562,10 @@ function resolveMediaItemUrl(url) {
       viewMedia(item.id);
     });
 
-    const meta = document.createElement('div');
-    meta.className = 'media-card__meta';
-
     const checkboxLabel = document.createElement('label');
-    checkboxLabel.className = 'u-inline-flex u-shrink-0 u-clickable';
+    checkboxLabel.className = 'media-card-check';
     checkboxLabel.innerHTML =
-      '<input type="checkbox" class="media-select-checkbox" aria-label="Select ' + escapeHtml(item.name || 'media item') + '">' +
-      '<span class="u-sr-only">Select</span>';
+      '<input type="checkbox" class="media-select-checkbox" aria-label="Select ' + escapeHtml(item.name || 'media item') + '">';
 
     const checkbox = checkboxLabel.querySelector('input');
     checkbox.checked = state.selectedIds.has(item.id);
@@ -571,35 +576,31 @@ function resolveMediaItemUrl(url) {
       toggleMediaSelection(item.id, checkbox.checked);
     });
 
+    const meta = document.createElement('div');
+    meta.className = 'media-card-meta';
+
     const nameEl = document.createElement('button');
     nameEl.type = 'button';
-    nameEl.className = 'media-card__name';
+    nameEl.className = 'media-card-name';
     nameEl.title = item.name || 'Untitled';
     nameEl.textContent = item.name || 'Untitled';
     nameEl.addEventListener('click', async function () {
       viewMedia(item.id);
     });
 
-    const infoEl = document.createElement('div');
-    infoEl.className = 'u-text-xs u-fg-secondary';
-    infoEl.textContent = String(item.category || 'file') + ' · ' + String(item.size_formatted || '0 B');
+    const infoEl = document.createElement('span');
+    infoEl.className = 'media-card-info';
+    infoEl.textContent = mediaTypeLabel(item) + ' · ' + String(item.size_formatted || '0 B');
 
-    const metaHead = document.createElement('div');
-    metaHead.className = 'u-split u-gap-2';
-    metaHead.append(nameEl, checkboxLabel);
+    meta.append(nameEl, infoEl);
 
-    meta.appendChild(metaHead);
-    meta.appendChild(infoEl);
+    const extra = document.createElement('div');
+    extra.className = 'media-card-extra';
+    extra.innerHTML =
+      '<span>' + escapeHtml(item.folder || mdT('media_js_root_folder', 'Root folder')) + '</span>' +
+      '<span>' + escapeHtml(item.uploaded_at ? new Date(item.uploaded_at).toLocaleDateString() : '') + '</span>';
 
-    if (item.alt_text) {
-      const altEl = document.createElement('div');
-      altEl.className = 'u-text-xs u-fg-secondary u-clamp-2';
-      altEl.textContent = mdT('media_js_alt_prefix', 'Alt:') + ' ' + item.alt_text;
-      meta.appendChild(altEl);
-    }
-
-    card.appendChild(preview);
-    card.appendChild(meta);
+    card.append(checkboxLabel, preview, meta, extra);
     return card;
   }
 
@@ -616,7 +617,7 @@ function resolveMediaItemUrl(url) {
 
   function getMediaThumbnailHTML(item) {
     if (!item) {
-      return icon('file-text', { size: 48 });
+      return icon('content', { size: 26 });
     }
 
     const category = String(item.category || 'file');
@@ -625,22 +626,23 @@ function resolveMediaItemUrl(url) {
 
     if (category === 'image' && url) {
       return '<img src="' + escapeHtml(url) + '" alt="' + name + '">' +
-        '<div data-thumb-fallback hidden>' + icon('image', { size: 48 }) + '</div>';
+        '<div data-thumb-fallback hidden>' + icon('media', { size: 26 }) + '</div>';
     }
 
     if (category === 'video') {
-      return icon('play', { size: 48 });
+      return icon('play', { size: 26 });
     }
 
     if (category === 'audio') {
-      return icon('music-notes', { size: 48 });
+      return icon('music', { size: 26 });
     }
 
-    return icon('file-text', { size: 48 });
+    return icon('content', { size: 26 });
   }
 
   function uploadMedia() {
-    const folderDisplay = state.currentFolder === 'all' ? 'Root' : (state.currentFolder || 'Root');
+    const rootLabel = mdT('media_js_root_folder', 'Root folder');
+    const folderDisplay = state.currentFolder === 'all' ? rootLabel : (state.currentFolder || rootLabel);
     const currentUploadFolder = document.getElementById('current-upload-folder');
     if (currentUploadFolder) {
       currentUploadFolder.textContent = folderDisplay;
@@ -871,32 +873,27 @@ function resolveMediaItemUrl(url) {
     if (item.dimensions && item.dimensions.width && item.dimensions.height) {
       details.push(['Dimensions', item.dimensions.width + ' × ' + item.dimensions.height]);
     }
-    const detailPairs = details.map(function (pair) {
-      return '<span class="kv-key">' + escapeHtml(pair[0]) + '</span>' +
-        '<span class="kv-value">' + escapeHtml(pair[1]) + '</span>';
+    const detailRows = details.map(function (pair) {
+      return '<div class="media-detail-row"><span class="media-detail-label">' + escapeHtml(pair[0]) + '</span>' +
+        '<span class="media-detail-value">' + escapeHtml(pair[1]) + '</span></div>';
     }).join('');
 
     body.innerHTML =
-      '<div class="u-stack-5">' +
-        '<div class="media-modal-preview">' + getMediaPreviewHTML(item) + '</div>' +
-        '<section class="u-stack-3">' +
-          '<h4 class="section-title">Details</h4>' +
-          '<div class="kv">' + detailPairs + '</div>' +
-        '</section>' +
-        '<div class="u-stack-4">' +
-          '<div class="field">' +
-            '<label class="field-label" for="media-alt-text">Alt text</label>' +
-            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="' + escapeHtml(mdT('media_js_alt_text_placeholder', 'Describe the image for screen readers')) + '">' +
+      '<div class="media-sheet">' +
+        '<div class="media-sheet-preview well">' + getMediaPreviewHTML(item) + '</div>' +
+        '<div class="media-detail-rows">' + detailRows + '</div>' +
+        '<div class="field-group">' +
+          '<label class="field-label" for="media-alt-text">' + escapeHtml(mdT('media_js_alt_text', 'Alt text')) + '</label>' +
+          '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="' + escapeHtml(mdT('media_js_alt_text_placeholder', 'Describe the image for screen readers')) + '">' +
+        '</div>' +
+        '<div class="media-sheet-focal">' +
+          '<div class="field-group">' +
+            '<label class="field-label" for="media-focal-x">' + escapeHtml(mdT('media_js_focal_x', 'Focal point X')) + '</label>' +
+            '<input type="number" id="media-focal-x" class="input is-mono" min="0" max="100" value="' + escapeHtml(focalX) + '">' +
           '</div>' +
-          '<div class="u-grid-2">' +
-            '<div class="field">' +
-              '<label class="field-label" for="media-focal-x">Focal point X</label>' +
-              '<input type="number" id="media-focal-x" class="input" min="0" max="100" value="' + escapeHtml(focalX) + '">' +
-            '</div>' +
-            '<div class="field">' +
-              '<label class="field-label" for="media-focal-y">Focal point Y</label>' +
-              '<input type="number" id="media-focal-y" class="input" min="0" max="100" value="' + escapeHtml(focalY) + '">' +
-            '</div>' +
+          '<div class="field-group">' +
+            '<label class="field-label" for="media-focal-y">' + escapeHtml(mdT('media_js_focal_y', 'Focal point Y')) + '</label>' +
+            '<input type="number" id="media-focal-y" class="input is-mono" min="0" max="100" value="' + escapeHtml(focalY) + '">' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -917,9 +914,9 @@ function resolveMediaItemUrl(url) {
     if (category === 'audio') {
       return '<audio controls><source src="' + escapeHtml(url) + '" type="' + escapeHtml(type) + '">Your browser does not support the audio tag.</audio>';
     }
-    return '<div class="u-center-col u-gap-3">' +
-      '<p class="u-text-sm u-fg-secondary">Preview not available for ' + escapeHtml(category || 'file') + ' files.</p>' +
-      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="btn btn-primary">Download file</a></div>';
+    return '<div class="media-sheet-nopreview">' + icon('content', { size: 26 }) +
+      '<p>' + escapeHtml(mdT('media_js_no_preview', 'No preview for this file type.')) + '</p>' +
+      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="button is-small">' + icon('download') + escapeHtml(mdT('media_js_download', 'Download')) + '</a></div>';
   }
 
   function closeMediaModal() {
@@ -1086,6 +1083,11 @@ function resolveMediaItemUrl(url) {
     }
     if (toolbar) {
       toolbar.hidden = selectedCount === 0;
+    }
+    document.getElementById('media-grid')?.classList.toggle('has-selection', selectedCount > 0);
+    const pageBar = document.getElementById('media-page-bar');
+    if (pageBar) {
+      pageBar.hidden = selectedCount > 0;
     }
   }
 
