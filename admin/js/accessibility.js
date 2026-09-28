@@ -91,6 +91,10 @@
         
         // Add error announcements
         document.querySelectorAll('.error, .field-error').forEach(error => {
+            // Empty feedback slots are placeholders for later validation, not errors.
+            if (!error.textContent.trim() || error.hidden) {
+                return;
+            }
             const input = error.closest('.form-group, .field-block')?.querySelector('input, textarea, select');
             if (input && !input.hasAttribute('aria-invalid')) {
                 input.setAttribute('aria-invalid', 'true');

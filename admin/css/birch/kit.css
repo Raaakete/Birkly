@@ -204,24 +204,24 @@
 
 [data-birch] .input.is-mono { font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono); }
 
-/* Inside a slab: invisible until hover */
+/* Inside a slab: grey on white, so the field still reads as a field at rest */
 [data-birch] .slab .input,
 [data-birch] .setting-row .input,
 [data-birch] .field .input {
   border-color: transparent;
-  background: none;
+  background: var(--surface-2);
 }
 
 [data-birch] .slab .input:hover:not(:focus),
 [data-birch] .setting-row .input:hover:not(:focus),
 [data-birch] .field .input:hover:not(:focus) {
   border-color: transparent;
-  background: var(--surface-2);
+  background: var(--surface-3);
 }
 
 [data-birch] .slab .input:focus,
 [data-birch] .setting-row .input:focus,
-[data-birch] .field .input:focus { background: var(--surface); }
+[data-birch] .field .input:focus { background: var(--surface); border-color: var(--accent); }
 
 [data-birch] .input-group {
   display: flex;

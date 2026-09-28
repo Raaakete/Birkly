@@ -441,15 +441,26 @@
   letter-spacing: 0;
 }
 
-[data-birch] .collection-basics .input {
+/* Both sit on white, so their fields take the grey fill (kit: field inside a slab) */
+[data-birch] .collection-basics .input,
+[data-birch] .fieldtype-section .input {
   border-color: transparent;
-  background: none;
-  padding-inline: 0;
-  font-size: var(--size-slab-title);
+  background-color: var(--surface-2);
 }
 
-[data-birch] .collection-basics .input:hover { background: var(--surface-2); padding-inline: var(--s-2); }
-[data-birch] .collection-basics .input:focus { background: var(--surface); padding-inline: var(--s-2); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+[data-birch] .collection-basics .input:hover:not(:focus),
+[data-birch] .fieldtype-section .input:hover:not(:focus) {
+  border-color: transparent;
+  background-color: var(--surface-3);
+}
+
+[data-birch] .collection-basics .input:focus,
+[data-birch] .fieldtype-section .input:focus {
+  border-color: var(--accent);
+  background-color: var(--surface);
+}
+
+[data-birch] .collection-basics .input { font-size: var(--size-slab-title); }
 
 [data-birch] .fields-section.frame { margin-block-start: var(--s-4); }
 
