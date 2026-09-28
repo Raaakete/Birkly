@@ -56,6 +56,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <script<?= $__birklyScriptNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
+      window.Birkly.mediaUploadAccept = <?= json_encode((function () { require_once __DIR__ . '/../../core/media_storage.php'; return birkly_media_upload_accept(); })()) ?>;
       window.Birkly.currentUser = window.Birkly.currentUser || {};
       window.Birkly.currentUser.role = <?= json_encode($currentRole) ?>;
       window.Birkly.currentUser.permissions = <?= json_encode(array_values(array_unique(array_filter($currentPermissions)))) ?>;

@@ -53,7 +53,8 @@ class File extends BaseField {
         $metaHidden = $meta !== '' ? '' : ' hidden';
         $icon = static fn (string $n): string => function_exists('birkly_icon') ? birkly_icon($n, ['size' => 13]) : '';
         $multi = $this->options['multiple'] ?? false;
-        $accept = htmlspecialchars($this->options['accept'] ?? '*/*', ENT_QUOTES, 'UTF-8');
+        $defaultAccept = function_exists('birkly_media_upload_accept') ? birkly_media_upload_accept() : '*/*';
+        $accept = htmlspecialchars($this->options['accept'] ?? $defaultAccept, ENT_QUOTES, 'UTF-8');
         $multipleAttr = $multi ? 'multiple' : '';
         $mediaIcon = $icon('media');
         $uploadIcon = $icon('upload');
