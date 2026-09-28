@@ -1030,6 +1030,67 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 }
 
 /* ---------- Sheet and dialog ---------- */
+/* P56 .modal markup inside Birch pages: the panel is a float; .is-sheet docks it right */
+[data-birch] .modal-content {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: var(--shadow-sheet);
+}
+
+[data-birch] .modal-header {
+  padding: var(--s-5) var(--s-5) var(--s-3);
+  border: 0;
+}
+
+[data-birch] .modal-title,
+[data-birch] .modal-header h2,
+[data-birch] .modal-header h3 {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  letter-spacing: 0;
+}
+
+[data-birch] .modal-body {
+  padding: 0 var(--s-5) var(--s-4);
+  font-size: var(--size-body);
+}
+
+[data-birch] .modal-footer {
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border: 0;
+  background: none;
+}
+
+[data-birch] .modal-close {
+  border-radius: var(--r);
+  color: var(--text-3);
+}
+
+[data-birch] .modal-close:hover { background: var(--surface-2); color: var(--text); }
+
+[data-birch] .modal.is-sheet {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+
+[data-birch] .modal.is-sheet .modal-content {
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+  animation: birch-sheet-in var(--dur-2) var(--ease);
+}
+
+@keyframes birch-sheet-in {
+  from { transform: translateX(16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
 [data-birch] .dialog,
 [data-birch] .sheet {
   display: flex;
