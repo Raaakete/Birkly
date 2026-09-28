@@ -7,12 +7,6 @@
       "required": true
     },
     {
-      "name": "slug",
-      "type": "text",
-      "label": "Slug",
-      "required": true
-    },
-    {
       "name": "excerpt",
       "type": "textarea",
       "label": "Excerpt",
@@ -20,13 +14,13 @@
     },
     {
       "name": "content",
-      "type": "editor",
+      "type": "contenteditor",
       "label": "Content",
       "required": true
     },
     {
       "name": "featured_image",
-      "type": "media",
+      "type": "file",
       "label": "Featured Image",
       "required": false
     },
@@ -47,17 +41,6 @@
       "type": "text",
       "label": "Author",
       "required": false
-    },
-    {
-      "name": "status",
-      "type": "select",
-      "label": "Status",
-      "options": [
-        "draft",
-        "published"
-      ],
-      "default": "draft"
     }
   ]
 }
-

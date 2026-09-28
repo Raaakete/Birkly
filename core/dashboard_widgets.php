@@ -505,28 +505,14 @@ function birkly_normalize_dashboard_layout($layout, array $widgetIds): array
  *
  * @return array{widget_order: list<string>, hidden_widgets: list<string>, widget_sizes: array<string, string>, customized: bool}
  */
-function birkly_load_user_dashboard_layout(string $userId, array $widgetIds): array
+function birkly_load_user_dashboard_layout(string $userId, array $widgetIds, ?string $email = null): array
 {
     require_once __DIR__ . '/birkly_users.php';
 
-    $userId = trim($userId);
-    if ($userId === '') {
-        return birkly_normalize_dashboard_layout(null, $widgetIds);
-    }
+    $path = trim($userId) !== '' ? birkly_resolve_user_account_path($userId, $email) : null;
+    $user = $path !== null ? json_decode((string) file_get_contents($path), true) : null;
 
-    foreach (birkly_users_search_dirs() as $dir) {
-        $path = $dir . '/' . $userId . '.json';
-        if (!is_file($path)) {
-            continue;
-        }
-        $user = json_decode((string) file_get_contents($path), true);
-        if (!is_array($user)) {
-            break;
-        }
-        return birkly_normalize_dashboard_layout($user['dashboard_layout'] ?? null, $widgetIds);
-    }
-
-    return birkly_normalize_dashboard_layout(null, $widgetIds);
+    return birkly_normalize_dashboard_layout(is_array($user) ? ($user['dashboard_layout'] ?? null) : null, $widgetIds);
 }
 
 /**
@@ -534,7 +520,7 @@ function birkly_load_user_dashboard_layout(string $userId, array $widgetIds): ar
  *
  * @param array<string, mixed> $layout
  */
-function birkly_save_user_dashboard_layout(string $userId, array $layout, array $widgetIds): bool
+function birkly_save_user_dashboard_layout(string $userId, array $layout, array $widgetIds, ?string $email = null): bool
 {
     require_once __DIR__ . '/birkly_users.php';
 
@@ -543,34 +529,30 @@ function birkly_save_user_dashboard_layout(string $userId, array $layout, array 
         return false;
     }
 
+    // Accounts are stored as {id}.json or md5(email).json; resolve like the metric pins do.
+    $path = birkly_resolve_user_account_path($userId, $email);
+    if ($path === null) {
+        return false;
+    }
+
     $normalized = birkly_normalize_dashboard_layout($layout, $widgetIds);
     unset($normalized['customized']);
 
-    foreach (birkly_users_search_dirs() as $dir) {
-        $path = $dir . '/' . $userId . '.json';
-        if (!is_file($path)) {
-            continue;
-        }
-        $user = json_decode((string) file_get_contents($path), true);
-        if (!is_array($user)) {
-            return false;
-        }
-        $user['dashboard_layout'] = $normalized;
-        $user['updated_at'] = date('c');
-        $encoded = json_encode($user, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if ($encoded === false) {
-            return false;
-        }
-        if (file_put_contents($path, $encoded) === false) {
-            return false;
-        }
-        if (isset($_SESSION['user']) && is_array($_SESSION['user']) && ($_SESSION['user']['id'] ?? '') === $userId) {
-            $_SESSION['user']['dashboard_layout'] = $normalized;
-        }
-        return true;
+    $user = json_decode((string) file_get_contents($path), true);
+    if (!is_array($user)) {
+        return false;
+    }
+    $user['dashboard_layout'] = $normalized;
+    $user['updated_at'] = date('c');
+    $encoded = json_encode($user, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false || file_put_contents($path, $encoded) === false) {
+        return false;
+    }
+    if (isset($_SESSION['user']) && is_array($_SESSION['user']) && ($_SESSION['user']['id'] ?? '') === $userId) {
+        $_SESSION['user']['dashboard_layout'] = $normalized;
     }
 
-    return false;
+    return true;
 }
 
 /**

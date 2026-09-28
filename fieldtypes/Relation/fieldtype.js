@@ -88,10 +88,7 @@ if (window.HaruFieldtypeValidation) {
             const container = document.querySelector(`#relation_field_${error.field}`);
             if (container) {
                 const errorElement = document.createElement('div');
-                errorElement.className = 'relation-validation-error';
-                errorElement.style.color = '#dc3545';
-                errorElement.style.fontSize = '0.875rem';
-                errorElement.style.marginTop = '0.25rem';
+                errorElement.className = 'relation-validation-error field-error';
                 errorElement.textContent = error.message;
                 container.appendChild(errorElement);
             }
@@ -363,36 +360,38 @@ window.HaruFieldtypes['relation'] = {
     const modal = document.createElement('div');
     modal.id = 'relationPickerModal';
     modal.className = 'relation-picker-modal';
+    modal.setAttribute('data-birch', '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'relationPickerTitle');
     modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
-      <div class="card" style="width:90vw;max-width:800px;max-height:90vh;">
-        <div class="card-header flex justify-between align-center">
-          <h3 class="h3 m-0">Select Relations</h3>
-          <button class="btn btn-secondary" id="relationPickerCancelBtn">&times;</button>
+      <div class="modal-content relation-picker-panel">
+        <div class="modal-header">
+          <h3 class="modal-title" id="relationPickerTitle">Link entries</h3>
+          <button type="button" class="modal-close" id="relationPickerCancelBtn" aria-label="Close"><span data-icon="x" aria-hidden="true"></span></button>
         </div>
-        <div class="card-body">
-          <div class="collection-selector" style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 4px; font-weight: 500;">Select Collection:</label>
-            <select id="relationPickerCollection" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ddd; border-radius: 4px;">
-              <option value="">Choose a collection...</option>
-            </select>
+        <div class="modal-body relation-picker-body">
+          <div class="relation-picker-bar">
+            <span class="select-box">
+              <select id="relationPickerCollection" aria-label="Collection">
+                <option value="">Choose a collection</option>
+              </select>
+              <span data-icon="chev-down" aria-hidden="true"></span>
+            </span>
+            <label class="search-field">
+              <span data-icon="search" aria-hidden="true"></span>
+              <input type="search" class="input" id="relationPickerSearch" placeholder="Search entries" aria-label="Search entries">
+            </label>
           </div>
-          <div class="entry-search" style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 4px; font-weight: 500;">Search Entries:</label>
-            <input type="text" class="input" id="relationPickerSearch" placeholder="Search entries..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          <div class="relation-grid" id="relationPickerGrid" style="max-height:50vh;overflow-y:auto;border: 1px solid #ddd; border-radius: 4px; padding: 8px; background: #f8f9fa;">
-            <div class="text-muted" style="text-align: center; padding: 20px;">Select a collection to browse entries</div>
+          <div class="relation-grid" id="relationPickerGrid">
+            <div class="relation-picker-empty">Choose a collection to see its entries</div>
           </div>
         </div>
-        <div class="card-footer flex justify-between align-center">
-          <div class="selected-count" style="font-size: 14px; color: #666;">
-            <span id="relationPickerSelectedCount">0</span> selected
-          </div>
-          <div class="card-footer-buttons flex gap-2">
-            <button class="btn btn-primary" id="relationPickerSelectBtn" disabled>Add Selected</button>
-            <button class="btn btn-secondary" id="relationPickerCancelBtn2">Cancel</button>
-          </div>
+        <div class="modal-footer">
+          <span class="relation-picker-count"><span id="relationPickerSelectedCount">0</span> selected</span>
+          <button type="button" class="button" id="relationPickerCancelBtn2">Cancel</button>
+          <button type="button" class="button is-main" id="relationPickerSelectBtn" disabled>Add selected</button>
         </div>
       </div>
     `;
@@ -415,6 +414,7 @@ window.HaruFieldtypes['relation'] = {
     relationPickerSelected = [];
     
     const pickerModal = document.getElementById('relationPickerModal');
+    if (window.Birkly && typeof Birkly.initIcons === 'function') Birkly.initIcons(pickerModal);
     pickerModal.classList.add('is-open');
     pickerModal.setAttribute('aria-hidden', 'false');
     document.getElementById('relationPickerSelectBtn').disabled = true;
@@ -425,7 +425,7 @@ window.HaruFieldtypes['relation'] = {
     loadRelationPickerCollections();
     
     document.getElementById('relationPickerSearch').value = '';
-    document.getElementById('relationPickerGrid').innerHTML = '<div class="text-muted" style="text-align: center; padding: 20px;">Select a collection to browse entries</div>';
+    document.getElementById('relationPickerGrid').innerHTML = '<div class="relation-picker-empty">Choose a collection to see its entries</div>';
     
     console.log('[Relation Picker] Modal opened successfully');
   }
@@ -435,7 +435,6 @@ window.HaruFieldtypes['relation'] = {
     if (pickerModal) {
       pickerModal.classList.remove('is-open');
       pickerModal.setAttribute('aria-hidden', 'true');
-      pickerModal.style.display = '';
     }
     relationPickerCallback = null;
     relationPickerSelected = [];
@@ -452,7 +451,7 @@ window.HaruFieldtypes['relation'] = {
       return;
     }
     
-    select.innerHTML = '<option value="">Choose a collection...</option>';
+    select.innerHTML = '<option value="">Choose a collection</option>';
     
     try {
       console.log('[Relation Picker] Fetching collections from API...');
@@ -470,7 +469,7 @@ window.HaruFieldtypes['relation'] = {
           if (!key) {
             return;
           }
-          select.innerHTML += `<option value="${key}">${relationCollectionLabel(collection)} (${collection.slug})</option>`;
+          select.insertAdjacentHTML('beforeend', `<option value="${relationEscape(key)}">${relationEscape(relationCollectionLabel(collection))}</option>`);
         });
         
         console.log('[Relation Picker] Collections loaded into dropdown');
@@ -484,12 +483,12 @@ window.HaruFieldtypes['relation'] = {
   
   async function loadRelationPickerEntries(collectionId, search) {
     if (!collectionId) {
-      document.getElementById('relationPickerGrid').innerHTML = '<div class="text-muted">Select a collection to browse entries</div>';
+      document.getElementById('relationPickerGrid').innerHTML = '<div class="relation-picker-empty">Choose a collection to see its entries</div>';
       return;
     }
     
     const grid = document.getElementById('relationPickerGrid');
-    grid.innerHTML = '<div class="text-muted">Loading entries...</div>';
+    grid.innerHTML = '<div class="relation-picker-empty">Loading entries…</div>';
     
     // Get filter options from field config
     const fieldElement = document.querySelector(`[data-field="${relationPickerField}"]`);
@@ -564,7 +563,7 @@ window.HaruFieldtypes['relation'] = {
         relationPickerCurrentCollection = collectionId;
         
         if (!relationPickerItems.length) {
-          grid.innerHTML = '<div class="text-muted">No entries found in this collection.</div>';
+          grid.innerHTML = '<div class="relation-picker-empty">No entries in this collection yet</div>';
           return;
         }
         
@@ -585,36 +584,17 @@ window.HaruFieldtypes['relation'] = {
           }
         }
         
-        // Render based on display mode
-        if (displayMode === 'grid') {
-          grid.style.display = 'grid';
-          grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(150px, 1fr))';
-          grid.style.gap = '12px';
-          grid.innerHTML = relationPickerItems.map(e => `
-            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.75rem;border-radius:8px;border:1px solid #ddd;transition:all 0.2s;background:#fff;">
-              <div class="relation-title" style="font-weight:500;margin-bottom:4px;">${(e.title || e.id).substring(0, 30)}${(e.title || e.id).length > 30 ? '...' : ''}</div>
-              <div class="relation-meta" style="font-size:11px;color:#666;">${collectionName}</div>
-            </div>
-          `).join('');
-        } else if (displayMode === 'compact') {
-          grid.style.display = 'block';
-          grid.innerHTML = relationPickerItems.map(e => `
-            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.5rem;border-radius:4px;margin-bottom:0.25rem;border:1px solid #ddd;transition:all 0.2s;background:#fff;font-size:13px;">
-              <span style="font-weight:500;">${e.title || e.id}</span>
-              <span style="color:#666;margin-left:8px;">(${collectionName})</span>
-            </div>
-          `).join('');
-        } else {
-          // Default list mode
-          grid.style.display = 'block';
-          grid.innerHTML = relationPickerItems.map(e => `
-            <div class="relation-picker-item" data-id="${e.id}" tabindex="0" style="cursor:pointer;padding:0.5rem 1rem;border-radius:4px;margin-bottom:0.5rem;border:1px solid #ddd;transition:all 0.2s;background:#fff;">
-              <div class="relation-title" style="font-weight:500;">${e.title || e.id}</div>
-              <div class="relation-meta" style="font-size:12px;color:#666;">from ${collectionName}</div>
-            </div>
-          `).join('');
-        }
-        
+        // Rows are slabs; grid mode tiles them, compact drops the meta line.
+        grid.classList.toggle('is-grid', displayMode === 'grid');
+        grid.classList.toggle('is-compact', displayMode === 'compact');
+        grid.innerHTML = relationPickerItems.map(e => {
+          const alreadySelected = relationPickerSelected.some(r => r.id === e.id);
+          return `<button type="button" class="relation-picker-item${alreadySelected ? ' selected' : ''}" data-id="${relationEscape(e.id)}" aria-pressed="${alreadySelected ? 'true' : 'false'}">
+              <span class="relation-title">${relationEscape(e.title || e.id)}</span>
+              <span class="relation-meta">${relationEscape(collectionName)}</span>
+            </button>`;
+        }).join('');
+
         grid.querySelectorAll('.relation-picker-item').forEach(itemDiv => {
           itemDiv.addEventListener('click', () => {
             const id = itemDiv.getAttribute('data-id');
@@ -623,15 +603,13 @@ window.HaruFieldtypes['relation'] = {
             if (isSelected) {
               relationPickerSelected = relationPickerSelected.filter(r => r.id !== id);
               itemDiv.classList.remove('selected');
-              itemDiv.style.background = '';
-              itemDiv.style.borderColor = '#ddd';
+              itemDiv.setAttribute('aria-pressed', 'false');
             } else {
               if (!relationPickerIsMulti) {
                 // Single selection - clear others
-                grid.querySelectorAll('.relation-picker-item').forEach(div => { 
-                  div.classList.remove('selected'); 
-                  div.style.background = ''; 
-                  div.style.borderColor = '#ddd';
+                grid.querySelectorAll('.relation-picker-item').forEach(div => {
+                  div.classList.remove('selected');
+                  div.setAttribute('aria-pressed', 'false');
                 });
                 relationPickerSelected = [];
               }
@@ -645,8 +623,7 @@ window.HaruFieldtypes['relation'] = {
                 })()
               });
               itemDiv.classList.add('selected');
-              itemDiv.style.background = '#e0e7ff';
-              itemDiv.style.borderColor = '#007bff';
+              itemDiv.setAttribute('aria-pressed', 'true');
             }
             
             document.getElementById('relationPickerSelectBtn').disabled = relationPickerSelected.length === 0;
@@ -673,21 +650,24 @@ window.HaruFieldtypes['relation'] = {
       } else {
         const message = (data && data.message) ? data.message : 'Failed to load entries';
         console.error('[Relation Picker] Failed to load entries:', data);
-        grid.innerHTML = `<div class="text-danger">${message}</div>`;
+        grid.innerHTML = `<div class="relation-picker-empty is-error">${relationEscape(message)}</div>`;
       }
     } catch (error) {
       console.error('[DEBUG] Failed to load relation picker entries:', error);
-      grid.innerHTML = '<div class="text-danger">Failed to load entries</div>';
+      grid.innerHTML = '<div class="relation-picker-empty is-error">Failed to load entries</div>';
     }
   }
   
   // Event listeners
+  document.getElementById('relationPickerModal').addEventListener('click', function (e) {
+    if (e.target === this) closeRelationPicker();
+  });
   document.getElementById('relationPickerCancelBtn').onclick = closeRelationPicker;
   document.getElementById('relationPickerCancelBtn2').onclick = closeRelationPicker;
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     var picker = document.getElementById('relationPickerModal');
-    if (picker && picker.style.display === 'flex') {
+    if (picker && picker.classList.contains('is-open')) {
       closeRelationPicker();
     }
   });

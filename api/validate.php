@@ -103,11 +103,12 @@ function set_security_headers($context = 'api', ?string $cspNonce = null, array 
         $nonce = trim((string) ($cspNonce ?? ''));
         $frameSrc = $cspOverrides['frame_src'] ?? ["'self'"];
         $frameSrcValue = implode(' ', array_unique($frameSrc));
+        $connectSrcValue = implode(' ', array_unique($cspOverrides['connect_src'] ?? ["'self'"]));
         if ($nonce !== '') {
             // Admin shell: inline scripts require nonce; external scripts allowed via 'self'
-            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . $nonce . "' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . $nonce . "' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src " . $connectSrcValue . "; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
         } else {
-            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
+            header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src " . $connectSrcValue . "; frame-src " . $frameSrcValue . "; frame-ancestors 'self'; base-uri 'self'; form-action 'self'");
         }
     } elseif ($context === 'api') {
         // API endpoints - very restrictive, no scripts/styles needed

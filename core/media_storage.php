@@ -7,6 +7,57 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
 
+/**
+ * Upload allowlist: extension → MIME type. The server accepts exactly these types
+ * (api/admin_media.php) and every file picker offers exactly these extensions.
+ *
+ * @return array<string, string>
+ */
+function birkly_media_extension_mime_map(): array
+{
+    return [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+        'mp4' => 'video/mp4',
+        'm4v' => 'video/mp4',
+        'webm' => 'video/webm',
+        'ogv' => 'video/ogg',
+        'mov' => 'video/quicktime',
+        'mp3' => 'audio/mpeg',
+        'wav' => 'audio/wav',
+        'ogg' => 'audio/ogg',
+        'pdf' => 'application/pdf',
+        'doc' => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls' => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'zip' => 'application/zip',
+        'rar' => 'application/x-rar-compressed',
+    ];
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_media_allowed_mime_types(): array
+{
+    return array_values(array_unique(birkly_media_extension_mime_map()));
+}
+
+/**
+ * Value for <input type="file" accept="…"> matching the upload allowlist.
+ */
+function birkly_media_upload_accept(): string
+{
+    return implode(',', array_map(static fn (string $ext): string => '.' . $ext, array_keys(birkly_media_extension_mime_map())));
+}
+
 function birkly_media_dir(): string
 {
     return birkly_project_root() . '/media';

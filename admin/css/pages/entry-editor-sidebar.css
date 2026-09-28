@@ -599,6 +599,15 @@
 
 .entry-editor-page[data-birch] .main-actions-right { gap: var(--s-2); }
 
+/* A language with a validation error gets a red square after its name */
+.entry-editor-page[data-birch] .language-switch > button.has-error::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--danger);
+}
+
+
 /* Rail */
 .entry-editor-page[data-birch] .editor-sidebar {
   display: flex;

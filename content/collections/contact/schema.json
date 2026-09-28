@@ -27,13 +27,6 @@
             "type": "textarea",
             "required": true,
             "id": 3
-        },
-        {
-            "name": "status",
-            "label": "Status",
-            "type": "select",
-            "required": false,
-            "id": 4
         }
     ]
 }

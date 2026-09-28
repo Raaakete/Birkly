@@ -555,6 +555,57 @@ function birkly_admin_entry_sidebar_context(array $collection, ?string $entryId 
     ];
 }
 
+/**
+ * Map legacy field types (editor, media, image, …) to the fieldtypes the builder offers,
+ * so every field has a matching Field type option and saves with a canonical type.
+ * Walks nested sub-collection schemas.
+ */
+function birkly_admin_normalize_field_types(array $data): array
+{
+    require_once __DIR__ . '/../core/fieldtype_catalog.php';
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            $data[$key] = birkly_admin_normalize_field_types($value);
+        }
+    }
+    if (isset($data['name'], $data['type']) && is_string($data['type']) && $data['type'] !== '') {
+        $data['type'] = birkly_fieldtype_normalize_type_slug($data['type']);
+    }
+
+    return $data;
+}
+
+/**
+ * Legacy schemas repeat the system entry fields as schema fields: a text "slug" and a
+ * "status" select holding only publish states. The API rejects both names as reserved, so
+ * such a collection could never be saved; drop the duplicates (entries keep their system
+ * slug and status). A "status" with other options stays, and the save explains the rename.
+ *
+ * @param list<array<string, mixed>> $fields
+ * @return list<array<string, mixed>>
+ */
+function birkly_admin_drop_system_duplicate_fields(array $fields): array
+{
+    $publishStates = ['draft', 'published', 'unpublished', 'scheduled', 'pending_review'];
+    $kept = [];
+    foreach ($fields as $field) {
+        $name = strtolower((string) ($field['name'] ?? ''));
+        $type = (string) ($field['type'] ?? '');
+        if ($name === 'slug' && $type === 'text') {
+            continue;
+        }
+        if ($name === 'status' && $type === 'select') {
+            $values = array_map(static fn ($o) => strtolower((string) (is_array($o) ? ($o['value'] ?? '') : $o)), (array) ($field['options'] ?? []));
+            if (array_diff($values, $publishStates) === []) {
+                continue;
+            }
+        }
+        $kept[] = $field;
+    }
+
+    return $kept;
+}
+
 function getCollectionEditorData() {
     // Get collection data from URL parameters
     $collectionSlug = $_GET['collection'] ?? null;
@@ -707,6 +758,9 @@ function getCollectionEditorData() {
                 'parent_sub_collection' => $parentSubCollectionSlug
             ];
 
+        $collectionData = birkly_admin_normalize_field_types($collectionData);
+        $subData = birkly_admin_normalize_field_types($subData);
+
         return [
             'collection' => $collectionData,
             'sub_collection' => $subData,
@@ -746,8 +800,8 @@ function getCollectionEditorData() {
             }
             
             return [
-                'collection' => $collectionData,
-                'fields' => $fields,
+                'collection' => birkly_admin_normalize_field_types($collectionData),
+                'fields' => birkly_admin_drop_system_duplicate_fields(birkly_admin_normalize_field_types($fields)),
                 'fieldtypes' => $fieldtypes,
                 'is_sub_collection' => false,
                 'collAutoSlugChecked' => birkly_admin_collection_slug_sidebar_state($collectionData),
