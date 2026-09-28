@@ -1529,6 +1529,12 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 @media (max-width: 767px) {
   [data-birch] .setting-row { grid-template-columns: minmax(0, 1fr); }
   [data-birch] .setting-value { padding-block-start: 0; border-inline-start: 0; }
+  [data-birch] .page-bar { flex-wrap: wrap; }
+  [data-birch] .page-bar-tools { flex: 1 1 100%; flex-wrap: wrap; margin-inline-start: 0; }
+  [data-birch] .page-bar-tools > .search-field { flex: 1 1 100%; }
+  [data-birch] .list-row:has(> .row-actions > :is(.button, .btn) ~ :is(.button, .btn)) { flex-wrap: wrap; }
+  [data-birch] .list-row:has(> .row-actions > :is(.button, .btn) ~ :is(.button, .btn)) > .row-body { flex: 1 1 0; min-width: 0; }
+  [data-birch] .list-row > .row-actions:has(> :is(.button, .btn) ~ :is(.button, .btn)) { flex: 1 1 100%; flex-wrap: wrap; margin-inline-start: 0; }
 }
 
 /* ---------- Plugin pages on Birch (P96-M14) ----------
