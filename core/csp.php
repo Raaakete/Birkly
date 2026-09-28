@@ -62,6 +62,56 @@ function birkly_csp_marketplace_frame_origin(): string
 }
 
 /**
+ * Origins that core fieldtypes declare for their admin widgets (BaseField::adminCspSources()).
+ * Only https origins (scheme://host[:port]) are accepted.
+ *
+ * @return array{frame-src: list<string>, connect-src: list<string>}
+ */
+function birkly_fieldtype_admin_csp_sources(): array
+{
+    static $sources = null;
+    if ($sources !== null) {
+        return $sources;
+    }
+
+    $sources = ['frame-src' => [], 'connect-src' => []];
+    $dir = dirname(__DIR__) . '/fieldtypes';
+    if (!is_file($dir . '/BaseField.php')) {
+        return $sources;
+    }
+    require_once $dir . '/BaseField.php';
+
+    foreach (glob($dir . '/*', GLOB_ONLYDIR) ?: [] as $typeDir) {
+        $name = basename($typeDir);
+        $file = $typeDir . '/' . $name . '.php';
+        if (!is_file($file)) {
+            continue;
+        }
+        require_once $file;
+        $class = 'Birkly\\FieldTypes\\' . $name . '\\' . $name;
+        if (!class_exists($class) || !method_exists($class, 'adminCspSources')) {
+            continue;
+        }
+        foreach ((array) $class::adminCspSources() as $directive => $origins) {
+            if (!isset($sources[$directive])) {
+                continue;
+            }
+            foreach ((array) $origins as $origin) {
+                if (is_string($origin) && preg_match('#^https://[a-z0-9.-]+(:[0-9]+)?$#i', $origin)) {
+                    $sources[$directive][] = strtolower($origin);
+                }
+            }
+        }
+    }
+
+    foreach ($sources as $directive => $origins) {
+        $sources[$directive] = array_values(array_unique($origins));
+    }
+
+    return $sources;
+}
+
+/**
  * Set admin CSP headers using the per-request nonce.
  */
 function birkly_set_admin_csp_headers(): void
@@ -71,7 +121,9 @@ function birkly_set_admin_csp_headers(): void
     }
 
     require_once __DIR__ . '/../api/validate.php';
+    $fieldtypeSources = birkly_fieldtype_admin_csp_sources();
     set_security_headers('admin', birkly_csp_nonce(), [
-        'frame_src' => ["'self'", birkly_csp_marketplace_frame_origin()],
+        'frame_src' => array_merge(["'self'", birkly_csp_marketplace_frame_origin()], $fieldtypeSources['frame-src']),
+        'connect_src' => array_merge(["'self'"], $fieldtypeSources['connect-src']),
     ]);
 }
