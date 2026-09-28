@@ -12,6 +12,14 @@ class Checkbox extends BaseField {
         return 'Selection';
     }
 
+    public function getIcon(): string {
+        return 'check-circle';
+    }
+
+    public function getDescription(): string {
+        return 'A single yes or no';
+    }
+
     public function render(): string {
         $checked = $this->value ? 'checked' : '';
         return <<<HTML

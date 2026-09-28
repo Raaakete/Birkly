@@ -19,6 +19,18 @@ class OEmbed extends BaseField {
         return 'Media';
     }
 
+    public function getTypeLabel(): string {
+        return 'Embed';
+    }
+
+    public function getIcon(): string {
+        return 'play';
+    }
+
+    public function getDescription(): string {
+        return 'A video or post embedded from a link';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $placeholder = htmlspecialchars($this->placeholder, ENT_QUOTES, 'UTF-8');

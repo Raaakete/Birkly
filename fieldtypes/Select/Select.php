@@ -58,6 +58,14 @@ class Select extends BaseField {
         return 'Selection';
     }
 
+    public function getIcon(): string {
+        return 'chev-down';
+    }
+
+    public function getDescription(): string {
+        return 'One choice from a dropdown';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $optionsHtml = '<option value="">Select ' . htmlspecialchars($this->label) . '</option>';

@@ -20,6 +20,14 @@ class Date extends BaseField {
         return 'Date & Time';
     }
 
+    public function getIcon(): string {
+        return 'calendar';
+    }
+
+    public function getDescription(): string {
+        return 'A calendar date';
+    }
+
     public function render(): string {
         $required = $this->required ? 'required' : '';
         $value = htmlspecialchars($this->value ?? '');
