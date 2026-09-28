@@ -5,6 +5,7 @@ require_once __DIR__ . '/../core/cors.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../core/hosting_redirects.php';
 
 set_cors_headers('admin');
 haru_secure_session_start();
@@ -12,18 +13,7 @@ requireAuth('manage_settings');
 
 function birkly_redirects_file(): string
 {
-    return dirname(__DIR__) . '/settings/redirects.json';
-}
-
-function birkly_load_redirects(): array
-{
-    $file = birkly_redirects_file();
-    if (!is_file($file)) {
-        return [];
-    }
-
-    $decoded = json_decode((string) file_get_contents($file), true);
-    return is_array($decoded) ? array_values($decoded) : [];
+    return birkly_redirects_settings_path();
 }
 
 function birkly_save_redirects(array $redirects): bool
@@ -36,18 +26,6 @@ function birkly_save_redirects(array $redirects): bool
 
     $encoded = json_encode(array_values($redirects), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     return $encoded !== false && file_put_contents($file, $encoded) !== false;
-}
-
-function birkly_normalize_redirect_path(string $path): string
-{
-    $path = trim($path);
-    if ($path === '') {
-        return '';
-    }
-    if ($path[0] !== '/') {
-        $path = '/' . $path;
-    }
-    return preg_replace('#/+#', '/', $path) ?: $path;
 }
 
 function birkly_normalize_redirect_record(array $input, ?array $existing = null): array
