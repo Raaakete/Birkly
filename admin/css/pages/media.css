@@ -1,103 +1,95 @@
 /* ============================================
-   Birkly Admin — Media library (P56)
+   Birkly Admin — Media library
    ============================================
 
-   Chrome comes from components: .main-actions-bar, .btn-group, .input,
-   .select, .card, .badge, .modal (+ size modifier), .kv, .empty-state and
-   .loading-state. What stays here is the two-pane layout, the folder tree,
-   the asset grid, the modal preview surface and the media picker overlay —
-   none of which a component expresses.
-
-   Folder tree uses the shared bar-indicator side-nav
-   (`.side-nav.side-nav--track.media-tree` in components/tabs.css) — same
-   language as Help. `.folder-item` / `.folder-item-move` are JS hooks only.
+   Chrome comes from the Birch kit: .page-bar, .bulk-bar, .button,
+   .search-field, .select-box, .segmented and the dialog/sheet rules for
+   .modal. The page owns the folder list, the file grid, the drop zone,
+   the detail sheet body and the media picker overlay.
    ============================================ */
-
-/* `.bulk-actions-toolbar` sets `display: flex`, which outranks the user-agent
-   `[hidden]` rule. Restored so media-page.js can toggle the attribute instead
-   of an inline style. */
-.media-page .bulk-actions-toolbar[hidden] {
-  display: none;
-}
 
 /* ============================================
-   Two-pane layout — folder tree + asset grid
+   Birch media library (P96-M11)
+   Folder list on the canvas (ink bar = where you are), files as slabs
+   8px apart with a well thumbnail, list rows 4px apart, detail sheet.
    ============================================ */
+.media-page[data-birch] [hidden] { display: none; }
+
 .media-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--s-6);
   align-items: start;
   min-width: 0;
 }
 
-.media-sidebar,
-.media-main {
-  min-width: 0;
-}
-
 @media (min-width: 1024px) {
-  .media-layout {
-    grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
-  }
+  .media-layout { grid-template-columns: 180px minmax(0, 1fr); }
 }
 
-/* Track chrome from components/tabs.css; page file only owns scroll. */
+.media-sidebar,
+.media-main { min-width: 0; }
+
+.media-search { width: 240px; }
+
+/* Folders */
+.media-folders-heading {
+  margin: 0 0 var(--s-2);
+  padding-inline-start: var(--s-3);
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+}
+
 .media-tree {
-  max-height: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - 220px);
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
 
-/* ============================================
-   Toolbar controls
-
-   Two component defects force these rules; both live in components/forms.css
-   and are reported with P56-M7 rather than patched from a page file:
-
-     1. `.input-search` is declared BEFORE the shared padding block, whose
-        `input[type="search"]` selector outranks it — the icon gutter never
-        lands.
-     2. `core/helpers.css` is imported before the components, so `u-w-auto`
-        loses to `.select { width: 100% }` and the filter fills the bar.
-   ============================================ */
-.media-toolbar-search {
-  flex: 0 1 16rem;
-  min-width: 0;
+#folder-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.media-toolbar-search .input-search {
-  padding-inline-start: var(--space-8);
-}
-
-.media-toolbar-filter {
-  width: auto;
-}
-
-/* ============================================
-   Folder tree rows — indentation is set inline by media-page.js
-
-   `.folder-item` is a `.side-nav-item` (see markup in media.html /
-   media-page.js) — box, hover and active visuals come from
-   components/tabs.css. `.folder-actions` (the hover-revealed add/rename/
-   delete buttons) and the count badge are page-specific and stay here.
-   ============================================ */
-.folder-actions {
+.folder-item,
+.folder-item-move {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  margin-inline-start: auto;
-  opacity: 0;
-  transition: opacity var(--motion-fast) var(--ease-out);
+  gap: var(--s-2);
+  min-height: 32px;
+  padding: 0 var(--s-2) 0 calc(var(--s-3) + var(--level, 0) * var(--s-4));
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-2);
+  font: var(--weight-regular) var(--size-body) / var(--lh-body) var(--font-sans);
+  text-align: start;
+  cursor: pointer;
 }
 
-.folder-item:hover .folder-actions,
-.folder-item:focus-within .folder-actions {
-  opacity: 1;
+.folder-item:hover,
+.folder-item-move:hover { background: var(--surface-2); color: var(--text); }
+
+.folder-item.active {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
 }
 
-/* Move-media modal rows use `.side-nav-item.folder-item-move`
-   (components/tabs.css). `.selected` is aliased to the shared active chip. */
+.folder-item.active::before {
+  content: "";
+  position: absolute;
+  inset-block: 6px;
+  inset-inline-start: 0;
+  width: 2px;
+  background: var(--text);
+}
+
+.folder-item-move.is-selected { box-shadow: 0 0 0 2px var(--accent); color: var(--text); }
 
 .folder-name {
   flex: 1 1 auto;
@@ -107,197 +99,346 @@
   white-space: nowrap;
 }
 
-/* Move-media modal reuses the row, scrolled inside the dialog */
+.folder-count {
+  flex: none;
+  color: var(--text-3);
+  font: var(--weight-regular) var(--size-small) / var(--lh-small) var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.folder-actions {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 2px;
+  display: none;
+  align-items: center;
+  gap: 0;
+  padding-inline-start: var(--s-2);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+
+.folder-actions .icon-button {
+  width: 24px;
+  height: 24px;
+}
+
+.folder-item:hover .folder-actions,
+.folder-item:focus-within .folder-actions { display: flex; }
+
+
+
 .folder-tree-move {
   display: flex;
   flex-direction: column;
-  gap: 0.125rem;
+  gap: 2px;
   max-height: 20rem;
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
 
-/* ============================================
-   Asset grid
-   ============================================ */
+/* Path inside a nested folder */
+.media-current-folder {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  margin-block-end: var(--s-3);
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+.media-current-folder .breadcrumb-item {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.media-current-folder .is-current { color: var(--text); font-weight: var(--weight-medium); }
+
+/* Grid: slabs 8px apart */
 .media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
+  gap: var(--s-2);
   align-items: start;
   min-width: 0;
 }
 
-@media (min-width: 768px) {
-  .media-grid {
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-  }
-}
-
 .media-grid > .empty-state,
 .media-grid > .loading-state,
-.media-grid > .error-state {
-  grid-column: 1 / -1;
-}
+.media-grid > .error-state,
+.media-grid > .empty { grid-column: 1 / -1; }
 
 .media-card {
-  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--s-1) var(--s-1) var(--s-2);
 }
 
-.media-card.is-selected {
-  border-color: var(--accent-focus);
-  background: var(--surface-selected);
-}
-
-.media-card__preview {
+.media-card-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 9rem;
+  aspect-ratio: 4 / 3;
+  padding: 0;
   overflow: hidden;
-  background: var(--surface-sunken);
-  color: var(--text-tertiary);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-3);
+  cursor: pointer;
 }
 
-.media-card__preview img {
+.media-card-thumb img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.media-card__meta {
+.media-card-meta {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
+  gap: 2px;
   min-width: 0;
+  padding-inline: var(--s-1);
 }
 
-.media-card__name {
-  flex: 1 1 auto;
+.media-card-name {
   min-width: 0;
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-  text-align: start;
   overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans);
+  text-align: start;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
 }
 
-/* List view — a wide row instead of a tile. `align-items` flips to the
-   horizontal axis once the grid becomes a column flex, so it has to be reset
-   or every row shrinks to its content width. */
+.media-card-info,
+.media-card-extra {
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.media-card-extra { display: none; }
+
+.media-card-check {
+  position: absolute;
+  inset-block-start: var(--s-2);
+  inset-inline-start: var(--s-2);
+  z-index: 1;
+  display: flex;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease);
+}
+
+.media-card:hover .media-card-check,
+.media-card-check:focus-within,
+.media-card.is-selected .media-card-check,
+.media-grid.has-selection .media-card-check { opacity: 1; }
+
+/* List: rows 4px apart */
 .media-grid[data-view="list"] {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-2);
+  gap: var(--s-1);
 }
 
-@media (min-width: 768px) {
-  .media-grid[data-view="list"] .media-card {
-    display: grid;
-    grid-template-columns: 11rem minmax(0, 1fr);
-    align-items: stretch;
-  }
-
-  .media-grid[data-view="list"] .media-card__preview {
-    height: 100%;
-    min-height: 7rem;
-  }
-
-  .media-grid[data-view="list"] .media-card__meta {
-    justify-content: center;
-  }
+.media-grid[data-view="list"] .media-card {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-1) var(--s-3) var(--s-1) var(--s-1);
 }
 
-/* ============================================
-   Drop zone and folder breadcrumb
-   ============================================ */
+.media-grid[data-view="list"] .media-card-check {
+  position: static;
+  order: -1;
+  padding-inline-start: var(--s-2);
+  opacity: 1;
+}
+
+.media-grid[data-view="list"] .media-card-thumb {
+  flex: none;
+  width: 48px;
+  aspect-ratio: 1;
+}
+
+.media-grid[data-view="list"] .media-card-meta {
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--s-3);
+}
+
+.media-grid[data-view="list"] .media-card-extra {
+  display: grid;
+  flex: none;
+  grid-template-columns: 140px 96px;
+  gap: var(--s-4);
+}
+
+/* Drop zone */
 .media-drop-zone {
   display: none;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 11rem;
-  border: 2px dashed var(--accent-focus);
-  border-radius: var(--radius-md);
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  gap: var(--s-1);
+  min-height: 160px;
+  margin-block-end: var(--s-3);
+  border-color: var(--accent);
+  color: var(--text-2);
+  font-size: var(--size-small);
   text-align: center;
 }
 
-.media-drop-zone.is-active {
+.media-drop-zone strong { color: var(--text); font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans); }
+.media-drop-zone.is-active { display: flex; }
+
+/* Upload float */
+.media-upload-form {
   display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
 }
 
-.media-current-folder {
-  font-size: var(--text-sm);
+.media-upload-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-6) var(--s-4);
+  color: var(--text-2);
+  text-align: center;
+  cursor: pointer;
 }
 
-.media-current-folder .is-current {
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
+.media-upload-drop-title { color: var(--text); font-weight: var(--weight-medium); }
+.media-upload-drop input[type="file"] { max-width: 100%; font-size: var(--size-small); }
+
+/* Detail sheet */
+.media-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
 }
 
-.media-current-folder .breadcrumb-separator {
-  color: var(--text-tertiary);
-}
-
-/* ============================================
-   Media details modal — preview surface
-   ============================================ */
-.media-modal-preview {
+.media-sheet-preview {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 12rem;
-  max-height: 24rem;
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  overflow: auto;
-  overscroll-behavior: contain;
+  min-height: 200px;
+  max-height: 320px;
+  overflow: hidden;
 }
 
-.media-modal-preview img,
-.media-modal-preview video {
+.media-sheet-preview img,
+.media-sheet-preview video {
+  display: block;
   max-width: 100%;
-  border-radius: var(--radius-sm);
+  max-height: 320px;
+  object-fit: contain;
 }
 
-.media-modal-preview audio {
-  width: 100%;
+.media-sheet-preview audio { width: calc(100% - var(--s-6)); }
+
+.media-sheet-nopreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  text-align: center;
 }
+
+.media-sheet-nopreview p { margin: 0; }
+
+.media-detail-rows { display: flex; flex-direction: column; }
+
+.media-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 6px 0;
+  border-block-start: 1px solid var(--line);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.media-detail-row:first-child { border-block-start: 0; }
+.media-detail-label { flex: none; color: var(--text-3); }
+.media-detail-value { min-width: 0; color: var(--text); text-align: end; overflow-wrap: anywhere; }
+
+.media-sheet-focal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+}
+
+.media-sheet-move { margin-inline-start: auto; }
 
 /* ============================================
    Media picker overlay (admin/js/media-modal.js)
    Used by fieldtypes on any page, so it ships in the global bundle rather
    than as a runtime <style> injection.
    ============================================ */
-.media-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: var(--space-3);
+.media-picker-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
 }
 
-.media-picker-item {
-  gap: var(--space-1);
-  padding: var(--space-2);
-  text-align: center;
+.media-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: var(--s-2);
 }
+
+/* Items are slabs on the float; the thumbnail is a well */
+.media-picker-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-1) var(--s-1) var(--s-2);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+}
+
+.media-picker-item:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+.media-picker-item:focus-visible { outline: var(--focus-outline); outline-offset: 1px; }
 
 .media-picker-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 6rem;
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-  color: var(--text-tertiary);
-  font-size: var(--text-xs);
+  margin-block-end: 4px;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: var(--size-small);
 }
 
 .media-picker-thumb img {
@@ -307,16 +448,17 @@
 }
 
 .media-picker-name {
-  font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
   overflow: hidden;
+  padding-inline: var(--s-1);
+  font: var(--weight-medium) var(--size-body) / var(--lh-body) var(--font-sans);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .media-picker-size {
-  font-size: var(--text-2xs);
-  color: var(--text-secondary);
+  padding-inline: var(--s-1);
+  color: var(--text-3);
+  font-size: var(--size-small);
 }
 
 /* ============================================

@@ -2828,6 +2828,10 @@
         "entry_editor_current_version": "Aktuelle Version",
         "entry_editor_restore": "Wiederherstellen",
         "entry_editor_version_n": "Version {n}",
-        "entry_editor_revisions_unavailable": "Versionen konnten nicht geladen werden."
+        "entry_editor_revisions_unavailable": "Versionen konnten nicht geladen werden.",
+        "media_folders": "Ordner",
+        "media_list_view": "Listenansicht",
+        "media_grid_view": "Rasteransicht",
+        "media_drop_title": "Dateien zum Hochladen ablegen"
     }
 }
