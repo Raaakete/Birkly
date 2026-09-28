@@ -333,3 +333,288 @@
   color: var(--warning-fg);
   letter-spacing: 0.05em;
 }
+
+/* ============================================
+   Birch Hub (P96-M13)
+   ============================================
+   Tabs with counts; Discover is a grid of offer slabs (cover art as the
+   top of the slab, brand square, price | action foot); Installed, Updates
+   and site packs are row lists; Licenses and Upload are frames of setting
+   rows.
+   ============================================ */
+
+.hub-shell [hidden] { display: none; }
+
+.hub-shell .plugins-page > .tabs-v2-root { margin-block-end: var(--s-4); }
+
+.hub-shell #marketplace-browse-view .main-actions-bar {
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-block-end: var(--s-4);
+}
+
+.hub-shell .marketplace-search { flex: 0 1 240px; width: 240px; }
+
+.hub-shell .marketplace-result-count {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  white-space: nowrap;
+}
+
+.hub-shell .main-actions-right { flex-wrap: wrap; gap: var(--s-2); }
+.hub-shell .marketplace-filter-select { min-width: 8rem; }
+
+/* Offer grid: slabs 8px apart */
+.hub-shell .marketplace-grid { gap: var(--s-2); }
+
+.hub-shell .marketplace-offer-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.hub-shell .marketplace-offer-card:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+
+.hub-shell .marketplace-offer-media {
+  border: 0;
+  border-radius: var(--r) var(--r) 0 0;
+  background: var(--surface-2);
+}
+
+.hub-shell .marketplace-offer-icon-badge {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r);
+}
+
+.hub-shell .marketplace-offer-body {
+  gap: 2px;
+  padding: var(--s-3) var(--s-4) var(--s-2);
+}
+
+.hub-shell .marketplace-offer-title { margin: 0; }
+
+.hub-shell .marketplace-offer-title > button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-slab-title) / var(--lh-slab-title) var(--font-sans);
+  text-align: start;
+  cursor: pointer;
+}
+
+.hub-shell .marketplace-offer-title > button:hover { text-decoration: underline; }
+.hub-shell .marketplace-offer-body > .u-text-xs { color: var(--text-3); font-size: var(--size-small); }
+
+.hub-shell .marketplace-offer-summary {
+  display: -webkit-box;
+  margin: var(--s-2) 0 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.hub-shell .marketplace-offer-stats {
+  display: flex;
+  gap: var(--s-2);
+  margin: var(--s-2) 0 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+.hub-shell .marketplace-offer-stats > span:first-child { font-size: inherit; }
+
+.hub-shell .marketplace-offer-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-block-start: auto;
+  padding: var(--s-3) var(--s-4);
+  border-block-start: 1px solid var(--line);
+}
+
+.hub-shell .marketplace-offer-price {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+.hub-shell .marketplace-offer-price strong {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+.hub-shell .marketplace-offer-actions { display: flex; flex-shrink: 0; gap: var(--s-1); }
+
+/* Brand square: installed rows and site packs */
+.hub-shell .hub-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+  background: var(--text);
+  color: var(--bg);
+  font: var(--weight-semibold) var(--size-title) / 1 var(--font-sans);
+  object-fit: cover;
+}
+
+.hub-shell .hub-brand.skeleton { background: var(--surface-2); }
+
+/* Installed, Updates, site packs: row lists */
+.hub-shell .plugins-grid.list-rows { display: flex; }
+.hub-shell .plugins-grid.list-rows > :is(.empty-state, .loading-state) { width: 100%; }
+
+.hub-shell .plugin-row { align-items: center; padding-block: var(--s-3); }
+.hub-shell .plugin-row.has-update { box-shadow: inset 2px 0 0 var(--info); }
+
+.hub-shell .plugin-row .row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  white-space: normal;
+}
+
+.hub-shell .plugin-row-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+  cursor: pointer;
+}
+
+.hub-shell button.plugin-row-name:hover { text-decoration: underline; }
+
+.hub-shell .plugin-row .plugin-row-text {
+  display: -webkit-box;
+  max-width: 72ch;
+  margin: 2px 0 0;
+  overflow: hidden;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.hub-shell .plugin-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-block-start: var(--s-2);
+}
+
+.hub-shell .plugin-row .row-actions { gap: var(--s-2); }
+.hub-shell .icon-button.is-danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+.hub-shell .section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-block-end: var(--s-3);
+  padding: 0;
+  border: 0;
+}
+
+.hub-shell .section-title {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+}
+
+/* Empty and loading states are dashed */
+.hub-shell .plugins-page :is(.empty-state, .empty-state--compact) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  background: none;
+  color: var(--text-3);
+  text-align: center;
+}
+
+.hub-shell .plugins-page :is(.empty-state, .empty-state--compact) p { margin: 0; }
+.hub-shell .plugins-page .empty-state-title { color: var(--text); font-weight: var(--weight-semibold); }
+.hub-shell .plugins-page .empty-state-actions { display: flex; gap: var(--s-2); margin-block-start: var(--s-2); }
+
+/* Licenses and Upload: frames of setting rows */
+.hub-shell .hub-licenses-layout { gap: var(--s-6); }
+
+@media (min-width: 1024px) {
+  .hub-shell .hub-licenses-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+.hub-shell .hub-license-form,
+.hub-shell .hub-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-width: none;
+}
+
+.hub-shell .hub-upload-panel { max-width: 720px; }
+.hub-shell :is(.hub-license-form, .hub-upload-form) > .setting-actions { margin-block-start: var(--s-3); }
+
+.hub-shell #hub-licenses-grid .card--flush {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.hub-shell #hub-licenses-grid .data-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.hub-shell #hub-licenses-grid .data-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-list);
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.hub-shell #hub-licenses-grid .data-list-main { display: flex; flex: 1 1 auto; flex-direction: column; min-width: 0; }
+.hub-shell #hub-licenses-grid .data-list-title { color: var(--text); font-weight: var(--weight-semibold); }
+.hub-shell #hub-licenses-grid .data-list-meta { color: var(--text-3); font-size: var(--size-small); }
+.hub-shell #hub-licenses-grid .data-list-actions { display: flex; align-items: center; gap: var(--s-2); }
+
+.hub-shell .hub-licenses-layout > .frame { margin: 0; }
+
+/* Cover badges: ink chips on the art; pre-release in danger */
+.hub-shell .marketplace-offer-media-badges .badge {
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--size-caption);
+}
+
+.hub-shell .marketplace-offer-media-badges .badge-danger { background: var(--danger); color: var(--on-status); }
+.hub-shell .marketplace-offer-media-badges .badge-warning { background: var(--warning); color: var(--on-status); }
+.hub-shell .marketplace-offer-media-badges .badge-accent { background: var(--bg); color: var(--text); }

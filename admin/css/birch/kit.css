@@ -1359,4 +1359,167 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 }
 
 /* The hidden attribute always wins over component display values */
+/* ---------- Setting rows and row lists (P96-M12) ----------
+   A setting row is a slab split by a hairline into label and help | value.
+   A row list is slabs 4px apart: icon or avatar · title and meta · actions. */
+[data-birch] .setting-label > :is(small, .form-help, .settings-help) {
+  margin: 0;
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .setting-value > :is(.input, select, textarea, input:not([type="checkbox"]):not([type="radio"])) { width: 100%; }
+
+[data-birch] .setting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+[data-birch] .list-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-birch] .list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-list);
+  margin: 0;
+  padding: var(--s-2) var(--s-3) var(--s-2) var(--s-4);
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+/* Setting row: label and help | value */
+[data-birch] .setting-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 32%) minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+[data-birch] .setting-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--s-3) var(--s-4);
+}
+
+[data-birch] .setting-label > label {
+  margin: 0;
+  color: var(--text);
+  font: var(--weight-medium) var(--size-title) / var(--lh-title) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-birch] .setting-value {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--s-2);
+  min-width: 0;
+  padding: var(--s-2) var(--s-4);
+  border-inline-start: 1px solid var(--line);
+}
+
+[data-birch] .setting-value input[type="file"] {
+  font-size: var(--size-small);
+  color: var(--text-2);
+}
+
+[data-birch] .list-row .row-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+[data-birch] .list-row .row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--s-3);
+  white-space: normal;
+}
+
+[data-birch] .row-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--s-1);
+  margin-inline-start: auto;
+}
+
+[data-birch] .row-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-birch] .row-sublist > li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
+[data-birch] .row-sublist .birkly-icon { color: var(--text-3); }
+
+[data-birch] .tag-detail { color: var(--text-3); }
+
+[data-birch] .setting-value.setting-inline {
+  flex-direction: row;
+  align-items: center;
+}
+
+[data-birch] .setting-value.setting-inline > .input { flex: 1 1 auto; width: auto; min-width: 0; }
+[data-birch] .setting-value.setting-inline > .btn { flex-shrink: 0; }
+
+/* Grouped setting rows (notification preferences) */
+[data-birch] .setting-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .setting-group-title {
+  margin: var(--s-3) 0 var(--s-1);
+  color: var(--text-3);
+  font: var(--weight-medium) var(--size-caption) / var(--lh-caption) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+[data-birch] .setting-group-title:first-child { margin-block-start: 0; }
+
+[data-birch] :is(.setting-row, .list-row) .input {
+  border-color: transparent;
+  background-color: var(--surface-2);
+}
+
+[data-birch] :is(.setting-row, .list-row) .input:hover:not(:focus):not(:disabled) { background-color: var(--surface-3); }
+[data-birch] :is(.setting-row, .list-row) .input:focus { border-color: var(--accent); background-color: var(--surface); }
+
+@media (max-width: 767px) {
+  [data-birch] .setting-row { grid-template-columns: minmax(0, 1fr); }
+  [data-birch] .setting-value { padding-block-start: 0; border-inline-start: 0; }
+}
+
 [data-birch] [hidden] { display: none; }
