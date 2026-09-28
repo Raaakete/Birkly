@@ -75,14 +75,6 @@ a.btn { text-decoration: none; }
   flex-shrink: 0;
 }
 
-/* Legacy wrap from the removed bounce hover — keep layout-neutral */
-.btn > .btn-spin {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: inherit;
-}
-
 /* ============================================
    Variants
    ============================================ */

@@ -117,19 +117,6 @@
 .table--compact tbody td { height: 2rem; padding-block: var(--s-1); }
 .table--compact thead th { height: 2rem; }
 
-.table--bordered th,
-.table--bordered td { border: 1px solid var(--line); }
-
-.table--striped tbody tr:nth-child(even) { background: var(--surface-2); }
-.table--striped tbody tr:nth-child(even):hover { background: var(--surface-2); }
-
-/* Sticky header inside a scrolling container */
-.table--sticky thead th {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: var(--z-raised);
-}
-
 /* Sortable headers */
 .table th[aria-sort],
 .table th.sortable { cursor: pointer; user-select: none; }

@@ -114,13 +114,6 @@ a.data-list-item:focus-visible .dash-row-arrow {
   gap: var(--s-3);
 }
 
-/* Long feeds scroll inside their widget instead of stretching the grid row. */
-.dash-scroll {
-  max-height: 20rem;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-}
-
 /* ============================================
    Customize dashboard — draggable widget picker
    ============================================ */
@@ -238,11 +231,6 @@ a.data-list-item:focus-visible .dash-row-arrow {
   flex-shrink: 0;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
-}
-
-.analytics-report__footnote {
-  margin: 0;
-  font-size: var(--size-small);
 }
 
 /* First-visit welcome modal — highlight AI setup card */

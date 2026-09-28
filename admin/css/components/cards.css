@@ -323,12 +323,6 @@ a.data-list-item:hover,
   z-index: var(--z-dragging);
 }
 
-.drop-target,
-.collection-card.drop-target {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
 .drag-handle {
   display: inline-flex;
   align-items: center;

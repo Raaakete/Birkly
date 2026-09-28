@@ -294,7 +294,6 @@ label.field-title { cursor: pointer; }
 [data-birch] .subgroup-header:hover .group-actions,
 [data-birch] .group-actions:focus-within { opacity: 1; }
 
-
 [data-birch] .group-drag-handle {
   display: inline-flex;
   color: var(--text-3);
@@ -433,9 +432,6 @@ label.field-title { cursor: pointer; }
   pointer-events: none;
   z-index: var(--z-dragging);
 }
-
-body.dragging-group .drop-zone { pointer-events: none; }
-body.dragging-group .drop-zone.drag-over { background: transparent; }
 
 /* First-run starter templates */
 [data-birch] .starter-template-card { text-align: start; font: inherit; }
@@ -612,55 +608,6 @@ body.entries-filter-drawer-open { overflow: hidden; }
   box-shadow: none;
 }
 
-.entries-page .bulk-actions-content--entries {
-  width: 100%;
-}
-
-.entries-page .bulk-actions-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-3);
-}
-
-.entries-page .bulk-actions-row__left,
-.entries-page .bulk-actions-row__right {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.entries-page .bulk-actions-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  margin: 0;
-  font-size: var(--size-small);
-  font-weight: var(--weight-medium);
-  color: var(--text-2);
-}
-
-.entries-page .bulk-actions-badge__count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.625rem;
-  height: 1.625rem;
-  padding-inline: var(--s-2);
-  border-radius: var(--r);
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-weight: var(--weight-semibold);
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.entries-page .bulk-actions-clear {
-  flex-shrink: 0;
-}
-
 .entries-bulk-edit-modal__intro {
   margin-block: 0 var(--s-4);
   color: var(--text-2);
@@ -679,34 +626,6 @@ body.entries-filter-drawer-open { overflow: hidden; }
 
 body.entries-bulk-edit-modal-open {
   overflow: hidden;
-}
-
-.entries-page .bulk-actions-field-form > .custom-select {
-  flex-shrink: 0;
-  min-width: 0;
-}
-
-.entries-page .bulk-actions-field-form .custom-select-trigger,
-.entries-page .bulk-actions-field-form .input {
-  height: var(--control-sm);
-  padding-inline: var(--s-2);
-  font-size: var(--size-small);
-  width: 100%;
-}
-
-.entries-page .bulk-actions-field-form .input {
-  min-width: 0;
-}
-
-.entries-page .bulk-actions-field-form #bulk-field-apply-btn {
-  justify-self: start;
-}
-
-@media (min-width: 640px) {
-  .entries-page .bulk-actions-field-form #bulk-field-apply-btn {
-    justify-self: stretch;
-    white-space: nowrap;
-  }
 }
 
 .entries-pagination {
