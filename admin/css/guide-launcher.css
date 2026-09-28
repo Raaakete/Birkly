@@ -744,3 +744,52 @@ body.ai-chat-window-open .guide-panel {
     inset-inline-end: max(var(--space-4), env(safe-area-inset-right, 0px));
   }
 }
+
+/* ============================================
+   Birch (P96-M13): the panel is a float (grey body, sheet shadow, one 6px
+   radius); tips, progress and journeys are white slabs on it; the AI nudge
+   is an info signal; labels are sentence case.
+   ============================================ */
+.guide-panel {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: var(--shadow-sheet);
+}
+
+.guide-panel-header { border-block-end: 0; background: none; }
+.guide-panel-brand__icon { border-radius: var(--r); }
+.guide-panel-title { color: var(--text); font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans); }
+.guide-panel-subtitle { color: var(--text-3); font-size: var(--size-small); }
+
+.guide-panel-tabs { border-radius: var(--r); background: var(--surface-2); }
+.guide-panel-tab { border-radius: var(--r-inset); }
+.guide-panel-tab.is-active { background: var(--surface); color: var(--text); box-shadow: none; }
+
+.guide-section-eyebrow {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.guide-setup-progress,
+.guide-tip-block,
+.guide-journey,
+.guide-concept-card,
+.guide-checklist__item {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+.guide-setup-progress__track { height: 4px; border-radius: 0; background: var(--surface-2); }
+.guide-setup-progress__fill { border-radius: 0; background: var(--accent); }
+
+.guide-ai-nudge {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--info-soft);
+}
+
+.guide-checklist__marker { border-radius: var(--r-inset); }

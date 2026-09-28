@@ -105,7 +105,7 @@
             group.forEach(function (result) {
                 const globalIndex = results.indexOf(result);
                 html += '<button type="button" class="search-result-item' + (selectedIndex === globalIndex ? ' selected' : '') + '" data-index="' + globalIndex + '" data-url="' + escapeHtml(result.url || '#') + '">';
-                html += '<span class="search-result-icon">' + escapeHtml(result.icon || '📌') + '</span>';
+                html += '<span class="search-result-icon" aria-hidden="true">' + resultIcon(result) + '</span>';
                 html += '<div class="search-result-content">';
                 html += '<div class="search-result-title">' + escapeHtml(result.title || t('search_untitled', 'Untitled')) + '</div>';
                 html += '<div class="search-result-subtitle">' + escapeHtml(result.subtitle || '') + '</div>';
@@ -115,6 +115,19 @@
         });
 
         container.innerHTML = html;
+    }
+
+    const RESULT_ICONS = { collection: 'folder', entry: 'content', media: 'media', user: 'user', page: 'template', setting: 'sliders', plugin: 'layers' };
+
+    function resultIcon(result) {
+        const name = RESULT_ICONS[result.type];
+        if (name && window.Birkly && typeof window.Birkly.icon === 'function') {
+            const svg = window.Birkly.icon(name);
+            if (svg) {
+                return svg;
+            }
+        }
+        return escapeHtml(result.icon || '📌');
     }
 
     function closeSearch() {

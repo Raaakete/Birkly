@@ -262,3 +262,9 @@
 }
 .avatar-sm { width: var(--control-sm); height: var(--control-sm); font-size: var(--text-2xs); }
 .avatar-lg { width: 3rem; height: 3rem; font-size: var(--text-md); }
+
+/* Birch 2FA grace banner (partials/2fa-grace-banner.php): a warning signal
+   above the page content, with its action inside as a secondary button. */
+.grace-banner { margin-block-end: var(--s-4); }
+.grace-banner .signal { align-items: center; }
+.grace-banner .signal > .btn { flex-shrink: 0; }

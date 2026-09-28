@@ -587,3 +587,41 @@
   .ai-chat-window { inset-inline: var(--space-4); inset-block-end: 5rem; width: auto; }
   .ai-chat-message { max-width: 92%; }
 }
+
+/* ============================================
+   Birch (P96-M13): the chat window is a float — grey body, sheet shadow,
+   one 6px radius; the header sits on a hairline; the no-connection state is
+   dashed; FAB actions are square-cornered.
+   ============================================ */
+.ai-chat-window {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--bg);
+  box-shadow: var(--shadow-sheet);
+}
+
+.ai-chat-window.ai-chat-fullscreen { border-radius: 0; }
+
+.ai-chat-header { border-block-end: 1px solid var(--line); background: none; }
+.ai-chat-connection-inline { border-radius: var(--r); color: var(--text); }
+.ai-chat-connection-inline:hover { background-color: var(--surface-2); }
+
+.ai-chat-welcome {
+  margin: var(--s-4);
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  color: var(--text-3);
+  text-align: center;
+}
+
+.ai-chat-welcome h3 { margin: 0 0 var(--s-1); color: var(--text); font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans); }
+.ai-chat-welcome p { margin: 0 0 var(--s-3); font-size: var(--size-small); }
+
+.assist-fab-action {
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-menu);
+}
+
+.ai-chat-floating-btn.assist-fab-main { border-radius: var(--r); }
