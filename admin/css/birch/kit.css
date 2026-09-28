@@ -265,6 +265,8 @@
 
 [data-birch] .search-field > .birkly-icon {
   position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
   inset-inline-start: var(--s-3);
   color: var(--text-3);
   pointer-events: none;
@@ -460,7 +462,8 @@
 }
 
 [data-birch] .tabs > [aria-selected="true"],
-[data-birch] .tabs > [aria-current="page"] {
+[data-birch] .tabs > [aria-current="page"],
+[data-birch] .tabs > .active {
   border-block-end-color: var(--text);
   color: var(--text);
   font-weight: var(--weight-medium);
