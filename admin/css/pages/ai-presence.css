@@ -25,6 +25,13 @@
   padding-block-end: 32px;
 }
 
+.ap-hub .empty-state {
+  padding: var(--s-5);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--r);
+  color: var(--text-3);
+}
+
 #ap-hub-tablist .tab {
   display: inline-flex;
   align-items: center;

@@ -1598,6 +1598,8 @@
         if (!list) return;
         list.innerHTML = '';
         var count = state.suggestions.length;
+        var acceptAll = document.getElementById('ap-accept-all-suggestions');
+        if (acceptAll) acceptAll.hidden = count === 0;
         [badge, badgeFab].forEach(function (el) {
             if (!el) return;
             if (count) {

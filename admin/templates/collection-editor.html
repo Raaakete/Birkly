@@ -1388,15 +1388,19 @@ echo htmlspecialchars($formCode);
 <div id="col-save-success-modal" class="modal col-save-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="col-save-success-title" aria-describedby="col-save-success-message">
     <div class="modal-backdrop" data-col-modal-close="col-save-success-modal"></div>
     <div class="modal-content modal--md">
-        <div class="modal-body ap-publish-success-body ag-wizard-panel--success">
-            <div class="ag-wizard-success-icon" aria-hidden="true">✓</div>
-            <h3 id="col-save-success-title"><?= __('admin.col_save_success_title') ?></h3>
-            <p id="col-save-success-message" class="ag-wizard-success-meta"><?= __('admin.col_save_success_message') ?></p>
-            <div class="ag-wizard-success-actions">
-                <a class="btn btn-primary" id="col-save-add-entry" href="#"><?= __('admin.col_save_add_first_entry') ?></a>
-                <a class="btn btn-secondary" id="col-save-back" href="<?= htmlspecialchars(admin_url('content')) ?>"><?= __('admin.col_save_back_to_collections') ?></a>
-                <button type="button" class="btn btn-secondary" id="col-save-continue" data-col-modal-close="col-save-success-modal"><?= __('admin.col_save_continue_editing') ?></button>
+        <div class="modal-header">
+            <div>
+                <h2 class="dialog-title" id="col-save-success-title"><?= __('admin.col_save_success_title') ?></h2>
+                <p class="dialog-text" id="col-save-success-message"><?= __('admin.col_save_success_message') ?></p>
             </div>
+            <button type="button" class="icon-button modal-close" data-col-modal-close="col-save-success-modal" aria-label="<?= htmlspecialchars(__('admin.close')) ?>">
+                <?= birkly_icon('x') ?>
+            </button>
+        </div>
+        <div class="modal-footer">
+            <a class="button is-quiet" id="col-save-back" href="<?= htmlspecialchars(admin_url('content')) ?>"><?= __('admin.col_save_back_to_collections') ?></a>
+            <button type="button" class="button" id="col-save-continue"><?= __('admin.col_save_continue_editing') ?></button>
+            <a class="button is-main" id="col-save-add-entry" href="#"><?= __('admin.col_save_add_first_entry') ?></a>
         </div>
     </div>
 </div>

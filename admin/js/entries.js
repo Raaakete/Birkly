@@ -755,9 +755,9 @@
         if (totalPages > 1) {
             if (page > 1) {
                 const prevState = Object.assign({}, listState, meta, { page: page - 1 });
-                controls += '<a class="button is-small" href="' + escapeHtml(buildEntriesPageUrl(prevState)) + '" data-entries-page="' + escapeHtml(page - 1) + '">Previous</a>';
+                controls += '<a class="button is-small" href="' + escapeHtml(buildEntriesPageUrl(prevState)) + '" data-entries-page="' + escapeHtml(page - 1) + '">' + escapeHtml(t('entries_pagination_previous', 'Previous')) + '</a>';
             } else {
-                controls += '<span class="button is-small" aria-disabled="true">Previous</span>';
+                controls += '<span class="button is-small" aria-disabled="true">' + escapeHtml(t('entries_pagination_previous', 'Previous')) + '</span>';
             }
 
             controls += '<div class="entries-pagination__pages">';
@@ -773,15 +773,17 @@
 
             if (page < totalPages) {
                 const nextState = Object.assign({}, listState, meta, { page: page + 1 });
-                controls += '<a class="button is-small" href="' + escapeHtml(buildEntriesPageUrl(nextState)) + '" data-entries-page="' + escapeHtml(page + 1) + '">Next</a>';
+                controls += '<a class="button is-small" href="' + escapeHtml(buildEntriesPageUrl(nextState)) + '" data-entries-page="' + escapeHtml(page + 1) + '">' + escapeHtml(t('entries_pagination_next', 'Next')) + '</a>';
             } else {
-                controls += '<span class="button is-small" aria-disabled="true">Next</span>';
+                controls += '<span class="button is-small" aria-disabled="true">' + escapeHtml(t('entries_pagination_next', 'Next')) + '</span>';
             }
         }
 
         return '' +
             '<div class="entries-pagination__summary">' +
-                (total > 0 ? ('Showing ' + rangeStart + '-' + rangeEnd + ' of ' + total + ' entries') : 'No entries found') +
+                escapeHtml(total === 1 ? t('entries_pagination_showing_one', 'Showing 1 entry')
+                    : total > 0 ? t('entries_pagination_showing', 'Showing {start}–{end} of {total} entries', { start: rangeStart, end: rangeEnd, total: total })
+                    : t('entries_pagination_none', 'No entries found')) +
             '</div>' +
             '<div class="entries-pagination__controls">' + controls + '</div>';
     }
