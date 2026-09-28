@@ -296,12 +296,12 @@
 }
 
 .desktop-mcp-note-info {
-  background: color-mix(in srgb, var(--color-info, #3b82f6) 8%, var(--surface-2));
-  border-color: color-mix(in srgb, var(--color-info, #3b82f6) 25%, transparent);
+  background: var(--info-soft);
+  border-color: transparent;
 }
 
 .desktop-mcp-note-warning {
-  background: color-mix(in srgb, var(--color-warning, #eab308) 10%, var(--surface-2));
+  background: var(--warning-soft);
 }
 
 .desktop-mcp-note-title {
@@ -339,7 +339,7 @@
   border-radius: 999px;
   font-weight: var(--weight-semibold);
   font-size: var(--size-small);
-  background: var(--surface-elevated, var(--surface-base));
+  background: var(--surface);
   border: 1px solid var(--line);
   flex-shrink: 0;
 }
@@ -365,7 +365,7 @@
   padding: var(--s-3) var(--s-4);
   border: 2px solid var(--line);
   border-radius: var(--r);
-  background: var(--surface-base);
+  background: var(--surface);
   cursor: pointer;
   font: inherit;
   text-align: center;
@@ -400,7 +400,7 @@
   padding: var(--s-3);
   border-radius: var(--r);
   border: 1px solid var(--line);
-  background: var(--surface-base);
+  background: var(--surface);
   resize: vertical;
   min-height: 5rem;
 }

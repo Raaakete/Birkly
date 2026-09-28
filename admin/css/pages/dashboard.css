@@ -247,8 +247,8 @@ a.data-list-item:focus-visible .dash-row-arrow {
 
 /* First-visit welcome modal — highlight AI setup card */
 .onboarding-welcome-ai-highlight {
-  border: 2px solid var(--accent-primary, var(--mint));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary, var(--mint)) 25%, transparent);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-line);
 }
 
 .onboarding-welcome-ai-badge {
