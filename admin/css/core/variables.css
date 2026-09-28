@@ -136,6 +136,7 @@
   --dur-3: 320ms;
   --dur-4: 640ms;
   --dur-px: 1s;
+  --dur-frame: calc(var(--dur-px) / 8);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
   /* 8. Focus */
