@@ -1133,6 +1133,43 @@
                 input.removeAttribute('aria-describedby');
             });
         });
+        document.querySelectorAll('.language-tab-btn.has-error').forEach((btn) => btn.classList.remove('has-error'));
+    }
+
+    /**
+     * Multilanguage entries render one block per language. The API names the
+     * language in the message ("Title is required (de)"); otherwise use the first
+     * language whose control is empty.
+     */
+    function findErrorBlock(fieldName, message) {
+        const name = CSS.escape(fieldName);
+        const langBlocks = document.querySelectorAll(`.field-block[data-field-name="${name}"][data-lang]`);
+        if (langBlocks.length) {
+            const match = /\(([a-z]{2}(?:-[a-z0-9]+)?)\)\s*$/i.exec(String(message));
+            if (match) {
+                const byLang = document.querySelector(`.field-block[data-field-name="${name}"][data-lang="${CSS.escape(match[1].toLowerCase())}"]`);
+                if (byLang) return byLang;
+            }
+            const empty = Array.from(langBlocks).find((block) => {
+                const control = block.querySelector('input:not([type="hidden"]), textarea, select');
+                return control && !String(control.value || '').trim();
+            });
+            return empty || langBlocks[0];
+        }
+        return document.querySelector(`.field-block[data-field-name="${name}"]`)
+            || document.querySelector(`#field_${name}`)?.closest('.field-block')
+            || document.querySelector(`[name="${name}"]`)?.closest('.field-block');
+    }
+
+    function showLanguageOf(block) {
+        const lang = block && block.getAttribute('data-lang');
+        if (!lang) return;
+        const btn = document.querySelector(`.language-tab-btn[data-lang="${CSS.escape(lang)}"]`);
+        if (!btn) return;
+        btn.classList.add('has-error');
+        if (!btn.classList.contains('active')) {
+            btn.click();
+        }
     }
 
     /**
@@ -1154,9 +1191,7 @@
                 return;
             }
 
-            const block = document.querySelector(`.field-block[data-field-name="${CSS.escape(fieldName)}"]`)
-                || document.querySelector(`#field_${CSS.escape(fieldName)}`)?.closest('.field-block')
-                || document.querySelector(`[name="${CSS.escape(fieldName)}"]`)?.closest('.field-block');
+            const block = findErrorBlock(fieldName, message);
 
             if (!block) {
                 return;
@@ -1186,8 +1221,13 @@
         });
 
         if (firstBlock) {
+            showLanguageOf(firstBlock);
             firstBlock.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
+        document.querySelectorAll('.field-block--error[data-lang]').forEach((block) => {
+            const btn = document.querySelector(`.language-tab-btn[data-lang="${CSS.escape(block.getAttribute('data-lang'))}"]`);
+            if (btn) btn.classList.add('has-error');
+        });
 
         return applied;
     }

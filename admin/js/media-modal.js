@@ -159,9 +159,18 @@ window.Birkly.MediaModal = {
                     <button type="button" class="modal-close" data-media-modal-action="close" aria-label="Close">${birklyMediaModalIcon('x', 13) || '&times;'}</button>
                 </div>
                 <div class="modal-body media-picker-body">
+                    <div class="media-picker-bar">
+                    <span class="select-box">
+                        <select id="birkly-media-modal-folder" aria-label="Folder">
+                            <option value="all">All media</option>
+                            <option value="">Root folder</option>
+                        </select>
+                        ${birklyMediaModalIcon('chev-down', 13)}
+                    </span>
                     <div class="media-upload-section">
-                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.mov,.mp3,.wav" hidden>
+                        <input type="file" id="birkly-media-modal-upload" accept="${birklyMediaModalEscapeHtml((window.Birkly && Birkly.mediaUploadAccept) || '')}" hidden>
                         <button type="button" class="button" data-media-modal-action="upload-trigger">${birklyMediaModalIcon('upload', 13)}Upload new media</button>
+                    </div>
                     </div>
                     <div class="media-picker-grid" id="birkly-media-modal-grid">
                         <div class="loading-state"><p class="empty-state-text">Loading media…</p></div>
@@ -201,6 +210,12 @@ window.Birkly.MediaModal = {
             }
         });
 
+        const folderSelect = this.modal.querySelector('#birkly-media-modal-folder');
+        if (folderSelect) {
+            folderSelect.addEventListener('change', () => this.loadMedia());
+            this.loadFolders(folderSelect);
+        }
+
         const fileInput = this.modal.querySelector('#birkly-media-modal-upload');
         if (fileInput && this.accept && this.accept !== '*/*' && this.accept !== '*') {
             fileInput.setAttribute('accept', this.accept);
@@ -218,6 +233,26 @@ window.Birkly.MediaModal = {
         
     },
     
+    // Folders for the picker's filter (media page folder tree, flattened)
+    async loadFolders(select) {
+        try {
+            const response = await fetch(Birkly.url('/api/admin_media.php?action=folders'), { credentials: 'same-origin' });
+            const result = await response.json();
+            if (result.status !== 'ok' || !Array.isArray(result.data)) return;
+            result.data.forEach((folder) => {
+                const option = document.createElement('option');
+                option.value = folder.path || '';
+                option.textContent = '\u00a0\u00a0'.repeat(Number(folder.level || 0)) + (folder.name || folder.path || '');
+                select.appendChild(option);
+            });
+        } catch (_) { /* the filter stays at All media / Root folder */ }
+    },
+
+    currentFolder() {
+        const select = this.modal && this.modal.querySelector('#birkly-media-modal-folder');
+        return select ? select.value : 'all';
+    },
+
     // Load media from API
     async loadMedia() {
         
@@ -234,7 +269,7 @@ window.Birkly.MediaModal = {
         grid.innerHTML = '<div class="loading-state"><p class="empty-state-text">Loading media…</p></div>';
         
         try {
-            const response = await fetch(Birkly.url('/api/admin_media.php?action=list'), { credentials: 'same-origin' });
+            const response = await fetch(Birkly.url('/api/admin_media.php?action=list&folder=' + encodeURIComponent(this.currentFolder())), { credentials: 'same-origin' });
             const result = await response.json();
             
             // Check if modal is still open before rendering
@@ -307,6 +342,8 @@ window.Birkly.MediaModal = {
         
         const formData = new FormData();
         formData.append('file', file);
+        const folder = this.currentFolder();
+        formData.append('folder', folder === 'all' ? '' : folder);
         const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
         if (csrf) formData.append('_csrf', csrf);
 

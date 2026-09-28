@@ -12,6 +12,11 @@ class Map extends BaseField {
         return 'Location';
     }
 
+    // Leaflet ships inside this fieldtype (leaflet/); tiles are images (img-src https:).
+    public static function adminCspSources(): array {
+        return ['connect-src' => ['https://nominatim.openstreetmap.org']];
+    }
+
     public function getIcon(): string {
         return 'map-pin';
     }

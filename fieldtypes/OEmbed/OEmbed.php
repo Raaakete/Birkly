@@ -23,6 +23,10 @@ class OEmbed extends BaseField {
         return 'Embed';
     }
 
+    public static function adminCspSources(): array {
+        return ['frame-src' => ['https://www.youtube.com', 'https://www.youtube-nocookie.com', 'https://player.vimeo.com']];
+    }
+
     public function getIcon(): string {
         return 'play';
     }

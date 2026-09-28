@@ -50,6 +50,33 @@ function getUserInfo($userId) {
     return null;
 }
 
+/** Template lines for each schema field, in the canonical syntax (docs/TEMPLATE_LANGUAGE_SPEC.md). */
+if (!function_exists('birkly_entry_editor_example_fields')) {
+    function birkly_entry_editor_example_fields(array $fields): string
+    {
+        require_once dirname(__DIR__, 2) . '/core/fieldtype_catalog.php';
+        $out = '';
+        foreach ($fields as $field) {
+            $name = (string) ($field['name'] ?? '');
+            if ($name === '' || $name === 'title') {
+                continue;
+            }
+            switch (birkly_fieldtype_normalize_type_slug((string) ($field['type'] ?? ''))) {
+                case 'file':
+                    $out .= "  {media_img('" . $name . "', title)}\n";
+                    break;
+                case 'checkbox':
+                case 'toggle':
+                    $out .= "  {if entry has '" . $name . "'}\n    <span>" . htmlspecialchars((string) ($field['label'] ?? $name), ENT_QUOTES, 'UTF-8') . "</span>\n  {endif}\n";
+                    break;
+                default:
+                    $out .= "  <div>{'" . $name . "'}</div>\n";
+            }
+        }
+        return $out;
+    }
+}
+
 // Check if this is a sub-entry
 $subCollectionSlug = $sub_collection ?? $_GET['sub_collection'] ?? null;
 $subEntryId = $sub_entry_id ?? $_GET['sub_entry'] ?? null;
@@ -578,30 +605,8 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
 $exampleSlug = !empty($entry['slug']) ? htmlspecialchars($entry['slug']) : 'example-entry-slug';
 $entryExample = "{from '" . $collectionSlug . "' get entry '" . $exampleSlug . "'}\n";
-$entryExample .= "  <h1>{ title }</h1>\n";
-if (!empty($fields)) {
-    foreach ($fields as $field) {
-        $fieldName = $field['name'] ?? '';
-        $fieldLabel = $field['label'] ?? $fieldName;
-        if ($field['type'] === 'media') {
-            $entryExample .= sprintf(
-                '  <img src="{ %s }" alt="%s">' . "\n",
-                $fieldName,
-                htmlspecialchars($fieldLabel, ENT_QUOTES, 'UTF-8')
-            );
-        } elseif ($field['type'] === 'boolean') {
-            $entryExample .= "  {if " . $fieldName . " is on}\n";
-            $entryExample .= "    <span>It is featured</span>\n";
-            $entryExample .= "  {endif}\n";
-        } elseif ($field['type'] === 'editor') {
-            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } elseif ($field['type'] === 'select') {
-            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } else {
-            $entryExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        }
-    }
-}
+$entryExample .= "  <h1>{title}</h1>\n";
+$entryExample .= birkly_entry_editor_example_fields($fields ?? []);
 $entryExample .= "{endget}";
 echo htmlspecialchars($entryExample);
 ?></code></pre>
@@ -621,30 +626,8 @@ echo htmlspecialchars($entryExample);
                                     <pre class="code-example" id="collection-example-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
 $collectionExample = "{for each entry in '" . $collectionSlug . "'}\n";
-$collectionExample .= "  <h1>{ title }</h1>\n";
-if (!empty($fields)) {
-    foreach ($fields as $field) {
-        $fieldName = $field['name'] ?? '';
-        $fieldLabel = $field['label'] ?? $fieldName;
-        if ($field['type'] === 'media') {
-            $collectionExample .= sprintf(
-                '  <img src="{ %s }" alt="%s">' . "\n",
-                $fieldName,
-                htmlspecialchars($fieldLabel, ENT_QUOTES, 'UTF-8')
-            );
-        } elseif ($field['type'] === 'boolean') {
-            $collectionExample .= "  {if " . $fieldName . " is on}\n";
-            $collectionExample .= "    <span>It is featured</span>\n";
-            $collectionExample .= "  {endif}\n";
-        } elseif ($field['type'] === 'editor') {
-            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } elseif ($field['type'] === 'select') {
-            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        } else {
-            $collectionExample .= "  <div>{ " . $fieldName . " }</div>\n";
-        }
-    }
-}
+$collectionExample .= "  <h1>{title}</h1>\n";
+$collectionExample .= birkly_entry_editor_example_fields($fields ?? []);
 $collectionExample .= "{endfor}";
 echo htmlspecialchars($collectionExample);
 ?></code></pre>

@@ -166,7 +166,7 @@ if ($action === 'layout') {
         $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
         $widgetIds = array_column($widgets, 'id');
         $userId = (string) ($_SESSION['user']['id'] ?? '');
-        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds, (string) ($_SESSION['user']['email'] ?? ''));
 
         ob_clean();
         echo json_encode([
@@ -225,8 +225,8 @@ if ($action === 'save_layout') {
             exit;
         }
 
-        $saved = birkly_save_user_dashboard_layout($userId, $layoutInput, $widgetIds);
-        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+        $saved = birkly_save_user_dashboard_layout($userId, $layoutInput, $widgetIds, (string) ($_SESSION['user']['email'] ?? ''));
+        $layout = birkly_load_user_dashboard_layout($userId, $widgetIds, (string) ($_SESSION['user']['email'] ?? ''));
 
         ob_clean();
         echo json_encode([
@@ -828,7 +828,7 @@ if ($action === 'widgets') {
     $widgets = birkly_filter_dashboard_widgets_for_user($widgets);
     $widgetIds = array_column($widgets, 'id');
     $userId = (string) ($_SESSION['user']['id'] ?? '');
-    $layout = birkly_load_user_dashboard_layout($userId, $widgetIds);
+    $layout = birkly_load_user_dashboard_layout($userId, $widgetIds, (string) ($_SESSION['user']['email'] ?? ''));
     $widgets = birkly_apply_dashboard_layout($widgets, $layout);
 
         ob_clean();

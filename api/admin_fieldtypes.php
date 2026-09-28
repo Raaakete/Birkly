@@ -93,20 +93,7 @@ function getFieldtypeClass($fieldtypeName) {
     }
     
     require_once __DIR__ . '/../core/fieldtype_catalog.php';
-    $aliases = [
-        'tag' => 'tags',
-        'dynamic-items' => 'dynamicitems',
-        'content-editor' => 'contenteditor',
-        'editor' => 'contenteditor',
-        'wysiwyg' => 'contenteditor',
-        'media' => 'file',
-        'image' => 'file',
-        'richtext' => 'contenteditor',
-    ];
-    
-    if (isset($aliases[$normalized])) {
-        $normalized = $aliases[$normalized];
-    }
+    $normalized = birkly_fieldtype_normalize_type_slug($normalized);
     
     // Auto-discover fieldtype by scanning directory
     $fieldtypesDir = __DIR__ . '/../fieldtypes';
@@ -244,7 +231,7 @@ function getAvailableFieldtypes() {
                         'label' => $displayLabel,
                         'category' => $category,
                         'icon' => method_exists($fieldtype, 'getIcon') ? $fieldtype->getIcon() : '',
-                        'description' => method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '',
+                        'description' => (method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '') ?: (string) ($data['description'] ?? ''),
                         'config' => $config
                     ];
                 } catch (Exception $e) {

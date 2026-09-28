@@ -115,6 +115,13 @@ abstract class BaseField {
         return '';
     }
 
+    // External origins the admin widget needs, by CSP directive, e.g.
+    // ['frame-src' => ['https://player.example.com'], 'connect-src' => [...]].
+    // Merged into the admin Content-Security-Policy (core/csp.php); https origins only.
+    public static function adminCspSources(): array {
+        return [];
+    }
+
     // CSS for this fieldtype's renderListCell() output. Loaded on entries lists that
     // show the fieldtype; shared cell primitives (.ft-list-*) live in core tables.css.
     public function getListCSS(): string {
