@@ -159,6 +159,9 @@ hr {
 
 .prose > * + * { margin-block-start: var(--s-4); }
 
+/* Long inline code (paths, URLs) wraps instead of running past narrow screens */
+.prose :not(pre) > code { overflow-wrap: anywhere; }
+
 .prose h1,
 .prose h2,
 .prose h3,
