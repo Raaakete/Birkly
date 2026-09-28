@@ -379,4 +379,13 @@
 
     window.initUpdatesManager = initUpdatesManager;
     window.initUpdates = initUpdatesManager;
+
+    // The standalone Updates page starts itself; Settings > System calls initUpdates() when its tab opens.
+    if (document.querySelector('[data-updates-page]')) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initUpdatesManager);
+        } else {
+            initUpdatesManager();
+        }
+    }
 })();

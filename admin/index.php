@@ -159,8 +159,12 @@ if (isset($_SESSION['user'])) {
 
 // If first-time setup and onboarding not completed, redirect to welcome
 $page = isset($_GET['page']) && $_GET['page'] !== '' ? $_GET['page'] : 'dashboard';
-if ($page === 'redirects') {
-    header('Location: ' . birkly_admin_url('settings') . '#redirects', true, 302);
+if ($page === 'redirects' || $page === 'roles' || $page === 'webhooks') {
+    header('Location: ' . birkly_admin_url('settings') . '#' . $page, true, 302);
+    exit;
+}
+if ($page === 'audit-log') {
+    header('Location: ' . birkly_admin_url('activity'), true, 302);
     exit;
 }
 if ($page === 'agent-guide' || $page === 'ai-presence') {
@@ -201,11 +205,8 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'entry-detail' => 'entry-detail.html',
             'collection-editor' => 'collection-editor.html',
             'users' => 'settings.html', // Users UI currently lives in settings template section
-            'roles' => 'roles.html',
             'plugins' => 'plugins.html',
-            'audit-log' => 'audit-log.html',
             'activity' => 'activity.html',
-            'webhooks' => 'webhooks.html',
             'onboarding' => 'onboarding.html',
             'help' => 'help.html',
             'feedback' => 'feedback.html',

@@ -87,6 +87,7 @@
 
         if (loading) {
             loading.hidden = false;
+            loading.className = 'loading-state';
             loading.textContent = fbT('feedback_loading', 'Loading feedback…');
         }
         if (empty) empty.hidden = true;
@@ -108,8 +109,13 @@
             renderTable();
         } catch (err) {
             if (loading) {
-                loading.textContent = fbT('feedback_error_prefix', 'Error:') + ' ' + err.message;
+                loading.className = 'signal is-info';
+                loading.innerHTML = (window.Birkly && typeof window.Birkly.icon === 'function' ? window.Birkly.icon('info') : '')
+                    + '<div class="signal-body"><p class="signal-text"></p></div>';
+                loading.querySelector('.signal-text').textContent = err.message;
             }
+            if (empty) empty.hidden = true;
+            if (wrap) wrap.hidden = true;
         }
     }
 
