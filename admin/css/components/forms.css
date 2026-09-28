@@ -236,8 +236,8 @@ input[type="search"].input-search { padding-inline-start: 32px; }
 .input-icon-wrap > .birkly-icon {
   position: absolute;
   inset-inline-start: var(--s-3);
-  width: 1rem;
-  height: 1rem;
+  width: var(--icon);
+  height: var(--icon);
   color: var(--text-3);
   pointer-events: none;
 }

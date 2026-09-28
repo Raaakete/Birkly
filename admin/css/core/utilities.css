@@ -30,5 +30,5 @@
   border: 2px solid var(--line);
   border-block-start-color: var(--accent-text);
   border-radius: 50%;
-  animation: u-spin 0.6s linear infinite;
+  animation: u-spin calc(var(--dur-frame) * 5) linear infinite;
 }

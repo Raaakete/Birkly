@@ -1,0 +1,320 @@
+/* ============================================
+   Birch v5 — motion: icon gestures and micro-interactions
+   ============================================
+
+   Icon gestures
+   Every Birch icon names a gesture (data-gesture, from core/icon_data.php).
+   It plays once when the control around the icon is hovered or keyboard-
+   focused, or when JS calls Birkly.iconPlay(el). A gesture is a frame
+   animation at 8 frames a second (--dur-frame): each keyframe is one frame,
+   held with steps(1, end), and every move is a whole cell, so the pixel grid
+   never blurs. Parts are the grid's letters (data-part="a"); ghosts are its
+   digits (data-part="1", opacity 0 at rest).
+
+   A gesture sets, on the svg:
+     --g-n            frames (default 4)
+     --g-base         keyframes for the body; letter parts follow it
+     --g-a … --g-j    keyframes for one part; --g-1 … --g-3 for a ghost
+     --g-a-at         start frame of a part; --g-a-n its own length
+
+   Reduced motion: the global block in core/reset.css collapses every
+   animation, so gestures, entrances and shimmer do not play.
+   ============================================ */
+
+/* ---------- Gesture engine ---------- */
+/* Defaults carry no specificity, so any gesture rule overrides them */
+:where(.birkly-icon[data-gesture]) {
+  --g-n: 4;
+  --g-loop: 1;
+  --g-a-at: 0; --g-b-at: 0; --g-c-at: 0; --g-d-at: 0; --g-e-at: 0; --g-f-at: 0; --g-g-at: 0; --g-h-at: 0; --g-i-at: 0; --g-j-at: 0;
+  --g-1-at: 0; --g-2-at: 0; --g-3-at: 0;
+}
+
+.birkly-icon[data-gesture] path {
+  animation-name: var(--run-base, none);
+  animation-duration: calc(var(--dur-frame) * var(--g-n));
+  animation-timing-function: steps(1, end);
+  animation-iteration-count: var(--g-loop);
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+}
+
+.birkly-icon[data-gesture] [data-part="a"] { animation-name: var(--run-a, none); animation-delay: calc(var(--dur-frame) * var(--g-a-at)); animation-duration: calc(var(--dur-frame) * var(--g-a-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="b"] { animation-name: var(--run-b, none); animation-delay: calc(var(--dur-frame) * var(--g-b-at)); animation-duration: calc(var(--dur-frame) * var(--g-b-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="c"] { animation-name: var(--run-c, none); animation-delay: calc(var(--dur-frame) * var(--g-c-at)); animation-duration: calc(var(--dur-frame) * var(--g-c-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="d"] { animation-name: var(--run-d, none); animation-delay: calc(var(--dur-frame) * var(--g-d-at)); animation-duration: calc(var(--dur-frame) * var(--g-d-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="e"] { animation-name: var(--run-e, none); animation-delay: calc(var(--dur-frame) * var(--g-e-at)); animation-duration: calc(var(--dur-frame) * var(--g-e-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="f"] { animation-name: var(--run-f, none); animation-delay: calc(var(--dur-frame) * var(--g-f-at)); animation-duration: calc(var(--dur-frame) * var(--g-f-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="g"] { animation-name: var(--run-g, none); animation-delay: calc(var(--dur-frame) * var(--g-g-at)); animation-duration: calc(var(--dur-frame) * var(--g-g-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="h"] { animation-name: var(--run-h, none); animation-delay: calc(var(--dur-frame) * var(--g-h-at)); animation-duration: calc(var(--dur-frame) * var(--g-h-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="i"] { animation-name: var(--run-i, none); animation-delay: calc(var(--dur-frame) * var(--g-i-at)); animation-duration: calc(var(--dur-frame) * var(--g-i-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="j"] { animation-name: var(--run-j, none); animation-delay: calc(var(--dur-frame) * var(--g-j-at)); animation-duration: calc(var(--dur-frame) * var(--g-j-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="1"] { animation-name: var(--run-1, none); animation-delay: calc(var(--dur-frame) * var(--g-1-at)); animation-duration: calc(var(--dur-frame) * var(--g-1-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="2"] { animation-name: var(--run-2, none); animation-delay: calc(var(--dur-frame) * var(--g-2-at)); animation-duration: calc(var(--dur-frame) * var(--g-2-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="3"] { animation-name: var(--run-3, none); animation-delay: calc(var(--dur-frame) * var(--g-3-at)); animation-duration: calc(var(--dur-frame) * var(--g-3-n, var(--g-n))); }
+
+/* Trigger: the icon itself or one wrapper deep inside a hovered or
+   keyboard-focused control. Disabled and busy controls stay still. */
+:is(a[href], button, summary, label, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="tab"], [role="option"], [role="switch"]):not(:disabled, [aria-disabled="true"], .is-busy):is(:hover, :focus-visible) > .birkly-icon[data-gesture],
+:is(a[href], button, summary, label, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="tab"], [role="option"], [role="switch"]):not(:disabled, [aria-disabled="true"], .is-busy):is(:hover, :focus-visible) > :not(a, button, label) > .birkly-icon[data-gesture],
+.birkly-icon[data-gesture][data-play],
+.is-busy .birkly-icon[data-gesture="chase"] {
+  --run-base: var(--g-base, none);
+  --run-a: var(--g-a, var(--g-base, none));
+  --run-b: var(--g-b, var(--g-base, none));
+  --run-c: var(--g-c, var(--g-base, none));
+  --run-d: var(--g-d, var(--g-base, none));
+  --run-e: var(--g-e, var(--g-base, none));
+  --run-f: var(--g-f, var(--g-base, none));
+  --run-g: var(--g-g, var(--g-base, none));
+  --run-h: var(--g-h, var(--g-base, none));
+  --run-i: var(--g-i, var(--g-base, none));
+  --run-j: var(--g-j, var(--g-base, none));
+  --run-1: var(--g-1, none);
+  --run-2: var(--g-2, none);
+  --run-3: var(--g-3, none);
+}
+
+/* A busy control loops its loader instead of playing it once */
+.is-busy .birkly-icon[data-gesture="chase"] { --g-loop: infinite; }
+
+/* ---------- Shared frames ---------- */
+@keyframes g-up { 0% { transform: translate(0, -1px); } }
+@keyframes g-down { 0% { transform: translate(0, 1px); } }
+@keyframes g-right { 0% { transform: translate(1px, 0); } }
+@keyframes g-hide { 0% { opacity: 0; } }
+@keyframes g-show { 0% { opacity: 1; } }
+@keyframes g-dim { 0% { opacity: 0.3; } 12.5%, 100% { opacity: 1; } }
+@keyframes g-pop { 0%, 66.667% { opacity: 0; } 33.333% { opacity: 1; } }
+
+/* ---------- Gestures ---------- */
+
+/* Wayfinding: two taps in the direction of travel */
+[data-gesture="nudge-r"] { --g-base: g-nudge-r; }
+[data-gesture="nudge-l"] { --g-base: g-nudge-l; }
+[data-gesture="nudge-u"] { --g-base: g-nudge-u; }
+[data-gesture="nudge-d"] { --g-base: g-nudge-d; }
+[data-gesture="nudge-ur"] { --g-base: g-nudge-ur; }
+@keyframes g-nudge-r { 0%, 50% { transform: translate(1px, 0); } 25%, 75% { transform: none; } }
+@keyframes g-nudge-l { 0%, 50% { transform: translate(-1px, 0); } 25%, 75% { transform: none; } }
+@keyframes g-nudge-u { 0%, 50% { transform: translate(0, -1px); } 25%, 75% { transform: none; } }
+@keyframes g-nudge-d { 0%, 50% { transform: translate(0, 1px); } 25%, 75% { transform: none; } }
+@keyframes g-nudge-ur { 0%, 50% { transform: translate(1px, -1px); } 25%, 75% { transform: none; } }
+
+/* Hop: the whole icon up one cell for two frames */
+[data-gesture="hop"] { --g-base: g-up; --g-n: 2; }
+
+/* Lift and sink: part a (a lid, shackle, head, sun, sheet) moves one cell */
+[data-gesture="lift"] { --g-a: g-up; --g-n: 2; }
+[data-gesture="sink"] { --g-a: g-down; --g-n: 2; }
+
+/* Bell: the body swings, the clapper follows a frame late */
+[data-gesture="ring"] { --g-base: g-ring; --g-a: g-ring-clapper; --g-n: 6; }
+@keyframes g-ring {
+  0%, 33.333% { transform: translate(-1px, 0); }
+  16.667%, 50% { transform: translate(1px, 0); }
+  66.667% { transform: none; }
+}
+@keyframes g-ring-clapper {
+  0%, 83.333% { transform: none; }
+  16.667%, 50% { transform: translate(-1px, 0); }
+  33.333%, 66.667% { transform: translate(1px, 0); }
+}
+
+/* Download and upload: the arrow travels two cells and comes back */
+[data-gesture="drop"] { --g-a: g-drop; --g-n: 5; }
+[data-gesture="launch"] { --g-a: g-launch; --g-n: 5; }
+@keyframes g-drop { 0%, 60% { transform: translate(0, 1px); } 20%, 40% { transform: translate(0, 2px); } 80% { transform: none; } }
+@keyframes g-launch { 0%, 60% { transform: translate(0, -1px); } 20%, 40% { transform: translate(0, -2px); } 80% { transform: none; } }
+
+/* Code and braces open; expand and collapse push their corners */
+[data-gesture="spread"] { --g-a: g-left2; --g-b: g-right2; --g-n: 3; }
+@keyframes g-left2 { 0% { transform: translate(-1px, 0); } 66.667% { transform: none; } }
+@keyframes g-right2 { 0% { transform: translate(1px, 0); } 66.667% { transform: none; } }
+[data-gesture="grow"] { --g-a: g-corner-tl; --g-b: g-corner-tr; --g-c: g-corner-bl; --g-d: g-corner-br; --g-n: 3; }
+[data-gesture="squeeze"] { --g-a: g-corner-br; --g-b: g-corner-bl; --g-c: g-corner-tr; --g-d: g-corner-tl; --g-n: 3; }
+@keyframes g-corner-tl { 0% { transform: translate(-1px, -1px); } 66.667% { transform: none; } }
+@keyframes g-corner-tr { 0% { transform: translate(1px, -1px); } 66.667% { transform: none; } }
+@keyframes g-corner-bl { 0% { transform: translate(-1px, 1px); } 66.667% { transform: none; } }
+@keyframes g-corner-br { 0% { transform: translate(1px, 1px); } 66.667% { transform: none; } }
+
+/* Typing dots and list lines ripple, one part per frame */
+[data-gesture="bounce"] { --g-a: g-up; --g-b: g-up; --g-c: g-up; --g-a-n: 1; --g-b-n: 1; --g-c-n: 1; --g-b-at: 1; --g-c-at: 2; }
+[data-gesture="wave"] {
+  --g-a: g-right; --g-b: g-right; --g-c: g-right; --g-d: g-right; --g-e: g-right;
+  --g-a-n: 1; --g-b-n: 1; --g-c-n: 1; --g-d-n: 1; --g-e-n: 1;
+  --g-b-at: 1; --g-c-at: 2; --g-d-at: 3; --g-e-at: 4;
+}
+
+/* Draw: parts appear in letter order, two per frame (check marks, text lines) */
+[data-gesture="draw"] {
+  --g-a: g-hide; --g-b: g-hide; --g-c: g-hide; --g-d: g-hide; --g-e: g-hide;
+  --g-f: g-hide; --g-g: g-hide; --g-h: g-hide; --g-i: g-hide; --g-j: g-hide;
+  --g-a-n: 0.5; --g-b-n: 1; --g-c-n: 1.5; --g-d-n: 2; --g-e-n: 2.5;
+  --g-f-n: 3; --g-g-n: 3.5; --g-h-n: 4; --g-i-n: 4.5; --g-j-n: 5;
+}
+
+/* Chase: one part dims per frame (loader, tiles, keys, nodes, paint) */
+[data-gesture="chase"] {
+  --g-a: g-dim; --g-b: g-dim; --g-c: g-dim; --g-d: g-dim;
+  --g-e: g-dim; --g-f: g-dim; --g-g: g-dim; --g-h: g-dim;
+  --g-n: 8;
+  --g-b-at: 1; --g-c-at: 2; --g-d-at: 3; --g-e-at: 4; --g-f-at: 5; --g-g-at: 6; --g-h-at: 7;
+}
+
+/* Clock and history: the minute hand turns in quarter steps */
+[data-gesture="tick"] { --g-a: g-quarter-cw; --g-n: 3; }
+[data-gesture="rewind"] { --g-a: g-quarter-ccw; --g-n: 3; }
+[data-gesture="spin"] { --g-base: g-quarter-cw; --g-n: 3; }
+@keyframes g-quarter-cw { 0% { transform: rotate(90deg); } 33.333% { transform: rotate(180deg); } 66.667% { transform: rotate(270deg); } }
+@keyframes g-quarter-ccw { 0% { transform: rotate(-90deg); } 33.333% { transform: rotate(-180deg); } 66.667% { transform: rotate(-270deg); } }
+
+/* Copy: the front sheet slides onto the back one */
+[data-gesture="copy"] { --g-a: g-copy; --g-n: 3; }
+@keyframes g-copy { 0% { transform: translate(1px, -1px); } 66.667% { transform: none; } }
+
+/* Eye: two blinks */
+[data-gesture="blink"] { --g-a: g-pop; --g-1: g-blink-lid; --g-n: 3; }
+@keyframes g-blink-lid { 0%, 66.667% { opacity: 1; } 33.333% { opacity: 0; } }
+
+/* Sequence: ghost 1, 2, 3 each show for one frame (bubbles, scan line, stars) */
+[data-gesture="seq"] {
+  --g-1: g-show; --g-2: g-show; --g-3: g-show;
+  --g-1-n: 1; --g-2-n: 1; --g-3-n: 1;
+  --g-2-at: 1; --g-3-at: 2;
+}
+
+/* Globe: the meridians roll round */
+[data-gesture="turn"] { --g-a: g-turn; --g-n: 4; }
+@keyframes g-turn {
+  0% { transform: translate(1px, 0); }
+  25% { transform: translate(2px, 0); }
+  50% { transform: translate(-2px, 0); }
+  75% { transform: translate(-1px, 0); }
+}
+
+/* Heart beats twice; star and shield fill */
+[data-gesture="beat"] { --g-1: g-beat; --g-n: 3; }
+@keyframes g-beat { 0%, 66.667% { opacity: 1; } 33.333% { opacity: 0; } }
+[data-gesture="fill"] { --g-1: g-show; --g-n: 3; }
+
+/* Help: the question mark wobbles */
+[data-gesture="wobble"] { --g-a: g-wobble; --g-n: 4; }
+@keyframes g-wobble { 0%, 50% { transform: translate(-1px, 0); } 25% { transform: translate(1px, 0); } 75% { transform: none; } }
+
+/* Link: one ring unhooks */
+[data-gesture="tug"] { --g-a: g-left2; --g-n: 3; }
+
+/* Log out: the arrow leaves through the door */
+[data-gesture="exit"] { --g-a: g-exit; --g-n: 4; }
+@keyframes g-exit { 0%, 50% { transform: translate(1px, 0); } 25% { transform: translate(2px, 0); } 75% { transform: none; } }
+
+/* Pop: part a (tips, rays, the exclamation mark) blinks; flash blinks all */
+[data-gesture="pop"] { --g-a: g-pop; --g-n: 3; }
+[data-gesture="flash"] { --g-base: g-pop; --g-n: 3; }
+
+/* Pencil scribbles; phone rings; search looks around */
+[data-gesture="write"] { --g-base: g-write; --g-n: 4; }
+@keyframes g-write { 0%, 50% { transform: translate(-1px, 1px); } 25%, 75% { transform: none; } }
+[data-gesture="shake"] { --g-base: g-shake; --g-n: 4; }
+@keyframes g-shake { 0%, 50% { transform: translate(-1px, 0); } 25%, 75% { transform: translate(1px, 0); } }
+[data-gesture="scan"] { --g-base: g-scan; --g-n: 4; }
+@keyframes g-scan {
+  0% { transform: translate(-1px, 0); }
+  25% { transform: translate(-1px, -1px); }
+  50% { transform: translate(0, -1px); }
+  75% { transform: none; }
+}
+
+/* Scale: the pans see-saw */
+[data-gesture="tilt"] { --g-a: g-tilt; --g-b: g-tilt-back; --g-n: 4; }
+@keyframes g-tilt { 0%, 50% { transform: translate(0, 1px); } 25% { transform: translate(0, -1px); } 75% { transform: none; } }
+@keyframes g-tilt-back { 0%, 50% { transform: translate(0, -1px); } 25% { transform: translate(0, 1px); } 75% { transform: none; } }
+
+/* Send: flies out to the right and comes back in from the left */
+[data-gesture="fly"] { --g-base: g-fly; --g-n: 6; }
+@keyframes g-fly {
+  0% { transform: translate(2px, 0); }
+  16.667% { transform: translate(5px, 0); }
+  33.333% { transform: translate(13px, 0); }
+  50% { transform: translate(-5px, 0); }
+  66.667% { transform: translate(-2px, 0); }
+  83.333% { transform: none; }
+}
+
+/* Sliders: the knobs slide against each other */
+[data-gesture="slide"] { --g-a: g-slide; --g-b: g-slide-back; --g-c: g-slide; --g-n: 4; }
+@keyframes g-slide { 0%, 50% { transform: translate(1px, 0); } 25% { transform: translate(2px, 0); } 75% { transform: none; } }
+@keyframes g-slide-back { 0%, 50% { transform: translate(-1px, 0); } 25% { transform: translate(-2px, 0); } 75% { transform: none; } }
+
+/* Sparkle: the points pull in, then burst with glints */
+[data-gesture="twinkle"] { --g-a: g-twinkle-points; --g-1: g-twinkle-glint; --g-n: 3; }
+@keyframes g-twinkle-points { 0% { opacity: 0; } 33.333% { opacity: 1; } }
+@keyframes g-twinkle-glint { 0% { opacity: 0; } 33.333% { opacity: 1; } }
+
+/* Toggle: the knob crosses and comes back */
+[data-gesture="flip"] { --g-a: g-flip; --g-n: 5; }
+@keyframes g-flip { 0%, 60% { transform: translate(-2px, 0); } 20%, 40% { transform: translate(-4px, 0); } 80% { transform: none; } }
+
+/* Truck: the body bounces on its wheels */
+[data-gesture="drive"] { --g-base: g-drive; --g-a: none; --g-n: 4; }
+@keyframes g-drive { 0%, 50% { transform: translate(0, -1px); } 25%, 75% { transform: none; } }
+
+/* ---------- Micro-interactions ---------- */
+
+/* Press: controls sink one pixel while held (no transition: it is a frame) */
+[data-birch] :is(.button, .btn, .icon-button, .btn-icon, .topbar-icon-btn, .segmented > button):active:not(:disabled, [aria-disabled="true"]) {
+  translate: 0 1px;
+}
+
+/* Menus and popovers rise 4 px into place each time they open */
+[data-birch] :is(.menu:not([hidden]), .popover:not([hidden]), .dropdown-menu:is(.show, .active, .open), .dropdown:is(.open, .active) > .dropdown-menu, .custom-select-menu.show) {
+  animation: birch-rise var(--dur-2) var(--ease);
+}
+
+/* Messages that appear inside a dialog or form */
+[data-birch] :is(.dialog, .modal-content, form) .signal:not([hidden]) {
+  animation: birch-rise var(--dur-2) var(--ease);
+}
+
+/* Disclosure bodies */
+[data-birch] details[open] > :not(summary) {
+  animation: birch-rise var(--dur-2) var(--ease);
+}
+
+@keyframes birch-rise {
+  from { opacity: 0; translate: 0 -4px; }
+}
+
+/* Focus ring settles onto the control */
+:where([data-birch]) :where(:focus-visible) {
+  animation: birch-focus var(--dur-2) var(--ease);
+}
+
+@keyframes birch-focus {
+  from { outline-offset: 4px; }
+}
+
+/* Check marks draw in four frames */
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):checked::before {
+  animation: birch-tick var(--dur-2) steps(4, end);
+}
+
+@keyframes birch-tick {
+  from { clip-path: inset(0 100% 0 0); }
+}
+
+/* Tab underline and current colour ease in */
+[data-birch] :is(.tabs > *, .tab) {
+  transition: border-color var(--dur-2) var(--ease), color var(--dur-1) var(--ease);
+}
+
+/* Counts that go up bump once */
+[data-birch] :is(.notification-badge, .count)[data-bump] {
+  animation: birch-bump calc(var(--dur-frame) * 2) steps(1, end);
+}
+
+@keyframes birch-bump {
+  0% { translate: 0 -2px; }
+  50% { translate: 0 -1px; }
+}

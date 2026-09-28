@@ -365,12 +365,16 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
                 });
         }
         
+        let shownPendingCount = null;
+
         function updateBadge() {
             const badge = document.getElementById('notification-badge');
             if (!badge) {
                 return;
             }
             badge.classList.remove('notification-badge--seen', 'notification-badge--unread');
+            const rose = shownPendingCount !== null && pendingCount > shownPendingCount;
+            shownPendingCount = pendingCount;
             if (badgeState === 'none' || pendingCount <= 0) {
                 badge.style.display = 'none';
                 return;
@@ -378,6 +382,14 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
             badge.textContent = pendingCount > 99 ? '99+' : pendingCount.toString();
             badge.style.display = 'flex';
             badge.classList.add(badgeState === 'unread' ? 'notification-badge--unread' : 'notification-badge--seen');
+            if (rose) {
+                if (window.Birkly && typeof Birkly.iconPlay === 'function') {
+                    Birkly.iconPlay(document.getElementById('notifications-btn'));
+                }
+                badge.removeAttribute('data-bump');
+                void badge.offsetWidth;
+                badge.setAttribute('data-bump', '');
+            }
         }
 
         function markVisibleNotificationsSeen() {

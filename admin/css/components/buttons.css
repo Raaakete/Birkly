@@ -66,10 +66,8 @@ a.btn { text-decoration: none; }
   pointer-events: none;
 }
 
-.btn > svg,
-.btn > .birkly-icon,
-.btn > .btn-spin > svg,
-.btn > .btn-spin > .birkly-icon {
+.btn > svg:not(.birkly-icon),
+.btn > .btn-spin > svg:not(.birkly-icon) {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
@@ -192,10 +190,8 @@ a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   font-size: var(--size-small);
   gap: var(--s-1);
 }
-.btn-sm > svg,
-.btn-sm > .birkly-icon,
-.btn-sm > .btn-spin > svg,
-.btn-sm > .btn-spin > .birkly-icon {
+.btn-sm > svg:not(.birkly-icon),
+.btn-sm > .btn-spin > svg:not(.birkly-icon) {
   width: 0.875rem;
   height: 0.875rem;
 }
@@ -275,14 +271,9 @@ a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
 }
 .btn-icon > svg,
 .btn-icon > .birkly-icon {
-  width: 1rem;
-  height: 1rem;
-  transition: transform var(--dur-1) var(--ease);
+  width: var(--icon);
+  height: var(--icon);
 }
-.btn-icon:hover:not(:disabled) > svg,
-.btn-icon:hover:not(:disabled) > .birkly-icon { transform: scale(1.08); }
-.btn-icon:active:not(:disabled) > svg,
-.btn-icon:active:not(:disabled) > .birkly-icon { transform: scale(0.96); }
 .btn-icon-sm {
   width: var(--control-sm);
   height: var(--control-sm);
@@ -320,7 +311,7 @@ a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   border-block-start-color: transparent;
   border-radius: 50%;
   color: var(--text);
-  animation: u-spin 0.6s linear infinite;
+  animation: u-spin calc(var(--dur-frame) * 5) linear infinite;
 }
 .btn-primary.btn-loading::after,
 .btn-primary.loading::after { color: var(--on-mint); }
