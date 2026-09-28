@@ -243,193 +243,208 @@ label.field-title { cursor: pointer; }
 }
 
 /* ============================================
-   4. Content hub — collection groups
+   4. Content hub (Birch) — groups of collection cards
+   Cards are slabs 8px apart; groups are headings on the canvas.
    ============================================ */
-/* Starter templates in the first-run empty state are .card--interactive
-   buttons; only the button element reset is page-owned. */
-button.starter-template-card {
-  width: 100%;
-  font: inherit;
-  text-align: start;
-}
-
-button.starter-template-card[aria-busy="true"] { opacity: 0.6; }
-
-.collections-container {
+[data-birch] .collections-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--s-6);
 }
 
-.collection-group,
-.collection-subgroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
-}
+[data-birch] .collection-group,
+[data-birch] .collection-subgroup { min-width: 0; }
 
-.group-header,
-.subgroup-header {
+[data-birch] .group-header,
+[data-birch] .subgroup-header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  cursor: grab;
-  user-select: none;
+  gap: var(--s-2);
+  min-height: var(--control-sm);
+  margin-block-end: var(--s-3);
 }
 
-.group-header:active,
-.subgroup-header:active { cursor: grabbing; }
-
-.group-title,
-.subgroup-title {
-  flex: 1 1 auto;
-  min-width: 0;
+[data-birch] .group-title,
+[data-birch] .subgroup-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
   margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-slab-title) / var(--lh-slab-title) var(--font-sans);
 }
 
-.subgroup-title { font-size: var(--text-base); }
+[data-birch] .subgroup-title { font-size: var(--size-title); }
 
-.group-title-icon,
-.subgroup-icon {
-  margin-inline-end: var(--space-1);
-  line-height: 1;
+[data-birch] .group-meta {
+  color: var(--text-3);
+  font-size: var(--size-small);
+  white-space: nowrap;
 }
 
-.group-actions {
+[data-birch] .group-actions {
   display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-  cursor: default;
+  gap: 2px;
+  margin-inline-start: auto;
+  opacity: 0;
+  transition: opacity var(--dur-1) var(--ease);
 }
 
-.group-drag-handle {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  color: var(--text-tertiary);
+[data-birch] .group-header:hover .group-actions,
+[data-birch] .subgroup-header:hover .group-actions,
+[data-birch] .group-actions:focus-within { opacity: 1; }
+
+
+[data-birch] .group-drag-handle {
+  display: inline-flex;
+  color: var(--text-3);
   cursor: grab;
-  touch-action: none;
-  user-select: none;
 }
 
-.collection-group:hover .group-drag-handle,
-.collection-subgroup:hover .group-drag-handle { color: var(--text-secondary); }
+[data-birch] .group-drag-handle.is-static { visibility: hidden; }
 
-/* Track sizing comes from the u-grid-auto helper that content-groups.js puts
-   on each grid; only the min-width guard is page-owned. */
-.group-collections,
-.ungrouped-collections { min-width: 0; }
+[data-birch] .collection-group.collapsed > .group-collections,
+[data-birch] .collection-group.collapsed > .collection-subgroups,
+[data-birch] .collection-subgroup.collapsed > .group-collections,
+[data-birch] .collection-group.collapsed > .ungrouped-collections { display: none; }
 
-.collection-group.collapsed > .group-collections,
-.collection-group.collapsed > .collection-subgroups,
-.collection-subgroup.collapsed > .group-collections { display: none; }
-
-/* Nested groups are indented by a rail, not by margins */
-.collection-subgroups {
+[data-birch] .collection-subgroups {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding-inline-start: var(--space-4);
-  border-inline-start: 2px solid var(--border-subtle);
+  gap: var(--s-4);
+  margin-block-start: var(--s-4);
+  padding-inline-start: var(--s-4);
+  border-inline-start: 1px solid var(--line);
 }
 
-/* ============================================
-   5. Content hub — drag and drop affordances
-   .dragging / .drop-target / .drag-handle are owned by components/cards.css.
-   These are the hub-only extras: drop wells, ghost placeholder, insert line.
-   ============================================ */
-.drop-zone {
-  position: relative;
-  border-radius: var(--radius-md);
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+/* Collection card */
+[data-birch] .collection-card { cursor: pointer; }
+
+[data-birch] .collection-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  padding-inline-end: var(--s-6);
 }
 
-.drop-zone.empty-drop-zone {
-  min-height: 6rem;
-  border: 1px dashed var(--border-default);
-  background: var(--surface-sunken);
-}
-
-.drop-zone.drag-over {
-  border: 1px dashed var(--accent-focus);
-  background: var(--accent-soft);
-}
-
-.empty-drop-message {
+[data-birch] .collection-card .drag-handle {
   position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--text-tertiary);
-  font-size: var(--text-sm);
-  pointer-events: none;
+  inset-block-start: var(--s-3);
+  inset-inline-start: 2px;
+  opacity: 0;
 }
+
+[data-birch] .collection-card:hover .drag-handle { opacity: 1; }
+
+[data-birch] .collection-card-title {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-birch] .collection-icon,
+[data-birch] .collection-icon-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-caption);
+  font-weight: var(--weight-semibold);
+}
+
+[data-birch] .collection-card-foot a {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-1);
+  color: inherit;
+  text-decoration: none;
+}
+
+[data-birch] .collection-card .collection-menu-wrapper {
+  position: absolute;
+  inset-block-start: var(--s-2);
+  inset-inline-end: var(--s-2);
+}
+
+[data-birch] .collection-card .collection-menu-wrapper .icon-button {
+  position: static;
+  opacity: 0;
+}
+
+[data-birch] .collection-card:hover .collection-menu-wrapper .icon-button,
+[data-birch] .collection-menu-wrapper .icon-button[aria-expanded="true"],
+[data-birch] .collection-menu-wrapper .icon-button:focus-visible { opacity: 1; }
+
+/* List mode: one column of rows 4px apart */
+[data-birch] .collections-container.list-view .card-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--s-1);
+}
+
+[data-birch] .collection-card.is-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(0, 2fr) auto;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: var(--row-list);
+  padding-block: var(--s-2);
+}
+
+[data-birch] .collection-card.is-row .collection-card-text { -webkit-line-clamp: 1; }
+[data-birch] .collection-card.is-row .collection-card-foot { margin: 0; padding-inline-end: var(--s-6); }
+[data-birch] .collection-card.is-row .collection-menu-wrapper { inset-block-start: 50%; transform: translateY(-50%); }
+
+/* Drop targets while dragging */
+[data-birch] .drop-zone { min-height: var(--card-h); border-radius: var(--r); }
+[data-birch] .drop-zone.empty-drop-zone { display: block; }
+
+[data-birch] .empty-drop-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-column: 1 / -1;
+  min-height: var(--card-h);
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+[data-birch] .drop-zone.drag-over { background: var(--accent-soft); }
 
 .drag-placeholder {
-  border: 1px dashed var(--accent-focus);
-  border-radius: var(--radius-md);
+  border: 1px dashed var(--accent);
+  border-radius: var(--r);
   background: var(--accent-soft);
 }
 
-/* Insert line shown between cards / rows / groups while dragging */
 .drop-indicator,
 .cross-group-drop-indicator,
 .group-drop-indicator {
   position: absolute;
   height: 2px;
-  border-radius: var(--radius-pill);
-  background: var(--accent-focus);
+  border-radius: var(--r-pixel);
+  background: var(--accent);
   pointer-events: none;
   z-index: var(--z-dragging);
 }
 
-/* While a whole group is in flight, collection wells must not react */
 body.dragging-group .drop-zone { pointer-events: none; }
+body.dragging-group .drop-zone.drag-over { background: transparent; }
 
-body.dragging-group .drop-zone.drag-over {
-  border-color: transparent;
-  background: transparent;
-}
+/* First-run starter templates */
+[data-birch] .starter-template-card { text-align: start; font: inherit; }
+[data-birch] .starter-template-card[aria-busy="true"] { opacity: 0.6; }
 
-/* ============================================
-   6. Content hub — view toggle and list mode
-   ============================================ */
-.content-view-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-}
-
-.content-view-toggle .btn-icon { width: var(--control-sm); height: var(--control-sm); }
-
-.content-view-toggle .btn-icon.active {
-  background: var(--surface);
-  color: var(--text-primary);
-}
-
-/* List-mode grid switch (single column, flush rows) and the collection-card
-   list-row layout itself are owned by components/cards.css, keyed off the
-   `.list-view` class content-groups.js toggles on this container.
-
-   The shared rule only names `.group-collections` — content-groups.js gives
-   the root "Ungrouped Collections" grid its own class, `.ungrouped-
-   collections`, so it needs the same single-column switch mirrored here
-   rather than editing the shared component file. */
-.collections-container.list-view .ungrouped-collections {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
+@media (max-width: 767px) {
+  [data-birch] .search-field { width: 100%; }
+  [data-birch] .collection-card.is-row { grid-template-columns: minmax(0, 1fr) auto; }
+  [data-birch] .collection-card.is-row .collection-card-text { display: none; }
 }
 
 /* ============================================
@@ -734,3 +749,170 @@ body.entries-bulk-edit-modal-open {
     margin-inline-start: auto;
   }
 }
+
+/* ============================================
+   Entries list (Birch) — rows are slabs 4px apart on the canvas
+   ============================================ */
+[data-birch] .page-bar:has(~ .page-body .bulk-bar:not([hidden])),
+[data-birch] .page-bar:has(~ .bulk-bar:not([hidden])) { display: none; }
+
+[data-birch].entries-page .page-body { gap: 0; }
+
+[data-birch] .entries-toolbar-filters--desktop { display: none; }
+
+@media (min-width: 640px) {
+  [data-birch] .entries-toolbar-filters--desktop {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+  }
+
+  [data-birch] .button.entries-filter-toggle { display: none; }
+}
+
+[data-birch] .entries-toolbar-filters--desktop .select-box { width: 160px; }
+
+[data-birch] .entries-smart-table .smart-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 var(--s-1);
+  margin-block-start: calc(var(--s-1) * -1);
+}
+
+[data-birch] .entries-smart-table .table-viewport {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+[data-birch] .entries-smart-table .head-cell.head-actions { background: var(--bg); border-inline-start: 0; }
+[data-birch] .entries-smart-table .cell-actions { border-inline-start: 0; }
+
+[data-birch] .entries-smart-table .head-cell {
+  height: 32px;
+  padding: 0 var(--s-3);
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  font: var(--weight-regular) var(--size-small) / var(--lh-small) var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: start;
+}
+
+[data-birch] .entries-smart-table .table-row > .cell {
+  height: var(--row-table);
+  padding: 0 var(--s-3);
+  border: 0;
+  background: var(--surface);
+  vertical-align: middle;
+}
+
+[data-birch] .entries-smart-table .table-row > .cell:first-child { border-start-start-radius: var(--r); border-end-start-radius: var(--r); }
+[data-birch] .entries-smart-table .table-row > .cell:last-child { border-start-end-radius: var(--r); border-end-end-radius: var(--r); }
+
+[data-birch] .entries-smart-table .table-row:hover > .cell { background: var(--surface); }
+
+/* Selected is a blue ring */
+[data-birch] .entries-smart-table .table-row:has(.cell-checkbox input:checked) > .cell {
+  background: var(--accent-soft);
+  box-shadow: inset 0 2px 0 var(--accent), inset 0 -2px 0 var(--accent);
+}
+
+[data-birch] .entries-smart-table .table-row:has(.cell-checkbox input:checked) > .cell:first-child { box-shadow: inset 2px 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+[data-birch] .entries-smart-table .table-row:has(.cell-checkbox input:checked) > .cell:last-child { box-shadow: inset -2px 2px 0 var(--accent), inset 0 -2px 0 var(--accent); }
+
+[data-birch] .entries-smart-table .title-text {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+  text-decoration: none;
+}
+
+[data-birch] .entries-smart-table .title-text:hover { color: var(--accent-text); }
+
+[data-birch] .entries-smart-table .entry-slug-meta,
+[data-birch] .entries-smart-table .entry-slug-link {
+  color: var(--text-3);
+  font: var(--weight-regular) var(--size-mono) / var(--lh-mono) var(--font-mono);
+}
+
+[data-birch] .entries-smart-table .cell-field {
+  color: var(--text-2);
+  font-size: var(--size-body);
+}
+
+[data-birch] .entries-smart-table .entry-drag-handle {
+  border: 0;
+  background: none;
+  color: var(--text-3);
+  cursor: grab;
+}
+
+[data-birch] .entries-smart-table .sub-entry-count-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+  text-decoration: none;
+}
+
+/* Status: Birch chip with a square dot */
+[data-birch] .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-caption) / 1 var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+[data-birch] .status-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pixel);
+  background: currentColor;
+}
+
+[data-birch] .status-badge.published { background: var(--success-soft); color: var(--success); }
+[data-birch] .status-badge.scheduled { background: var(--info-soft); color: var(--info); }
+[data-birch] .status-badge.pending_review { background: var(--warning-soft); color: var(--warning); }
+[data-birch] .status-badge.trashed { background: var(--danger-soft); color: var(--danger); }
+
+/* Pagination */
+[data-birch] .entries-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-block-start: var(--s-3);
+  border: 0;
+  background: none;
+}
+
+[data-birch] .entries-pagination__summary {
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+[data-birch] .entries-pagination__controls,
+[data-birch] .entries-pagination__pages {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+[data-birch] .entries-pagination .button[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }

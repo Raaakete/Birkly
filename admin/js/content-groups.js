@@ -94,8 +94,43 @@
 
         setupEventListeners();
         setupViewToggle();
+        setupFilter();
+        setupCollapseAll();
         setView(currentView, false);
         setupDragDrop();
+    }
+
+    function setupFilter() {
+        const input = document.getElementById('collections-filter');
+        if (!input) return;
+        input.placeholder = cgT('content_groups_filter_placeholder', 'Filter {count} collections…', { count: collections.length });
+        input.addEventListener('input', () => {
+            const query = input.value.trim().toLowerCase();
+            document.querySelectorAll('#collections-container .collection-card').forEach((card) => {
+                card.hidden = query !== '' && !(card.dataset.filterText || '').includes(query);
+            });
+            document.querySelectorAll('#collections-container .collection-group, #collections-container .collection-subgroup').forEach((section) => {
+                const visible = section.querySelectorAll('.collection-card:not([hidden])').length;
+                section.hidden = query !== '' && visible === 0;
+            });
+        });
+    }
+
+    function setupCollapseAll() {
+        const button = document.getElementById('collapse-all-groups');
+        if (!button) return;
+        button.addEventListener('click', () => {
+            const sections = Array.from(document.querySelectorAll('#collections-container > .collection-group'));
+            const collapse = sections.some((section) => !section.classList.contains('collapsed'));
+            sections.forEach((section) => {
+                if (section.classList.contains('collapsed') !== collapse) {
+                    toggleGroupCollapse(section, section.dataset.groupId);
+                }
+            });
+            button.querySelector('span').textContent = collapse
+                ? cgT('content_groups_expand_all', 'Expand all')
+                : cgT('content_groups_collapse_all', 'Collapse all');
+        });
     }
 
     function normalizeGroups(rawGroups) {
@@ -197,7 +232,7 @@
         }
 
         document.querySelectorAll('.collection-card').forEach((card) => {
-            card.classList.toggle('collection-card--list-row', currentView === 'list');
+            card.classList.toggle('is-row', currentView === 'list');
         });
 
         document.querySelectorAll('[data-content-view]').forEach((button) => {
@@ -370,13 +405,22 @@
         }
     }
 
+    function createGroupMeta(slugs) {
+        const list = collections.filter((c) => slugs.includes(c.slug));
+        const entries = list.reduce((sum, c) => sum + Number(c.entries_count || 0), 0);
+        const meta = document.createElement('span');
+        meta.className = 'group-meta';
+        meta.textContent = cgT('content_groups_meta', '{collections} collections · {entries} entries', { collections: list.length, entries: entries });
+        return meta;
+    }
+
     function createGroupActions(group, depth, isSubgroup) {
         const actions = document.createElement('div');
         actions.className = isSubgroup ? 'subgroup-actions group-actions' : 'group-actions';
 
         const collapseBtn = document.createElement('button');
         collapseBtn.type = 'button';
-        collapseBtn.className = 'btn-icon group-collapse-btn';
+        collapseBtn.className = 'icon-button group-collapse-btn';
         collapseBtn.title = 'Collapse Group';
         collapseBtn.innerHTML = icon('caret-down', { size: 14 });
         collapseBtn.onclick = (e) => {
@@ -388,7 +432,7 @@
 
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
-        editBtn.className = 'btn-icon';
+        editBtn.className = 'icon-button';
         editBtn.title = 'Edit Group';
         editBtn.innerHTML = icon('pencil-simple', { size: 14 });
         editBtn.onclick = (e) => {
@@ -399,7 +443,7 @@
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
-        deleteBtn.className = 'btn-icon';
+        deleteBtn.className = 'icon-button';
         deleteBtn.title = 'Delete Group';
         deleteBtn.innerHTML = icon('trash', { size: 14 });
         deleteBtn.onclick = (e) => {
@@ -426,7 +470,7 @@
         if (depth < MAX_GROUP_DEPTH) {
             const addSubBtn = document.createElement('button');
             addSubBtn.type = 'button';
-            addSubBtn.className = 'btn-icon';
+            addSubBtn.className = 'icon-button';
             addSubBtn.title = 'Add subgroup';
             addSubBtn.innerHTML = icon('plus', { size: 14 });
             addSubBtn.onclick = (e) => {
@@ -446,7 +490,7 @@
 
     function appendCollectionsGrid(parent, group, groupId) {
         const grid = document.createElement('div');
-        grid.className = 'u-grid-auto group-collections drop-zone';
+        grid.className = 'card-grid group-collections drop-zone';
         grid.dataset.groupId = groupId;
 
         let groupCollections = collections.filter((col) =>
@@ -467,7 +511,7 @@
         if (groupCollections.length === 0) {
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
-            emptyMsg.className = 'empty-drop-message';
+            emptyMsg.className = 'empty-drop-message dashed';
             emptyMsg.textContent = cgT('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
@@ -512,6 +556,7 @@
 
         header.appendChild(dragHandleWrapper);
         header.appendChild(title);
+        header.appendChild(createGroupMeta(subgroup.collections || []));
         header.appendChild(createGroupActions(subgroup, depth, true));
 
         section.appendChild(header);
@@ -544,7 +589,6 @@
 
         const header = document.createElement('div');
         header.className = 'group-header';
-        header.style.cursor = 'grab';
 
         const dragHandleWrapper = document.createElement('div');
         dragHandleWrapper.className = 'group-drag-handle';
@@ -562,6 +606,7 @@
 
         header.appendChild(dragHandleWrapper);
         header.appendChild(title);
+        header.appendChild(createGroupMeta(group.collections || []));
         header.appendChild(createGroupActions(group, depth, false));
 
         section.appendChild(header);
@@ -581,35 +626,25 @@
 
     function renderEmptyCollectionsState() {
         const wrap = document.createElement('div');
-        wrap.className = 'u-stack-6';
+        wrap.className = 'collections-first-run';
 
         const empty = document.createElement('div');
-        empty.className = 'empty-state';
-
-        const iconWrap = document.createElement('div');
-        iconWrap.className = 'empty-state-icon';
-        iconWrap.setAttribute('aria-hidden', 'true');
-        iconWrap.innerHTML = icon('stack', { size: 32 });
-
-        const title = document.createElement('h2');
-        title.className = 'empty-state-title';
-        title.textContent = cgT('content_groups_first_title', 'Create your first collection');
-
-        const message = document.createElement('p');
-        message.className = 'empty-state-text';
-        message.textContent = cgT('content_groups_first_message', 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.');
+        empty.className = 'empty';
+        empty.innerHTML = '<span class="empty-icon">' + icon('layers', { size: 26 }) + '</span>'
+            + '<h2 class="empty-title">' + escapeHtml(cgT('content_groups_first_title', 'Create your first collection')) + '</h2>'
+            + '<p class="empty-text">' + escapeHtml(cgT('content_groups_first_message', 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.')) + '</p>';
 
         const actions = document.createElement('div');
-        actions.className = 'empty-state-actions';
+        actions.className = 'kit-row';
         const createBtn = document.createElement('a');
-        createBtn.className = 'btn btn-primary';
+        createBtn.className = 'button is-main';
         createBtn.href = adminUrl('collection-editor');
-        createBtn.textContent = cgT('content_groups_new_collection', 'New collection');
+        createBtn.innerHTML = icon('plus') + escapeHtml(cgT('content_groups_new_collection', 'New collection'));
         actions.appendChild(createBtn);
 
         const guideBtn = document.createElement('button');
         guideBtn.type = 'button';
-        guideBtn.className = 'btn btn-ghost btn-sm';
+        guideBtn.className = 'button is-quiet';
         guideBtn.textContent = cgT('guide_show_me_how', 'Show me how');
         guideBtn.addEventListener('click', function () {
             if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
@@ -617,33 +652,27 @@
             }
         });
         actions.appendChild(guideBtn);
-
-        empty.appendChild(iconWrap);
-        empty.appendChild(title);
-        empty.appendChild(message);
         empty.appendChild(actions);
         wrap.appendChild(empty);
 
         const selectable = (starterTemplates || []).filter((t) => t && t.id && t.id !== 'blank' && t.selectable !== false);
         if (selectable.length > 0) {
             const templates = document.createElement('section');
-            templates.className = 'u-stack-3';
+            templates.className = 'collections-templates';
 
             const templatesHeading = document.createElement('h3');
-            templatesHeading.className = 'section-title';
+            templatesHeading.className = 'group-title';
             templatesHeading.textContent = cgT('content_groups_or_template', 'Or start with a template');
 
             const grid = document.createElement('div');
-            grid.className = 'u-grid-auto';
+            grid.className = 'card-grid';
 
             selectable.slice(0, 4).forEach((template) => {
                 const card = document.createElement('button');
                 card.type = 'button';
-                card.className = 'card card--interactive card--compact starter-template-card';
-                card.innerHTML = '<div class="card-body u-stack-1">'
-                    + '<strong class="card-title">' + escapeHtml(template.label || template.id) + '</strong>'
-                    + '<span class="u-text-sm u-fg-secondary">' + escapeHtml(template.description || '') + '</span>'
-                    + '</div>';
+                card.className = 'collection-card starter-template-card';
+                card.innerHTML = '<span class="collection-card-title">' + escapeHtml(template.label || template.id) + '</span>'
+                    + '<span class="collection-card-text">' + escapeHtml(template.description || '') + '</span>';
                 card.addEventListener('click', function () {
                     installStarterTemplate(template.id, card);
                 });
@@ -719,19 +748,17 @@
         header.className = 'group-header';
 
         const dragHandleWrapper = document.createElement('div');
-        dragHandleWrapper.className = 'group-drag-handle';
-        dragHandleWrapper.style.opacity = '0.3';
-        dragHandleWrapper.style.cursor = 'default';
+        dragHandleWrapper.className = 'group-drag-handle is-static';
 
         const title = document.createElement('h3');
         title.className = 'group-title';
-        title.textContent = cgT('content_groups_ungrouped_title', 'Ungrouped Collections');
+        title.textContent = cgT('content_groups_ungrouped_title', 'Ungrouped collections');
 
         const actions = document.createElement('div');
         actions.className = 'group-actions';
         const collapseBtn = document.createElement('button');
         collapseBtn.type = 'button';
-        collapseBtn.className = 'btn-icon group-collapse-btn';
+        collapseBtn.className = 'icon-button group-collapse-btn';
         collapseBtn.title = isCollapsed ? 'Expand Group' : 'Collapse Group';
         collapseBtn.innerHTML = isCollapsed
             ? icon('caret-up', { size: 14 })
@@ -745,16 +772,17 @@
 
         header.appendChild(dragHandleWrapper);
         header.appendChild(title);
+        header.appendChild(createGroupMeta(collectionsList.map((c) => c.slug)));
         header.appendChild(actions);
 
         const grid = document.createElement('div');
-        grid.className = 'u-grid-auto ungrouped-collections drop-zone';
+        grid.className = 'card-grid ungrouped-collections drop-zone';
         grid.dataset.groupId = 'ungrouped';
 
         if (collectionsList.length === 0) {
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
-            emptyMsg.className = 'empty-drop-message';
+            emptyMsg.className = 'empty-drop-message dashed';
             emptyMsg.textContent = cgT('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
@@ -786,46 +814,46 @@
 
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
-        card.className = 'card collection-card' + (currentView === 'list' ? ' collection-card--list-row' : '');
+        const count = Number(collection.entries_count || 0);
+        card.className = 'collection-card' + (currentView === 'list' ? ' is-row' : '') + (count === 0 ? ' is-empty' : '');
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
+        card.dataset.filterText = ((collection.name || '') + ' ' + (collection.slug || '') + ' ' + (collection.description || '')).toLowerCase();
 
         const header = document.createElement('div');
-        header.className = 'collection-header';
+        header.className = 'collection-card-head';
 
         header.appendChild(createDragHandle('Drag to reorder'));
         renderCollectionIcon(collection, header);
 
         const title = document.createElement('h3');
-        title.className = 'card-title collection-title';
+        title.className = 'collection-card-title';
         title.textContent = collection.name || 'Untitled';
         header.appendChild(title);
 
         const descText = (collection.description || '').trim();
-        let description = null;
-        if (descText) {
-            description = document.createElement('p');
-            description.className = 'collection-description';
-            description.textContent = descText;
-        }
+        const description = document.createElement('p');
+        description.className = 'collection-card-text';
+        description.textContent = descText;
 
         const footer = document.createElement('div');
-        footer.className = 'collection-footer';
+        footer.className = 'collection-card-foot';
 
         const entryCount = document.createElement('a');
-        entryCount.className = 'entry-count entry-count-link';
+        entryCount.className = 'entry-count-link';
         entryCount.href = adminUrl('entries', { collection: collection.slug });
         entryCount.title = 'View entries';
-        const countBold = document.createElement('b');
-        countBold.textContent = collection.entries_count || 0;
+        const countBold = document.createElement('strong');
+        countBold.textContent = count.toLocaleString();
         entryCount.appendChild(countBold);
-        entryCount.appendChild(document.createTextNode(' entries'));
+        entryCount.appendChild(document.createTextNode(' ' + (count === 1 ? cgT('content_groups_entry', 'entry') : cgT('content_groups_entries', 'entries'))));
+        footer.appendChild(entryCount);
 
         if (collection.sub_entries_count > 0) {
             const subEntriesSpan = document.createElement('span');
-            subEntriesSpan.className = 'sub-entries-count';
-            subEntriesSpan.textContent = ' +' + collection.sub_entries_count;
-            entryCount.appendChild(subEntriesSpan);
+            subEntriesSpan.className = 'chip';
+            subEntriesSpan.textContent = cgT('content_groups_sub_entries', '+{count} sub-entries', { count: collection.sub_entries_count });
+            footer.appendChild(subEntriesSpan);
         }
 
         const menuWrapper = document.createElement('div');
@@ -833,11 +861,11 @@
 
         const menuButton = document.createElement('button');
         menuButton.type = 'button';
-        menuButton.className = 'dropdown-trigger btn-icon btn-icon-sm collection-menu-btn';
+        menuButton.className = 'dropdown-trigger icon-button collection-menu-btn';
         menuButton.setAttribute('aria-label', 'Collection options');
         menuButton.setAttribute('aria-expanded', 'false');
         menuButton.setAttribute('aria-haspopup', 'true');
-        menuButton.innerHTML = icon('dots-three-vertical', { size: 16 });
+        menuButton.innerHTML = icon('dots');
         menuButton.addEventListener('dragstart', (e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -885,14 +913,10 @@
         menuWrapper.appendChild(menuButton);
         menuWrapper.appendChild(menuDropdown);
 
-        footer.appendChild(entryCount);
-        footer.appendChild(menuWrapper);
-
         card.appendChild(header);
-        if (description) {
-            card.appendChild(description);
-        }
+        card.appendChild(description);
         card.appendChild(footer);
+        card.appendChild(menuWrapper);
 
         card.addEventListener('click', async function (e) {
             if (e.defaultPrevented) return;

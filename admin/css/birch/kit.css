@@ -97,6 +97,12 @@
   color: var(--danger);
 }
 
+[data-birch] .button.is-current {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
 [data-birch] .button.is-small {
   height: var(--control-sm);
   padding: 0 var(--s-2);
@@ -248,6 +254,31 @@
   color: var(--text-3);
   pointer-events: none;
 }
+
+/* ---------- Search field ---------- */
+[data-birch] .search-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 240px;
+}
+
+[data-birch] .search-field > .birkly-icon {
+  position: absolute;
+  inset-inline-start: var(--s-3);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+[data-birch] .search-field > .input { padding-inline-start: calc(var(--s-3) + var(--icon) + var(--s-2)); }
+
+[data-birch] .collections-first-run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+[data-birch] .collections-templates .group-title { margin-block-end: var(--s-3); }
 
 /* ---------- Checkbox, radio, switch ---------- */
 [data-birch] .choice {
@@ -798,11 +829,11 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 [data-birch] .collection-card:hover .icon-button,
 [data-birch] .collection-card.is-hover .icon-button { opacity: 1; }
 
-/* ---------- Table ---------- */
-[data-birch] .table { display: flex; flex-direction: column; }
+/* ---------- Table (div layout; <table> markup keeps table layout) ---------- */
+[data-birch] div.table { display: flex; flex-direction: column; }
 
-[data-birch] .table-head,
-[data-birch] .table-row {
+[data-birch] div.table > .table-head,
+[data-birch] div.table > .table-row {
   display: grid;
   grid-template-columns: var(--table-columns, 32px minmax(0, 1fr) 140px);
   align-items: center;
@@ -810,17 +841,17 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   padding: 0 var(--s-3);
 }
 
-[data-birch] .table-head {
+[data-birch] div.table > .table-head {
   min-height: 32px;
   color: var(--text-3);
   font-size: var(--size-small);
   line-height: var(--lh-small);
 }
 
-[data-birch] .table-row { min-height: var(--row-table); }
+[data-birch] div.table > .table-row { min-height: var(--row-table); }
 
-[data-birch] .table-row.is-selected,
-[data-birch] .table-row[aria-selected="true"] { background: var(--accent-soft); }
+[data-birch] div.table > .table-row.is-selected,
+[data-birch] div.table > .table-row[aria-selected="true"] { background: var(--accent-soft); }
 
 /* ---------- Field definitions (collection builder) ---------- */
 [data-birch] .field-def {
@@ -1149,3 +1180,6 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
   gap: var(--s-4);
 }
+
+/* The hidden attribute always wins over component display values */
+[data-birch] [hidden] { display: none; }
