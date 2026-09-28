@@ -404,6 +404,15 @@
   gap: var(--s-4);
 }
 
+.media-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.media-picker-bar .select-box { width: 220px; }
+
 .media-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
