@@ -60,9 +60,11 @@
             const help = group.querySelector('.help-text, .field-help, .form-text');
             
             if (input && help && !input.hasAttribute('aria-describedby')) {
-                const helpId = 'help-' + (input.id || Math.random().toString(36).substr(2, 9));
-                help.id = helpId;
-                input.setAttribute('aria-describedby', helpId);
+                // Keep an existing id: page scripts look help text up by it.
+                if (!help.id) {
+                    help.id = 'help-' + (input.id || Math.random().toString(36).substr(2, 9));
+                }
+                input.setAttribute('aria-describedby', help.id);
             }
             
             // Mark required fields
