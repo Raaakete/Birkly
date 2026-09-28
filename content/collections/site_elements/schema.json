@@ -14,34 +14,11 @@
       "help_text": "Unique identifier for this element (e.g., 'navigation', 'hero', 'footer')"
     },
     {
-      "name": "slug",
-      "type": "text",
-      "label": "Slug",
-      "required": true
-    },
-    {
       "name": "content",
       "type": "dynamicitems",
       "label": "Content",
       "required": false,
       "help_text": "Dynamic content blocks for this element"
-    },
-    {
-      "name": "status",
-      "type": "select",
-      "label": "Status",
-      "options": [
-        {
-          "label": "Draft",
-          "value": "draft"
-        },
-        {
-          "label": "Published",
-          "value": "published"
-        }
-      ],
-      "default": "published"
     }
   ]
 }
-
