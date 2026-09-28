@@ -15,7 +15,6 @@
             if (!field) return;
             
             const hiddenInput = document.getElementById('field_' + fieldName + '_value');
-            const badgesContainer = document.getElementById('multiselect_badges_' + fieldName);
             const optionsContainer = document.getElementById('multiselect_options_' + fieldName);
             
             // Initialize or load state
@@ -39,37 +38,20 @@
                 }
             }
             
-            // Update hidden input and badges
             function updateValue() {
                 if (hiddenInput) {
                     hiddenInput.value = JSON.stringify(state.selectedValues);
                     console.log('[MultiSelect] Updated hidden input for', fieldName, ':', hiddenInput.value);
                 }
-                updateBadges();
                 updateCheckboxes();
             }
             
-            function updateBadges() {
-                if (!badgesContainer) return;
-                
-                badgesContainer.innerHTML = '';
-                state.selectedValues.forEach(val => {
-                    // Find option label from checkbox
-                    const checkbox = optionsContainer.querySelector('.multiselect-option-checkbox[value="' + val.replace(/"/g, '&quot;') + '"]');
-                    const label = checkbox ? checkbox.closest('.multiselect-option-label').querySelector('.multiselect-option-text').textContent : val;
-                    
-                    const badge = document.createElement('span');
-                    badge.className = 'multiselect-badge';
-                    badge.setAttribute('data-value', val);
-                    badge.innerHTML = label + '<span class="badge-remove" onclick="window.HaruFieldtypes[\'multiselect\'].removeValue(\'' + fieldName + '\', \'' + val.replace(/'/g, "\\'") + '\')">×</span>';
-                    badgesContainer.appendChild(badge);
-                });
-            }
-            
             function updateCheckboxes() {
-                if (!optionsContainer) return;
-                
-                const checkboxes = optionsContainer.querySelectorAll('.multiselect-option-checkbox');
+                // Looked up each time: the container is swapped for a clone below.
+                const list = document.getElementById('multiselect_options_' + fieldName);
+                if (!list) return;
+
+                const checkboxes = list.querySelectorAll('.multiselect-option-checkbox');
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = state.selectedValues.includes(checkbox.value);
                 });
@@ -96,8 +78,6 @@
                 });
             }
             
-            // Initialize
-            updateBadges();
             updateCheckboxes();
         },
         
@@ -135,7 +115,6 @@
         
         updateValue: function(fieldName) {
             const hiddenInput = document.getElementById('field_' + fieldName + '_value');
-            const badgesContainer = document.getElementById('multiselect_badges_' + fieldName);
             const optionsContainer = document.getElementById('multiselect_options_' + fieldName);
             
             if (!fieldStates[fieldName]) return;
@@ -143,21 +122,6 @@
             
             if (hiddenInput) {
                 hiddenInput.value = JSON.stringify(state.selectedValues);
-            }
-            
-            // Update badges
-            if (badgesContainer) {
-                badgesContainer.innerHTML = '';
-                state.selectedValues.forEach(val => {
-                    const checkbox = optionsContainer ? optionsContainer.querySelector('.multiselect-option-checkbox[value="' + val.replace(/"/g, '&quot;') + '"]') : null;
-                    const label = checkbox ? checkbox.closest('.multiselect-option-label').querySelector('.multiselect-option-text').textContent : val;
-                    
-                    const badge = document.createElement('span');
-                    badge.className = 'multiselect-badge';
-                    badge.setAttribute('data-value', val);
-                    badge.innerHTML = label + '<span class="badge-remove" onclick="window.HaruFieldtypes[\'multiselect\'].removeValue(\'' + fieldName + '\', \'' + val.replace(/'/g, "\\'") + '\')">×</span>';
-                    badgesContainer.appendChild(badge);
-                });
             }
             
             // Update checkboxes

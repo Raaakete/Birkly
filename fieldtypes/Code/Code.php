@@ -44,7 +44,7 @@ class Code extends BaseField {
             <textarea
                 name="{$this->name}"
                 id="field_{$this->name}"
-                class="input code-field-input"
+                class="input is-mono code-field-input"
                 rows="{$rows}"
                 spellcheck="false"
                 {$required}
@@ -81,28 +81,20 @@ class Code extends BaseField {
         return <<<'CSS'
         .code-field {
             display: grid;
-            gap: var(--space-2, 0.5rem);
+            gap: var(--s-1);
         }
-
         .code-field-input {
-            min-height: 240px;
-            font-family: var(--font-family-mono, SFMono-Regular, Consolas, monospace);
-            line-height: 1.6;
+            min-height: 200px;
             tab-size: 2;
         }
-
         .code-field-status {
-            font-size: 0.875rem;
-            color: var(--text-secondary, #6b7280);
+            color: var(--text-3);
+            font-size: var(--size-small);
+            line-height: var(--lh-small);
         }
-
-        .code-field-status.is-valid {
-            color: var(--success-600, #16a34a);
-        }
-
-        .code-field-status.is-invalid {
-            color: var(--error-600, #dc2626);
-        }
+        .code-field-status:empty { display: none; }
+        .code-field-status.is-valid { color: var(--success); }
+        .code-field-status.is-invalid { color: var(--danger); }
         CSS;
     }
 

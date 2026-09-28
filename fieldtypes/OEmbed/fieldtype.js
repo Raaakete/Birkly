@@ -120,6 +120,19 @@ window.HaruFieldtypes['oembed'] = {
     document.querySelectorAll('[data-oembed-field]').forEach(initField);
   }
 
+  // The admin CSP may not allow the provider's frames; hide the preview instead of an empty box.
+  document.addEventListener('securitypolicyviolation', function(event) {
+    if (String(event.violatedDirective || '').indexOf('frame-src') !== 0 || !event.blockedURI) {
+      return;
+    }
+    document.querySelectorAll('.oembed-field-frame').forEach(function(frame) {
+      var src = frame.getAttribute('src') || '';
+      if (src && src.indexOf(event.blockedURI) === 0) {
+        frame.closest('.oembed-field-preview').hidden = true;
+      }
+    });
+  });
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initAll);
   } else {
