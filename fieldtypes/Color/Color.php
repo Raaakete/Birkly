@@ -280,6 +280,19 @@ class Color extends BaseField {
         JS;
     }
 
+    public function getListCSS(): string {
+        return <<<'CSS'
+        .ft-color-swatch {
+            flex: none;
+            width: 16px;
+            height: 16px;
+            border-radius: var(--r-inset);
+            background: var(--swatch);
+            box-shadow: inset 0 0 0 1px var(--line);
+        }
+        CSS;
+    }
+
     public function getCSS(): string {
         return <<<'CSS'
         /* One row: swatch, hex, rgba. The swatch opens the native picker. */
@@ -378,7 +391,7 @@ class Color extends BaseField {
         
         // Show color swatch with hex code
         $hex = $this->normalizeToHex($value);
-        return '<div style="display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:20px;height:20px;background-color:' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . ';border-radius:4px;border:1px solid var(--border-light, #e5e7eb);flex-shrink:0;"></span><span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '</span></div>';
+        return '<span class="ft-list-row"><span class="ft-color-swatch" style="--swatch: ' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '"></span><span class="ft-list-text ft-list-mono">' . htmlspecialchars($hex, ENT_QUOTES, 'UTF-8') . '</span></span>';
     }
 
     public function getTableMinWidth(): string {

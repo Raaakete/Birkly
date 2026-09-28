@@ -115,6 +115,12 @@ abstract class BaseField {
         return '';
     }
 
+    // CSS for this fieldtype's renderListCell() output. Loaded on entries lists that
+    // show the fieldtype; shared cell primitives (.ft-list-*) live in core tables.css.
+    public function getListCSS(): string {
+        return '';
+    }
+
     // One-line, sentence-case hint shown in the Add a field dialog.
     public function getDescription(): string {
         return '';

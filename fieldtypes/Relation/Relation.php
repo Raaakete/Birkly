@@ -462,7 +462,7 @@ class Relation extends BaseField {
         }
         
         $badge = '<span class="ft-list-badge">' . $count . ' related</span>';
-        $text = $previewText ? '<span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);margin-left:4px;">(' . $previewText . ')</span>' : '';
+        $text = $previewText ? '<span class="ft-list-muted">' . $previewText . '</span>' : '';
         
         return $badge . $text;
     }

@@ -156,6 +156,12 @@ class Gallery extends BaseField {
         return file_get_contents(__DIR__ . '/fieldtype.js');
     }
 
+    public function getListCSS(): string {
+        return <<<'CSS'
+        .ft-gallery-stack { flex-wrap: nowrap; gap: 2px; }
+        CSS;
+    }
+
     public function getCSS(): string {
         return <<<'CSS'
         /* Thumbnails are wells 8px apart; an empty gallery is a dashed area. */
@@ -354,16 +360,16 @@ class Gallery extends BaseField {
             }
         }
         
-        $html = '<div class="ft-gallery-preview-container" style="display:flex;gap:4px;align-items:center;">';
+        $html = '<span class="ft-list-row ft-gallery-stack">';
         $html .= implode('', $previews);
         
         // Add count badge if more than 3 items
         if ($count > 3) {
             $remaining = $count - 3;
-            $html .= '<span class="ft-gallery-count" style="display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;background:var(--color-neutral-200, #f3f4f6);color:var(--text-secondary, #6b7280);border-radius:4px;font-size:12px;font-weight:600;flex-shrink:0;">+' . $remaining . '</span>';
+            $html .= '<span class="ft-list-badge">+' . $remaining . '</span>';
         }
         
-        $html .= '</div>';
+        $html .= '</span>';
         return $html;
     }
 

@@ -250,7 +250,7 @@ class MultiSelect extends BaseField {
             $previewText .= '...';
         }
         
-        return '<span class="ft-list-badge">' . $count . ' selected</span> <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);margin-left:4px;">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>';
+        return '<span class="ft-list-row"><span class="ft-list-badge">' . $count . ' selected</span><span class="ft-list-muted">' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . '</span></span>';
     }
 
     public function getTableMinWidth(): string {

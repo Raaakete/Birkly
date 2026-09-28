@@ -239,7 +239,7 @@ class Map extends BaseField {
         
         // Show coordinates
         $coords = number_format($lat, 6) . ', ' . number_format($lng, 6);
-        return '<span class="ft-list-text" style="font-family:monospace;font-size:11px;">' . htmlspecialchars($coords, ENT_QUOTES, 'UTF-8') . '</span>';
+        return '<span class="ft-list-text ft-list-mono">' . htmlspecialchars($coords, ENT_QUOTES, 'UTF-8') . '</span>';
     }
 
     public function getTableMinWidth(): string {
