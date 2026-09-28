@@ -110,7 +110,7 @@ if (empty($userAvatar)) {
         $avatarInitials = strtoupper(substr($userName, 0, 2));
     }
 }
-?><aside class="sidebar" id="admin-sidebar">
+?><aside class="sidebar" id="admin-sidebar" data-birch>
         <div class="sidebar-body">
             <div class="sidebar-header">
                 <div id="brandingLogoSidebar" class="logo branding-logo">
@@ -122,7 +122,7 @@ if (empty($userAvatar)) {
             </div>
             <nav class="sidebar-nav">
                 <!-- First Section: Main Navigation -->
-                <ul class="nav-links" id="links-main">
+                <ul class="nav-links nav-panel" id="links-main">
                     <li class="nav-item">
                         <a href="<?= htmlspecialchars(admin_url('dashboard')) ?>" class="nav-link <?= is_nav_active('dashboard') ?>" title="<?= htmlspecialchars(__('admin.dashboard')) ?>">
                             <?= birkly_icon('gauge', ['class' => 'nav-icon']) ?><span class="nav-label"><?= __('admin.dashboard') ?></span>
@@ -189,7 +189,7 @@ if (empty($userAvatar)) {
                             </div>
                         </li>
                     </ul>
-                    <ul class="nav-links" id="links-plugins">
+                    <ul class="nav-links nav-panel" id="links-plugins">
                         <li class="nav-item">
                             <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'discover'])) ?>" class="nav-link <?= is_plugins_tab_active('discover') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
                                 <?= birkly_icon('shopping-bag', ['class' => 'nav-icon']) ?>
@@ -233,7 +233,7 @@ if (empty($userAvatar)) {
                 }
                 $settingsNavTitle = __('admin.settings') . ($settingsCmsUpdateAttention ? ' (new activity)' : '');
                 ?>
-                <ul class="nav-links" id="links-settings">
+                <ul class="nav-links nav-panel" id="links-settings">
                     <li class="nav-item<?= $settingsCmsUpdateAttention ? ' has-attention' : '' ?>" data-nav-attention-key="birkly">
                         <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('redirects') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>" title="<?= htmlspecialchars($settingsNavTitle) ?>"<?= $settingsCmsUpdateAttention ? ' aria-label="' . htmlspecialchars($settingsNavTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                             <?= birkly_icon('gear', ['class' => 'nav-icon']) ?>
@@ -264,18 +264,21 @@ if (empty($userAvatar)) {
                 </ul>
                 </nav>
             <button type="button" class="sidebar-collapse-toggle" id="sidebar-collapse-toggle" aria-label="Collapse sidebar" aria-pressed="false" title="Collapse sidebar">
-                <?= birkly_icon('caret-left') ?>
+                <?= birkly_icon('chev-left2') ?>
                 <span class="sidebar-collapse-label">Collapse</span>
             </button>
         </div>
         <?php
         require_once __DIR__ . '/../../core/platform.php';
-        if (birkly_alpha_program_enabled()):
+        $sidebarVersion = trim((string) @file_get_contents(__DIR__ . '/../../VERSION'));
+        $sidebarProgram = birkly_alpha_program_enabled() ? birkly_program_status_label() : '';
+        $sidebarFooterLabel = trim(($sidebarVersion !== '' ? 'v' . $sidebarVersion : '') . ($sidebarProgram !== '' ? ' · ' . $sidebarProgram : ''), ' ·');
+        if ($sidebarFooterLabel !== ''):
         ?>
         <div class="sidebar-footer">
             <p class="sidebar-program-label">
-                <span class="sidebar-program-label-full"><?= htmlspecialchars(birkly_program_status_label()) ?></span>
-                <span class="sidebar-program-label-short" aria-hidden="true">v1</span>
+                <span class="sidebar-program-label-full"><?= htmlspecialchars($sidebarFooterLabel) ?></span>
+                <span class="sidebar-program-label-short" aria-hidden="true"><?= htmlspecialchars($sidebarProgram !== '' ? 'alpha' : 'v' . strtok($sidebarVersion, '.')) ?></span>
             </p>
         </div>
         <?php endif; ?>
