@@ -312,7 +312,7 @@
    .is-scrolled-x so it doesn't sit there when there is nothing to scroll. */
 .entries-smart-table.is-scrolled-x .head-actions,
 .entries-smart-table.is-scrolled-x .cell-actions {
-  box-shadow: -6px 0 12px -6px rgba(32, 34, 29, 0.12);
+  box-shadow: -6px 0 12px -6px var(--scroll-shade);
 }
 
 .entries-smart-table.entries-l2-actions .head-actions,
@@ -349,7 +349,7 @@
 .entries-smart-table tbody tr:hover { background: var(--surface-2); }
 .entries-smart-table tbody tr:last-child td { border-block-end: none; }
 
-.entries-smart-table.is-scrolled-x { box-shadow: inset 8px 0 8px -8px rgba(32, 34, 29, 0.12); }
+.entries-smart-table.is-scrolled-x { box-shadow: inset 8px 0 8px -8px var(--scroll-shade); }
 
 .table-row.dragging:not(.drop-target) {
   opacity: 0.85;

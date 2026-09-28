@@ -66,7 +66,7 @@
   background: var(--chrome-assist-bg, color-mix(in srgb, var(--mint) 22%, var(--surface) 78%));
   backdrop-filter: var(--chrome-glass-blur, blur(12px) saturate(1.15));
   -webkit-backdrop-filter: var(--chrome-glass-blur, blur(12px) saturate(1.15));
-  color: var(--mint);
+  color: var(--accent-text);
   box-shadow: var(--chrome-glass-shadow, var(--shadow-float-2));
   cursor: pointer;
   transition:

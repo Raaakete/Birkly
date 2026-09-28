@@ -159,7 +159,7 @@ body.ai-chat-window-open .assist-fab-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--mint);
+  color: var(--accent-text);
 }
 
 .guide-launcher-btn:hover {
@@ -189,10 +189,6 @@ body.ai-chat-window-open .assist-fab-wrap {
   border-color: var(--mint);
   background: color-mix(in srgb, var(--mint) 24%, var(--surface) 76%);
   box-shadow: var(--chrome-glass-shadow);
-}
-
-.guide-launcher-btn.is-open .guide-launcher-btn__inner {
-  color: var(--accent-text);
 }
 
 @keyframes guide-launcher-halo {
