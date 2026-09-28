@@ -131,3 +131,72 @@ body.auth-page {
   font-size: var(--text-sm);
   color: var(--text-primary);
 }
+
+/* ============================================
+   Birch (P96-M13): the card is a slab on the canvas; fields are grey inside
+   it and take an accent border on focus; the brand square is 32px; one mint
+   action.
+   ============================================ */
+.auth-card {
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: none;
+}
+
+.auth-card > .card-body { padding: var(--s-6); }
+
+.auth-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r);
+}
+
+.auth-title {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-page-title) / var(--lh-page-title) var(--font-sans);
+  letter-spacing: 0;
+}
+
+.auth-subtitle { color: var(--text-3); font-size: var(--size-small); }
+
+.auth-form label,
+.auth-form .field-label {
+  color: var(--text);
+  font-size: var(--size-small);
+  font-weight: var(--weight-medium);
+}
+
+.auth-form .input {
+  height: 40px;
+  border-color: transparent;
+  border-radius: var(--r);
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.auth-form .input:hover:not(:focus) { background: var(--surface-3); }
+
+.auth-form .input:focus {
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: none;
+  outline: none;
+}
+
+.auth-code-input { height: 48px; font-family: var(--font-mono); }
+
+.auth-footer {
+  border-block-start-color: var(--line);
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+.auth-footer a { color: var(--accent-text); }
+
+.auth-invite-detail dt {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  letter-spacing: 0;
+  text-transform: none;
+}
