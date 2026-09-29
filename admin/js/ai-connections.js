@@ -200,8 +200,8 @@
                     ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
                 </div>
                 <div class="ai-connection-entry-actions">
-                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">${editLabel}</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">${deleteLabel}</button>
+                    <button type="button" class="button is-small" data-edit-connection="${escapeHtml(conn.id)}">${editLabel}</button>
+                    <button type="button" class="button is-small is-danger" data-delete-connection="${escapeHtml(conn.id)}">${deleteLabel}</button>
                 </div>
             </div>
         `).join('');

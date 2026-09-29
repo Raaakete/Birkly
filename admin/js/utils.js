@@ -134,7 +134,7 @@ Birkly.Utils = {
                     ${bodyHtml}
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" type="button" data-modal-action="close">OK</button>
+                    <button class="button is-main" type="button" data-modal-action="close">OK</button>
                 </div>
             </div>
         `;

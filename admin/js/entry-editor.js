@@ -702,8 +702,8 @@
                     <textarea id="review-notes-input" class="input" rows="4" placeholder="${eeT('entry_editor_js_review_notes_placeholder', 'Enter notes...')}"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">${eeT('cancel', 'Cancel')}</button>
-                    <button class="btn btn-primary" id="submit-review-btn">${eeT('entry_editor_js_submit_review', 'Submit')}</button>
+                    <button class="button" onclick="this.closest('.modal').remove()">${eeT('cancel', 'Cancel')}</button>
+                    <button class="button is-main" id="submit-review-btn">${eeT('entry_editor_js_submit_review', 'Submit')}</button>
                 </div>
             </div>
         `;
@@ -854,7 +854,7 @@
                     </div>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <button id="compare-versions-btn" class="btn btn-primary">Compare Versions</button>
+                    <button id="compare-versions-btn" class="button is-main">Compare Versions</button>
                 </div>
                 <div id="diff-view" style="display: none;"></div>
                 <div class="versions-list" id="versions-list">
@@ -870,7 +870,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <button class="btn btn-sm" onclick="window.restoreVersion('${collectionSlug}', '${entryId}', '${version.version}')">
+                                    <button class="button is-small" onclick="window.restoreVersion('${collectionSlug}', '${entryId}', '${version.version}')">
                                         Restore
                                     </button>
                                     ${index === 0 ? '<span style="margin-left: 8px; color: #0a0;">Current</span>' : ''}
@@ -939,7 +939,7 @@
         
         container.innerHTML = `
             <div style="margin-bottom: 20px;">
-                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('diff-view').style.display='none'; document.getElementById('versions-list').style.display='block';">Back to Versions</button>
+                <button class="button is-small" onclick="document.getElementById('diff-view').style.display='none'; document.getElementById('versions-list').style.display='block';">Back to Versions</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
                 <div style="background: #f5f5f5; padding: 12px; border-right: 1px solid #ddd;">

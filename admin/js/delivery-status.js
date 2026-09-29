@@ -90,13 +90,13 @@
     function renderFixControl(check) {
         if (!check.fix) return '';
         if (check.fix.action === 'fix_project_paths') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="fix_project_paths">' + escapeHtml(t('delivery_btn_fix_paths', 'Fix paths')) + '</button>';
+            return ' <button type="button" class="button is-small delivery-status-fix delivery-status-fix-action" data-fix-action="fix_project_paths">' + escapeHtml(t('delivery_btn_fix_paths', 'Fix paths')) + '</button>';
         }
         if (check.fix.action === 'repair') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="repair">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
+            return ' <button type="button" class="button is-small delivery-status-fix delivery-status-fix-action" data-fix-action="repair">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
         }
         if (check.fix.action === 'set_same_host_public') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="set_same_host_public">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
+            return ' <button type="button" class="button is-small delivery-status-fix delivery-status-fix-action" data-fix-action="set_same_host_public">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
         }
         return ' <a class="delivery-status-fix" href="' + escapeHtml(fixUrl(check.fix)) + '">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</a>';
     }
@@ -134,7 +134,7 @@
 
         var guideNudge = (overall !== 'green' && id === 'site-delivery')
             ? '<div class="delivery-status-guide-nudge">' +
-                '<button type="button" class="btn btn-ghost btn-sm" data-delivery-guide-nudge>' +
+                '<button type="button" class="button is-quiet is-small" data-delivery-guide-nudge>' +
                 escapeHtml(t('guide_delivery_nudge', 'Show me how to set up site delivery')) +
                 '</button></div>'
             : '';
@@ -146,8 +146,8 @@
             (metaBits.length ? '<p class="delivery-status-meta">' + metaBits.map(escapeHtml).join(' · ') + '</p>' : '') +
             '</div>' +
             '<div class="delivery-status-actions">' +
-            '<button type="button" class="btn btn-secondary btn-sm delivery-status-refresh">' + escapeHtml(t('delivery_btn_refresh', 'Refresh')) + '</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm delivery-status-repair">' + escapeHtml(t('delivery_btn_repair', 'Repair delivery')) + '</button>' +
+            '<button type="button" class="button is-small delivery-status-refresh">' + escapeHtml(t('delivery_btn_refresh', 'Refresh')) + '</button>' +
+            '<button type="button" class="button is-small delivery-status-repair">' + escapeHtml(t('delivery_btn_repair', 'Repair delivery')) + '</button>' +
             '</div></div>' +
             guideNudge +
             '<ul class="delivery-status-checks">' + rows + '</ul>' +

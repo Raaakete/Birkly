@@ -1528,13 +1528,13 @@ async function loadTeamInvitations() {
             const actions = [];
 
             if (invite.can_copy_link && invite.invite_url) {
-                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>Copy link</button>');
+                actions.push('<button type="button" class="button is-small" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>Copy link</button>');
             }
             if (invite.can_resend) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
+                actions.push('<button type="button" class="button is-quiet is-small" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
             }
             if (invite.can_cancel) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(stT('cancel', 'Cancel')) + '</button>');
+                actions.push('<button type="button" class="button is-quiet is-small" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(stT('cancel', 'Cancel')) + '</button>');
             }
 
             return '<div class="data-list-item">' +
@@ -2055,7 +2055,7 @@ async function deletePlugin(pluginId) {
         }
         var actions = '';
         if (row.can_make_public_primary) {
-            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
+            actions = ' <button type="button" class="button is-small delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
         }
         return '<tr>' +
             '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
@@ -2193,7 +2193,7 @@ async function deletePlugin(pluginId) {
         return '' +
             '<div class="domains-code-block">' +
             '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
-            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="' + escapeHtml(stT('copy_code', 'Copy code')) + '">' +
+            '<button type="button" class="button is-small domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="' + escapeHtml(stT('copy_code', 'Copy code')) + '">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
             '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
             '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
@@ -2404,8 +2404,8 @@ async function deletePlugin(pluginId) {
                 '</div>' +
                 '</div>' +
                 '<div class="card-actions">' +
-                '<button type="button" class="btn btn-sm btn-secondary" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
+                '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
+                '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
                 '</div>' +
                 '</div>' +
                 '<div class="card-body u-stack-4">' +
@@ -2431,7 +2431,7 @@ async function deletePlugin(pluginId) {
                 (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
                 (analyticsEnabled ?
                     '<div class="u-cluster">' +
-                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
+                    '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
                     '</div>' +
                     '<div class="domain-analytics-report" hidden></div>' : '') +
                 '</div>' +
@@ -3150,7 +3150,7 @@ function renderDenylistItem(resource, type) {
             <code class="u-mono u-text-sm u-fill u-break-word">${escapeHtml(resource)}</code>
             <span class="badge badge-neutral">${label}</span>
             <div class="data-list-actions">
-                <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
+                <button type="button" class="button is-small is-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
                     Remove
                 </button>
             </div>

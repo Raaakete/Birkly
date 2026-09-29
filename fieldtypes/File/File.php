@@ -67,8 +67,8 @@ class File extends BaseField {
             </div>
             <span class="file-meta"{$metaHidden}>{$meta}</span>
             <div class="file-controls">
-                <button type="button" class="btn btn-secondary btn-sm select-file-btn" data-field="{$name}">{$mediaIcon}<span class="file-select-label">{$selectLabel}</span></button>
-                <button type="button" class="btn btn-ghost btn-sm upload-file-btn" data-field="{$name}">{$uploadIcon}<span class="file-upload-label">Upload</span></button>
+                <button type="button" class="button is-small select-file-btn" data-field="{$name}">{$mediaIcon}<span class="file-select-label">{$selectLabel}</span></button>
+                <button type="button" class="button is-quiet is-small upload-file-btn" data-field="{$name}">{$uploadIcon}<span class="file-upload-label">Upload</span></button>
                 <button type="button" class="btn-icon remove-file-btn" data-field="{$name}" title="Remove file" aria-label="Remove file"{$removeHidden}>{$trashIcon}</button>
             </div>
             <input type="file" id="file_input_{$name}" accept="{$accept}" hidden {$multipleAttr}>
@@ -276,7 +276,7 @@ class File extends BaseField {
             inset-block-end: var(--s-2);
             inset-inline-end: var(--s-2);
         }
-        .file-field[data-state="filled"] .file-controls .btn,
+        .file-field[data-state="filled"] .file-controls :is(.btn, .button),
         .file-field[data-state="filled"] .file-controls .btn-icon {
             background: var(--surface);
         }

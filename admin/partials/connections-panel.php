@@ -14,7 +14,7 @@
           <h2 class="section-title"><?= __('admin.connections_panel_email_title') ?></h2>
           <p class="settings-help"><?= __('admin.connections_panel_email_help') ?></p>
         </div>
-        <button type="button" class="btn btn-primary" data-sys-conn-action="open-email-wizard">
+        <button type="button" class="button is-main" data-sys-conn-action="open-email-wizard">
           <?= birkly_icon('plus', ['size' => 16]) ?>
           <?= __('admin.connections_panel_setup_email_btn') ?>
         </button>
@@ -35,7 +35,7 @@
           <h2 class="section-title"><?= __('admin.connections_panel_http_title') ?></h2>
           <p class="settings-help"><?= __('admin.connections_panel_http_help') ?></p>
         </div>
-        <button type="button" class="btn btn-primary" data-sys-conn-action="open-http-wizard" data-connection-type="http_credential">
+        <button type="button" class="button is-main" data-sys-conn-action="open-http-wizard" data-connection-type="http_credential">
           <?= birkly_icon('plus', ['size' => 16]) ?>
           <?= __('admin.connections_panel_add_credential_btn') ?>
         </button>
@@ -130,7 +130,7 @@
           <label for="sys-conn-test-email"><?= __('admin.connections_panel_send_test_label') ?></label>
           <div class="input-with-action">
             <input type="email" id="sys-conn-test-email" class="input" placeholder="<?= htmlspecialchars(__('admin.connections_panel_test_email_ph')) ?>" autocomplete="email">
-            <button type="button" class="btn btn-secondary" id="sys-conn-send-test-btn"><?= __('admin.connections_panel_send_test_btn') ?></button>
+            <button type="button" class="button" id="sys-conn-send-test-btn"><?= __('admin.connections_panel_send_test_btn') ?></button>
           </div>
           <p id="sys-conn-test-status" class="form-help sys-conn-test-status" aria-live="polite"></p>
         </div>
@@ -144,10 +144,10 @@
       </section>
 
       <div class="conn-wizard-actions modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden><?= __('admin.connections_panel_wizard_back') ?></button>
-        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next"><?= __('admin.connections_panel_wizard_continue') ?></button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden><?= __('admin.connections_panel_save_connection') ?></button>
+        <button type="button" class="button" data-sys-conn-action="close-email-modal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button" id="sys-conn-wizard-back" hidden><?= __('admin.connections_panel_wizard_back') ?></button>
+        <button type="button" class="button is-main" id="sys-conn-wizard-next"><?= __('admin.connections_panel_wizard_continue') ?></button>
+        <button type="submit" class="button is-main" id="sys-conn-wizard-save" hidden><?= __('admin.connections_panel_save_connection') ?></button>
       </div>
     </form>
   </div>
@@ -192,8 +192,8 @@
       </label>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal"><?= __('admin.cancel') ?></button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit"><?= __('admin.connections_js_save_credential') ?></button>
+        <button type="button" class="button" data-sys-conn-action="close-http-modal"><?= __('admin.cancel') ?></button>
+        <button type="submit" class="button is-main" id="sys-conn-http-submit"><?= __('admin.connections_js_save_credential') ?></button>
       </div>
     </form>
   </div>

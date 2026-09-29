@@ -105,7 +105,7 @@
         if (!existing) {
             existing = document.createElement('a');
             existing.id = 'admin-visit-project-btn';
-            existing.className = 'btn btn-secondary btn-sm admin-visit-project-btn';
+            existing.className = 'button is-small admin-visit-project-btn';
             existing.target = '_blank';
             existing.rel = 'noopener noreferrer';
             existing.textContent = t('project_btn_visit', 'Visit project');

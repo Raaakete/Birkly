@@ -173,8 +173,8 @@
                 '<td>' + status + '</td>' +
                 '<td>' + lastTriggered + '</td>' +
                 '<td class="cell-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary" data-edit-webhook="' + escapeHtml(webhook.id) + '">' + editLabel + '</button> ' +
-                    '<button type="button" class="btn btn-sm btn-danger" data-delete-webhook="' + escapeHtml(webhook.id) + '">' + deleteLabel + '</button>' +
+                    '<button type="button" class="button is-small" data-edit-webhook="' + escapeHtml(webhook.id) + '">' + editLabel + '</button> ' +
+                    '<button type="button" class="button is-small is-danger" data-delete-webhook="' + escapeHtml(webhook.id) + '">' + deleteLabel + '</button>' +
                 '</td>' +
             '</tr>';
         }).join('');

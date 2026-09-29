@@ -397,7 +397,7 @@
         menu.className = 'assist-fab-menu';
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
-            <button type="button" class="btn assist-fab-action" id="assist-fab-feedback" role="menuitem" title="${chatT('ai_chat_js_send_feedback', 'Send feedback')}" aria-label="${chatT('ai_chat_js_send_feedback', 'Send feedback')}">
+            <button type="button" class="button assist-fab-action" id="assist-fab-feedback" role="menuitem" title="${chatT('ai_chat_js_send_feedback', 'Send feedback')}" aria-label="${chatT('ai_chat_js_send_feedback', 'Send feedback')}">
                 ${icon('paper-plane-tilt', { size: 20 })}
                 <span>${chatT('ai_chat_js_fab_feedback', 'Feedback')}</span>
             </button>
@@ -546,8 +546,8 @@
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(approval.description || chatT('ai_chat_js_no_description', 'No description'))}</div>
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
-                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}</button>
+                    <button type="button" class="button is-small btn-success" data-ai-approve="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}</button>
+                    <button type="button" class="button is-small is-danger" data-ai-reject="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}</button>
                 </div>
             </div>`;
         }).join('');
@@ -838,7 +838,7 @@
                             <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
                                 <div class="ai-chat-console-toolbar u-split u-gap-2 u-shrink-0">
                                     <span class="ai-chat-console-hint u-text-xs u-fg-secondary">${chatT('ai_chat_js_console_hint', 'Action results and errors from this session')}</span>
-                                    <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">${chatT('ai_chat_js_clear', 'Clear')}</button>
+                                    <button type="button" class="button is-small" id="ai-chat-console-clear">${chatT('ai_chat_js_clear', 'Clear')}</button>
                                 </div>
                                 <div class="ai-chat-console-list u-stack-2" id="ai-chat-console-list"></div>
                             </div>
@@ -869,14 +869,14 @@
                             <div class="ai-chat-composer-tools u-cluster u-gap-1 u-min-w-0">
                                 <input type="file" id="ai-chat-image-input" accept="image/*" hidden>
                                 <input type="file" id="ai-chat-doc-input" accept=".txt,.md,.json,.csv,.pdf" hidden>
-                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="${chatT('ai_chat_js_add_image', 'Add image')}" aria-label="${chatT('ai_chat_js_add_image', 'Add image')}" hidden>
+                                <button type="button" class="button is-quiet is-small ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="${chatT('ai_chat_js_add_image', 'Add image')}" aria-label="${chatT('ai_chat_js_add_image', 'Add image')}" hidden>
                                     ${icon('image', { size: 18 })}
                                 </button>
-                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="${chatT('ai_chat_js_add_document', 'Add document')}" aria-label="${chatT('ai_chat_js_add_document', 'Add document')}" hidden>
+                                <button type="button" class="button is-quiet is-small ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="${chatT('ai_chat_js_add_document', 'Add document')}" aria-label="${chatT('ai_chat_js_add_document', 'Add document')}" hidden>
                                     ${icon('file-text', { size: 18 })}
                                 </button>
                                 <div class="ai-chat-model-picker" id="ai-chat-model-picker" hidden>
-                                    <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="${chatT('ai_chat_js_choose_model', 'Choose model')}" aria-haspopup="listbox" aria-expanded="false">
+                                    <button type="button" class="button is-quiet is-small ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="${chatT('ai_chat_js_choose_model', 'Choose model')}" aria-haspopup="listbox" aria-expanded="false">
                                         ${icon('sparkle', { size: 16 })}
                                         <span id="ai-chat-model-label">${chatT('ai_chat_js_model', 'Model')}</span>
                                         ${icon('caret-down', { size: 12 })}
@@ -884,7 +884,7 @@
                                     <div class="popover ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
                                 </div>
                             </div>
-                            <button type="button" class="btn-icon btn-primary ai-chat-send-btn" id="ai-chat-send-btn" aria-label="${chatT('ai_chat_js_send_message', 'Send message')}">
+                            <button type="button" class="button btn-icon is-main ai-chat-send-btn" id="ai-chat-send-btn" aria-label="${chatT('ai_chat_js_send_message', 'Send message')}">
                                 <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 18 })}</span>
                                 <span class="ai-chat-cancel-icon" hidden>${icon('stop', { size: 18 })}</span>
                             </button>
@@ -1761,7 +1761,7 @@
                 '<div class="ai-chat-welcome">' +
                 '<h3>' + escapeHtml(chatT('ai_chat_js_no_connection_title', 'No AI Connection Found')) + '</h3>' +
                 '<p>' + escapeHtml(chatT('ai_chat_js_no_connection_body', 'You need to set up an AI connection first to use the AI assistant.')) + '</p>' +
-                '<button type="button" class="btn btn-primary" id="ai-chat-open-connections-btn">' +
+                '<button type="button" class="button is-main" id="ai-chat-open-connections-btn">' +
                 escapeHtml(chatT('ai_chat_js_open_ai_connections', 'Open AI connections')) +
                 '</button></div>';
             const openConnBtn = messages.querySelector('#ai-chat-open-connections-btn');
@@ -2318,7 +2318,7 @@
         if (!messageEl) return messageId;
         const retryBtn = document.createElement('button');
         retryBtn.type = 'button';
-        retryBtn.className = 'btn btn-sm ai-chat-retry-btn';
+        retryBtn.className = 'button is-small ai-chat-retry-btn';
         retryBtn.textContent = chatT('ai_chat_js_retry', 'Retry');
         retryBtn.addEventListener('click', retryLastMessage);
         messageEl.querySelector('.ai-chat-message-content')?.appendChild(retryBtn);
@@ -2719,10 +2719,10 @@
                 ${actionDataHtml ? `<div class="ai-chat-approval-data">${actionDataHtml}</div>` : ''}
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     ${status === 'pending' ? `
-                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">
+                    <button type="button" class="button is-small btn-success" data-ai-approve="${escapeHtml(approval.id)}">
                         ✓ ${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}
                     </button>
-                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">
+                    <button type="button" class="button is-small is-danger" data-ai-reject="${escapeHtml(approval.id)}">
                         ✗ ${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}
                     </button>
                     ` : `<div class="ai-chat-approval-status ${statusClass}">${status === 'approved' ? '✓ ' + escapeHtml(chatT('ai_chat_js_approved', 'Approved')) : status === 'rejected' ? '✗ ' + escapeHtml(chatT('ai_chat_js_rejected', 'Rejected')) : escapeHtml(statusLabel)}</div>`}

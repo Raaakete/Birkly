@@ -304,7 +304,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
     <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
         <div class="notifications-header">
             <h3><?= htmlspecialchars(__('admin.notifications_title')) ?></h3>
-            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden><?= htmlspecialchars(__('admin.mark_all_as_read')) ?></button>
+            <button type="button" class="button is-quiet is-small mark-all-read-btn" id="mark-all-read-btn" hidden><?= htmlspecialchars(__('admin.mark_all_as_read')) ?></button>
         </div>
         <div class="notifications-list" id="notifications-list">
             <div class="notifications-loading"><?= htmlspecialchars(__('admin.notifications_loading')) ?></div>
@@ -904,8 +904,8 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
                 <p id="cms-update-modal-body" data-template="<?= htmlspecialchars(__('admin.cms_update_modal_body'), ENT_QUOTES, 'UTF-8') ?>"></p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-cms-update-modal-later><?= htmlspecialchars(__('admin.cms_update_modal_later'), ENT_QUOTES, 'UTF-8') ?></button>
-                <a href="<?= htmlspecialchars(birkly_admin_url('settings', ['tab' => 'system']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary" data-cms-update-modal-go><?= htmlspecialchars(__('admin.cms_update_modal_go'), ENT_QUOTES, 'UTF-8') ?></a>
+                <button type="button" class="button" data-cms-update-modal-later><?= htmlspecialchars(__('admin.cms_update_modal_later'), ENT_QUOTES, 'UTF-8') ?></button>
+                <a href="<?= htmlspecialchars(birkly_admin_url('settings', ['tab' => 'system']), ENT_QUOTES, 'UTF-8') ?>" class="button is-main" data-cms-update-modal-go><?= htmlspecialchars(__('admin.cms_update_modal_go'), ENT_QUOTES, 'UTF-8') ?></a>
             </div>
         </div>
     </div>

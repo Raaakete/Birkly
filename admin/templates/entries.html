@@ -54,7 +54,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                 <div class="entries-filter-drawer__panel" role="dialog" aria-label="<?= htmlspecialchars(__('admin.entries_filters')) ?>">
                     <div class="entries-filter-drawer__header">
                         <h2 class="entries-filter-drawer__title"><?= __('admin.entries_filters') ?></h2>
-                        <button type="button" class="btn btn-icon entries-filter-drawer__close" data-entries-filter-close aria-label="<?= htmlspecialchars(__('admin.entries_close_filters')) ?>">&times;</button>
+                        <button type="button" class="btn-icon entries-filter-drawer__close" data-entries-filter-close aria-label="<?= htmlspecialchars(__('admin.entries_close_filters')) ?>">&times;</button>
                     </div>
                     <div class="entries-filter-drawer__body">
                         <label for="entries-search" class="collection-filter-label"><?= __('admin.search') ?></label>
@@ -70,7 +70,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                         </select>
                     </div>
                     <div class="entries-filter-drawer__footer">
-                        <button type="button" class="btn btn-primary" data-entries-filter-close><?= __('admin.entries_apply_filters') ?></button>
+                        <button type="button" class="button is-main" data-entries-filter-close><?= __('admin.entries_apply_filters') ?></button>
                     </div>
                 </div>
             </div>
@@ -161,8 +161,8 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                     </div>
                 </div>
                 <footer class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="entries-bulk-edit-cancel"><?= __('admin.cancel') ?></button>
-                    <button type="button" class="btn btn-primary" id="entries-bulk-edit-apply" disabled><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                    <button type="button" class="button" id="entries-bulk-edit-cancel"><?= __('admin.cancel') ?></button>
+                    <button type="button" class="button is-main" id="entries-bulk-edit-apply" disabled><?= __('admin.entries_bulk_apply_field_edit') ?></button>
                 </footer>
             </div>
         </div>

@@ -60,8 +60,8 @@
             '    <div class="icon-picker-grid" id="birkly-icon-picker-grid"></div>' +
             '  </div>' +
             '  <div class="modal-footer">' +
-            '    <button type="button" class="btn btn-secondary" data-icon-picker-clear>Clear</button>' +
-            '    <button type="button" class="btn btn-secondary" data-icon-picker-close>Cancel</button>' +
+            '    <button type="button" class="button" data-icon-picker-clear>Clear</button>' +
+            '    <button type="button" class="button" data-icon-picker-close>Cancel</button>' +
             '  </div>' +
             '</div>';
 
@@ -184,7 +184,7 @@
 
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-secondary btn-sm icon-picker-open-btn';
+        btn.className = 'button is-small icon-picker-open-btn';
         btn.textContent = 'Browse';
         btn.setAttribute('aria-haspopup', 'dialog');
         btn.addEventListener('click', function (e) {

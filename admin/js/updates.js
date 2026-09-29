@@ -175,7 +175,7 @@
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-primary';
+        btn.className = 'button is-main';
         btn.id = 'install-update-btn';
         btn.hidden = true;
         btn.innerHTML =
