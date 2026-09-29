@@ -221,29 +221,42 @@ function getPageData($page) {
 }
 
 function getAutomationData() {
+    $inactive = [
+        'automations' => [],
+        'blocks' => [],
+        'plugin_inactive' => true,
+    ];
+
     try {
         require_once __DIR__ . '/../core/plugin_availability.php';
+        require_once __DIR__ . '/../core/plugins/admin_page_data.php';
         if (!birkly_bootstrap_active_plugin('automation')) {
+            return $inactive;
+        }
+
+        $data = birkly_admin_page_data('automation');
+        if (!is_array($data)) {
             return [
                 'automations' => [],
                 'blocks' => [],
-                'plugin_inactive' => true
             ];
         }
-        
-        $automations = function_exists('get_automations') ? get_automations() : [];
-        $blocks = function_exists('get_all_automation_blocks') ? get_all_automation_blocks() : [];
-        
-        return [
-            'automations' => $automations,
-            'blocks' => $blocks
-        ];
-    } catch (Exception $e) {
+
+        if (!is_array($data['automations'] ?? null)) {
+            $data['automations'] = [];
+        }
+        if (!is_array($data['blocks'] ?? null)) {
+            $data['blocks'] = [];
+        }
+        unset($data['plugin_inactive']);
+
+        return $data;
+    } catch (Throwable $e) {
         error_log("Error in getAutomationData: " . $e->getMessage());
         return [
             'automations' => [],
             'blocks' => [],
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ];
     }
 }
