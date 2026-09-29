@@ -128,7 +128,7 @@ helpers (M4)".
 
 ### Hydrate script (baked pages)
 
-**birkly-hydrate.js** — still supported for baked/publish-time pages. Use when HTML is pre-rendered at deploy and you only need interactivity (forms, cart, auth). See file header and [Production optimization](../../admin/docs/snapshots/production-optimization.md) in admin help.
+**birkly-hydrate.js** — still supported for baked/publish-time pages. Use when HTML is pre-rendered at deploy and you only need interactivity (forms, cart, auth). See the file header and [Production optimization](https://docs.birkly.com/03-templating/production-optimization.html).
 
 ## Usage
 
