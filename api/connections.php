@@ -22,6 +22,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/connections/registry.php';
+require_once __DIR__ . '/../core/connections/email_picker.php';
 require_once __DIR__ . '/../core/connections/resolve.php';
 require_once __DIR__ . '/../core/connections/http.php';
 require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
@@ -54,10 +55,7 @@ function connections_require_action_auth(string $action): void
             echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
             exit;
         }
-        $canPick = checkPermission($user, 'manage_settings')
-            || checkPermission($user, 'manage_commerce')
-            || checkPermission($user, 'manage_payments')
-            || checkPermission($user, 'manage_content');
+        $canPick = birkly_email_picker_allowed($user);
         if (!$canPick) {
             http_response_code(403);
             echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
