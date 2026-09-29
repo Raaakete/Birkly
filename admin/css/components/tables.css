@@ -166,16 +166,18 @@
    Dropping these is what collapsed the checkbox/drag/title/status columns. */
 .entries-smart-table .head-checkbox,
 .entries-smart-table .cell-checkbox {
-  width: 2.5rem;
-  min-width: 2.5rem;
-  max-width: 2.5rem;
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+  padding-inline: var(--s-1);
 }
 
 .entries-smart-table .head-drag,
 .entries-smart-table td.cell-drag {
-  width: 2.25rem;
-  min-width: 2.25rem;
-  max-width: 2.25rem;
+  width: 1.75rem;
+  min-width: 1.75rem;
+  max-width: 1.75rem;
+  padding-inline: 0;
   text-align: center;
 }
 
@@ -258,10 +260,10 @@
   position: sticky;
   inset-inline-end: 0;
   z-index: var(--z-raised);
-  width: 7rem;
-  min-width: 7rem;
-  max-width: 7rem;
-  padding: var(--s-2);
+  width: 10rem;
+  min-width: 10rem;
+  max-width: 10rem;
+  padding: var(--s-1) var(--s-2);
   border-inline-start: 1px solid var(--line);
   background: var(--surface);
   text-align: center;
@@ -317,9 +319,9 @@
 
 .entries-smart-table.entries-l2-actions .head-actions,
 .entries-smart-table.entries-l2-actions .cell-actions {
-  width: 8.5rem;
-  min-width: 8.5rem;
-  max-width: 8.5rem;
+  width: 12rem;
+  min-width: 12rem;
+  max-width: 12rem;
 }
 
 .entries-smart-table.entries-l2-actions .cell-actions-inner {

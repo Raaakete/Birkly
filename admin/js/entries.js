@@ -88,10 +88,32 @@
         return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
     }
 
+    function normalizePerPage(value, fallback) {
+        if (value === null || value === undefined || value === '') {
+            return fallback;
+        }
+        if (String(value).toLowerCase() === 'all') {
+            return 0;
+        }
+        const parsed = Number.parseInt(value, 10);
+        if (Number.isFinite(parsed) && parsed === 0) {
+            return 0;
+        }
+        if (Number.isFinite(parsed) && parsed > 0) {
+            return Math.min(parsed, 200);
+        }
+        return fallback;
+    }
+
+    const defaultEntriesPerPage = normalizePerPage(
+        initialListState.default_per_page,
+        normalizePositiveInteger(initialListState.per_page, 20) || 20
+    );
+
     function normalizeListState(rawState) {
         rawState = rawState || {};
         const page = normalizePositiveInteger(rawState.page ?? urlParams.get('page'), 1);
-        const perPage = normalizePositiveInteger(rawState.per_page ?? initialListState.per_page, 20);
+        const perPage = normalizePerPage(rawState.per_page ?? urlParams.get('per_page') ?? initialListState.per_page, defaultEntriesPerPage);
         const total = Math.max(0, normalizePositiveInteger(rawState.total, 0));
         const totalPages = Math.max(1, normalizePositiveInteger(rawState.total_pages, 1));
         const sort = String(rawState.sort ?? urlParams.get('sort') ?? initialListState.sort ?? '').trim();
@@ -155,7 +177,7 @@
     }
 
     function canDragCurrentView() {
-        return hasDragColumn && !isTrashView() && !listState.q && !listState.status && Number(listState.page || 1) === 1;
+        return hasDragColumn && !isTrashView() && !listState.q && !listState.status;
     }
 
     function buildTitleUrl(entry) {
@@ -193,15 +215,22 @@
         if (normalizePositiveInteger(nextState.page, 1) > 1) {
             params.page = String(normalizePositiveInteger(nextState.page, 1));
         }
+        const perPage = normalizePerPage(nextState.per_page, defaultEntriesPerPage);
+        if (perPage === 0) {
+            params.per_page = 'all';
+        } else if (perPage !== defaultEntriesPerPage) {
+            params.per_page = String(perPage);
+        }
         return adminUrl('entries', params);
     }
 
     function buildEntriesApiUrl(nextState) {
+        const perPage = normalizePerPage(nextState.per_page, defaultEntriesPerPage);
         const params = new URLSearchParams({
             action: 'list',
             collection: collectionSlug,
             page: String(normalizePositiveInteger(nextState.page, 1)),
-            per_page: String(normalizePositiveInteger(nextState.per_page, 20)),
+            per_page: perPage === 0 ? 'all' : String(perPage || defaultEntriesPerPage),
         });
         if (nextState.q) {
             params.set('q', nextState.q);
@@ -741,10 +770,31 @@
         tableBody.innerHTML = entries.map(renderEntryRow).join('');
     }
 
+    function buildPerPageSelectMarkup(selectedPerPage) {
+        const current = normalizePerPage(selectedPerPage, defaultEntriesPerPage);
+        const options = [20, 50, 100].map(function (size) {
+            const selected = current === size ? ' selected' : '';
+            return '<option value="' + escapeHtml(size) + '"' + selected + '>' + escapeHtml(size) + '</option>';
+        }).join('');
+        const allSelected = current === 0 ? ' selected' : '';
+        return '' +
+            '<label class="entries-per-page">' +
+                '<span class="entries-per-page__label">' + escapeHtml(t('entries_per_page', 'Per page')) + '</span>' +
+                '<span class="select-box select-box--compact">' +
+                    '<select id="entries-per-page" class="entries-per-page-select" aria-label="' + escapeHtml(t('entries_per_page', 'Per page')) + '">' +
+                        options +
+                        '<option value="all"' + allSelected + '>' + escapeHtml(t('entries_per_page_all', 'All')) + '</option>' +
+                    '</select>' +
+                    icon('chev-down') +
+                '</span>' +
+            '</label>';
+    }
+
     function buildPaginationMarkup(meta, visibleCount) {
         const total = Math.max(0, Number(meta.total || 0));
         const page = Math.max(1, Number(meta.page || 1));
-        const perPage = Math.max(1, Number(meta.per_page || listState.per_page || 20));
+        const perPageRaw = normalizePerPage(meta.per_page ?? listState.per_page, defaultEntriesPerPage);
+        const perPage = perPageRaw === 0 ? total : Math.max(1, perPageRaw);
         const totalPages = Math.max(1, Number(meta.total_pages || 1));
         const rangeStart = total > 0 ? ((page - 1) * perPage) + 1 : 0;
         const rangeEnd = total > 0 ? Math.min(rangeStart + Math.max(visibleCount, 0) - 1, total) : 0;
@@ -785,7 +835,10 @@
                     : total > 0 ? t('entries_pagination_showing', 'Showing {start}–{end} of {total} entries', { start: rangeStart, end: rangeEnd, total: total })
                     : t('entries_pagination_none', 'No entries found')) +
             '</div>' +
-            '<div class="entries-pagination__controls">' + controls + '</div>';
+            '<div class="entries-pagination__controls">' +
+                buildPerPageSelectMarkup(perPageRaw) +
+                controls +
+            '</div>';
     }
 
     function renderPagination(meta, visibleCount) {
@@ -909,6 +962,17 @@
 
         if (target.id === 'select-all-entries') {
             handleSelectAll();
+            return;
+        }
+
+        if (target.id === 'entries-per-page' || target.classList.contains('entries-per-page-select')) {
+            const nextPerPage = normalizePerPage(target.value, defaultEntriesPerPage);
+            if (nextPerPage !== normalizePerPage(listState.per_page, defaultEntriesPerPage)) {
+                fetchEntriesPage(Object.assign({}, listState, {
+                    per_page: nextPerPage,
+                    page: 1,
+                }), { replaceHistory: false });
+            }
             return;
         }
 
@@ -1240,31 +1304,24 @@
         });
     }
 
-    // The sticky Actions column covers whatever sits under it, so the shade
-    // shows while columns remain hidden to its side, not after scrolling.
-    function hasHiddenColumns(viewport) {
-        return viewport.scrollWidth - viewport.clientWidth - Math.abs(viewport.scrollLeft) > 1;
+    function isViewportScrolledHorizontally(viewport) {
+        return viewport.scrollLeft > 1;
     }
 
     function initializeViewportScrollState() {
         document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
-            if (viewport.dataset.entriesViewportBound === 'true') {
-                const table = viewport.closest('.entries-smart-table');
-                if (table) {
-                    table.classList.toggle('is-scrolled-x', hasHiddenColumns(viewport));
-                }
-                return;
-            }
             const table = viewport.closest('.entries-smart-table');
             const onScroll = function () {
                 if (!table) {
                     return;
                 }
-                table.classList.toggle('is-scrolled-x', hasHiddenColumns(viewport));
+                table.classList.toggle('is-scrolled-x', isViewportScrolledHorizontally(viewport));
             };
-            viewport.dataset.entriesViewportBound = 'true';
-            viewport.addEventListener('scroll', onScroll, { passive: true });
-            window.addEventListener('resize', onScroll, { passive: true });
+            if (viewport.dataset.entriesViewportBound !== 'true') {
+                viewport.dataset.entriesViewportBound = 'true';
+                viewport.addEventListener('scroll', onScroll, { passive: true });
+                window.addEventListener('resize', onScroll, { passive: true });
+            }
             onScroll();
         });
     }

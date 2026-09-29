@@ -1004,3 +1004,38 @@ body.entries-bulk-edit-modal-open {
 }
 
 [data-birch] .entries-pagination .button[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+
+[data-birch] .entries-per-page {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-inline-end: var(--s-3);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  white-space: nowrap;
+}
+
+[data-birch] .entries-per-page__label { color: var(--text-3); }
+
+[data-birch] .entries-per-page .select-box--compact { min-width: 5.5rem; }
+
+[data-birch] .entries-smart-table .head-checkbox,
+[data-birch] .entries-smart-table .cell-checkbox {
+  width: 2rem;
+  min-width: 2rem;
+  max-width: 2rem;
+  padding-inline: var(--s-1);
+}
+
+[data-birch] .entries-smart-table .head-drag,
+[data-birch] .entries-smart-table .cell-drag {
+  width: 1.75rem;
+  min-width: 1.75rem;
+  max-width: 1.75rem;
+  padding-inline: 0;
+}
+
+[data-birch] .entries-smart-table .head-title,
+[data-birch] .entries-smart-table .cell-title {
+  padding-inline-start: var(--s-2);
+}
