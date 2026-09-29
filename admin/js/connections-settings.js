@@ -203,6 +203,14 @@ function connT(key, fallback, params) {
             })) + '</p></div>';
     }
 
+    function signingSecretMarkup(connection) {
+        var secret = connection.inbound_signing_secret || '';
+        if (!secret) return '';
+        return '<p class="form-help u-m-0">' + escapeHtml(connT('connections_js_inbound_secret_label', 'Inbound webhook signing secret')) + '</p>' +
+            '<code class="sys-conn-signing-secret">' + escapeHtml(secret) + '</code>' +
+            '<p class="form-help u-m-0">' + escapeHtml(connT('connections_js_inbound_secret_help', 'Copy this secret to the sender. Posts without a valid signature are rejected.')) + '</p>';
+    }
+
     function renderEmailConnections() {
         if (!emailListEl) return;
         var emailConnections = connections.filter(function (c) { return (c.type || 'email') === 'email'; });
@@ -225,6 +233,7 @@ function connT(key, fallback, params) {
                 '<div class="u-stack-1">' +
                 '<h3 class="card-title">' + escapeHtml(c.name) + ' ' + defaultBadge + '</h3>' +
                 '<p class="card-description">' + escapeHtml(providerLabel) + ' · ' + escapeHtml(c.from_email || '') + '</p>' +
+                signingSecretMarkup(c) +
                 '</div>' +
                 '<div class="u-cluster">' + statusBadge +
                 '<button type="button" class="btn btn-secondary btn-sm" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Send test</button>' +
@@ -258,6 +267,7 @@ function connT(key, fallback, params) {
                 '<div class="u-stack-1">' +
                 '<h3 class="card-title">' + escapeHtml(c.name) + '</h3>' +
                 '<p class="card-description">' + escapeHtml(providerLabel) + ' · ' + escapeHtml((c.config || {}).base_url || '') + '</p>' +
+                signingSecretMarkup(c) +
                 '</div>' +
                 '<div class="u-cluster">' + statusBadge +
                 '<button type="button" class="btn btn-secondary btn-sm" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Test</button>' +
