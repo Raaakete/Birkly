@@ -844,7 +844,7 @@
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
         const count = Number(collection.entries_count || 0);
-        card.className = 'collection-card' + (currentView === 'list' ? ' is-row' : '') + (count === 0 ? ' is-empty' : '');
+        card.className = 'collection-card' + (currentView === 'list' ? ' is-row' : '') + (count === 0 ? ' is-empty' : '') + ((collection.description || '').trim() !== '' ? ' has-text' : '');
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
         card.dataset.filterText = ((collection.name || '') + ' ' + (collection.slug || '') + ' ' + (collection.description || '') + ' ' + (Array.isArray(collection.sub_collections) ? collection.sub_collections.map((sub) => (sub && (sub.name || sub.slug)) || '').join(' ') : '')).toLowerCase();
