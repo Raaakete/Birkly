@@ -1,4 +1,4 @@
-<h2>Getting Started</h2>
+<h2>Getting started</h2>
 <p>Welcome to Birkly! This guide will help you understand what a CMS is, how to use Birkly, and how to get your first website up and running.</p>
 
 <h3>What is a CMS?</h3>

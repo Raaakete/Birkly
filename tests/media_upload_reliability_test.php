@@ -82,8 +82,8 @@ $assert(strpos($filePhp, "'mp4'") !== false && strpos($filePhp, "'mov'") !== fal
 
 $pickerCss = (string) file_get_contents($root . '/admin/css/pages/collection-editor.css');
 $assert(strpos($pickerCss, '.fieldtype-card[hidden]') !== false, 'fieldtype search can hide cards that use display:flex');
-$buttonCss = (string) file_get_contents($root . '/admin/css/components/buttons.css');
-$assert(strpos($buttonCss, 'a.btn-primary:hover') !== false && strpos($buttonCss, 'color: var(--on-mint);') !== false, 'primary hover keeps dark ink on the mint fill');
+$buttonCss = (string) file_get_contents($root . '/admin/css/birch/kit.css');
+$assert(strpos($buttonCss, '.button.is-main:hover') !== false && strpos($buttonCss, 'color: var(--on-mint);') !== false, 'primary hover keeps dark ink on the mint fill');
 $galleryPhp = (string) file_get_contents($root . '/fieldtypes/Gallery/Gallery.php');
 $assert(strpos($galleryPhp, 'video/mp4') !== false, 'gallery file picker accepts video');
 
