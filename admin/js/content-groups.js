@@ -7,6 +7,7 @@
     'use strict';
 
     const VIEW_STORAGE_KEY = 'birkly_content_view';
+    const DENSITY_STORAGE_KEY = 'birkly_content_card_density';
     const MAX_GROUP_DEPTH = 3;
 
     function cgT(key, fallback, params) {
@@ -56,6 +57,7 @@
     let dragDropManager = null;
     let subgroupSorters = [];
     let currentView = 'grid';
+    let currentDensity = 'default';
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
@@ -65,6 +67,7 @@
 
     function init() {
         currentView = localStorage.getItem(VIEW_STORAGE_KEY) === 'list' ? 'list' : 'grid';
+        currentDensity = localStorage.getItem(DENSITY_STORAGE_KEY) === 'compact' ? 'compact' : 'default';
 
         const dataScript = document.getElementById('content-data');
         if (dataScript) {
@@ -94,9 +97,11 @@
 
         setupEventListeners();
         setupViewToggle();
+        setupDensityToggle();
         setupFilter();
         setupCollapseAll();
         setView(currentView, false);
+        setDensity(currentDensity, false);
         setupDragDrop();
     }
 
@@ -243,6 +248,30 @@
 
         if (persist) {
             localStorage.setItem(VIEW_STORAGE_KEY, currentView);
+        }
+    }
+
+    function setupDensityToggle() {
+        document.querySelectorAll('[data-content-density]').forEach((button) => {
+            button.addEventListener('click', () => {
+                setDensity(button.getAttribute('data-content-density') || 'default', true);
+            });
+        });
+    }
+
+    function setDensity(density, persist) {
+        currentDensity = density === 'compact' ? 'compact' : 'default';
+        const page = document.querySelector('.content-page');
+        if (page) {
+            page.dataset.cardDensity = currentDensity;
+            page.classList.toggle('is-compact-cards', currentDensity === 'compact');
+        }
+        document.querySelectorAll('[data-content-density]').forEach((button) => {
+            const active = button.getAttribute('data-content-density') === currentDensity;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        if (persist) {
+            localStorage.setItem(DENSITY_STORAGE_KEY, currentDensity);
         }
     }
 
@@ -815,44 +844,55 @@
     function createCollectionCard(collection, groupId) {
         const card = document.createElement('div');
         const count = Number(collection.entries_count || 0);
-        card.className = 'collection-card' + (currentView === 'list' ? ' is-row' : '') + (count === 0 ? ' is-empty' : '');
+        card.className = 'collection-card' + (currentView === 'list' ? ' is-row' : '') + (count === 0 ? ' is-empty' : '') + ((collection.description || '').trim() !== '' ? ' has-text' : '');
         card.dataset.collectionSlug = collection.slug;
         card.dataset.groupId = groupId || 'ungrouped';
-        card.dataset.filterText = ((collection.name || '') + ' ' + (collection.slug || '') + ' ' + (collection.description || '')).toLowerCase();
+        card.dataset.filterText = ((collection.name || '') + ' ' + (collection.slug || '') + ' ' + (collection.description || '') + ' ' + (Array.isArray(collection.sub_collections) ? collection.sub_collections.map((sub) => (sub && (sub.name || sub.slug)) || '').join(' ') : '')).toLowerCase();
 
-        const header = document.createElement('div');
-        header.className = 'collection-card-head';
-
-        header.appendChild(createDragHandle('Drag to reorder'));
-        renderCollectionIcon(collection, header);
+        const titleRow = document.createElement('div');
+        titleRow.className = 'collection-card-title-row';
 
         const title = document.createElement('h3');
         title.className = 'collection-card-title';
         title.textContent = collection.name || 'Untitled';
-        header.appendChild(title);
+        titleRow.appendChild(title);
 
         const descText = (collection.description || '').trim();
+        const body = document.createElement('div');
+        body.className = 'collection-card-body';
+        renderCollectionIcon(collection, body);
         const description = document.createElement('p');
         description.className = 'collection-card-text';
         description.textContent = descText;
+        body.appendChild(description);
 
         const footer = document.createElement('div');
-        footer.className = 'collection-card-foot';
+        footer.className = 'collection-card-meta';
 
         const entryCount = document.createElement('a');
         entryCount.className = 'entry-count-link';
         entryCount.href = adminUrl('entries', { collection: collection.slug });
         entryCount.title = 'View entries';
-        const countBold = document.createElement('strong');
-        countBold.textContent = count.toLocaleString();
-        entryCount.appendChild(countBold);
-        entryCount.appendChild(document.createTextNode(' ' + (count === 1 ? cgT('content_groups_entry', 'entry') : cgT('content_groups_entries', 'entries'))));
+        entryCount.textContent = count.toLocaleString() + ' ' + (count === 1 ? cgT('content_groups_entry', 'entry') : cgT('content_groups_entries', 'entries'));
         footer.appendChild(entryCount);
+
+        const subCollections = Array.isArray(collection.sub_collections) ? collection.sub_collections : [];
+        const subNames = subCollections.map((sub) => (sub && (sub.name || sub.slug)) || '').filter(Boolean);
+        if (subNames.length) {
+            const subLabel = document.createElement('span');
+            subLabel.className = 'collection-card-subs';
+            subLabel.textContent = subNames.length === 1
+                ? subNames[0]
+                : (subNames.length <= 3
+                    ? subNames.join(', ')
+                    : cgT('content_groups_sub_collections', '{count} sub-collections', { count: subNames.length }));
+            footer.appendChild(subLabel);
+        }
 
         if (collection.sub_entries_count > 0) {
             const subEntriesSpan = document.createElement('span');
-            subEntriesSpan.className = 'chip';
-            subEntriesSpan.textContent = cgT('content_groups_sub_entries', '+{count} sub-entries', { count: collection.sub_entries_count });
+            subEntriesSpan.className = 'collection-card-subs';
+            subEntriesSpan.textContent = cgT('content_groups_sub_entries', '{count} sub-entries', { count: collection.sub_entries_count });
             footer.appendChild(subEntriesSpan);
         }
 
@@ -913,10 +953,19 @@
         menuWrapper.appendChild(menuButton);
         menuWrapper.appendChild(menuDropdown);
 
-        card.appendChild(header);
-        card.appendChild(description);
-        card.appendChild(footer);
-        card.appendChild(menuWrapper);
+        const head = document.createElement('div');
+        head.className = 'collection-card-head';
+        head.appendChild(createDragHandle(cgT('content_card_drag', 'Drag to reorder')));
+        head.appendChild(titleRow);
+
+        const foot = document.createElement('div');
+        foot.className = 'collection-card-foot';
+        foot.appendChild(footer);
+        foot.appendChild(menuWrapper);
+
+        card.appendChild(head);
+        card.appendChild(body);
+        card.appendChild(foot);
 
         card.addEventListener('click', async function (e) {
             if (e.defaultPrevented) return;

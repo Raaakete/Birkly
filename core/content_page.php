@@ -30,6 +30,20 @@ function birkly_content_page_data_minimal(): array
 
             $entriesDir = $dir . '/entries';
             $entriesCount = birkly_count_entry_files($entriesDir);
+            $subCollections = [];
+            foreach (is_array($collectionData['sub_collections'] ?? null) ? $collectionData['sub_collections'] : [] as $subCollection) {
+                if (!is_array($subCollection)) {
+                    continue;
+                }
+                $subName = trim((string) ($subCollection['name'] ?? $subCollection['label'] ?? $subCollection['slug'] ?? ''));
+                if ($subName === '') {
+                    continue;
+                }
+                $subCollections[] = [
+                    'name' => $subName,
+                    'slug' => (string) ($subCollection['slug'] ?? ''),
+                ];
+            }
 
             $row = [
                 'id' => $collectionData['id'] ?? ('col-' . $collectionName),
@@ -38,6 +52,7 @@ function birkly_content_page_data_minimal(): array
                 'description' => $collectionData['description'] ?? '',
                 'entries_count' => $entriesCount,
                 'sub_entries_count' => 0,
+                'sub_collections' => $subCollections,
             ];
             if (!empty($collectionData['icon'])) {
                 $row['icon'] = $collectionData['icon'];
