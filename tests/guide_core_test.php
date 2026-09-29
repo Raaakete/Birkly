@@ -49,6 +49,15 @@ guide_assert('ai connection href', strpos((string) ($payload2['ai_connection_hre
 
 $manifest = birkly_guide_load_manifest();
 guide_assert('manifest journeys', count($manifest['journeys'] ?? []) >= 2);
+guide_assert(
+    'alpha plugin ids come from guide content',
+    birkly_guide_alpha_plugin_ids() === ['user_management', 'commerce', 'automation']
+);
+$guidePhp = (string) file_get_contents(dirname(__DIR__) . '/core/admin_guide.php');
+guide_assert(
+    'guide php does not hardcode the alpha plugin list',
+    !str_contains($guidePhp, "return ['user_management', 'commerce', 'automation']")
+);
 guide_assert('manifest concepts', count($manifest['concepts'] ?? []) >= 6);
 
 $journeys = birkly_guide_resolve_journeys($prefs);
