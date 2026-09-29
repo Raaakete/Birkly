@@ -409,20 +409,9 @@ label.field-title { cursor: pointer; }
   white-space: nowrap;
 }
 
-[data-birch] .content-page .collection-card-meta .collection-card-subs {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 [data-birch] .content-page .collection-card-meta .entry-count-link {
   color: var(--text);
   font: var(--weight-semibold) var(--size-small) / var(--lh-small) var(--font-sans);
-}
-
-[data-birch] .content-page .collection-card-meta > :not(:first-child)::before {
-  content: "·";
-  margin-inline-end: var(--s-2);
 }
 
 [data-birch] .content-page .collection-card-meta a {
