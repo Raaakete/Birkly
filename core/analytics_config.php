@@ -41,8 +41,46 @@ function birkly_analytics_save_tracking_ids(array $trackingIds): bool
 }
 
 /**
- * Enable or disable self-hosted analytics for a registered domain (tracking id = domain slug).
+ * Directory of daily JSON files for one analytics export.
+ * Hostnames may contain dots. "." , ".." and slashes cannot leave data/analytics/data.
+ * Returns null when the id is not a single safe segment. Does not create directories.
  */
+function birkly_analytics_export_directory(string $trackingId): ?string
+{
+    $trackingId = birkly_analytics_normalize_domain($trackingId);
+    if ($trackingId === '' || $trackingId === '.' || $trackingId === '..' || $trackingId === 'all') {
+        return null;
+    }
+    if (str_contains($trackingId, '..') || str_contains($trackingId, '/') || str_contains($trackingId, '\\')) {
+        return null;
+    }
+    if (preg_match('/^[a-z0-9._:-]+$/', $trackingId) !== 1) {
+        return null;
+    }
+
+    $base = birkly_analytics_dir() . '/data';
+    if (!is_dir($base)) {
+        return $base . DIRECTORY_SEPARATOR . $trackingId;
+    }
+    $root = realpath($base);
+    if ($root === false) {
+        return null;
+    }
+    $candidate = $root . DIRECTORY_SEPARATOR . $trackingId;
+    if (basename($candidate) !== $trackingId) {
+        return null;
+    }
+    if (is_dir($candidate)) {
+        $real = realpath($candidate);
+        if ($real === false || dirname($real) !== $root) {
+            return null;
+        }
+        return $real;
+    }
+
+    return $candidate;
+}
+
 function birkly_analytics_normalize_domain(string $domain): string
 {
     $domain = strtolower(trim($domain));
