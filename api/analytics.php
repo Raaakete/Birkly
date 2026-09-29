@@ -567,17 +567,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'export_csv') {
     require_once 'validate.php';
     requireAuth('manage_settings');
 
-    $trackingId = $_GET['tracking_id'] ?? '';
+    $trackingId = (string) ($_GET['tracking_id'] ?? '');
     $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $endDate = $_GET['end_date'] ?? date('Y-m-d');
-    if ($trackingId === '') {
+    $dataDir = birkly_analytics_export_directory($trackingId);
+    if ($dataDir === null) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Tracking ID required']);
         exit;
     }
-
-    $analyticsDir = __DIR__ . '/../data/analytics';
-    $dataDir = $analyticsDir . '/data/' . $trackingId;
     $rows = [];
     $start = strtotime($startDate);
     $end = strtotime($endDate . ' 23:59:59');

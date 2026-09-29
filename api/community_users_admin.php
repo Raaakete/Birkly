@@ -7,6 +7,7 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../core/community_user_files.php';
 
 // Check admin authentication
 requireAuth('manage_users');
@@ -125,13 +126,17 @@ if ($action === 'list') {
 }
 
 if ($action === 'get') {
-    $id = $_GET['id'] ?? '';
-    if (!$id) {
+    $id = (string) ($_GET['id'] ?? '');
+    if ($id === '') {
         echo json_encode(['status' => 'error', 'message' => 'User ID required']);
         exit;
     }
     $pluginCollectionPath = __DIR__ . '/../plugins/community_users/collections/community_users/entries';
-    $entryFile = $pluginCollectionPath . '/' . $id . '.json';
+    $entryFile = community_users_entry_file($pluginCollectionPath, $id);
+    if ($entryFile === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user id']);
+        exit;
+    }
     if (!file_exists($entryFile)) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -198,7 +203,12 @@ if ($action === 'add') {
         'status' => $status
     ];
     
-    $result = file_put_contents($pluginCollectionPath . '/' . $id . '.json', json_encode($entry, JSON_PRETTY_PRINT));
+    $entryFile = community_users_entry_file($pluginCollectionPath, $id);
+    if ($entryFile === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user id']);
+        exit;
+    }
+    $result = file_put_contents($entryFile, json_encode($entry, JSON_PRETTY_PRINT));
     echo json_encode([
         'status' => $result ? 'ok' : 'error',
         'message' => $result ? 'User added successfully' : 'Failed to add user'
@@ -213,13 +223,17 @@ if ($action === 'update') {
     $password = $input['password'] ?? '';
     $status = $input['status'] ?? 'active';
     
-    if (empty($id) || empty($username) || empty($email)) {
+    if ($id === '' || $username === '' || $email === '') {
         echo json_encode(['status' => 'error', 'message' => 'ID, username, and email are required']);
         exit;
     }
     
     $pluginCollectionPath = __DIR__ . '/../plugins/community_users/collections/community_users/entries';
-    $entryFile = $pluginCollectionPath . '/' . $id . '.json';
+    $entryFile = community_users_entry_file($pluginCollectionPath, (string) $id);
+    if ($entryFile === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user id']);
+        exit;
+    }
     if (!file_exists($entryFile)) {
         echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
@@ -268,14 +282,18 @@ if ($action === 'update') {
 }
 
 if ($action === 'delete' || $action === 'delete_user') {
-    $id = $input['id'] ?? $input['user_id'] ?? '';
-    if (empty($id)) {
+    $id = (string) ($input['id'] ?? $input['user_id'] ?? '');
+    if ($id === '') {
         echo json_encode(['status' => 'error', 'message' => 'User ID required']);
         exit;
     }
     
     $pluginCollectionPath = __DIR__ . '/../plugins/community_users/collections/community_users/entries';
-    $entryFile = $pluginCollectionPath . '/' . $id . '.json';
+    $entryFile = community_users_entry_file($pluginCollectionPath, $id);
+    if ($entryFile === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid user id']);
+        exit;
+    }
     $result = file_exists($entryFile) ? unlink($entryFile) : false;
     echo json_encode([
         'status' => $result ? 'ok' : 'error',

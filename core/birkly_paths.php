@@ -100,6 +100,31 @@ function birkly_media_url(string $query = ''): string
 }
 
 /**
+ * True when $file is a real path inside $root, not a sibling whose name
+ * merely starts with the same prefix ($root vs $root-other).
+ */
+function birkly_resolved_path_is_inside_root(string $file, string $root): bool
+{
+    if ($file === '') {
+        return false;
+    }
+    $file = str_replace('\\', '/', $file);
+    $roots = [$root];
+    $real = realpath($root);
+    if (is_string($real) && $real !== '' && $real !== $root) {
+        $roots[] = $real;
+    }
+    foreach ($roots as $candidate) {
+        $prefix = rtrim(str_replace('\\', '/', $candidate), '/') . '/';
+        if ($prefix !== '/' && str_starts_with($file, $prefix)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Filesystem path to the Birkly project root (directory containing admin/, api/, core/).
  */
 function birkly_project_root(): string
