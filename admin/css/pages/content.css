@@ -874,6 +874,10 @@ body.entries-bulk-edit-modal-open {
   box-shadow: none;
 }
 
+[data-birch] .entries-smart-table .table-viewport.is-scrolled-x {
+  box-shadow: inset 8px 0 8px -8px var(--scroll-shade);
+}
+
 [data-birch] .entries-smart-table .head-cell.head-actions { background: var(--bg); border-inline-start: 0; }
 [data-birch] .entries-smart-table .cell-actions { border-inline-start: 0; }
 
