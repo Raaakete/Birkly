@@ -2,6 +2,7 @@
     "name": "birkly/birkly",
     "description": "A flat-file headless CMS",
     "type": "project",
+    "license": "AGPL-3.0-or-later",
     "require": {
         "php": ">=7.4"
     },

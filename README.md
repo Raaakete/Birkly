@@ -60,4 +60,6 @@ Official plugin sources and the full test suite live in the private **Birkly-Mar
 
 ## License
 
-See [LICENSE](LICENSE).
+Birkly is released under the GNU Affero General Public License v3.0 or any later version. See [LICENSE](LICENSE).
+
+The Map field includes [Leaflet](https://leafletjs.com) 1.9.4 so the admin map works without loading it from another website. Leaflet stays under the BSD 2-Clause license in `fieldtypes/Map/leaflet/LICENSE`. That license applies only to those files.
