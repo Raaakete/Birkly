@@ -17,6 +17,7 @@
         enhanceModals();
         enhanceTables();
         setupKeyboardNavigation();
+        bindBackdropDismiss();
     }
     
     /**
@@ -209,6 +210,34 @@
         document.head.appendChild(style);
     }
     
+    /**
+     * Clicking the scrim outside a sheet or dialog closes it.
+     * The press and the release both have to land on the backdrop, so a drag
+     * that starts inside the panel does not dismiss it.
+     */
+    function bindBackdropDismiss() {
+        if (document.documentElement.hasAttribute('data-a11y-backdrop-dismiss')) return;
+        document.documentElement.setAttribute('data-a11y-backdrop-dismiss', 'true');
+
+        document.addEventListener('pointerdown', function (e) {
+            var modal = e.target && e.target.closest ? e.target.closest('.modal, .modal-backdrop') : null;
+            if (!modal) return;
+            if (e.target === modal) modal.setAttribute('data-a11y-backdrop-pointer', '1');
+            else modal.removeAttribute('data-a11y-backdrop-pointer');
+        }, true);
+
+        document.addEventListener('click', function (e) {
+            var modal = e.target;
+            if (!modal || !modal.classList) return;
+            if (!modal.classList.contains('modal') && !modal.classList.contains('modal-backdrop')) return;
+            if (modal.getAttribute('data-a11y-backdrop-pointer') !== '1') return;
+            modal.removeAttribute('data-a11y-backdrop-pointer');
+            if (modal.hidden || modal.classList.contains('hidden') || modal.getAttribute('aria-hidden') === 'true') return;
+            var closeBtn = modal.querySelector('.modal-close, .modal-close-btn, [data-modal-dismiss]');
+            if (closeBtn) closeBtn.click();
+        });
+    }
+
     /**
      * Enhance modal accessibility
      */
