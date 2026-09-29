@@ -851,7 +851,6 @@
 
         const titleRow = document.createElement('div');
         titleRow.className = 'collection-card-title-row';
-        renderCollectionIcon(collection, titleRow);
 
         const title = document.createElement('h3');
         title.className = 'collection-card-title';
@@ -859,12 +858,13 @@
         titleRow.appendChild(title);
 
         const descText = (collection.description || '').trim();
-        let description = null;
-        if (descText !== '') {
-            description = document.createElement('p');
-            description.className = 'collection-card-text';
-            description.textContent = descText;
-        }
+        const body = document.createElement('div');
+        body.className = 'collection-card-body';
+        renderCollectionIcon(collection, body);
+        const description = document.createElement('p');
+        description.className = 'collection-card-text';
+        description.textContent = descText;
+        body.appendChild(description);
 
         const footer = document.createElement('div');
         footer.className = 'collection-card-meta';
@@ -964,9 +964,7 @@
         foot.appendChild(menuWrapper);
 
         card.appendChild(head);
-        if (description) {
-            card.appendChild(description);
-        }
+        card.appendChild(body);
         card.appendChild(foot);
 
         card.addEventListener('click', async function (e) {
