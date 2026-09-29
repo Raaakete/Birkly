@@ -19,6 +19,10 @@ if (!function_exists('birkly_build_info')) {
                 <?= birkly_icon('search') ?>
                 <input type="search" class="input" id="collections-filter" aria-label="<?= htmlspecialchars(__('admin.content_filter_collections')) ?>">
             </label>
+            <div class="segmented well content-density-toggle" role="group" aria-label="<?= htmlspecialchars(__('admin.content_card_size')) ?>">
+                <button type="button" id="content-density-default" data-content-density="default" aria-pressed="true"><?= __('admin.content_card_default') ?></button>
+                <button type="button" id="content-density-compact" data-content-density="compact" aria-pressed="false"><?= __('admin.content_card_compact') ?></button>
+            </div>
             <div class="segmented well content-view-toggle" role="group" aria-label="<?= htmlspecialchars(__('admin.content_view')) ?>">
                 <button type="button" id="content-view-grid" data-content-view="grid" aria-pressed="true" aria-label="<?= htmlspecialchars(__('admin.content_view_grid')) ?>" title="<?= htmlspecialchars(__('admin.content_view_grid')) ?>"><?= birkly_icon('grid') ?></button>
                 <button type="button" id="content-view-list" data-content-view="list" aria-pressed="false" aria-label="<?= htmlspecialchars(__('admin.content_view_list')) ?>" title="<?= htmlspecialchars(__('admin.content_view_list')) ?>"><?= birkly_icon('list') ?></button>
