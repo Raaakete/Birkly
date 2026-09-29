@@ -133,61 +133,6 @@ function birkly_read_plugin_storefront_manifest(string $plugin_id, array $plugin
 }
 
 /**
- * One-release back-compat for plugins that expose storefront_script via legacy config
- * but have not yet migrated to plugin.json storefront.scripts[].
- *
- * @param array<string, true> $coveredProvides globals already declared in manifest
- * @return list<array<string, mixed>>
- */
-function birkly_storefront_legacy_manifest_entries(array $coveredProvides): array
-{
-    $legacy = [];
-
-    foreach (['commerce' => [
-        'path' => 'assets/commerce-storefront.js',
-        'provides' => 'BirklyCommerce',
-    ]] as $pluginId => $spec) {
-        if (!birkly_is_storefront_plugin_active($pluginId)) {
-            continue;
-        }
-
-        $all = function_exists('get_all_plugins') ? get_all_plugins() : [];
-        $plugin = $all[$pluginId] ?? null;
-        if (!is_array($plugin)) {
-            continue;
-        }
-
-        $manifestEntries = birkly_read_plugin_storefront_manifest($pluginId, $plugin);
-        if ($manifestEntries !== []) {
-            continue;
-        }
-
-        $provides = (string) ($spec['provides'] ?? '');
-        if ($provides !== '' && isset($coveredProvides[$provides])) {
-            continue;
-        }
-
-        $path = (string) ($spec['path'] ?? '');
-        $pluginRoot = rtrim((string) ($plugin['path'] ?? ''), '/');
-        if ($pluginRoot === '' || !is_file($pluginRoot . '/' . $path)) {
-            continue;
-        }
-
-        $legacy[] = [
-            'plugin_id' => $pluginId,
-            'path' => $path,
-            'url' => birkly_storefront_script_public_path($pluginId, $path),
-            'version' => (string) ($plugin['version'] ?? ''),
-            'provides' => $provides,
-            'load' => 'always',
-            'legacy' => true,
-        ];
-    }
-
-    return $legacy;
-}
-
-/**
  * Aggregate storefront scripts for all active plugins.
  *
  * @return list<array<string, mixed>>
@@ -217,17 +162,6 @@ function birkly_get_storefront_scripts(): array
             }
             $scripts[] = $entry;
         }
-    }
-
-    foreach (birkly_storefront_legacy_manifest_entries($coveredProvides) as $entry) {
-        $provides = (string) ($entry['provides'] ?? '');
-        if ($provides !== '' && isset($coveredProvides[$provides])) {
-            continue;
-        }
-        if ($provides !== '') {
-            $coveredProvides[$provides] = true;
-        }
-        $scripts[] = $entry;
     }
 
     if (function_exists('apply_filters')) {
