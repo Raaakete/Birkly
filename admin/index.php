@@ -463,7 +463,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     . 'index bypass <code>' . htmlspecialchars((string) ($build['index_content_bypass'] ?? '?')) . '</code>. '
                     . '<a href="' . htmlspecialchars(birkly_url('/admin/deploy-check.php')) . '">Full diagnostics</a></p>';
                 echo '<p class="u-text-sm u-fg-secondary">Pull the full Birkly repo root on the server (folders <code>admin/</code>, <code>api/</code>, <code>core/</code> as siblings), not only <code>admin/</code>.</p>';
-                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                 echo '</div></div></div>';
             };
 
@@ -543,7 +543,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
                     echo '<h2 class="callout-title">Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                     echo '</div></div></div>';
                 } else {
                     try {
@@ -564,7 +564,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                                 echo 'Entry ID: ' . htmlspecialchars($data['entry']['id'] ?? 'N/A') . "\n";
                             }
                             echo '</pre>';
-                            echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                            echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                             echo '</div></div></div>';
                         } else {
                             echo $output;
@@ -574,7 +574,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         echo '<h2 class="callout-title">Template Rendering Error</h2>';
                         echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
                         echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                         echo '</div></div></div>';
                     }
                 }
@@ -590,7 +590,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
                         echo '<h2 class="callout-title">Error Loading Page</h2>';
                         echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                         echo '</div></div></div>';
                     } else {
                         // Check if template uses PHP tags or template directives
@@ -615,7 +615,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                                 echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
                                 echo '<h2 class="callout-title">Error Rendering Template</h2>';
                                 echo '<p>The template rendered empty output.</p>';
-                                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                                 echo '</div></div></div>';
                             } else {
                                 echo $output;
@@ -630,7 +630,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     echo '<h2 class="callout-title">Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
                     echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to dashboard</a></div>';
+                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="button is-main">Back to dashboard</a></div>';
                     echo '</div></div></div>';
                 }
             } elseif ($isPluginAdminPage) {
@@ -652,7 +652,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     echo '<div class="empty-state">';
                     echo '<p class="empty-state-title">Plugin Not Found</p>';
                     echo '<p class="empty-state-text">The plugin page could not be loaded.</p>';
-                    echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to dashboard</a></div>';
+                    echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="button is-main">Back to dashboard</a></div>';
                     echo '</div>';
                 }
             } else {
@@ -660,7 +660,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                 echo '<div class="empty-state">';
                 echo '<p class="empty-state-title">Coming Soon</p>';
                 echo '<p class="empty-state-text">The ' . htmlspecialchars(ucfirst($page)) . ' page is not implemented yet.</p>';
-                echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to dashboard</a></div>';
+                echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="button is-main">Back to dashboard</a></div>';
                 echo '</div>';
             }
             ?>

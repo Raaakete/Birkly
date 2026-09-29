@@ -59,12 +59,12 @@
             '<div class="tabs ag-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('ag_wizard_steps_label', 'Setup steps')) + '">' + stepsHtml + '</div>' +
             '<div class="modal-body u-stack-4" id="ag-wizard-panels"></div>' +
             '<div class="modal-footer ag-wizard-footer">' +
-            '<button type="button" class="btn btn-secondary ag-wizard-back" hidden>' + escapeHtml(t('ag_wizard_back', 'Back')) + '</button>' +
-            '<button type="button" class="btn btn-link ag-wizard-skip-step" hidden>' + escapeHtml(t('ag_wizard_skip_step', 'Skip this step')) + '</button>' +
+            '<button type="button" class="button ag-wizard-back" hidden>' + escapeHtml(t('ag_wizard_back', 'Back')) + '</button>' +
+            '<button type="button" class="button btn-link ag-wizard-skip-step" hidden>' + escapeHtml(t('ag_wizard_skip_step', 'Skip this step')) + '</button>' +
             '<div class="u-fill"></div>' +
-            '<button type="button" class="btn btn-primary ag-wizard-next">' + escapeHtml(t('ag_wizard_continue', 'Continue')) + '</button>' +
-            '<button type="button" class="btn btn-primary ag-wizard-publish" hidden>' + escapeHtml(t('publish_ai_presence', 'Publish')) + '</button>' +
-            '<button type="button" class="btn btn-primary ag-wizard-done" hidden>' + escapeHtml(t('ag_wizard_done', 'Go to Overview')) + '</button>' +
+            '<button type="button" class="button is-main ag-wizard-next">' + escapeHtml(t('ag_wizard_continue', 'Continue')) + '</button>' +
+            '<button type="button" class="button is-main ag-wizard-publish" hidden>' + escapeHtml(t('publish_ai_presence', 'Publish')) + '</button>' +
+            '<button type="button" class="button is-main ag-wizard-done" hidden>' + escapeHtml(t('ag_wizard_done', 'Go to Overview')) + '</button>' +
             '</div>' +
             '<div class="ag-wizard-loading" id="ag-wizard-loading" hidden aria-live="polite" aria-busy="true">' +
             '<div class="spinner spinner-lg" aria-hidden="true"></div>' +
@@ -117,7 +117,7 @@
                 '<div class="form-group"><label for="ag-wiz-diff">' + escapeHtml(t('ai_presence_differentiators', 'Differentiators')) + '</label>' +
                 '<textarea id="ag-wiz-diff" class="input" rows="2" placeholder="' + escapeHtml(t('ag_wizard_one_per_line', 'One per line')) + '"></textarea></div>' +
                 '<div class="u-stack-3">' +
-                '<button type="button" class="btn btn-secondary btn-sm" id="ag-wiz-suggest-enrich">' + escapeHtml(t('ag_wizard_suggest_from_sources', 'Suggest from sources')) + '</button>' +
+                '<button type="button" class="button is-small" id="ag-wiz-suggest-enrich">' + escapeHtml(t('ag_wizard_suggest_from_sources', 'Suggest from sources')) + '</button>' +
                 '<ul id="ag-wiz-suggestions" class="ap-card-list"></ul></div>' +
                 '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_enrich_outcome', 'These messages help agents answer “what makes you different?”')) + '</p></section>',
             claims: '' +
@@ -143,9 +143,9 @@
                 '<dl class="ai-presence-urls"><dt>' + escapeHtml(t('ag_wizard_public_json', 'Public JSON')) + '</dt>' +
                 '<dd><code id="ag-wiz-success-url"></code></dd></dl>' +
                 '<div class="u-cluster u-justify-center">' +
-                '<button type="button" class="btn btn-primary" id="ag-wiz-copy-url">' + escapeHtml(t('ag_wizard_copy_url', 'Copy URL')) + '</button>' +
-                '<a class="btn btn-secondary" id="ag-wiz-open-json" target="_blank" rel="noopener">' + escapeHtml(t('ag_wizard_open_json', 'Open public JSON')) + '</a>' +
-                '<button type="button" class="btn btn-secondary" id="ag-wiz-preview-q">' + escapeHtml(t('ag_wizard_try_preview', 'Try a preview question')) + '</button>' +
+                '<button type="button" class="button is-main" id="ag-wiz-copy-url">' + escapeHtml(t('ag_wizard_copy_url', 'Copy URL')) + '</button>' +
+                '<a class="button" id="ag-wiz-open-json" target="_blank" rel="noopener">' + escapeHtml(t('ag_wizard_open_json', 'Open public JSON')) + '</a>' +
+                '<button type="button" class="button" id="ag-wiz-preview-q">' + escapeHtml(t('ag_wizard_try_preview', 'Try a preview question')) + '</button>' +
                 '</div></section>'
         };
     };
@@ -612,9 +612,9 @@
             if (valPreview.length > 120) valPreview = valPreview.slice(0, 120) + '…';
             li.innerHTML = '<strong>' + escapeHtml(s.label || s.field) + '</strong><p>' + escapeHtml(valPreview) + '</p>' +
                 '<div class="u-cluster u-gap-2">' +
-                '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' + escapeHtml(s.id) + '">' +
+                '<button type="button" class="button is-small is-main ap-accept-suggestion" data-id="' + escapeHtml(s.id) + '">' +
                 escapeHtml(t('accept', 'Accept')) + '</button> ' +
-                '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' + escapeHtml(s.id) + '">' +
+                '<button type="button" class="button is-small ap-reject-suggestion" data-id="' + escapeHtml(s.id) + '">' +
                 escapeHtml(t('reject', 'Reject')) + '</button></div>';
             list.appendChild(li);
         });

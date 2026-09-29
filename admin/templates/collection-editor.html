@@ -218,7 +218,7 @@ if (!$cancelUrl) {
                                 ?>
                             </div>
                             
-                            <button type="button" id="add-sub-collection-field-btn" class="btn btn-secondary">
+                            <button type="button" id="add-sub-collection-field-btn" class="button">
                                 <?= birkly_icon('plus', ['size' => 16]) ?>
                                 Add Field
                             </button>
@@ -286,7 +286,7 @@ if (!$cancelUrl) {
                                 ?>
                             </div>
                             
-                            <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
+                            <button type="button" id="add-sub-collection-btn" class="button">
                                 <?= birkly_icon('plus', ['size' => 16]) ?>
                                 <?= __('admin.col_editor_add_sub_collection') ?>
                             </button>
@@ -516,7 +516,7 @@ if (!$cancelUrl) {
                                                 endif; 
                                                 ?>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="<?= $index ?>">
+                                            <button type="button" class="button is-small add-sub-field-btn" data-sub-collection-index="<?= $index ?>">
                                                 <?= birkly_icon('plus', ['size' => 16]) ?>
                                                 Add Field
                                             </button>
@@ -529,7 +529,7 @@ if (!$cancelUrl) {
                             ?>
                         </div>
                         
-                        <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
+                        <button type="button" id="add-sub-collection-btn" class="button">
                             <?= birkly_icon('plus', ['size' => 16]) ?>
                             <?= __('admin.col_editor_add_sub_collection') ?>
                         </button>
@@ -752,10 +752,10 @@ if (!$cancelUrl) {
                                                 <code id="sub-collection-api-key-display">
                                                     <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
-                                                <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
+                                                <button type="button" id="sub-collection-generate-api-key-btn" class="button is-small" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
                                                 </button>
-                                                <button type="button" id="sub-collection-copy-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($subCollectionData['api_key']) ? 'disabled' : '' ?>>
+                                                <button type="button" id="sub-collection-copy-api-key-btn" class="button is-small" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($subCollectionData['api_key']) ? 'disabled' : '' ?>>
                                                     <?= birkly_icon('copy', ['size' => 14]) ?>
                                                 </button>
                                                 <input type="hidden" name="sub_collections[0][api_key]" id="sub-collection-api_key" value="<?= htmlspecialchars($subCollectionData['api_key'] ?? '') ?>">
@@ -763,10 +763,10 @@ if (!$cancelUrl) {
                                                 <code id="api-key-display">
                                                     <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
-                                                <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
+                                                <button type="button" id="generate-api-key-btn" class="button is-small" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
                                                 </button>
-                                                <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
+                                                <button type="button" id="copy-api-key-btn" class="button is-small" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
                                                     <?= birkly_icon('copy', ['size' => 14]) ?>
                                                 </button>
                                                 <input type="hidden" name="api_key" id="api_key" value="<?= htmlspecialchars($collection['api_key'] ?? '') ?>">
@@ -1194,7 +1194,7 @@ if (!empty($captchaProvider) && !empty($captchaSiteKey)) {
     }
 }
 
-$formCode .= '  <button type="submit" class="btn btn-primary">' . $formUiSubmit . '</button>' . "\n";
+$formCode .= '  <button type="submit" class="button is-main">' . $formUiSubmit . '</button>' . "\n";
 $formCode .= '  <div data-form-status role="status" aria-live="polite" style="display: none; margin-top: 12px; font-size: 14px;"></div>' . "\n";
 $formCode .= '</form>' . "\n";
 $formCode .= "\n";
@@ -2681,7 +2681,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         `).join('') : ''}
                     </div>
-                    <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="${index}">
+                    <button type="button" class="button is-small add-sub-field-btn" data-sub-collection-index="${index}">
                         <?= birkly_icon('plus', ['size' => 16]) ?>
                         Add Field
                     </button>

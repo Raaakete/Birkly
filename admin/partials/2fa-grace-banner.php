@@ -32,6 +32,6 @@ $accountUrl = birkly_admin_url('account') . '#2fa';
                 <?= htmlspecialchars(__('admin.auth_2fa_grace_after')) ?>
             </p>
         </div>
-        <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars($accountUrl) ?>"><?= htmlspecialchars(__('admin.auth_2fa_grace_enable')) ?></a>
+        <a class="button is-small" href="<?= htmlspecialchars($accountUrl) ?>"><?= htmlspecialchars(__('admin.auth_2fa_grace_enable')) ?></a>
     </div>
 </div>

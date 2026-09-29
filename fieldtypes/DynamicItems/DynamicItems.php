@@ -248,8 +248,8 @@ class DynamicItems extends BaseField {
             flex: none;
             gap: 2px;
         }
-        .block-item-actions .btn { border: 0; background: none; color: var(--text-2); }
-        .block-item-actions .btn:hover { background: var(--surface-3); color: var(--text); }
+        .block-item-actions :is(.btn, .button) { border: 0; background: none; color: var(--text-2); }
+        .block-item-actions :is(.btn, .button):hover { background: var(--surface-3); color: var(--text); }
         .block-item-actions [data-dynamicitems-action="remove-block"]:hover { color: var(--danger); }
         .block-loading,
         .block-error {

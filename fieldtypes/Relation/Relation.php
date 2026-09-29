@@ -68,8 +68,8 @@ class Relation extends BaseField {
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJsonEscaped}">
             <div class="relation-controls">
-                <button type="button" class="btn btn-secondary btn-sm select-relation-btn" data-field="{$this->name}" data-multiple="{$isMultiple}">{$plusIcon}{$selectText}</button>
-                <button type="button" class="btn btn-ghost btn-sm remove-all-relation-btn" data-field="{$this->name}" hidden>Remove all</button>
+                <button type="button" class="button is-small select-relation-btn" data-field="{$this->name}" data-multiple="{$isMultiple}">{$plusIcon}{$selectText}</button>
+                <button type="button" class="button is-quiet is-small remove-all-relation-btn" data-field="{$this->name}" hidden>Remove all</button>
             </div>
         </div>
         HTML;

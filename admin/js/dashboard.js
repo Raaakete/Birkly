@@ -175,8 +175,8 @@
                     '<p class="empty-state-title">' + escapeHtml(t('dash_empty_collections_title', 'Create your first collection')) + '</p>' +
                     '<p class="empty-state-text">' + escapeHtml(t('dash_empty_collections_hint', 'Collections hold the content that powers your site.')) + '</p>' +
                     '<div class="empty-state-actions">' +
-                    '<a class="btn btn-primary btn-sm" href="' + escapeHtml(adminUrl('collection-editor')) + '">' + escapeHtml(t('content_groups_new_collection', 'New collection')) + '</a>' +
-                    '<button type="button" class="btn btn-ghost btn-sm" data-dash-guide-open>' + escapeHtml(t('guide_show_me_how', 'Show me how')) + '</button>' +
+                    '<a class="button is-main is-small" href="' + escapeHtml(adminUrl('collection-editor')) + '">' + escapeHtml(t('content_groups_new_collection', 'New collection')) + '</a>' +
+                    '<button type="button" class="button is-quiet is-small" data-dash-guide-open>' + escapeHtml(t('guide_show_me_how', 'Show me how')) + '</button>' +
                     '</div></div></div>';
             }
 

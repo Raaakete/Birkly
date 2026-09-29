@@ -90,7 +90,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     $entryEditorShowPublish = !$isSubEntry && !$entryEditorIsPublished;
     $stickySaveBarForm = 'entry-form';
     $stickySaveBarSaveLabel = __('admin.save_changes');
-    $stickySaveBarSaveClass = $entryEditorShowPublish ? 'btn btn-secondary' : 'btn btn-primary';
+    $stickySaveBarSaveClass = $entryEditorShowPublish ? 'button' : 'button is-main';
     $stickySaveBarSaveId = 'entry-save-submit';
     $stickySaveBarCancelLabel = __('admin.close');
     $stickySaveBarCancelId = 'entry-close-btn';
@@ -114,13 +114,13 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
         }
         $languageSwitch .= '</div>';
         if (!$isSubEntry && !empty($collection['slug'])) {
-            $languageSwitch .= '<a class="btn btn-ghost btn-sm" href="' . htmlspecialchars(admin_url('collection-editor', ['collection' => $collection['slug']])) . '#multilanguage-settings">'
+            $languageSwitch .= '<a class="button is-quiet is-small" href="' . htmlspecialchars(admin_url('collection-editor', ['collection' => $collection['slug']])) . '#multilanguage-settings">'
                 . birkly_icon('plus', ['size' => 13]) . htmlspecialchars(__('admin.entry_editor_add_language')) . '</a>';
         }
         $stickySaveBarStatusHtml .= $languageSwitch;
     }
   if (!$isSubEntry):
-    $stickySaveBarAfterSaveHtml = '<button type="button" class="btn btn-primary" id="entry-publish-btn"' . ($entryEditorShowPublish ? '' : ' hidden') . '>'
+    $stickySaveBarAfterSaveHtml = '<button type="button" class="button is-main" id="entry-publish-btn"' . ($entryEditorShowPublish ? '' : ' hidden') . '>'
         . htmlspecialchars(__('admin.entry_publish_and_save'))
         . '</button>';
   endif;
@@ -354,9 +354,9 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                         <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
                             <div class="entry-review-actions__title"><?= __('admin.entry_editor_review_actions_title') ?></div>
                             <div class="entry-review-actions__buttons">
-                                <button type="button" class="btn btn-secondary btn-sm" id="approve-entry"><?= htmlspecialchars(__('admin.approve')) ?></button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="request-changes"><?= htmlspecialchars(__('admin.request_changes')) ?></button>
-                                <button type="button" class="btn btn-danger btn-sm" id="reject-entry"><?= htmlspecialchars(__('admin.reject')) ?></button>
+                                <button type="button" class="button is-small" id="approve-entry"><?= htmlspecialchars(__('admin.approve')) ?></button>
+                                <button type="button" class="button is-small" id="request-changes"><?= htmlspecialchars(__('admin.request_changes')) ?></button>
+                                <button type="button" class="button is-danger is-small" id="reject-entry"><?= htmlspecialchars(__('admin.reject')) ?></button>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -385,7 +385,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 </div>
                                 <?php if (!empty($sidebar['discovery_seo_url'])): ?>
                                     <div class="form-group u-pt-2">
-                                        <a href="<?= htmlspecialchars($sidebar['discovery_seo_url']) ?>" class="btn btn-ghost btn-sm"><?= __('admin.entry_editor_discovery_seo_btn') ?></a>
+                                        <a href="<?= htmlspecialchars($sidebar['discovery_seo_url']) ?>" class="button is-quiet is-small"><?= __('admin.entry_editor_discovery_seo_btn') ?></a>
                                         <small class="form-text"><?= __('admin.entry_editor_discovery_seo_help') ?></small>
                                     </div>
                                 <?php endif; ?>
@@ -520,7 +520,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <div class="templating-section">
                                     <div class="section-header">
                                         <h4><?= htmlspecialchars(__('admin.col_editor_field_slugs_title')) ?></h4>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="copy-all-bindings-btn"><?= htmlspecialchars(__('admin.entry_editor_copy_all_bindings')) ?></button>
+                                        <button type="button" class="button is-small" id="copy-all-bindings-btn"><?= htmlspecialchars(__('admin.entry_editor_copy_all_bindings')) ?></button>
                                     </div>
                                     <div class="field-slugs-list">
                                         <?php 

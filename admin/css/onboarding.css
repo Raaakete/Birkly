@@ -330,8 +330,8 @@
   .onboarding-actions--ai { flex-direction: column; align-items: stretch; }
 
   .onboarding-actions-right { margin-inline-start: 0; }
-  .onboarding-actions .btn,
-  .form-actions .btn { width: 100%; }
+  .onboarding-actions :is(.btn, .button),
+  .form-actions :is(.btn, .button) { width: 100%; }
 }
 
 /* ============================================

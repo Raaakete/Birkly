@@ -15,9 +15,9 @@ $stickySaveBarSaveId = 'disc-seo-publish-btn';
 $stickySaveBarSaveLabel = __('admin.discovery_publish');
 $stickySaveBarMessageId = 'disc-seo-publish-status';
 $stickySaveBarMessageClass = 'message';
-$stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="disc-seo-save">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
-    . '<button type="button" class="btn btn-danger" id="disc-seo-unpublish" hidden>' . htmlspecialchars(__('admin.discovery_unpublish')) . '</button>';
+$stickySaveBarSaveClass = 'button is-main';
+$stickySaveBarExtraActionHtml = '<button type="button" class="button" id="disc-seo-save">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="button is-danger" id="disc-seo-unpublish" hidden>' . htmlspecialchars(__('admin.discovery_unpublish')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
@@ -324,11 +324,11 @@ $stickySaveBarSaveId = 'ai-presence-publish-btn';
 $stickySaveBarSaveLabel = __('admin.publish_ai_presence');
 $stickySaveBarMessageId = 'ai-presence-message';
 $stickySaveBarMessageClass = 'message';
-$stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
-    . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
-$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . birkly_icon('info') . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
-    . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . birkly_icon('wand') . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
+$stickySaveBarSaveClass = 'button is-main';
+$stickySaveBarExtraActionHtml = '<button type="button" class="button" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="button is-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
+$stickySaveBarRightHtml = '<button type="button" class="button is-quiet is-small" id="ap-about-agent-guide-btn">' . birkly_icon('info') . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
+    . '<button type="button" class="button is-quiet is-small" id="ap-setup-guide-btn">' . birkly_icon('wand') . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 echo '</div>';

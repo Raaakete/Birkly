@@ -44,7 +44,7 @@ window.HaruFieldtypes['select'] = {
     container.innerHTML = `
       <label class="mb-1" style="font-size:0.95em;">Options:</label>
       <div class="options-list mb-1"></div>
-      <button type="button" class="btn btn-secondary btn-sm">Add Option</button>
+      <button type="button" class="button is-small">Add Option</button>
     `;
     const optionsList = container.querySelector('.options-list');
     function renderOptions() {
@@ -55,7 +55,7 @@ window.HaruFieldtypes['select'] = {
         row.innerHTML = `
           <input type="text" class="input" placeholder="Label" value="${opt.label||''}" style="max-width:100px;">
           <input type="text" class="input" placeholder="Value" value="${opt.value||''}" style="max-width:100px;">
-          <button type="button" class="btn btn-danger btn-sm">&times;</button>
+          <button type="button" class="button is-danger is-small">&times;</button>
         `;
         const [labelInput, valueInput, removeBtn] = row.children;
         labelInput.addEventListener('input', e => {
@@ -75,7 +75,7 @@ window.HaruFieldtypes['select'] = {
       });
     }
     renderOptions();
-    container.querySelector('button.btn-secondary').addEventListener('click', () => {
+    container.querySelector('button.add-option-btn').addEventListener('click', () => {
       config.options = config.options || [];
       config.options.push({label:'',value:''});
       renderOptions();

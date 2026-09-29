@@ -87,7 +87,7 @@ function requireAdminPermission($permission) {
         echo '<div class="error-page">
                 <h1>Access Denied</h1>
                 <p>You do not have permission to access this page.</p>
-                <a href="' . htmlspecialchars($redirect) . '" class="btn btn-primary">Back</a>
+                <a href="' . htmlspecialchars($redirect) . '" class="button is-main">Back</a>
               </div>';
         exit;
     }

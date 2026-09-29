@@ -148,7 +148,7 @@
                 <td>${escapeHtml(item.title)}</td>
                 <td>${escapeHtml(item.user_email || item.user_id || '—')}</td>
                 <td>${statusBadge(item.status)}</td>
-                <td><button type="button" class="btn btn-sm btn-secondary" data-feedback-id="${escapeHtml(item.id)}">${viewLabel}</button></td>
+                <td><button type="button" class="button is-small" data-feedback-id="${escapeHtml(item.id)}">${viewLabel}</button></td>
             </tr>
         `).join('');
 
