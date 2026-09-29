@@ -36,7 +36,8 @@ birkly_analytics_set_domain_tracking('example.com', false);
 @unlink(dirname(__DIR__) . '/data/analytics/tracking_ids.json');
 
 // Public-site alias → canonical host (when hosting config is present).
-$hostingConfigPath = dirname(__DIR__) . '/data/hosting.json';
+require_once dirname(__DIR__) . '/core/hosting_urls.php';
+$hostingConfigPath = dirname(__DIR__) . '/settings/hosting.json';
 $hostingBackup = is_file($hostingConfigPath) ? (string) file_get_contents($hostingConfigPath) : null;
 $hostingFixture = json_encode([
     'public_site_mode' => 'project',

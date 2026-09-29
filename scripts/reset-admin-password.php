@@ -10,13 +10,22 @@
  * Or:
  *   BIRKLY_RESET_PASSWORD='NewPassword123!' php scripts/reset-admin-password.php --email=you@example.com
  *
- * Deprecated (argv leaks via ps):
- *   --password=…
+ * --password is rejected. The value would show up in the process list.
  */
 
 declare(strict_types=1);
 
-$options = getopt('', ['email:', 'password:', 'help']);
+foreach (array_slice($argv, 1) as $arg) {
+    if ($arg === '--password' || str_starts_with($arg, '--password=')) {
+        fwrite(STDERR, "Do not pass --password on the command line (visible in process list).\n");
+        fwrite(STDERR, "Use one of:\n");
+        fwrite(STDERR, "  php scripts/reset-admin-password.php --email=you@example.com\n");
+        fwrite(STDERR, "  BIRKLY_RESET_PASSWORD='…' php scripts/reset-admin-password.php --email=you@example.com\n");
+        exit(1);
+    }
+}
+
+$options = getopt('', ['email:', 'help']);
 
 if (isset($options['help'])) {
     echo "Reset an admin account password\n\n";
@@ -24,7 +33,7 @@ if (isset($options['help'])) {
     echo "  php scripts/reset-admin-password.php --email=you@example.com\n";
     echo "  BIRKLY_RESET_PASSWORD='…' php scripts/reset-admin-password.php --email=you@example.com\n\n";
     echo "Run inside the Dokploy Terminal for the app whose data you want to change.\n";
-    echo "Do not pass --password on the command line (visible in process list).\n";
+    echo "--password is not accepted.\n";
     exit(0);
 }
 
@@ -34,11 +43,6 @@ if (empty($options['email'])) {
 }
 
 $password = trim((string) (getenv('BIRKLY_RESET_PASSWORD') ?: ''));
-if ($password === '' && isset($options['password'])) {
-    fwrite(STDERR, "Warning: --password on the command line is deprecated (exposes secret in ps).\n");
-    fwrite(STDERR, "Use stdin prompt or BIRKLY_RESET_PASSWORD instead.\n");
-    $password = (string) $options['password'];
-}
 
 if ($password === '') {
     if (function_exists('posix_isatty') && posix_isatty(STDIN)) {
