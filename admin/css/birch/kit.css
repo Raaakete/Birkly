@@ -899,17 +899,17 @@
 /* ---------- Cards ---------- */
 [data-birch] .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--s-2);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-3);
 }
 
 [data-birch] .collection-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-height: var(--card-h);
-  padding: var(--s-3) var(--s-4);
+  gap: var(--s-2);
+  min-height: 132px;
+  padding: var(--s-4);
   color: inherit;
   text-decoration: none;
   transition: box-shadow var(--dur-1) var(--ease);
@@ -920,7 +920,7 @@
 
 [data-birch] .collection-card-title {
   color: var(--text);
-  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
 }
 
 [data-birch] .collection-card-text {
@@ -944,9 +944,10 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   font-size: var(--size-small);
 }
 
-[data-birch] .collection-card-foot strong {
-  color: var(--text);
-  font: var(--weight-semibold) 20px / 24px var(--font-sans);
+[data-birch] .collection-card-foot strong,
+[data-birch] .collection-card-meta {
+  color: var(--text-2);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
   font-variant-numeric: tabular-nums;
 }
 
