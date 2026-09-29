@@ -1,14 +1,8 @@
 <?php
-// DEBUG: Show all errors for troubleshooting
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-set_exception_handler(function($e) {
-    http_response_code(500);
-    header('Content-Type: text/plain');
-    echo 'Fatal error: ' . $e->getMessage() . "\n" . $e->getTraceAsString();
-    exit;
-});
+error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 header('Content-Type: application/json');
 
 // SECURITY FIX: Replace wildcard CORS with origin whitelist
@@ -20,6 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../fieldtypes/FieldRegistry.php';
+
+$fieldtypesDirect = realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__);
+if ($fieldtypesDirect && empty($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    require_once __DIR__ . '/session.php';
+    require_once __DIR__ . '/auth.php';
+    requireAuth();
+}
 
 $action = $_GET['action'] ?? '';
 
