@@ -373,3 +373,47 @@ function birkly_list_byoai_connections_for_user(string $userId): array
 
     return $connections;
 }
+
+/**
+ * Name and email for an admin account, for display in templates.
+ * The template does not open users/*.json itself.
+ *
+ * @return array{id: string, name: string, email: string}|null
+ */
+function birkly_user_public_profile(string $userId): ?array
+{
+    $userId = trim($userId);
+    if ($userId === '') {
+        return null;
+    }
+
+    $emailHint = str_contains($userId, '@') ? $userId : null;
+    $path = birkly_resolve_user_account_path($userId, $emailHint);
+    $user = null;
+    if ($path !== null && is_file($path)) {
+        $decoded = json_decode((string) file_get_contents($path), true);
+        $user = is_array($decoded) ? $decoded : null;
+    }
+
+    if ($user === null) {
+        $needle = strtolower($userId);
+        foreach (birkly_list_human_user_records() as $record) {
+            $recordId = strtolower((string) ($record['id'] ?? ''));
+            $recordEmail = strtolower((string) ($record['email'] ?? ''));
+            if ($recordId === $needle || $recordEmail === $needle) {
+                $user = $record;
+                break;
+            }
+        }
+    }
+
+    if (!is_array($user)) {
+        return null;
+    }
+
+    return [
+        'id' => (string) ($user['id'] ?? $userId),
+        'name' => (string) ($user['name'] ?? $user['username'] ?? ''),
+        'email' => (string) ($user['email'] ?? ''),
+    ];
+}

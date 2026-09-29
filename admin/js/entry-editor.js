@@ -221,6 +221,15 @@
         return (config.saveLabels && config.saveLabels[key]) || fallback;
     }
 
+    function updateSavedEntryBreadcrumb(form) {
+        const titleInput = form ? form.querySelector('[name="title"]') : null;
+        const title = titleInput ? String(titleInput.value || '').trim() : '';
+        const label = title || saveLabel('untitled', 'Untitled');
+        document.querySelectorAll('.breadcrumbs .current, #admin-topbar-breadcrumbs .current').forEach((el) => {
+            el.textContent = label;
+        });
+    }
+
     function getPublishButton() {
         return document.getElementById('entry-publish-btn');
     }
@@ -1658,6 +1667,7 @@
                         if (isNewRegularEntry) {
                             updateEntryEditorUrl(savedEntryId);
                         }
+                        updateSavedEntryBreadcrumb(form);
 
                         document.dispatchEvent(new CustomEvent('entry:saved', {
                             detail: {
