@@ -174,6 +174,178 @@ function get_plugin_docs_by_topic_slug(string $slug): ?array
 }
 
 /**
+ * Plugin AI playbooks. Core discovers these; it does not name the plugin topics.
+ *
+ * @var array<string, array<string, mixed>>
+ */
+$birkly_plugin_playbooks = [];
+
+/**
+ * Register one playbook topic for an active plugin.
+ *
+ * @param array{
+ *   title?: string,
+ *   summary?: string,
+ *   triggers?: string,
+ *   category?: string,
+ *   file?: string,
+ *   aliases?: list<string>
+ * } $config
+ */
+function register_plugin_playbook(string $plugin_id, string $topic, array $config = []): bool
+{
+    global $birkly_plugin_playbooks;
+
+    $plugin_id = strtolower(trim($plugin_id));
+    $topic = strtolower(trim($topic));
+    if ($plugin_id === '' || !preg_match('/^[a-z0-9_-]+$/', $plugin_id)) {
+        return false;
+    }
+    if ($topic === '' || !preg_match('/^[a-z0-9_-]+$/', $topic)) {
+        return false;
+    }
+    if (!birkly_is_plugin_docs_plugin_active($plugin_id)) {
+        return false;
+    }
+
+    $file = (string) ($config['file'] ?? '');
+    if ($file === '' || !is_file($file)) {
+        return false;
+    }
+
+    $aliases = [];
+    foreach (($config['aliases'] ?? []) as $alias) {
+        $alias = strtolower(trim((string) $alias));
+        if ($alias === '' || $alias === $topic || !preg_match('/^[a-z0-9_-]+$/', $alias)) {
+            continue;
+        }
+        $aliases[] = $alias;
+    }
+
+    $entry = [
+        'plugin_id' => $plugin_id,
+        'topic' => $topic,
+        'title' => (string) ($config['title'] ?? $topic),
+        'summary' => (string) ($config['summary'] ?? ''),
+        'triggers' => (string) ($config['triggers'] ?? ''),
+        'category' => (string) ($config['category'] ?? 'Plugins'),
+        'file' => $file,
+        'aliases' => array_values(array_unique($aliases)),
+    ];
+
+    if (!isset($birkly_plugin_playbooks) || !is_array($birkly_plugin_playbooks)) {
+        $birkly_plugin_playbooks = [];
+    }
+    $birkly_plugin_playbooks[$topic] = $entry;
+    foreach ($entry['aliases'] as $alias) {
+        $birkly_plugin_playbooks[$alias] = $entry;
+    }
+
+    return true;
+}
+
+/**
+ * Catalog rows for active plugin playbooks, keyed by the primary topic id.
+ *
+ * @return array<string, array{title: string, topic: string, summary: string, triggers: string, category: string}>
+ */
+function birkly_plugin_playbook_catalog(): array
+{
+    global $birkly_plugin_playbooks;
+
+    birkly_bootstrap_plugins_for_docs();
+
+    if (!isset($birkly_plugin_playbooks) || !is_array($birkly_plugin_playbooks)) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($birkly_plugin_playbooks as $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        $topic = (string) ($entry['topic'] ?? '');
+        $pluginId = (string) ($entry['plugin_id'] ?? '');
+        if ($topic === '' || isset($out[$topic]) || !birkly_is_plugin_docs_plugin_active($pluginId)) {
+            continue;
+        }
+        $out[$topic] = [
+            'title' => (string) ($entry['title'] ?? $topic),
+            'topic' => $topic,
+            'summary' => (string) ($entry['summary'] ?? ''),
+            'triggers' => (string) ($entry['triggers'] ?? ''),
+            'category' => (string) ($entry['category'] ?? 'Plugins'),
+        ];
+    }
+
+    return $out;
+}
+
+/**
+ * Active plugin playbook registration for a topic id or alias.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_plugin_playbook_for_topic(string $topic): ?array
+{
+    global $birkly_plugin_playbooks;
+
+    birkly_bootstrap_plugins_for_docs();
+
+    $topic = preg_replace('/[^a-z0-9\-_]/', '', strtolower(trim($topic)));
+    if ($topic === '' || !isset($birkly_plugin_playbooks[$topic]) || !is_array($birkly_plugin_playbooks[$topic])) {
+        return null;
+    }
+
+    $entry = $birkly_plugin_playbooks[$topic];
+    if (!birkly_is_plugin_docs_plugin_active((string) ($entry['plugin_id'] ?? ''))) {
+        return null;
+    }
+
+    return $entry;
+}
+
+/**
+ * Read a registered playbook file. The file must sit inside that plugin's directory.
+ */
+function birkly_read_plugin_playbook_markdown(array $entry): ?string
+{
+    $pluginId = (string) ($entry['plugin_id'] ?? '');
+    $path = (string) ($entry['file'] ?? '');
+    if ($pluginId === '' || $path === '' || !is_file($path)) {
+        return null;
+    }
+
+    $real = realpath($path);
+    if ($real === false) {
+        return null;
+    }
+
+    global $birkly_plugins;
+    $pluginPath = $birkly_plugins[$pluginId]['path'] ?? null;
+    if (is_string($pluginPath) && $pluginPath !== '') {
+        $pluginReal = realpath($pluginPath);
+        if ($pluginReal === false) {
+            return null;
+        }
+        $prefix = rtrim($pluginReal, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!str_starts_with($real, $prefix) && $real !== $pluginReal) {
+            return null;
+        }
+    }
+
+    $text = trim((string) file_get_contents($real));
+    if ($text === '') {
+        return null;
+    }
+    if (strlen($text) > 120000) {
+        $text = substr($text, 0, 120000) . "\n\n[truncated]";
+    }
+
+    return $text;
+}
+
+/**
  * Read a plugin markdown doc file by logical key (overview or help_topic id).
  */
 function read_plugin_doc_markdown(string $plugin_id, string $doc_key): ?string

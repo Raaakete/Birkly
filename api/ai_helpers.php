@@ -1323,7 +1323,28 @@ function readBirklyDocsTopic(string $slug): ?array
         }
     }
 
-    // Active plugin docs (P6.5-M5) — after core playbooks so stubs don't override full playbooks
+    $shelf = dirname(__DIR__) . '/core/plugins/docs_shelf.php';
+    if (!function_exists('birkly_plugin_playbook_for_topic') && is_file($shelf)) {
+        require_once $shelf;
+    }
+    if (function_exists('birkly_plugin_playbook_for_topic')) {
+        $playbook = birkly_plugin_playbook_for_topic($slug);
+        if ($playbook !== null && function_exists('birkly_read_plugin_playbook_markdown')) {
+            $text = birkly_read_plugin_playbook_markdown($playbook);
+            if ($text !== null && $text !== '') {
+                $cache[$slug] = [
+                    'slug' => $slug,
+                    'title' => (string) ($playbook['title'] ?? $slug),
+                    'text' => $text,
+                    'source' => 'plugin_playbook',
+                    'plugin_id' => (string) ($playbook['plugin_id'] ?? ''),
+                ];
+                return $cache[$slug];
+            }
+        }
+    }
+
+    // Active plugin docs (P6.5-M5) — after playbooks so ai-context stubs don't override them
     if (function_exists('get_plugin_docs_by_topic_slug')) {
         if (function_exists('birkly_bootstrap_plugins_for_docs')) {
             birkly_bootstrap_plugins_for_docs();

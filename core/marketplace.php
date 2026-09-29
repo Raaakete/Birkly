@@ -1744,14 +1744,84 @@ function birkly_marketplace_deactivate_license(string $licenseKey, ?string $inst
     return ['ok' => true, 'code' => (string) ($response['data']['code'] ?? 'deactivated')];
 }
 
+function birkly_marketplace_release_license_key(string $slug, ?string $licenseKey = null): string
+{
+    $licenseKey = trim((string) $licenseKey);
+    if ($licenseKey !== '') {
+        return $licenseKey;
+    }
+
+    if (!function_exists('birkly_marketplace_hub_license_for_offer')) {
+        require_once __DIR__ . '/marketplace/hub_licenses.php';
+    }
+    $row = birkly_marketplace_hub_license_for_offer($slug);
+    if (!is_array($row)) {
+        return '';
+    }
+
+    return trim((string) ($row['license_key'] ?? ''));
+}
+
 /**
- * @return array{ok:bool,version?:string,download_url?:string,checksum_sha256?:string,error?:string}
+ * Ask the marketplace for a short-lived artifact URL.
+ * Official and free offers can mint one without a license. Other paid offers need a key.
+ * Failure leaves the caller on the anonymous URL, which stays valid for official and free zips.
+ *
+ * @return array{ok:bool,download_url?:string,expires_at?:string,error?:string}
  */
-function birkly_marketplace_release_download(string $slug, string $version): array
+function birkly_marketplace_request_signed_artifact_url(string $slug, string $version, ?string $licenseKey = null): array
+{
+    $query = [];
+    $licenseKey = birkly_marketplace_release_license_key($slug, $licenseKey);
+    if ($licenseKey !== '') {
+        $query['license_key'] = $licenseKey;
+    }
+
+    $path = '/api/v1/artifacts/' . rawurlencode($slug) . '/' . rawurlencode($version) . '/signed-url';
+    $response = birkly_marketplace_request('GET', $path, null, $query, true);
+    if (!$response['ok'] || !is_array($response['data'])) {
+        return ['ok' => false, 'error' => $response['error'] ?? 'signed_url_unavailable'];
+    }
+
+    $downloadUrl = trim((string) ($response['data']['download_url'] ?? ''));
+    if ($downloadUrl === '') {
+        return ['ok' => false, 'error' => 'signed_url_missing'];
+    }
+
+    return [
+        'ok' => true,
+        'download_url' => birkly_marketplace_rewrite_service_url($downloadUrl),
+        'expires_at' => (string) ($response['data']['expires_at'] ?? ''),
+    ];
+}
+
+/**
+ * @param array{ok:bool,version?:string,download_url?:string,checksum_sha256?:string,error?:string} $resolved
+ * @return array{ok:bool,version?:string,download_url?:string,checksum_sha256?:string,error?:string,signed_url?:bool}
+ */
+function birkly_marketplace_prefer_signed_artifact_url(array $resolved, string $slug, string $version, ?string $licenseKey = null): array
+{
+    if (empty($resolved['ok'])) {
+        return $resolved;
+    }
+
+    $signed = birkly_marketplace_request_signed_artifact_url($slug, $version, $licenseKey);
+    if (!empty($signed['ok']) && trim((string) ($signed['download_url'] ?? '')) !== '') {
+        $resolved['download_url'] = (string) $signed['download_url'];
+        $resolved['signed_url'] = true;
+    }
+
+    return $resolved;
+}
+
+/**
+ * @return array{ok:bool,version?:string,download_url?:string,checksum_sha256?:string,error?:string,signed_url?:bool}
+ */
+function birkly_marketplace_release_download(string $slug, string $version, ?string $licenseKey = null): array
 {
     $fromApi = birkly_marketplace_release_download_from_registry_api($slug, $version);
     if (!empty($fromApi['ok'])) {
-        return $fromApi;
+        return birkly_marketplace_prefer_signed_artifact_url($fromApi, $slug, $version, $licenseKey);
     }
 
     $fallbackOffer = birkly_marketplace_find_fallback_offer($slug);
@@ -1761,7 +1831,7 @@ function birkly_marketplace_release_download(string $slug, string $version): arr
             $version
         );
         if ($fromFallback !== null) {
-            return $fromFallback;
+            return birkly_marketplace_prefer_signed_artifact_url($fromFallback, $slug, $version, $licenseKey);
         }
     }
 
@@ -1772,7 +1842,7 @@ function birkly_marketplace_release_download(string $slug, string $version): arr
             $version
         );
         if ($fromDetail !== null) {
-            return $fromDetail;
+            return birkly_marketplace_prefer_signed_artifact_url($fromDetail, $slug, $version, $licenseKey);
         }
     }
 
