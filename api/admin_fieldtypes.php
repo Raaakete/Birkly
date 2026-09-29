@@ -352,8 +352,12 @@ function parseConfigFromPost() {
 if (isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] === true) {
     // Being included - don't execute switch statement, just provide functions
     // Do nothing and let execution continue
-} else {
-    // File is being called directly (not included) - handle API requests
+} elseif (realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__)) {
+    // Direct request. Includes keep the functions and do not start a session.
+    require_once __DIR__ . '/session.php';
+    require_once __DIR__ . '/auth.php';
+    requireAuth();
+
     $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
     // Execute the switch statement for direct calls
