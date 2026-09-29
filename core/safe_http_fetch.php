@@ -43,9 +43,42 @@ function birkly_safe_http_resolve_public_ip(string $host): ?string
 }
 
 /**
+ * @param array<int|string, mixed> $headers
+ * @return list<string>
+ */
+function birkly_safe_http_normalize_headers(array $headers): array
+{
+    $out = [];
+    foreach ($headers as $key => $value) {
+        if (is_int($key)) {
+            $line = trim((string) $value);
+            if ($line === '' || !str_contains($line, ':')) {
+                continue;
+            }
+            [$name, $headerValue] = explode(':', $line, 2);
+        } else {
+            $name = (string) $key;
+            $headerValue = (string) $value;
+        }
+        $name = trim($name);
+        $headerValue = trim($headerValue);
+        if ($name === '' || preg_match('/[\r\n]/', $name) === 1 || preg_match('/[\r\n]/', $headerValue) === 1) {
+            continue;
+        }
+        if (strcasecmp($name, 'Host') === 0 || strcasecmp($name, 'Content-Length') === 0) {
+            continue;
+        }
+        $out[] = $name . ': ' . $headerValue;
+    }
+
+    return $out;
+}
+
+/**
  * Fetch a URL body with DNS pinning and no redirects (SSRF hardening).
+ * GET stays the default. method, headers, and body are for outbound webhooks.
  *
- * @param array{timeout?: int, user_agent?: string, max_bytes?: int} $options
+ * @param array{timeout?: int, user_agent?: string, max_bytes?: int, method?: string, headers?: array<int|string, mixed>, body?: string|null} $options
  * @return array{ok: bool, body?: string, http_code?: int, error?: string}
  */
 function birkly_safe_http_fetch(string $url, array $options = []): array
@@ -64,6 +97,22 @@ function birkly_safe_http_fetch(string $url, array $options = []): array
     if ($host === '') {
         return ['ok' => false, 'error' => 'Invalid URL host'];
     }
+
+    $method = strtoupper((string) ($options['method'] ?? 'GET'));
+    if (!in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'], true)) {
+        return ['ok' => false, 'error' => 'Unsupported HTTP method'];
+    }
+    $headerLines = birkly_safe_http_normalize_headers(is_array($options['headers'] ?? null) ? $options['headers'] : []);
+    $requestBody = null;
+    if (!in_array($method, ['GET', 'HEAD'], true) && array_key_exists('body', $options) && $options['body'] !== null) {
+        $requestBody = (string) $options['body'];
+    }
+    $GLOBALS['__birkly_safe_http_fetch_last_request'] = [
+        'url' => $url,
+        'method' => $method,
+        'headers' => $headerLines,
+        'body' => $requestBody,
+    ];
 
     // Tests may supply a finished response only after the URL policy above has
     // already rejected private, loopback, and non-http targets.
@@ -87,7 +136,7 @@ function birkly_safe_http_fetch(string $url, array $options = []): array
     }
 
     $resolve = [$host . ':' . $port . ':' . $ip];
-    curl_setopt_array($ch, [
+    $curlOptions = [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_TIMEOUT => $timeout,
@@ -97,7 +146,17 @@ function birkly_safe_http_fetch(string $url, array $options = []): array
         CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         CURLOPT_RESOLVE => $resolve,
-    ]);
+    ];
+    if ($method !== 'GET') {
+        $curlOptions[CURLOPT_CUSTOMREQUEST] = $method;
+    }
+    if ($requestBody !== null) {
+        $curlOptions[CURLOPT_POSTFIELDS] = $requestBody;
+    }
+    if ($headerLines !== []) {
+        $curlOptions[CURLOPT_HTTPHEADER] = $headerLines;
+    }
+    curl_setopt_array($ch, $curlOptions);
 
     $body = curl_exec($ch);
     $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
