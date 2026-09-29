@@ -8,7 +8,7 @@
 
 <div class="main-actions-bar main-actions-bar--sticky">
   <div class="main-actions-left">
-    <button type="button" class="btn btn-primary" id="account-save-btn">{translate 'admin.save_changes'}</button>
+    <button type="button" class="button is-main" id="account-save-btn">{translate 'admin.save_changes'}</button>
   </div>
   <div class="main-actions-right">
     <div id="account-save-message" class="main-actions-message message settings-toast" role="status" aria-live="polite" hidden></div>
@@ -102,7 +102,7 @@
         </div>
       </div>
       <div class="setting-actions">
-        <button type="submit" class="btn btn-secondary">{translate 'admin.change_password'}</button>
+        <button type="submit" class="button">{translate 'admin.change_password'}</button>
       </div>
       
       <div id="password-message" class="message" role="status" aria-live="polite" hidden></div>
@@ -151,9 +151,9 @@
         </div>
       </div>
       <div class="setting-actions">
-        <button type="submit" class="btn btn-secondary">{translate 'admin.save_changes'}</button>
-        <button type="button" class="btn btn-secondary" id="account-guide-snooze">{translate 'admin.guide_snooze_tips'}</button>
-        <button type="submit" class="btn btn-secondary" data-guide-reset="1">{translate 'admin.guide_reset_progress'}</button>
+        <button type="submit" class="button">{translate 'admin.save_changes'}</button>
+        <button type="button" class="button" id="account-guide-snooze">{translate 'admin.guide_snooze_tips'}</button>
+        <button type="submit" class="button" data-guide-reset="1">{translate 'admin.guide_reset_progress'}</button>
       </div>
       <div id="account-guide-message" class="message" role="status" aria-live="polite" hidden></div>
     </form>
@@ -338,8 +338,8 @@
           <small class="form-text">{translate 'admin.verification_code_help'}</small>
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FADisableModal">{translate 'admin.cancel'}</button>
-          <button type="submit" class="btn btn-danger">{translate 'admin.disable_2fa'}</button>
+          <button type="button" class="button" data-admin-action="accountClose2FADisableModal">{translate 'admin.cancel'}</button>
+          <button type="submit" class="button is-danger">{translate 'admin.disable_2fa'}</button>
         </div>
       </form>
     </div>
@@ -364,8 +364,8 @@
           <input type="text" id="account-regenerate-code" name="code" class="input" placeholder="{translate 'admin.verification_code_placeholder'}" maxlength="6">
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FARegenerateModal">{translate 'admin.cancel'}</button>
-          <button type="submit" class="btn btn-primary">{translate 'admin.regenerate_backup_codes'}</button>
+          <button type="button" class="button" data-admin-action="accountClose2FARegenerateModal">{translate 'admin.cancel'}</button>
+          <button type="submit" class="button is-main">{translate 'admin.regenerate_backup_codes'}</button>
         </div>
       </form>
     </div>
