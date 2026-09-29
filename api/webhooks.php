@@ -32,6 +32,8 @@ function birkly_webhook_process_request(?string $identifier, string $method, str
         return ['status' => 'error', 'connection_id' => null, 'alias' => null, 'error' => 'Only POST requests are accepted.'];
     }
 
+    birkly_connections_ensure_inbound_signing_secrets();
+
     $connection = birkly_connection_get($identifier, true);
     if ($connection === null) {
         $connection = birkly_connection_get_by_alias($identifier, true);
@@ -78,25 +80,23 @@ function birkly_webhook_process_request(?string $identifier, string $method, str
     }
 
     $secrets = is_array($connection['secrets'] ?? null) ? $connection['secrets'] : [];
-    $signingSecret = (string) ($secrets['signing_secret'] ?? '');
+    $signingSecret = trim((string) ($secrets['signing_secret'] ?? ''));
 
-    if ($signingSecret !== '') {
-        $signature = null;
-        foreach ($headers as $name => $value) {
-            if (strtolower((string) $name) === 'x-birkly-signature') {
-                $signature = is_array($value) ? implode(',', $value) : (string) $value;
-                break;
-            }
+    $signature = null;
+    foreach ($headers as $name => $value) {
+        if (strtolower((string) $name) === 'x-birkly-signature') {
+            $signature = is_array($value) ? implode(',', $value) : (string) $value;
+            break;
         }
+    }
 
-        if ($signature === null || $signature === '') {
-            return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Missing signature.'];
-        }
+    if ($signingSecret === '' || $signature === null || $signature === '') {
+        return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Missing signature.'];
+    }
 
-        $expected = hash_hmac('sha256', $rawBody, $signingSecret);
-        if (!hash_equals($expected, $signature)) {
-            return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Invalid signature.'];
-        }
+    $expected = hash_hmac('sha256', $rawBody, $signingSecret);
+    if (!hash_equals($expected, $signature)) {
+        return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Invalid signature.'];
     }
 
     $decoded = json_decode($rawBody, true);

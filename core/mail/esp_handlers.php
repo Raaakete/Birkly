@@ -15,6 +15,10 @@ require_once __DIR__ . '/queue.php';
 
 function birkly_esp_webhook_handle(array $connection, array $headers, string $rawBody): array
 {
+    if (birkly_esp_signing_secret($connection) === '') {
+        return ['status' => 'error', 'error' => 'Missing signature.'];
+    }
+
     $provider = (string) ($connection['provider'] ?? '');
 
     return match ($provider) {
