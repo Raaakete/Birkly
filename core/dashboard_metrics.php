@@ -2,8 +2,9 @@
 /**
  * Dashboard metric bar (Birch v5, Foundations §06).
  *
- * The bar follows what is installed: plugin metrics lead (Commerce, User,
- * Events, then others), Published always keeps a slot, Analytics joins after
+ * The bar follows what is installed. A plugin sets dashboard_metric_lead on
+ * its runtime record (lower numbers lead). Plugins without that key follow
+ * in discovery order. Published always keeps a slot, Analytics joins after
  * content, and content defaults fill the rest. Four slots, no scrolling; a
  * user's pins (Customize) come first.
  *
@@ -20,10 +21,35 @@ function birkly_dashboard_metric_core_order(): array
     return ['published', 'page_views', 'drafts', 'visitors', 'collections', 'media'];
 }
 
-/** Plugins that lead the bar, in order. Other plugins follow them. */
+/**
+ * Plugin ids that lead the bar, lowest dashboard_metric_lead first.
+ * Core does not name official plugins. A plugin sets the key on its
+ * runtime record when it loads.
+ *
+ * @return list<string>
+ */
 function birkly_dashboard_metric_lead_plugins(): array
 {
-    return ['commerce', 'user_management', 'events'];
+    $plugins = function_exists('get_active_plugins') ? get_active_plugins() : [];
+    if ($plugins === [] && isset($GLOBALS['birkly_plugins']) && is_array($GLOBALS['birkly_plugins'])) {
+        $plugins = $GLOBALS['birkly_plugins'];
+    }
+
+    $leads = [];
+    foreach ($plugins as $pluginId => $plugin) {
+        if (!is_array($plugin) || !isset($plugin['dashboard_metric_lead'])) {
+            continue;
+        }
+        $rank = $plugin['dashboard_metric_lead'];
+        if (!is_int($rank) && !(is_string($rank) && preg_match('/^-?\d+$/', $rank))) {
+            continue;
+        }
+        $leads[(string) $pluginId] = (int) $rank;
+    }
+
+    asort($leads, SORT_NUMERIC);
+
+    return array_keys($leads);
 }
 
 /**

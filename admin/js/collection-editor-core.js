@@ -584,12 +584,20 @@
             var payload = responseData.data || {};
             var actionInput = form.querySelector('input[name="action"]');
 
+            var previousAction = actionInput ? actionInput.value : '';
             if (actionInput) {
                 if (actionInput.value === 'create') {
                     actionInput.value = 'update';
                 } else if (actionInput.value === 'add_sub_collection') {
                     actionInput.value = 'update_sub_collection';
                 }
+            }
+
+            if (previousAction === 'create' || previousAction === 'add_sub_collection') {
+                var editTitle = label('editTitle', 'Edit collection');
+                document.querySelectorAll('.breadcrumbs .current, #admin-topbar-breadcrumbs .current').forEach(function (el) {
+                    el.textContent = editTitle;
+                });
             }
 
             if (!isSubCollection && payload.slug) {

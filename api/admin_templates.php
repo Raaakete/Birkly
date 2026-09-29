@@ -192,8 +192,6 @@ function getPageData($page) {
             return getUsersData();
         case 'roles':
             return getRolesData();
-        case 'automation':
-            return getAutomationData();
         case 'onboarding':
             return getOnboardingData();
         case 'plugins':
@@ -216,48 +214,17 @@ function getPageData($page) {
         case 'discovery':
             return getAiPresenceData();
         default:
+            require_once __DIR__ . '/../core/plugins/admin_page_data.php';
+            try {
+                $pluginData = birkly_admin_page_data($page);
+            } catch (Throwable $e) {
+                error_log('Admin page data provider failed for ' . $page . ': ' . $e->getMessage());
+                return ['error' => $e->getMessage()];
+            }
+            if (is_array($pluginData)) {
+                return $pluginData;
+            }
             return ['error' => 'Page not found'];
-    }
-}
-
-function getAutomationData() {
-    $inactive = [
-        'automations' => [],
-        'blocks' => [],
-        'plugin_inactive' => true,
-    ];
-
-    try {
-        require_once __DIR__ . '/../core/plugin_availability.php';
-        require_once __DIR__ . '/../core/plugins/admin_page_data.php';
-        if (!birkly_bootstrap_active_plugin('automation')) {
-            return $inactive;
-        }
-
-        $data = birkly_admin_page_data('automation');
-        if (!is_array($data)) {
-            return [
-                'automations' => [],
-                'blocks' => [],
-            ];
-        }
-
-        if (!is_array($data['automations'] ?? null)) {
-            $data['automations'] = [];
-        }
-        if (!is_array($data['blocks'] ?? null)) {
-            $data['blocks'] = [];
-        }
-        unset($data['plugin_inactive']);
-
-        return $data;
-    } catch (Throwable $e) {
-        error_log("Error in getAutomationData: " . $e->getMessage());
-        return [
-            'automations' => [],
-            'blocks' => [],
-            'error' => $e->getMessage(),
-        ];
     }
 }
 
@@ -503,42 +470,6 @@ function birkly_admin_entry_slug_sidebar_state(array $entry): bool
     return birkly_auto_slug_checked($slug, $title, $id !== '' ? $id : null, $isNew);
 }
 
-function birkly_admin_collection_automation_context(string $collectionSlug, ?string $subCollectionSlug = null): array
-{
-    $automationData = getAutomationData();
-    $automations = is_array($automationData['automations'] ?? null) ? $automationData['automations'] : [];
-    $filtered = [];
-
-    foreach ($automations as $automation) {
-        if (!is_array($automation)) {
-            continue;
-        }
-        foreach (($automation['triggers'] ?? []) as $trigger) {
-            if (!is_array($trigger)) {
-                continue;
-            }
-            $config = is_array($trigger['config'] ?? null) ? $trigger['config'] : [];
-            $triggerCollection = (string) ($config['collection'] ?? $trigger['collection'] ?? '');
-            if ($triggerCollection !== $collectionSlug) {
-                continue;
-            }
-            if ($subCollectionSlug !== null && $subCollectionSlug !== '') {
-                $triggerSub = (string) ($config['sub_collection'] ?? '');
-                if ($triggerSub !== '' && $triggerSub !== $subCollectionSlug) {
-                    continue;
-                }
-            }
-            $filtered[] = $automation;
-            break;
-        }
-    }
-
-    return [
-        'collection_automations' => $filtered,
-        'automation_plugin_inactive' => !empty($automationData['plugin_inactive']),
-    ];
-}
-
 function birkly_admin_entry_sidebar_context(array $collection, ?string $entryId = null, bool $isSubEntry = false): array
 {
     $siteUrl = '';
@@ -782,10 +713,7 @@ function getCollectionEditorData() {
             'subCollection' => $subData,
             'is_sub_collection' => true,
             'subAutoSlugChecked' => birkly_admin_collection_slug_sidebar_state($subData, empty($subData['slug'])),
-        ] + birkly_admin_collection_automation_context(
-            (string) ($collectionData['slug'] ?? $collectionSlug),
-            (string) ($subData['slug'] ?? $subCollectionSlug)
-        );
+        ];
     }
     
     // Handle regular collection editor
@@ -818,7 +746,7 @@ function getCollectionEditorData() {
                 'fieldtypes' => $fieldtypes,
                 'is_sub_collection' => false,
                 'collAutoSlugChecked' => birkly_admin_collection_slug_sidebar_state($collectionData),
-            ] + birkly_admin_collection_automation_context((string) $collectionSlug);
+            ];
         }
     }
     
@@ -835,8 +763,6 @@ function getCollectionEditorData() {
         'fieldtypes' => $fieldtypes,
         'is_sub_collection' => false,
         'collAutoSlugChecked' => true,
-        'collection_automations' => [],
-        'automation_plugin_inactive' => false,
     ];
 }
 
