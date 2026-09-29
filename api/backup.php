@@ -8,45 +8,22 @@ require_once 'auth.php';
 requireAuth('admin');
 require_once 'validate.php';
 require_once '../core/csrf.php';
+require_once '../core/backup.php';
 require_once 'log.php';
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-$backupDirs = [
-    '../content',
-    '../users',
-    '../media',
-    '../settings'
-];
 $backupFile = '../backup/birkly-backup-' . date('Ymd-His') . '.zip';
 
 if (!is_dir('../backup')) mkdir('../backup', 0755, true);
 
 // Create backup zip
 if ($action === 'backup') {
-    $zip = new ZipArchive();
-    if ($zip->open($backupFile, ZipArchive::CREATE) !== TRUE) {
-        echo json_encode(['status' => 'error', 'message' => 'Could not create backup file']);
+    $created = birkly_backup_create_zip(dirname(__DIR__), $backupFile);
+    if (empty($created['ok'])) {
+        echo json_encode(['status' => 'error', 'message' => $created['error'] ?? 'Could not create backup file']);
         exit;
     }
-    foreach ($backupDirs as $dir) {
-        $dir = rtrim($dir, '/');
-        $base = basename($dir);
-        $files = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::SELF_FIRST
-        );
-        foreach ($files as $file) {
-            $filePath = $file->getRealPath();
-            $localPath = $base . '/' . substr($filePath, strlen($dir) + 1);
-            if ($file->isDir()) {
-                $zip->addEmptyDir($localPath);
-            } else {
-                $zip->addFile($filePath, $localPath);
-            }
-        }
-    }
-    $zip->close();
     header('Content-Type: application/zip');
     header('Content-Disposition: attachment; filename="' . basename($backupFile) . '"');
     readfile($backupFile);
@@ -68,13 +45,11 @@ if ($action === 'restore' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     $file = $_FILES['backup']['tmp_name'];
-    $zip = new ZipArchive();
-    if ($zip->open($file) !== TRUE) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid backup file']);
+    $restored = birkly_backup_restore_zip($file, dirname(__DIR__));
+    if (empty($restored['ok'])) {
+        echo json_encode(['status' => 'error', 'message' => $restored['error'] ?? 'Invalid backup file']);
         exit;
     }
-    $zip->extractTo('..');
-    $zip->close();
     log_security_event('backup_restored', ['user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode(['status' => 'ok', 'message' => 'Backup restored']);
     exit;
