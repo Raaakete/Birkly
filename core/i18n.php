@@ -5,14 +5,79 @@
  */
 
 /**
- * Admin UI languages shown in onboarding, account, and sidebar pickers (P85 tiering).
- * Other lang/*.json files may exist for future work but are not offered to users.
+ * Read lang/{code}.json catalogs. A language is in the admin picker only when
+ * _meta.selectable is true. Files that are not language codes are ignored.
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function birkly_admin_locale_catalog(): array
+{
+    static $catalog = null;
+    if (is_array($catalog)) {
+        return $catalog;
+    }
+
+    $catalog = [];
+    $langDir = __DIR__ . '/../lang';
+    if (!is_dir($langDir)) {
+        return $catalog;
+    }
+
+    foreach (glob($langDir . '/*.json') ?: [] as $file) {
+        $code = strtolower(basename($file, '.json'));
+        if (!preg_match('/^[a-z]{2,3}(?:-[a-z0-9]+)?$/', $code)) {
+            continue;
+        }
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data) || !is_array($data['_meta'] ?? null) || !is_array($data['admin'] ?? null)) {
+            continue;
+        }
+        $meta = $data['_meta'];
+        $meta['code'] = $code;
+        $meta['selectable'] = ($meta['selectable'] ?? false) === true;
+        $catalog[$code] = $meta;
+    }
+
+    return $catalog;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function birkly_admin_locale_meta(string $code): array
+{
+    $code = strtolower(trim($code));
+    $catalog = birkly_admin_locale_catalog();
+
+    return $catalog[$code] ?? [];
+}
+
+/**
+ * Admin UI languages shown in onboarding, account, and sidebar pickers.
+ * English stays first, then the historical order, then any newer codes.
  *
  * @return list<string>
  */
 function birkly_admin_ui_selectable_language_codes(): array
 {
-    return ['en', 'de', 'fr', 'ja', 'es'];
+    $found = [];
+    foreach (birkly_admin_locale_catalog() as $code => $meta) {
+        if (!empty($meta['selectable'])) {
+            $found[] = $code;
+        }
+    }
+
+    $preferred = ['en', 'de', 'fr', 'ja', 'es'];
+    $ordered = [];
+    foreach ($preferred as $code) {
+        if (in_array($code, $found, true)) {
+            $ordered[] = $code;
+        }
+    }
+    $rest = array_values(array_diff($found, $ordered));
+    sort($rest);
+
+    return array_merge($ordered, $rest);
 }
 
 class I18n {
@@ -254,7 +319,9 @@ class I18n {
         // Replace parameters
         if (!empty($params)) {
             foreach ($params as $param => $value) {
-                $translation = str_replace('{{' . $param . '}}', (string) $value, $translation);
+                $replacement = (string) $value;
+                $translation = str_replace('{{' . $param . '}}', $replacement, $translation);
+                $translation = str_replace('{' . $param . '}', $replacement, $translation);
             }
         }
         

@@ -17,11 +17,45 @@ function birkly_locale_normalize_code(string $code): string
 }
 
 /**
+ * Admin catalog _meta for a language code, when lang/{code}.json exists.
+ *
+ * @return array<string, mixed>
+ */
+function birkly_locale_catalog_meta(string $code): array
+{
+    if (!function_exists('birkly_admin_locale_meta')) {
+        $i18n = __DIR__ . '/i18n.php';
+        if (is_file($i18n)) {
+            require_once $i18n;
+        }
+    }
+    if (!function_exists('birkly_admin_locale_meta')) {
+        return [];
+    }
+
+    $meta = birkly_admin_locale_meta(birkly_locale_normalize_code($code));
+
+    return is_array($meta) ? $meta : [];
+}
+
+function birkly_locale_meta_format(string $code, string $key): string
+{
+    $meta = birkly_locale_catalog_meta($code);
+    $value = $meta[$key] ?? '';
+
+    return is_string($value) ? $value : '';
+}
+
+/**
  * Map Birkly language codes to BCP 47 locales for Intl / toLocaleString.
  */
 function birkly_locale_to_bcp47(string $code): string
 {
     $normalized = birkly_locale_normalize_code($code);
+    $fromCatalog = birkly_locale_meta_format($normalized, 'bcp47');
+    if ($fromCatalog !== '') {
+        return $fromCatalog;
+    }
     $map = [
         'en' => 'en-US',
         'de' => 'de-DE',
@@ -85,6 +119,10 @@ function birkly_locale_endonym(string $code): string
 function birkly_locale_default_date_format(?string $langCode): string
 {
     $lang = birkly_locale_normalize_code((string) $langCode);
+    $fromCatalog = birkly_locale_meta_format($lang, 'date_format');
+    if ($fromCatalog !== '') {
+        return $fromCatalog;
+    }
     $map = [
         'en' => 'm/d/Y',
         'de' => 'd.m.Y',
@@ -114,6 +152,10 @@ function birkly_locale_default_date_format(?string $langCode): string
 function birkly_locale_default_datetime_format(?string $langCode): string
 {
     $lang = birkly_locale_normalize_code((string) $langCode);
+    $fromCatalog = birkly_locale_meta_format($lang, 'datetime_format');
+    if ($fromCatalog !== '') {
+        return $fromCatalog;
+    }
     $map = [
         'en' => 'm/d/Y g:i A',
         'de' => 'd.m.Y H:i',
@@ -143,6 +185,10 @@ function birkly_locale_default_datetime_format(?string $langCode): string
 function birkly_locale_default_time_format(?string $langCode): string
 {
     $lang = birkly_locale_normalize_code((string) $langCode);
+    $fromCatalog = birkly_locale_meta_format($lang, 'time_format');
+    if ($fromCatalog !== '') {
+        return $fromCatalog;
+    }
     if ($lang === 'en') {
         return 'g:i A';
     }

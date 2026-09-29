@@ -8,6 +8,9 @@
  */
 declare(strict_types=1);
 
+fwrite(STDERR, "i18n-rebuild-plugin-fr.php is deprecated. Translate from lang/en.json and run scripts/i18n-audit.php --selectable.\n");
+exit(1);
+
 $argv = $_SERVER['argv'] ?? [];
 array_shift($argv);
 $pluginRoot = rtrim($argv[0] ?? '', '/');
