@@ -1638,6 +1638,255 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 [data-birch] .page-more-menu > .dropdown-item:hover { background: var(--surface-2); }
 [data-birch] .has-page-more .page-more-icon { order: 2; }
 
+/* ---------- Template flow (admin/js/template-flow.js) ----------
+   Invoice and email templates share one flow: row slabs open an editor view
+   that replaces the panel; New template is a wide sheet with Start from cards. */
+[data-birch] button.list-row {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+
+[data-birch] button.list-row:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+[data-birch] button.list-row:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-outline-offset); }
+[data-birch] .template-row-chev { display: inline-flex; flex-shrink: 0; color: var(--text-3); }
+
+[data-birch] .template-shelf-head {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+[data-birch] .template-shelf-head > .field-help { max-width: 64ch; margin: 0; }
+
+/* The email connection picker inside a setting row: the row label is the label */
+[data-birch] .setting-value > [data-email-connection-picker] { align-self: stretch; }
+[data-birch] .setting-value .sys-conn-picker-field { margin: 0; }
+[data-birch] .setting-value .sys-conn-picker-field > label,
+[data-birch] .setting-value .sys-conn-picker-field > .form-help:not(:has(a)) { display: none; }
+
+[data-birch] .template-list-empty {
+  margin: 0;
+  padding: var(--s-4);
+  color: var(--text-3);
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+  text-align: center;
+}
+
+[data-birch] [data-template-editing] > :not(.template-editor-view) { display: none; }
+
+[data-birch] .template-editor-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+[data-birch] .template-editor-view[hidden] { display: none; }
+
+[data-birch] .template-editor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+[data-birch] .template-editor-title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-birch] .template-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  min-width: 0;
+  margin-inline-start: auto;
+}
+
+@media (max-width: 640px) {
+  [data-birch] .template-editor-actions {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+  }
+}
+
+[data-birch] .template-editor-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+[data-birch] .template-editor-host {
+  position: relative;
+  width: 100%;
+  min-height: 360px;
+  overflow: visible;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--surface);
+}
+
+[data-birch] .template-editor-foot { display: flex; gap: var(--s-2); }
+
+[data-birch] .token-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+[data-birch] .token-list-label {
+  margin-inline-end: var(--s-1);
+  color: var(--text-3);
+  font-size: var(--size-small);
+}
+
+[data-birch] .token-chip {
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+[data-birch] .token-chip:hover { background: var(--surface-3); color: var(--text); }
+
+[data-birch] :is(.modal, .modal-backdrop).is-sheet.is-wide .modal-content { max-width: 720px; }
+
+[data-birch] .template-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+[data-birch] .template-sheet-slab { padding: var(--s-3) var(--s-4); }
+[data-birch] .template-sheet-kinds {
+  display: flex;
+  margin-block-start: var(--s-2);
+  border-radius: var(--r);
+  background: var(--surface-2);
+}
+[data-birch] .template-sheet-kinds > button { flex: 1 1 0; justify-content: center; }
+
+[data-birch] .template-sheet-heading {
+  margin: var(--s-4) 0 var(--s-1);
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
+}
+
+[data-birch] .template-sheet-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-block-start: var(--s-3);
+}
+
+[data-birch] .template-sheet-next {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-block-start: var(--s-3);
+}
+
+[data-birch] .template-sheet-next strong { color: var(--text); font-weight: var(--weight-semibold); }
+
+[data-birch] .choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: var(--s-2);
+}
+
+[data-birch] .choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+  padding: var(--s-2);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: box-shadow var(--dur-1) var(--ease), background-color var(--dur-1) var(--ease);
+}
+
+[data-birch] .choice-card:hover { box-shadow: 0 0 0 1px var(--accent-line); }
+[data-birch] .choice-card[aria-pressed="true"] { background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent); }
+[data-birch] .choice-card:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-outline-offset); }
+
+[data-birch] .choice-title {
+  color: var(--text);
+  font: var(--weight-semibold) var(--size-small) / var(--lh-small) var(--font-sans);
+}
+
+[data-birch] .choice-text {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+}
+
+[data-birch] .choice-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  aspect-ratio: 4 / 3;
+  margin-block-end: var(--s-2);
+  padding: var(--s-2);
+  overflow: hidden;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+}
+
+[data-birch] .choice-card[aria-pressed="true"] .choice-thumb { background: var(--surface); }
+[data-birch] .choice-thumb.is-blank { border: 1px dashed var(--line-strong); background: none; }
+[data-birch] .choice-thumb.is-icon { align-items: center; justify-content: center; color: var(--text-3); }
+
+[data-birch] .choice-thumb-line {
+  display: block;
+  width: 80%;
+  height: 3px;
+  border-radius: var(--r-pixel);
+  background: var(--line-strong);
+}
+
+[data-birch] .choice-thumb-line:nth-of-type(2n) { width: 55%; }
+[data-birch] .choice-thumb-line:nth-of-type(3n) { width: 68%; }
+
+[data-birch] .choice-thumb-block {
+  width: 24%;
+  height: 8px;
+  border-radius: var(--r-pixel);
+  background: var(--text-3);
+}
+
+[data-birch] .choice-thumb-block.is-wide { width: 70%; }
+
+[data-birch] .choice-thumb-box {
+  flex: 1 1 auto;
+  max-height: 34%;
+  margin-block-start: auto;
+  border-radius: var(--r-pixel);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+[data-birch] .choice-thumb-band {
+  flex-shrink: 0;
+  height: 14%;
+  margin: calc(var(--s-2) * -1) calc(var(--s-2) * -1) 2px;
+  background: var(--text-2);
+}
+
 /* ---------- Plugin pages on Birch (P96-M14) ----------
    Official plugins opt in with data-birch on their .plugin-page root and
    still emit P56 cards, tables, stat tiles, empty states and field groups.
