@@ -616,6 +616,7 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
 
     $offers = is_array($response['data']['offers'] ?? null) ? $response['data']['offers'] : [];
     $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType, $priceSelection['price_range']);
+    $offers = birkly_marketplace_sort_offers($offers, $effectiveSort);
     $filterOptions = is_array($response['data']['filter_options'] ?? null)
         ? $response['data']['filter_options']
         : birkly_marketplace_catalog_filter_options(is_array($response['data']['offers'] ?? null) ? $response['data']['offers'] : []);
