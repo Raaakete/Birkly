@@ -78,7 +78,9 @@
             }
             const collapseBtn = groupElement.querySelector('.group-collapse-btn');
             if (collapseBtn) {
-                collapseBtn.title = 'Collapse Group';
+                collapseBtn.title = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+                    ? Birkly.i18n.t('admin.collapse_group', 'Collapse group')
+                    : 'Collapse group';
                 collapseBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>';
             }
         }

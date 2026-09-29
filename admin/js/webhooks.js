@@ -8,9 +8,9 @@
     let collections = [];
     let webhooks = [];
 
-    function t(key, fallback) {
+    function t(key, fallback, params) {
         if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
-            return Birkly.i18n.t('admin.' + key, fallback);
+            return Birkly.i18n.t('admin.' + key, fallback, params);
         }
         return fallback != null ? fallback : key;
     }

@@ -42,6 +42,15 @@ function birkly_bootstrap_plugins_for_docs(): void
  *
  * @return bool True on success
  */
+function birkly_docs_resolve_label(string $label): string
+{
+    if ($label !== '' && function_exists('birkly_i18n_resolve_string')) {
+        return birkly_i18n_resolve_string($label);
+    }
+
+    return $label;
+}
+
 function register_plugin_docs(string $plugin_id, array $config = []): bool
 {
     global $birkly_plugin_docs;
@@ -420,8 +429,8 @@ function birkly_build_help_manifest(): array
     $manifest = birkly_build_platform_help_manifest();
 
     $manifest['sections'] = [
-        ['id' => 'platform', 'title' => 'Birkly platform'],
-        ['id' => 'plugins', 'title' => 'Plugin extensions'],
+        ['id' => 'platform', 'title' => function_exists('__') ? __('admin.help_section_platform') : 'Birkly platform'],
+        ['id' => 'plugins', 'title' => function_exists('__') ? __('admin.help_section_plugins') : 'Plugin extensions'],
     ];
 
     $topics = [];
@@ -441,7 +450,7 @@ function birkly_build_help_manifest(): array
 
         $topics[] = [
             'id' => $plugin_id,
-            'title' => (string) ($doc['title'] ?? $plugin_id),
+            'title' => birkly_docs_resolve_label((string) ($doc['title'] ?? $plugin_id)),
             'keywords' => $keywords,
             'section' => 'plugins',
             'source' => 'plugin',
@@ -458,7 +467,7 @@ function birkly_build_help_manifest(): array
             $subKeywords = is_array($sub['keywords'] ?? null) ? $sub['keywords'] : $keywords;
             $topicRow = [
                 'id' => (string) $sub['id'],
-                'title' => (string) ($sub['title'] ?? $sub['id']),
+                'title' => birkly_docs_resolve_label((string) ($sub['title'] ?? $sub['id'])),
                 'keywords' => $subKeywords,
                 'section' => 'plugins',
                 'source' => 'plugin',
@@ -470,7 +479,7 @@ function birkly_build_help_manifest(): array
             ];
             $group = trim((string) ($sub['group'] ?? ''));
             if ($group !== '') {
-                $topicRow['group'] = $group;
+                $topicRow['group'] = birkly_docs_resolve_label($group);
             }
             $topics[] = $topicRow;
         }
@@ -492,7 +501,7 @@ function birkly_plugin_docs_ai_summaries(): string
 
     $blocks = [];
     foreach (get_active_plugin_docs() as $plugin_id => $doc) {
-        $title = (string) ($doc['title'] ?? $plugin_id);
+        $title = birkly_docs_resolve_label((string) ($doc['title'] ?? $plugin_id));
         $summary = trim((string) ($doc['summary'] ?? ''));
         if ($summary === '') {
             continue;

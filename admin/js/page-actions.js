@@ -14,9 +14,9 @@
     const KEEP_SELECTOR = ':is([hidden], [aria-live], [role="status"], .message, .badge, .page-more)';
     let menuSeq = 0;
 
-    function t(key, fallback) {
+    function t(key, fallback, params) {
         const i18n = window.Birkly && window.Birkly.i18n;
-        return i18n && typeof i18n.t === 'function' ? i18n.t('admin.' + key, fallback) : fallback;
+        return i18n && typeof i18n.t === 'function' ? i18n.t('admin.' + key, fallback, params) : fallback;
     }
 
     const WIDGET_SELECTOR = 'button, a, label, input, select, textarea, .dropdown, .search-field, .select-box, .segmented, .input-group, .switch';

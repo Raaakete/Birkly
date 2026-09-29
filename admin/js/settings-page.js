@@ -2193,12 +2193,12 @@ async function deletePlugin(pluginId) {
         return '' +
             '<div class="domains-code-block">' +
             '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
-            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="Copy code">' +
+            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="' + escapeHtml(stT('copy_code', 'Copy code')) + '">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
             '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
             '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
-            '</svg>Copy</button></div>' +
-            '<p class="form-help">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
+            '</svg>' + escapeHtml(stT('copy', 'Copy')) + '</button></div>' +
+            '<p class="form-help">' + stT('settings_domain_snippet_help', 'Add this snippet before the </body> tag on your site.') + '</p>';
     }
 
     function attachDomainsCopyButtons(root) {

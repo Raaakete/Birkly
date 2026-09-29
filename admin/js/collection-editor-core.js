@@ -726,7 +726,11 @@
 
             var confirmed = true;
             if (global.BirklyFeedback && typeof global.BirklyFeedback.confirm === 'function') {
-                confirmed = await global.BirklyFeedback.confirm('Are you sure you want to remove this field?', {
+                confirmed = await global.BirklyFeedback.confirm(
+                    (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function')
+                        ? global.Birkly.i18n.t('admin.confirm_remove_field', 'Are you sure you want to remove this field?')
+                        : 'Are you sure you want to remove this field?',
+                    {
                     danger: true
                 });
             } else {

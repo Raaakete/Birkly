@@ -8,6 +8,13 @@
   var manifestCache = null;
   var loadedPanels = {};
 
+  function docsT(key, fallback) {
+    if (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+      return Birkly.i18n.t('admin.' + key, fallback);
+    }
+    return fallback;
+  }
+
   function apiUrl(path) {
     return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
   }
@@ -218,7 +225,7 @@
 
     panelEl.innerHTML =
       '<div class="plugin-docs-layout">' +
-        '<nav class="side-nav side-nav--track plugin-docs-nav" role="tablist" aria-label="Documentation topics">' +
+        '<nav class="side-nav side-nav--track plugin-docs-nav" role="tablist" aria-label="' + escapeHtml(docsT('docs_topics', 'Documentation topics')) + '">' +
           '<div data-docs-nav-host></div>' +
         '</nav>' +
         '<div class="plugin-docs-content">' +
@@ -245,7 +252,7 @@
           content.innerHTML = '<article class="markdown-content plugin-docs-article" data-topic="' + escapeHtml(topicId) + '">' + renderMarkdown(md) + '</article>';
           content.scrollTop = 0;
         }).catch(function (err) {
-          content.innerHTML = '<p class="error">' + escapeHtml(err.message || 'Failed to load') + '</p>';
+          content.innerHTML = '<p class="error">' + escapeHtml(err.message || docsT('docs_failed_to_load', 'Failed to load')) + '</p>';
         });
       }
 
@@ -260,7 +267,7 @@
 
   function fetchDoc(snapshotUrl) {
     return fetch(snapshotUrl, { credentials: 'same-origin' }).then(function (res) {
-      if (!res.ok) throw new Error('Documentation not found');
+      if (!res.ok) throw new Error(docsT('docs_not_found', 'Documentation not found'));
       return res.text();
     });
   }

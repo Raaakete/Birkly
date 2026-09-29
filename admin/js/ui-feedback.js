@@ -10,9 +10,9 @@
     var promptResolve = null;
     var focusTrapHandler = null;
 
-    function uiT(key, fallback) {
+    function uiT(key, fallback, params) {
         if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            return global.Birkly.i18n.t('admin.' + key, fallback);
+            return global.Birkly.i18n.t('admin.' + key, fallback, params);
         }
         return fallback != null ? fallback : key;
     }

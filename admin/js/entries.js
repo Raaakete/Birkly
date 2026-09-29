@@ -723,11 +723,11 @@
                                 icon('pencil-simple', { size: 16 }) +
                             '</a>' +
                             (!isTrashedEntry
-                                ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
+                                ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('duplicate', 'Duplicate') + ' ' + title) + '" title="' + escapeHtml(t('duplicate', 'Duplicate')) + '">' + icon('copy', { size: 16 }) + '</button>'
                                 : '') +
                             (isTrashedEntry
-                                ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
-                                : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
+                                ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
+                                : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('move_to_trash', 'Move to trash') + ' ' + title) + '" title="' + escapeHtml(t('move_to_trash', 'Move to trash')) + '">' + icon('trash', { size: 16 }) + '</button>') +
                         '</div>' +
                     '</td>')) +
             '</tr>';

@@ -81,7 +81,7 @@ function birkly_audit_has_locale_mash(string $label, string $value): bool
  */
 function birkly_audit_english_leak(string $value, array $glossary, array $phrases): bool
 {
-    if (strlen($value) <= 40 || birkly_audit_glossary_only($value, $glossary, $phrases)) {
+    if (strlen($value) <= 8 || birkly_audit_glossary_only($value, $glossary, $phrases)) {
         return false;
     }
     $stripped = preg_replace('/\{\{?[a-zA-Z0-9_]+\}?\}/', ' ', $value) ?? $value;
@@ -94,18 +94,43 @@ function birkly_audit_english_leak(string $value, array $glossary, array $phrase
         'please', 'click', 'cannot', 'should', 'would', 'which', 'into', 'about',
         'after', 'before', 'because', 'without', 'between', 'these', 'those',
         'their', 'them', 'were', 'not', 'yet', 'only', 'when', 'then', 'than',
+        'you', 'they', 'each',
     ];
     $hits = 0;
     foreach ($words as $word) {
         if (in_array($word, $functionWords, true)) {
             $hits++;
-            if ($hits >= 3) {
+            if ($hits >= 2) {
                 return true;
             }
         }
     }
 
     return false;
+}
+
+/**
+ * Title-cased copy of a multi-word English string. One-word cognates
+ * (Option, Downloads) are left alone.
+ */
+function birkly_audit_case_copy(string $enVal, string $locVal): bool
+{
+    if ($locVal === $enVal || strlen($enVal) <= 8 || strcasecmp($locVal, $enVal) !== 0) {
+        return false;
+    }
+    $stripped = preg_replace('/\{\{?[a-zA-Z0-9_]+\}?\}/', ' ', $enVal) ?? $enVal;
+    $words = preg_split('/[^A-Za-z]+/', $stripped, -1, PREG_SPLIT_NO_EMPTY);
+    if ($words === false) {
+        return false;
+    }
+    $long = 0;
+    foreach ($words as $word) {
+        if (strlen($word) >= 3) {
+            $long++;
+        }
+    }
+
+    return $long >= 2;
 }
 
 /** @param list<string> $glossary */
@@ -190,7 +215,8 @@ function birkly_audit_compare(
                 $errors[] = $label . ': sentinel in ' . $key;
             }
         }
-        if ($locVal === $enVal && strlen($enVal) > 2 && preg_match('/[A-Za-z]{3,}/', $enVal) && !birkly_audit_glossary_only($enVal, $glossary, $phrases)) {
+        $caseCopy = birkly_audit_case_copy($enVal, $locVal) && !birkly_audit_glossary_only($enVal, $glossary, $phrases);
+        if ($caseCopy || ($locVal === $enVal && strlen($enVal) > 2 && preg_match('/[A-Za-z]{3,}/', $enVal) && !birkly_audit_glossary_only($enVal, $glossary, $phrases))) {
             $identical++;
         }
         if ($locVal !== $enVal && $locVal !== '' && !isset($shared[$locVal])) {

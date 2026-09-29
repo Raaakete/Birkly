@@ -11,6 +11,13 @@ Birkly.Theme = {
     currentTheme: 'light',
     _mediaQuery: null,
 
+    t(key, fallback) {
+        if (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback;
+    },
+
     init() {
         const saved = localStorage.getItem(this.STORAGE_KEY);
         if (saved && this.THEMES.includes(saved)) {
@@ -133,7 +140,7 @@ Birkly.Theme = {
                 backdrop.classList.remove('visible');
             }
             toggle.setAttribute('aria-expanded', 'false');
-            toggle.setAttribute('aria-label', 'Open menu');
+            toggle.setAttribute('aria-label', this.t('topbar_open_menu', 'Open menu'));
             document.body.classList.remove('sidebar-open');
         };
 
@@ -143,7 +150,7 @@ Birkly.Theme = {
                 backdrop.classList.add('visible');
             }
             toggle.setAttribute('aria-expanded', 'true');
-            toggle.setAttribute('aria-label', 'Close menu');
+            toggle.setAttribute('aria-label', this.t('close_menu', 'Close menu'));
             document.body.classList.add('sidebar-open');
         };
 
@@ -224,11 +231,11 @@ Birkly.Theme = {
         const applyCollapsed = (collapsed) => {
             document.body.classList.toggle('sidebar-collapsed', collapsed);
             toggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
-            toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
-            toggle.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            toggle.setAttribute('aria-label', collapsed ? this.t('expand_sidebar', 'Expand sidebar') : this.t('collapse_sidebar', 'Collapse sidebar'));
+            toggle.setAttribute('title', collapsed ? this.t('expand_sidebar', 'Expand sidebar') : this.t('collapse_sidebar', 'Collapse sidebar'));
             const label = toggle.querySelector('.sidebar-collapse-label');
             if (label) {
-                label.textContent = collapsed ? 'Expand' : 'Collapse';
+                label.textContent = collapsed ? this.t('expand', 'Expand') : this.t('collapse', 'Collapse');
             }
             document.dispatchEvent(new CustomEvent('birkly:layout-change'));
             if (!collapsed && typeof window.closePluginsFlyout === 'function') {

@@ -798,9 +798,28 @@
         return result;
     }
 
-    function t(key, fallback) {
-        var i18n = window.PluginsPageI18n || {};
-        return i18n[key] || fallback || key;
+    function applyPluginPageParams(text, params) {
+        if (!params || typeof params !== 'object') {
+            return text;
+        }
+        Object.keys(params).forEach(function (name) {
+            var value = String(params[name]);
+            text = text.split('{{' + name + '}}').join(value);
+            text = text.split('{' + name + '}').join(value);
+        });
+        return text;
+    }
+
+    function t(key, fallback, params) {
+        var bag = window.PluginsPageI18n || {};
+        var text = bag[key];
+        if (text == null || text === '' || String(text).indexOf('admin.') === 0) {
+            if (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+                return Birkly.i18n.t('admin.' + key, fallback, params);
+            }
+            text = fallback || key;
+        }
+        return applyPluginPageParams(String(text), params);
     }
 
     function formatPluginHealthLabel(status) {

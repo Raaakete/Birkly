@@ -14,6 +14,13 @@
         data: null
     };
 
+    function gitT(key, fallback) {
+        if (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback;
+    }
+
     function apiUrl(path) {
         if (window.Birkly && typeof window.Birkly.url === 'function') {
             return window.Birkly.url(path);
@@ -95,7 +102,7 @@
 
     function renderUnavailable(capability) {
         var reason = capability && capability.reason;
-        var message = 'Git sync is not available on this server.';
+        var message = gitT('git_sync_unavailable', 'Git sync is not available on this server.');
         if (reason === 'git_missing') {
             message = 'The <code>git</code> command is not installed on this server. Install git and reload this page to sync the project folder with GitHub, GitLab, or any other remote.';
         } else if (reason === 'proc_open_disabled') {
@@ -230,7 +237,7 @@
                         ? (nostrHelper
                             ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
                             : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.')
-                        : 'Stored encrypted on this server and never written into <code>project/</code>.') +
+                        : gitT('git_token_stored_encrypted_html', 'Stored encrypted on this server and never written into <code>project/</code>.')) +
                 '</small>' +
             '</div>' +
             '<div class="form-group" id="project-git-token-group"' + (authMode === 'token' ? '' : ' hidden') + '>' +
@@ -382,7 +389,7 @@
                     ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
                     : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.';
             } else {
-                authHelp.textContent = 'Stored encrypted on this server and never written into project/.';
+                authHelp.textContent = gitT('git_token_stored_encrypted', 'Stored encrypted on this server and never written into project/.');
             }
         }
     }

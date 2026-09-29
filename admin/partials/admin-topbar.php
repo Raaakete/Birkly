@@ -18,11 +18,11 @@ if ($showVisitProjectButton) {
 }
 ?>
 <header class="admin-topbar" id="admin-topbar">
-    <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="Open menu" aria-expanded="false" aria-controls="admin-sidebar">
+    <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="<?= htmlspecialchars(__('admin.topbar_open_menu'), ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false" aria-controls="admin-sidebar">
         <?= birkly_icon('list') ?>
     </button>
     <div class="admin-topbar-left">
-        <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="Breadcrumb"></nav>
+        <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="<?= htmlspecialchars(__('admin.breadcrumb_nav'), ENT_QUOTES, 'UTF-8') ?>"></nav>
     </div>
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
@@ -34,13 +34,13 @@ if ($showVisitProjectButton) {
             $__birklyDeveloperModeOn = function_exists('birkly_developer_mode_enabled') && birkly_developer_mode_enabled();
         }
         ?>
-        <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="Developer mode is on">Developer mode</span>
+        <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="<?= htmlspecialchars(__('admin.developer_mode_on'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('admin.developer_mode_badge'), ENT_QUOTES, 'UTF-8') ?></span>
         <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
         <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
-            Visit project
+            <?= htmlspecialchars(__('admin.visit_project'), ENT_QUOTES, 'UTF-8') ?>
         </a>
         <?php endif; ?>
-        <div class="topbar-control-group" role="group" aria-label="Workspace controls">
+        <div class="topbar-control-group" role="group" aria-label="<?= htmlspecialchars(__('admin.topbar_workspace_controls'), ENT_QUOTES, 'UTF-8') ?>">
             <?php include __DIR__ . '/theme-switcher.php'; ?>
             <button class="topbar-icon-btn" type="button" aria-label="<?= htmlspecialchars(__('admin.search'), ENT_QUOTES, 'UTF-8') ?>" id="topbar-search-btn">
                 <?= birkly_icon('magnifying-glass') ?>

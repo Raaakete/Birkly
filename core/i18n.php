@@ -399,7 +399,11 @@ class I18n {
     }
     
     /**
-     * Build flat JS dictionary: admin.* plus optional plugins.{id}.* subtree.
+     * Build flat JS dictionary: admin.* plus every active plugin subtree.
+     *
+     * Dashboard widgets and other cross-page scripts need plugin catalogs even
+     * when the current admin page is not owned by that plugin. $plugin_id is
+     * accepted for older callers and does not limit the dictionary.
      *
      * @return array<string, string>
      */
@@ -423,14 +427,12 @@ class I18n {
             $flat = array_merge($flat, self::flattenForJs(['admin' => $merged['admin']]));
         }
 
-        $plugin_id = trim((string) $plugin_id);
-        if ($plugin_id !== ''
-            && isset($merged['plugins'][$plugin_id])
-            && is_array($merged['plugins'][$plugin_id])) {
-            $flat = array_merge(
-                $flat,
-                self::flattenForJs(['plugins' => [$plugin_id => $merged['plugins'][$plugin_id]]])
-            );
+        $plugins = isset($merged['plugins']) && is_array($merged['plugins']) ? $merged['plugins'] : [];
+        foreach ($plugins as $id => $tree) {
+            if (!is_string($id) || $id === '' || !is_array($tree)) {
+                continue;
+            }
+            $flat = array_merge($flat, self::flattenForJs(['plugins' => [$id => $tree]]));
         }
 
         return $flat;

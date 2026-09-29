@@ -453,7 +453,7 @@
         const collapseBtn = document.createElement('button');
         collapseBtn.type = 'button';
         collapseBtn.className = 'icon-button group-collapse-btn';
-        collapseBtn.title = 'Collapse Group';
+        collapseBtn.title = cgT('collapse_group', 'Collapse group');
         collapseBtn.innerHTML = icon('caret-down', { size: 14 });
         collapseBtn.onclick = (e) => {
             e.preventDefault();
@@ -465,7 +465,7 @@
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'icon-button';
-        editBtn.title = 'Edit Group';
+        editBtn.title = cgT('edit_group', 'Edit group');
         editBtn.innerHTML = icon('pencil-simple', { size: 14 });
         editBtn.onclick = (e) => {
             e.preventDefault();
@@ -476,7 +476,7 @@
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'icon-button';
-        deleteBtn.title = 'Delete Group';
+        deleteBtn.title = cgT('delete_group', 'Delete group');
         deleteBtn.innerHTML = icon('trash', { size: 14 });
         deleteBtn.onclick = (e) => {
             e.preventDefault();
@@ -503,7 +503,7 @@
             const addSubBtn = document.createElement('button');
             addSubBtn.type = 'button';
             addSubBtn.className = 'icon-button';
-            addSubBtn.title = 'Add subgroup';
+            addSubBtn.title = cgT('add_subgroup', 'Add subgroup');
             addSubBtn.innerHTML = icon('plus', { size: 14 });
             addSubBtn.onclick = (e) => {
                 e.preventDefault();
@@ -791,7 +791,7 @@
         const collapseBtn = document.createElement('button');
         collapseBtn.type = 'button';
         collapseBtn.className = 'icon-button group-collapse-btn';
-        collapseBtn.title = isCollapsed ? 'Expand Group' : 'Collapse Group';
+        collapseBtn.title = isCollapsed ? cgT('expand_group', 'Expand group') : cgT('collapse_group', 'Collapse group');
         collapseBtn.innerHTML = isCollapsed
             ? icon('caret-up', { size: 14 })
             : icon('caret-down', { size: 14 });
@@ -875,7 +875,7 @@
         const entryCount = document.createElement('a');
         entryCount.className = 'entry-count-link';
         entryCount.href = adminUrl('entries', { collection: collection.slug });
-        entryCount.title = 'View entries';
+        entryCount.title = cgT('view_entries', 'View entries');
         const subCount = Number(collection.sub_entries_count || 0);
         if (subCount > 0) {
             entryCount.textContent = count === 1
@@ -913,7 +913,7 @@
         const viewEntriesItem = document.createElement('a');
         viewEntriesItem.className = 'dropdown-item';
         viewEntriesItem.href = adminUrl('entries', { collection: collection.slug });
-        viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">View Entries</span>';
+        viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">' + cgT('view_entries', 'View entries') + '</span>';
 
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item';
@@ -1235,7 +1235,7 @@
             groupSection.classList.remove('collapsed');
             if (grid) grid.style.display = '';
             if (collapseBtn) {
-                collapseBtn.title = 'Collapse Group';
+                collapseBtn.title = cgT('collapse_group', 'Collapse group');
                 collapseBtn.innerHTML = icon('caret-down', { size: 14 });
             }
             localStorage.setItem(`group-collapsed-${groupId}`, 'false');
@@ -1243,7 +1243,7 @@
             groupSection.classList.add('collapsed');
             if (grid) grid.style.display = 'none';
             if (collapseBtn) {
-                collapseBtn.title = 'Expand Group';
+                collapseBtn.title = cgT('expand_group', 'Expand group');
                 collapseBtn.innerHTML = icon('caret-up', { size: 14 });
             }
             localStorage.setItem(`group-collapsed-${groupId}`, 'true');
