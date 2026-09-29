@@ -10,8 +10,18 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 $all = in_array('--all', $argv, true);
+$discovered = [];
+if ($all) {
+    foreach (glob($root . '/lang/*.json') ?: [] as $file) {
+        $code = strtolower(basename($file, '.json'));
+        if ($code !== 'en' && preg_match('/^[a-z]{2,3}(?:-[a-z0-9]+)?$/', $code)) {
+            $discovered[] = $code;
+        }
+    }
+    sort($discovered);
+}
 $locales = $all
-    ? ['da', 'de', 'es', 'fr', 'hi', 'ja', 'zh']
+    ? $discovered
     : array_values(array_filter(array_slice($argv, 1), static fn($a) => $a !== '--all' && !str_starts_with($a, '-')));
 
 if ($locales === []) {

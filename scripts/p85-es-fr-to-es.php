@@ -7,7 +7,7 @@
 declare(strict_types=1);
 
 if (PHP_SAPI === 'cli' && realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
-    fwrite(STDERR, "p85-es-fr-to-es.php is deprecated. Use p85-es-rebuild-from-en.php from lang/en.json only.\n");
+    fwrite(STDERR, "p85-es-fr-to-es.php is deprecated. Translate from lang/en.json and run scripts/i18n-audit.php --selectable.\n");
     exit(1);
 }
 

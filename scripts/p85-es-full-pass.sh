@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# P85 tier-1: sync + rebuild Spanish catalogs for core + Wave 1 plugins (no external MT).
+# Deprecated. Do not rebuild locales with phrase maps. Use scripts/i18n-new-locale.php
+# and translate from lang/en.json. Check with scripts/i18n-audit.php --selectable.
+echo "p85-es-full-pass.sh is deprecated. Translate from lang/en.json and run scripts/i18n-audit.php --selectable." >&2
+exit 1
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 

@@ -27,12 +27,15 @@
     let knownEntryId = '';
 
     function eeT(key, fallback, params) {
-        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
-            ? Birkly.i18n.t('admin.' + key, fallback)
-            : (fallback != null ? fallback : key);
+        if ((window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')) {
+            return Birkly.i18n.t('admin.' + key, fallback, params);
+        }
+        let text = fallback != null ? fallback : key;
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
-                text = text.split('{' + name + '}').join(String(params[name]));
+                var value = String(params[name]);
+                text = String(text).split('{{' + name + '}}').join(value);
+                text = text.split('{' + name + '}').join(value);
             });
         }
         return text;

@@ -16,28 +16,49 @@
         return typeof value === 'string' ? value : null;
     }
 
-    function t(key, fallback) {
+    function applyParams(text, params) {
+        if (!params || typeof params !== 'object') {
+            return text;
+        }
+        Object.keys(params).forEach(function (name) {
+            var value = String(params[name]);
+            text = text.split('{{' + name + '}}').join(value);
+            text = text.split('{' + name + '}').join(value);
+        });
+        return text;
+    }
+
+    function t(key, fallback, params) {
         var dict = global.BirklyAdminI18n || {};
         var keyStr = String(key || '');
+        var text = null;
 
         if (keyStr !== '' && dict[keyStr] != null && dict[keyStr] !== '') {
-            return dict[keyStr];
+            text = dict[keyStr];
         }
 
-        var parts = keyStr.split('.');
-        if (parts.length > 1) {
-            var nested = lookupNested(dict, parts);
-            if (nested != null && nested !== '') {
-                return nested;
+        if (text == null) {
+            var parts = keyStr.split('.');
+            if (parts.length > 1) {
+                var nested = lookupNested(dict, parts);
+                if (nested != null && nested !== '') {
+                    text = nested;
+                }
+            }
+
+            if (text == null) {
+                var lookupKey = parts[parts.length - 1];
+                if (lookupKey && dict[lookupKey] != null && dict[lookupKey] !== '') {
+                    text = dict[lookupKey];
+                }
             }
         }
 
-        var lookupKey = parts[parts.length - 1];
-        if (lookupKey && dict[lookupKey] != null && dict[lookupKey] !== '') {
-            return dict[lookupKey];
+        if (text == null) {
+            text = fallback != null ? fallback : key;
         }
 
-        return fallback != null ? fallback : key;
+        return applyParams(String(text), params);
     }
 
     global.Birkly = global.Birkly || {};

@@ -49,15 +49,15 @@
     };
 
     function t(key, fallback, params) {
-        var text;
         if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            text = global.Birkly.i18n.t('admin.' + key, fallback);
-        } else {
-            text = fallback || key;
+            return global.Birkly.i18n.t('admin.' + key, fallback, params);
         }
+        var text = fallback || key;
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
-                text = text.split('{' + name + '}').join(String(params[name]));
+                var value = String(params[name]);
+                text = String(text).split('{{' + name + '}}').join(value);
+                text = text.split('{' + name + '}').join(value);
             });
         }
         return text;

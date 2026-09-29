@@ -2,7 +2,7 @@
 <?php
 /**
  * @deprecated Do not use for production French catalogs — DE substring heuristics produced DE/FR mixes.
- * Prefer human/agent translation from lang/en.json; validate with scripts/i18n-audit-fr-quality.php.
+ * Prefer translation from lang/en.json; validate with scripts/i18n-audit.php --selectable.
  *
  * Generate fr-batch-N.json from en-batch-N.json using core/de heuristics + supplement map.
  *
