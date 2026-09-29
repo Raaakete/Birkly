@@ -235,22 +235,26 @@
             ? formatDate(data.last_change.timestamp) + (data.last_change.path ? ' · ' + escapeHtml(data.last_change.path) : '')
             : '—';
 
-        container.innerHTML =
-            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_path', 'Path')) + '</div><div class="kv-value"><code>' + escapeHtml(data.site_dir || 'project') + '/</code></div></div>' +
-            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_public_url', 'Public URL')) + '</div><div class="kv-value">' +
-                (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
-            '</div></div>' +
+        function overviewRow(label, valueHtml) {
+            return '<div class="setting-row"><div class="setting-label"><span>' + escapeHtml(label) + '</span></div><div class="setting-value">' + valueHtml + '</div></div>';
+        }
+        container.innerHTML = '<div class="setting-rows">' +
+            overviewRow(t('project_kv_path', 'Path'), '<code>' + escapeHtml(data.site_dir || 'project') + '/</code>') +
+            overviewRow(t('project_kv_public_url', 'Public URL'), data.public_url
+                ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>'
+                : '—') +
             (data.also_served_on && data.also_served_on.length
-                ? '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_also_served', 'Also served on')) + '</div><div class="kv-value">' +
-                    escapeHtml(data.also_served_on.join(', ')) +
-                    ' <span class="u-fg-tertiary">' + escapeHtml(t('project_kv_also_served_hint', '(read-only — edit in Settings → Site delivery)')) + '</span></div></div>'
+                ? overviewRow(t('project_kv_also_served', 'Also served on'), escapeHtml(data.also_served_on.join(', ')) +
+                    ' <span class="u-fg-tertiary">' + escapeHtml(t('project_kv_also_served_hint', '(read-only — edit in Settings → Site delivery)')) + '</span>')
                 : '') +
-            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_starter', 'Starter')) + '</div><div class="kv-value">' + starter + '</div></div>' +
-            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_last_change', 'Last change')) + '</div><div class="kv-value">' + lastChange + '</div></div>' +
-            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_index', 'Index')) + '</div><div class="kv-value">' + (data.has_index ? escapeHtml(t('project_index_present', 'index.html present')) : escapeHtml(t('project_index_missing', 'No index.html'))) + '</div></div>' +
-            (data.visit_url ? '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_visit_url', 'Visit URL')) + '</div><div class="kv-value"><code>' + escapeHtml(data.visit_url) + '</code>' +
-                (data.visit_url_format_resolved ? ' <span class="u-fg-tertiary">(' + escapeHtml(data.visit_url_format || 'auto') + ' → ' + escapeHtml(data.visit_url_format_resolved) + ')</span>' : '') +
-            '</div></div>' : '');
+            overviewRow(t('project_kv_starter', 'Starter'), starter) +
+            overviewRow(t('project_kv_last_change', 'Last change'), lastChange) +
+            overviewRow(t('project_kv_index', 'Index'), data.has_index ? escapeHtml(t('project_index_present', 'index.html present')) : escapeHtml(t('project_index_missing', 'No index.html'))) +
+            (data.visit_url
+                ? overviewRow(t('project_kv_visit_url', 'Visit URL'), '<code>' + escapeHtml(data.visit_url) + '</code>' +
+                    (data.visit_url_format_resolved ? ' <span class="u-fg-tertiary">(' + escapeHtml(data.visit_url_format || 'auto') + ' → ' + escapeHtml(data.visit_url_format_resolved) + ')</span>' : ''))
+                : '') +
+            '</div>';
 
         var toggle = document.getElementById('project-show-visit-button');
         if (toggle) {
@@ -637,7 +641,9 @@
             if (!btn) return;
             projectActivityFilter = btn.getAttribute('data-project-activity-filter') || 'all';
             group.querySelectorAll('[data-project-activity-filter]').forEach(function (el) {
-                el.classList.toggle('is-active', el === btn);
+                var selected = el === btn;
+                el.classList.toggle('is-active', selected);
+                el.setAttribute('aria-pressed', selected ? 'true' : 'false');
             });
             renderProjectActivity(projectActivityCache);
         });

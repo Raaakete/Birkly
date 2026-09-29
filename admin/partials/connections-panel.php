@@ -50,7 +50,7 @@
 </div>
 
 <!-- Email setup wizard -->
-<div class="modal" id="sys-conn-email-modal" role="dialog" aria-labelledby="sys-conn-email-modal-title" aria-modal="true">
+<div class="modal is-sheet is-wide" id="sys-conn-email-modal" role="dialog" aria-labelledby="sys-conn-email-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
       <h2 id="sys-conn-email-modal-title"><?= __('admin.connections_panel_wizard_title') ?></h2>
@@ -154,7 +154,7 @@
 </div>
 
 <!-- HTTP credential modal (simpler form) -->
-<div class="modal" id="sys-conn-http-modal" role="dialog" aria-labelledby="sys-conn-http-modal-title" aria-modal="true">
+<div class="modal is-sheet is-wide" id="sys-conn-http-modal" role="dialog" aria-labelledby="sys-conn-http-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
       <h2 id="sys-conn-http-modal-title"><?= __('admin.connections_panel_add_http_credential') ?></h2>

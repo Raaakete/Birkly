@@ -26,10 +26,10 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
             </p>
           </div>
 
-          <div class="callout callout-info" id="ai-local-address-callout" role="status" hidden>
-            <div class="callout-body u-stack-2">
-              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_local_address_title')) ?></p>
-              <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_local_address_body')) ?></p>
+          <div class="signal is-info" id="ai-local-address-callout" role="status" hidden>
+            <div class="signal-body">
+              <p class="signal-title"><?= htmlspecialchars(__('admin.ai_conn_local_address_title')) ?></p>
+              <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_local_address_body')) ?></p>
               <p class="u-text-sm">
                 <a href="<?= htmlspecialchars($helpAiLocalUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_local_address_help_link')) ?></a>
               </p>
@@ -48,10 +48,10 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
             </div>
           </div>
 
-          <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
-            <div class="callout-body u-stack-1">
-              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>
-              <p><?= htmlspecialchars(__('admin.ai_conn_migration_body')) ?></p>
+          <div class="signal is-info" id="ai-agents-migration-banner" role="status" hidden>
+            <div class="signal-body">
+              <p class="signal-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>
+              <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_migration_body')) ?></p>
             </div>
           </div>
 

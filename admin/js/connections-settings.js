@@ -181,9 +181,9 @@ function connT(key, fallback, params) {
         var emailConnections = connections.filter(function (c) { return (c.type || 'email') === 'email' && c.enabled !== false; });
         if (emailConnections.length === 0) {
             emailStatusEl.hidden = false;
-            emailStatusEl.className = 'sys-conn-status-banner callout callout-warning';
-            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_no_email_connection_title', 'No email connection yet')) + '</p>' +
-                '<p>' + escapeHtml(connT('connections_js_no_email_connection_body', 'Form submissions and plugin emails will not reach a real inbox until you set up email below.')) + '</p></div>';
+            emailStatusEl.className = 'signal sys-conn-status-banner';
+            emailStatusEl.innerHTML = '<div class="signal-body"><p class="signal-title">' + escapeHtml(connT('connections_js_no_email_connection_title', 'No email connection yet')) + '</p>' +
+                '<p class="signal-text">' + escapeHtml(connT('connections_js_no_email_connection_body', 'Form submissions and plugin emails will not reach a real inbox until you set up email below.')) + '</p></div>';
             return;
         }
         var def = emailConnections.find(function (c) { return c.is_default; }) || emailConnections[0];
@@ -192,15 +192,15 @@ function connT(key, fallback, params) {
         var providerLabel = card.title || (providers[providerKey] || {}).label || providerKey;
         if (providerKey === 'log') {
             emailStatusEl.hidden = false;
-            emailStatusEl.className = 'sys-conn-status-banner callout callout-warning';
-            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_emails_logged_title', 'Emails are logged, not sent')) + '</p>' +
-                '<p>' + escapeHtml(connT('connections_js_emails_logged_body', 'Your default connection ({name}) uses Log only. Switch to SMTP or an email service before going live.', { name: def.name })) + '</p></div>';
+            emailStatusEl.className = 'signal sys-conn-status-banner';
+            emailStatusEl.innerHTML = '<div class="signal-body"><p class="signal-title">' + escapeHtml(connT('connections_js_emails_logged_title', 'Emails are logged, not sent')) + '</p>' +
+                '<p class="signal-text">' + escapeHtml(connT('connections_js_emails_logged_body', 'Your default connection ({name}) uses Log only. Switch to SMTP or an email service before going live.', { name: def.name })) + '</p></div>';
             return;
         }
         emailStatusEl.hidden = false;
-        emailStatusEl.className = 'sys-conn-status-banner callout callout-info';
-        emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_default_email_title', 'Default email: {name}', { name: def.name })) + '</p>' +
-            '<p>' + escapeHtml(connT('connections_js_default_email_body', 'Sending via {provider} from {from_email}. Form notifications and plugins use this connection.', {
+        emailStatusEl.className = 'signal is-info sys-conn-status-banner';
+        emailStatusEl.innerHTML = '<div class="signal-body"><p class="signal-title">' + escapeHtml(connT('connections_js_default_email_title', 'Default email: {name}', { name: def.name })) + '</p>' +
+            '<p class="signal-text">' + escapeHtml(connT('connections_js_default_email_body', 'Sending via {provider} from {from_email}. Form notifications and plugins use this connection.', {
                 provider: providerLabel,
                 from_email: def.from_email || '',
             })) + '</p></div>';
@@ -218,35 +218,34 @@ function connT(key, fallback, params) {
         if (!emailListEl) return;
         var emailConnections = connections.filter(function (c) { return (c.type || 'email') === 'email'; });
         if (emailConnections.length === 0) {
-            emailListEl.innerHTML = '<div class="empty-state empty-state-friendly">' +
-                '<p><strong>' + escapeHtml(connT('connections_js_no_email_setup_title', 'No email set up yet')) + '</strong></p>' +
-                '<p>' + escapeHtml(connT('connections_js_no_email_setup_hint', 'Click Set up email above and follow the steps. It only takes a minute.')) + '</p></div>';
+            emailListEl.innerHTML = '<div class="empty">' +
+                '<p class="empty-title">' + escapeHtml(connT('connections_js_no_email_setup_title', 'No email set up yet')) + '</p>' +
+                '<p class="empty-text">' + escapeHtml(connT('connections_js_no_email_setup_hint', 'Click Set up email above and follow the steps. It only takes a minute.')) + '</p></div>';
             return;
         }
 
         var rows = emailConnections.map(function (c) {
             var card = getEmailProviderCard(c.provider || '');
             var providerLabel = card.title || (providers[c.provider] || {}).label || escapeHtml(c.provider);
-            var defaultBadge = c.is_default ? '<span class="badge badge-accent">Default</span>' : '';
+            var defaultBadge = c.is_default ? '<span class="tag">' + escapeHtml(connT('default', 'Default')) + '</span>' : '';
             var statusBadge = (c.enabled === false)
-                ? '<span class="badge badge-neutral">Disabled</span>'
-                : '<span class="badge badge-success">Active</span>';
-            return '<div class="card card--sunken sys-conn-card" data-id="' + escapeHtml(c.id) + '" data-type="email">' +
-                '<div class="card-header">' +
-                '<div class="u-stack-1">' +
-                '<h3 class="card-title">' + escapeHtml(c.name) + ' ' + defaultBadge + '</h3>' +
-                '<p class="card-description">' + escapeHtml(providerLabel) + ' · ' + escapeHtml(c.from_email || '') + '</p>' +
+                ? '<span class="badge badge-neutral">' + escapeHtml(connT('disabled', 'Disabled')) + '</span>'
+                : '<span class="badge badge-success">' + escapeHtml(connT('active', 'Active')) + '</span>';
+            return '<div class="list-row sys-conn-card" data-id="' + escapeHtml(c.id) + '" data-type="email">' +
+                '<div class="row-body">' +
+                '<div class="row-title"><span class="u-truncate">' + escapeHtml(c.name) + '</span> ' + defaultBadge + '</div>' +
+                '<div class="row-meta">' + escapeHtml(providerLabel) + ' · ' + escapeHtml(c.from_email || '') + '</div>' +
                 signingSecretMarkup(c) +
                 '</div>' +
-                '<div class="u-cluster">' + statusBadge +
-                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Send test</button>' +
-                '<button type="button" class="button is-small" data-action="edit">Edit</button>' +
-                (c.is_default ? '' : '<button type="button" class="button is-small" data-action="set-default">Make default</button>') +
-                '<button type="button" class="button is-danger is-small" data-action="delete">Delete</button>' +
-                '</div></div></div>';
+                '<div class="row-actions">' + statusBadge +
+                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">' + escapeHtml(connT('connections_panel_send_test', 'Send test')) + '</button>' +
+                '<button type="button" class="button is-small" data-action="edit">' + escapeHtml(connT('edit', 'Edit')) + '</button>' +
+                (c.is_default ? '' : '<button type="button" class="button is-small" data-action="set-default">' + escapeHtml(connT('connections_js_make_default', 'Make default')) + '</button>') +
+                '<button type="button" class="button is-danger is-small" data-action="delete">' + escapeHtml(connT('delete', 'Delete')) + '</button>' +
+                '</div></div>';
         }).join('');
 
-        emailListEl.innerHTML = '<div class="u-stack-3">' + rows + '</div>';
+        emailListEl.innerHTML = '<div class="list-rows">' + rows + '</div>';
         emailListEl.querySelectorAll('[data-action]').forEach(function (btn) {
             btn.addEventListener('click', handleListAction);
         });
@@ -256,30 +255,29 @@ function connT(key, fallback, params) {
         if (!httpListEl) return;
         var httpConnections = connections.filter(function (c) { return c.type === 'http_credential'; });
         if (httpConnections.length === 0) {
-            httpListEl.innerHTML = '<div class="empty-state"><p>No HTTP credentials yet.</p></div>';
+            httpListEl.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(connT('connections_js_no_http_yet', 'No HTTP credentials yet.')) + '</p></div>';
             return;
         }
 
         var rows = httpConnections.map(function (c) {
             var providerLabel = (providers[c.provider] || {}).label || escapeHtml(c.provider);
             var statusBadge = (c.enabled === false)
-                ? '<span class="badge badge-neutral">Disabled</span>'
-                : '<span class="badge badge-success">Active</span>';
-            return '<div class="card card--sunken sys-conn-card" data-id="' + escapeHtml(c.id) + '" data-type="http_credential">' +
-                '<div class="card-header">' +
-                '<div class="u-stack-1">' +
-                '<h3 class="card-title">' + escapeHtml(c.name) + '</h3>' +
-                '<p class="card-description">' + escapeHtml(providerLabel) + ' · ' + escapeHtml((c.config || {}).base_url || '') + '</p>' +
+                ? '<span class="badge badge-neutral">' + escapeHtml(connT('disabled', 'Disabled')) + '</span>'
+                : '<span class="badge badge-success">' + escapeHtml(connT('active', 'Active')) + '</span>';
+            return '<div class="list-row sys-conn-card" data-id="' + escapeHtml(c.id) + '" data-type="http_credential">' +
+                '<div class="row-body">' +
+                '<div class="row-title"><span class="u-truncate">' + escapeHtml(c.name) + '</span></div>' +
+                '<div class="row-meta">' + escapeHtml(providerLabel) + ' · ' + escapeHtml((c.config || {}).base_url || '') + '</div>' +
                 signingSecretMarkup(c) +
                 '</div>' +
-                '<div class="u-cluster">' + statusBadge +
-                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Test</button>' +
-                '<button type="button" class="button is-small" data-action="edit">Edit</button>' +
-                '<button type="button" class="button is-danger is-small" data-action="delete">Delete</button>' +
-                '</div></div></div>';
+                '<div class="row-actions">' + statusBadge +
+                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">' + escapeHtml(connT('test', 'Test')) + '</button>' +
+                '<button type="button" class="button is-small" data-action="edit">' + escapeHtml(connT('edit', 'Edit')) + '</button>' +
+                '<button type="button" class="button is-danger is-small" data-action="delete">' + escapeHtml(connT('delete', 'Delete')) + '</button>' +
+                '</div></div>';
         }).join('');
 
-        httpListEl.innerHTML = '<div class="u-stack-3">' + rows + '</div>';
+        httpListEl.innerHTML = '<div class="list-rows">' + rows + '</div>';
         httpListEl.querySelectorAll('[data-action]').forEach(function (btn) {
             btn.addEventListener('click', handleListAction);
         });
