@@ -674,3 +674,74 @@ function birkly_public_filter_entry($entry, string $collectionSlug, string $cont
 
     return $filtered;
 }
+
+/**
+ * A sub-entry with no status is treated as published. Explicit drafts are not.
+ *
+ * @param array<string, mixed> $entry
+ */
+function birkly_sub_entry_status_is_public(array $entry): bool
+{
+    return (string) ($entry['status'] ?? 'published') === 'published';
+}
+
+/**
+ * @param list<mixed> $entries
+ * @return list<array<string, mixed>>
+ */
+function birkly_filter_public_sub_entries(array $entries): array
+{
+    $visible = [];
+    foreach ($entries as $entry) {
+        if (!is_array($entry) || !birkly_sub_entry_status_is_public($entry)) {
+            continue;
+        }
+        $visible[] = $entry;
+    }
+
+    return $visible;
+}
+
+/**
+ * @param list<mixed> $entries
+ * @return list<array<string, mixed>>
+ */
+function birkly_sub_entries_for_reader(array $entries, bool $adminSession): array
+{
+    $rows = [];
+    foreach ($entries as $entry) {
+        if (is_array($entry)) {
+            $rows[] = $entry;
+        }
+    }
+    if ($adminSession) {
+        return $rows;
+    }
+
+    return birkly_filter_public_sub_entries($rows);
+}
+
+/**
+ * Anonymous sub-entry reads use the page-bundle collection gate and require a published parent.
+ *
+ * @return array{ok:bool,http:int,message:string}
+ */
+function birkly_sub_entries_anonymous_parent_visible($storage, string $parentCollection, string $parentEntryId): array
+{
+    require_once __DIR__ . '/page_bundle_runner.php';
+
+    if (!birkly_page_bundle_collection_allowed($parentCollection, [], $storage)) {
+        return ['ok' => false, 'http' => 403, 'message' => 'Public read access is disabled'];
+    }
+
+    $dir = birkly_public_resolve_collection_dir($storage, $parentCollection);
+    if (!is_string($dir) || $dir === '') {
+        $dir = $parentCollection;
+    }
+    $entry = $storage->read("collections/$dir/entries/$parentEntryId.json");
+    if (!is_array($entry) || (string) ($entry['status'] ?? 'draft') !== 'published') {
+        return ['ok' => false, 'http' => 404, 'message' => 'Not found'];
+    }
+
+    return ['ok' => true, 'http' => 200, 'message' => ''];
+}
