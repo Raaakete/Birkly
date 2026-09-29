@@ -206,60 +206,47 @@
         var username = (config && config.auth_username) || meta.default_username || '';
         var nostrHelper = !!(state.data && state.data.capability && state.data.capability.nostr_helper);
 
-        return '<form id="project-git-form" class="u-stack-4">' +
-            '<div class="form-grid">' +
-                '<div class="form-group">' +
-                    '<label for="project-git-provider">Provider</label>' +
-                    '<select id="project-git-provider" class="input">' +
-                        renderProviderOptions(provider) +
-                    '</select>' +
-                '</div>' +
-                '<div class="form-group">' +
-                    '<label for="project-git-branch">Branch</label>' +
-                    '<input type="text" id="project-git-branch" class="input" value="' + escapeHtml((config && config.branch) || 'main') + '" placeholder="main">' +
-                '</div>' +
-            '</div>' +
-            '<div class="form-group">' +
-                '<label for="project-git-remote">Repository URL</label>' +
-                '<input type="text" id="project-git-remote" class="input" value="' + escapeHtml(isEdit ? config.remote_url : '') + '" placeholder="' + escapeHtml(meta.placeholder) + '" autocomplete="off" spellcheck="false">' +
-                '<small class="form-help" id="project-git-remote-help">' + escapeHtml(meta.help) + ' Only files under <code>project/</code> sync — CMS content, media, users and plugins stay in Birkly.</small>' +
-            '</div>' +
-            '<div class="form-group">' +
-                '<label for="project-git-auth-mode">Authentication</label>' +
+        function gitRow(wrapId, hidden, forId, label, controlHtml, helpHtml, helpId) {
+            return '<div class="form-group setting-row"' + (wrapId ? ' id="' + wrapId + '"' : '') + (hidden ? ' hidden' : '') + '>' +
+                '<div class="setting-label"><label for="' + forId + '">' + label + '</label>' +
+                (helpHtml ? '<small class="form-help"' + (helpId ? ' id="' + helpId + '"' : '') + '>' + helpHtml + '</small>' : '') +
+                '</div><div class="setting-value">' + controlHtml + '</div></div>';
+        }
+
+        return '<form id="project-git-form" class="setting-rows">' +
+            gitRow('', false, 'project-git-provider', 'Provider',
+                '<select id="project-git-provider" class="input">' + renderProviderOptions(provider) + '</select>') +
+            gitRow('', false, 'project-git-branch', 'Branch',
+                '<input type="text" id="project-git-branch" class="input" value="' + escapeHtml((config && config.branch) || 'main') + '" placeholder="main">') +
+            gitRow('', false, 'project-git-remote', 'Repository URL',
+                '<input type="text" id="project-git-remote" class="input" value="' + escapeHtml(isEdit ? config.remote_url : '') + '" placeholder="' + escapeHtml(meta.placeholder) + '" autocomplete="off" spellcheck="false">',
+                escapeHtml(meta.help) + ' Only files under <code>project/</code> sync — CMS content, media, users and plugins stay in Birkly.',
+                'project-git-remote-help') +
+            gitRow('', false, 'project-git-auth-mode', 'Authentication',
                 '<select id="project-git-auth-mode" class="input">' +
                     '<option value="token"' + (authMode === 'token' ? ' selected' : '') + '>Access token (HTTPS)</option>' +
                     '<option value="ssh"' + (authMode === 'ssh' ? ' selected' : '') + '>SSH private key</option>' +
                     '<option value="nostr"' + (authMode === 'nostr' ? ' selected' : '') + '>Nostr key (Buzz / NIP-98)</option>' +
                     '<option value="none"' + (authMode === 'none' ? ' selected' : '') + '>None (public or local remote)</option>' +
-                '</select>' +
-                '<small class="form-help" id="project-git-auth-help">' +
-                    (authMode === 'nostr'
-                        ? (nostrHelper
-                            ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
-                            : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.')
-                        : gitT('git_token_stored_encrypted_html', 'Stored encrypted on this server and never written into <code>project/</code>.')) +
-                '</small>' +
-            '</div>' +
-            '<div class="form-group" id="project-git-token-group"' + (authMode === 'token' ? '' : ' hidden') + '>' +
-                '<label for="project-git-token">Personal access token</label>' +
-                '<input type="password" id="project-git-token" class="input" placeholder="' + (config && config.has_token ? 'Stored — leave blank to keep ' + escapeHtml(config.token_hint) : 'ghp_… / glpat-… / app password') + '" autocomplete="new-password" spellcheck="false">' +
-                '<small class="form-help">Needs read and write access to the repository.</small>' +
-            '</div>' +
-            '<div class="form-group" id="project-git-username-group"' + (authMode === 'token' ? '' : ' hidden') + '>' +
-                '<label for="project-git-username">Username (optional)</label>' +
-                '<input type="text" id="project-git-username" class="input" value="' + escapeHtml(username) + '" placeholder="' + escapeHtml(meta.default_username || 'git') + '" autocomplete="off">' +
-                '<small class="form-help">Some hosts require a specific username alongside the token (e.g. Bitbucket <code>x-token-auth</code>, GitLab <code>oauth2</code>).</small>' +
-            '</div>' +
-            '<div class="form-group" id="project-git-ssh-group"' + (authMode === 'ssh' ? '' : ' hidden') + '>' +
-                '<label for="project-git-ssh-key">SSH private key</label>' +
-                '<textarea id="project-git-ssh-key" class="input" rows="5" spellcheck="false" placeholder="' + (config && config.has_ssh_key ? 'Stored — leave blank to keep the current key' : '-----BEGIN OPENSSH PRIVATE KEY-----') + '"></textarea>' +
-                '<small class="form-help">A deploy key with write access. Written to a temporary file only while git runs.</small>' +
-            '</div>' +
-            '<div class="form-group" id="project-git-nostr-group"' + (authMode === 'nostr' ? '' : ' hidden') + '>' +
-                '<label for="project-git-nostr-key">Nostr private key</label>' +
-                '<input type="password" id="project-git-nostr-key" class="input" placeholder="' + (config && config.has_nostr_key ? 'Stored — leave blank to keep ' + escapeHtml(config.nostr_hint || '••••') : 'nsec1… or hex') + '" autocomplete="new-password" spellcheck="false">' +
-                '<small class="form-help">Buzz signs git requests with NIP-98. Prefer a relay-scoped key. Encrypted at rest; never committed under <code>project/</code>.</small>' +
-            '</div>' +
+                '</select>',
+                (authMode === 'nostr'
+                    ? (nostrHelper
+                        ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
+                        : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.')
+                    : gitT('git_token_stored_encrypted_html', 'Stored encrypted on this server and never written into <code>project/</code>.')),
+                'project-git-auth-help') +
+            gitRow('project-git-token-group', authMode !== 'token', 'project-git-token', 'Personal access token',
+                '<input type="password" id="project-git-token" class="input" placeholder="' + (config && config.has_token ? 'Stored — leave blank to keep ' + escapeHtml(config.token_hint) : 'ghp_… / glpat-… / app password') + '" autocomplete="new-password" spellcheck="false">',
+                'Needs read and write access to the repository.') +
+            gitRow('project-git-username-group', authMode !== 'token', 'project-git-username', 'Username (optional)',
+                '<input type="text" id="project-git-username" class="input" value="' + escapeHtml(username) + '" placeholder="' + escapeHtml(meta.default_username || 'git') + '" autocomplete="off">',
+                'Some hosts require a specific username alongside the token (e.g. Bitbucket <code>x-token-auth</code>, GitLab <code>oauth2</code>).') +
+            gitRow('project-git-ssh-group', authMode !== 'ssh', 'project-git-ssh-key', 'SSH private key',
+                '<textarea id="project-git-ssh-key" class="input" rows="5" spellcheck="false" placeholder="' + (config && config.has_ssh_key ? 'Stored — leave blank to keep the current key' : '-----BEGIN OPENSSH PRIVATE KEY-----') + '"></textarea>',
+                'A deploy key with write access. Written to a temporary file only while git runs.') +
+            gitRow('project-git-nostr-group', authMode !== 'nostr', 'project-git-nostr-key', 'Nostr private key',
+                '<input type="password" id="project-git-nostr-key" class="input" placeholder="' + (config && config.has_nostr_key ? 'Stored — leave blank to keep ' + escapeHtml(config.nostr_hint || '••••') : 'nsec1… or hex') + '" autocomplete="new-password" spellcheck="false">',
+                'Buzz signs git requests with NIP-98. Prefer a relay-scoped key. Encrypted at rest; never committed under <code>project/</code>.') +
             '<div class="u-cluster">' +
                 '<button type="submit" class="button is-main is-small" id="project-git-connect-btn">' + (isEdit ? 'Save connection' : 'Connect') + '</button>' +
                 (isEdit ? '<button type="button" class="button is-small" id="project-git-test-btn">Test connection</button>' : '') +
@@ -289,16 +276,19 @@
         var dirty = repo.dirty || 0;
         var conflicts = repo.conflicts || [];
 
-        var summary = '<div class="u-stack-3">' +
-            '<div class="kv"><div class="kv-key">Remote</div><div class="kv-value"><code>' + escapeHtml(config.remote_url || '—') + '</code></div></div>' +
-            '<div class="kv"><div class="kv-key">Branch</div><div class="kv-value"><code>' + escapeHtml(repo.branch || config.branch || 'main') + '</code></div></div>' +
-            '<div class="kv"><div class="kv-key">Authentication</div><div class="kv-value">' + escapeHtml(authLabel(config)) + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Local changes</div><div class="kv-value">' + (dirty ? dirty + ' file' + (dirty === 1 ? '' : 's') : 'None') + '</div></div>' +
-            '<div class="kv"><div class="kv-key">To push</div><div class="kv-value">' + (ahead ? ahead + ' commit' + (ahead === 1 ? '' : 's') : 'Nothing') + '</div></div>' +
-            '<div class="kv"><div class="kv-key">To pull</div><div class="kv-value">' + (behind ? behind + ' commit' + (behind === 1 ? '' : 's') : 'Nothing') + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Last commit</div><div class="kv-value">' + (repo.last_commit ? escapeHtml(repo.last_commit.message) + ' · ' + escapeHtml(repo.last_commit.sha) : '—') + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Last push</div><div class="kv-value">' + (config.last_push ? formatDate(config.last_push.at) : '—') + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Last pull</div><div class="kv-value">' + (config.last_pull ? formatDate(config.last_pull.at) : '—') + '</div></div>' +
+        function statusRow(label, valueHtml) {
+            return '<div class="setting-row"><div class="setting-label"><span>' + label + '</span></div><div class="setting-value">' + valueHtml + '</div></div>';
+        }
+        var summary = '<div class="setting-rows">' +
+            statusRow('Remote', '<code>' + escapeHtml(config.remote_url || '—') + '</code>') +
+            statusRow('Branch', '<code>' + escapeHtml(repo.branch || config.branch || 'main') + '</code>') +
+            statusRow('Authentication', escapeHtml(authLabel(config))) +
+            statusRow('Local changes', dirty ? dirty + ' file' + (dirty === 1 ? '' : 's') : 'None') +
+            statusRow('To push', ahead ? ahead + ' commit' + (ahead === 1 ? '' : 's') : 'Nothing') +
+            statusRow('To pull', behind ? behind + ' commit' + (behind === 1 ? '' : 's') : 'Nothing') +
+            statusRow('Last commit', repo.last_commit ? escapeHtml(repo.last_commit.message) + ' · ' + escapeHtml(repo.last_commit.sha) : '—') +
+            statusRow('Last push', config.last_push ? formatDate(config.last_push.at) : '—') +
+            statusRow('Last pull', config.last_pull ? formatDate(config.last_pull.at) : '—') +
         '</div>';
 
         var warning = '';

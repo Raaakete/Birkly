@@ -89,9 +89,11 @@
             '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_public_title', 'Where is your public website?')) + '</h3>' +
             '<fieldset class="form-group">' +
             '<legend class="sr-only">' + escapeHtml(t('hosting_wizard_public_mode_legend', 'Public website mode')) + '</legend>' +
-            '<label class="radio-label"><input type="radio" name="' + id + '-public-mode" value="none" checked> ' + escapeHtml(t('hosting_wizard_public_none', 'None — CMS only (no public site on this install)')) + '</label>' +
-            '<label class="radio-label"><input type="radio" name="' + id + '-public-mode" value="external"> ' + escapeHtml(t('hosting_wizard_public_external', 'Hosted elsewhere (Netlify, separate server, etc.)')) + '</label>' +
-            '<label class="radio-label"><input type="radio" name="' + id + '-public-mode" value="project"> ' + escapeHtml(t('hosting_wizard_public_project', 'In Birkly (project/ folder)')) + '</label>' +
+            '<div class="choice-grid">' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="none" checked><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_none', 'None — CMS only (no public site on this install)')) + '</span></label>' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="external"><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_external', 'Hosted elsewhere (Netlify, separate server, etc.)')) + '</span></label>' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="project"><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_project', 'In Birkly (project/ folder)')) + '</span></label>' +
+            '</div>' +
             '</fieldset>' +
             '<div class="form-group hosting-wizard-public-field" hidden>' +
             '<label for="' + id + '-public-url">' + escapeHtml(t('hosting_wizard_public_url', 'Public site URL')) + '</label>' +
@@ -100,8 +102,10 @@
             '</div>' +
             '<fieldset class="form-group hosting-wizard-same-host-field" hidden>' +
             '<legend>' + escapeHtml(t('hosting_wizard_same_host_legend', 'When CMS and public use the same domain')) + '</legend>' +
-            '<label class="radio-label"><input type="radio" name="' + id + '-same-host" value="admin" checked> ' + escapeHtml(t('hosting_wizard_same_host_admin', 'Root / opens admin')) + '</label>' +
-            '<label class="radio-label"><input type="radio" name="' + id + '-same-host" value="public"> ' + escapeHtml(t('hosting_wizard_same_host_public', 'Root / opens public site')) + '</label>' +
+            '<div class="choice-grid">' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-same-host" value="admin" checked><span class="choice-title">' + escapeHtml(t('hosting_wizard_same_host_admin', 'Root / opens admin')) + '</span></label>' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-same-host" value="public"><span class="choice-title">' + escapeHtml(t('hosting_wizard_same_host_public', 'Root / opens public site')) + '</span></label>' +
+            '</div>' +
             '</fieldset>' +
             '<label class="checkbox-label">' +
             '<input type="checkbox" class="hosting-wizard-strict-admin" checked>' +

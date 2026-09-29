@@ -535,11 +535,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h3 class="card-title"><?= __('admin.settings_project_activity_card_title') ?></h3>
             </div>
             <div class="card-body u-stack-4">
-            <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="<?= htmlspecialchars(__('admin.settings_project_activity_filter_aria')) ?>">
-              <button type="button" class="button is-small is-active" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
-              <button type="button" class="button is-small" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
-              <button type="button" class="button is-small" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
-              <button type="button" class="button is-small" data-project-activity-filter="settings"><?= __('admin.settings_project_activity_filter_settings') ?></button>
+            <div class="segmented project-activity-filters" id="project-activity-filters" role="group" aria-label="<?= htmlspecialchars(__('admin.settings_project_activity_filter_aria')) ?>">
+              <button type="button" aria-pressed="true" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
+              <button type="button" aria-pressed="false" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
+              <button type="button" aria-pressed="false" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
+              <button type="button" aria-pressed="false" data-project-activity-filter="settings"><?= __('admin.settings_project_activity_filter_settings') ?></button>
             </div>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
@@ -1148,35 +1148,40 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
               <div class="card-body u-stack-4">
               <div class="u-stack-4">
-                <div class="card card--sunken">
-                  <div class="card-header">
-                    <h3 class="card-title"><?= __('admin.current_version') ?></h3>
-                    <span class="badge badge-info" id="current-version"><?= htmlspecialchars($settingsCmsVersion, ENT_QUOTES, 'UTF-8') ?></span>
+                <div class="setting-rows">
+                  <div class="setting-row">
+                    <div class="setting-label"><label><?= __('admin.current_version') ?></label></div>
+                    <div class="setting-value"><span class="badge badge-info" id="current-version"><?= htmlspecialchars($settingsCmsVersion, ENT_QUOTES, 'UTF-8') ?></span> <strong id="current-version-text"><?= htmlspecialchars($settingsCmsVersion, ENT_QUOTES, 'UTF-8') ?></strong></div>
                   </div>
-                  <div class="card-body u-stack-3">
-                    <p><?= __('admin.birkly_running_version') ?> <strong id="current-version-text"><?= htmlspecialchars($settingsCmsVersion, ENT_QUOTES, 'UTF-8') ?></strong></p>
-                    <div class="kv">
-                      <span class="kv-key"><?= __('admin.installation_date') ?></span>
-                      <span class="kv-value" id="install-date"><?= __('admin.unknown') ?></span>
-                      <span class="kv-key"><?= __('admin.last_update') ?></span>
-                      <span class="kv-value" id="last-update"><?= __('admin.never') ?></span>
-                      <?php if ($settingsDeployAt !== '' && $settingsDeployAt !== 'unknown'): ?>
-                      <span class="kv-key">Deployed</span>
-                      <span class="kv-value" id="deployed-at"><?= htmlspecialchars($settingsDeployAt, ENT_QUOTES, 'UTF-8') ?></span>
-                      <?php endif; ?>
-                      <?php if ($settingsGitCommit !== '' && $settingsGitCommit !== 'unknown'): ?>
-                      <span class="kv-key">Git revision</span>
-                      <span class="kv-value" id="git-commit"><?= htmlspecialchars($settingsGitCommit, ENT_QUOTES, 'UTF-8') ?></span>
-                      <?php endif; ?>
-                      <?php
-                      if (!function_exists('birkly_scheduled_publish_admin_url')) {
-                          require_once __DIR__ . '/../../core/scheduled_publish.php';
-                      }
-                      $scheduledPublishUrl = birkly_scheduled_publish_admin_url();
-                      ?>
-                      <span class="kv-key">Scheduled publish</span>
-                      <span class="kv-value" id="scheduled-publish-url"><code class="u-mono u-break-word"><?= htmlspecialchars($scheduledPublishUrl, ENT_QUOTES, 'UTF-8') ?></code></span>
-                    </div>
+                  <div class="setting-row">
+                    <div class="setting-label"><label><?= __('admin.installation_date') ?></label></div>
+                    <div class="setting-value" id="install-date"><?= __('admin.unknown') ?></div>
+                  </div>
+                  <div class="setting-row">
+                    <div class="setting-label"><label><?= __('admin.last_update') ?></label></div>
+                    <div class="setting-value" id="last-update"><?= __('admin.never') ?></div>
+                  </div>
+                  <?php if ($settingsDeployAt !== '' && $settingsDeployAt !== 'unknown'): ?>
+                  <div class="setting-row">
+                    <div class="setting-label"><label>Deployed</label></div>
+                    <div class="setting-value" id="deployed-at"><?= htmlspecialchars($settingsDeployAt, ENT_QUOTES, 'UTF-8') ?></div>
+                  </div>
+                  <?php endif; ?>
+                  <?php if ($settingsGitCommit !== '' && $settingsGitCommit !== 'unknown'): ?>
+                  <div class="setting-row">
+                    <div class="setting-label"><label>Git revision</label></div>
+                    <div class="setting-value" id="git-commit"><?= htmlspecialchars($settingsGitCommit, ENT_QUOTES, 'UTF-8') ?></div>
+                  </div>
+                  <?php endif; ?>
+                  <?php
+                  if (!function_exists('birkly_scheduled_publish_admin_url')) {
+                      require_once __DIR__ . '/../../core/scheduled_publish.php';
+                  }
+                  $scheduledPublishUrl = birkly_scheduled_publish_admin_url();
+                  ?>
+                  <div class="setting-row">
+                    <div class="setting-label"><label>Scheduled publish</label></div>
+                    <div class="setting-value" id="scheduled-publish-url"><code class="u-mono u-break-word"><?= htmlspecialchars($scheduledPublishUrl, ENT_QUOTES, 'UTF-8') ?></code></div>
                   </div>
                 </div>
 
@@ -1410,15 +1415,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <div class="data-list-item domain-analytics-toggle-row">
-              <div class="data-list-main">
+            <div class="setting-row domain-analytics-toggle-row">
+              <div class="setting-label">
                 <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
-                <small class="data-list-meta"><?= __('admin.settings_domain_analytics_track_long') ?></small>
+                <small class="form-help"><?= __('admin.settings_domain_analytics_track_long') ?></small>
               </div>
+              <div class="setting-value">
               <label class="switch" for="domain-enable-analytics">
                 <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
                 <span class="switch__slider"></span>
               </label>
+              </div>
             </div>
           </div>
         </form>
@@ -1477,15 +1484,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <div class="data-list-item domain-analytics-toggle-row">
-              <div class="data-list-main">
-                <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
-                <small class="data-list-meta"><?= __('admin.settings_domain_analytics_track') ?></small>
+            <div class="setting-row domain-analytics-toggle-row">
+              <div class="setting-label">
+                <span><?= __('admin.enable_analytics_tracking') ?></span>
+                <small class="form-help"><?= __('admin.settings_domain_analytics_track') ?></small>
               </div>
+              <div class="setting-value">
               <label class="switch" for="edit-domain-enable-analytics">
                 <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
                 <span class="switch__slider"></span>
               </label>
+              </div>
             </div>
           </div>
           <div id="edit-domain-snippet-wrap" class="u-stack-2" hidden>
@@ -1595,16 +1604,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <button class="modal-close-btn" data-admin-action="closeInviteUserModal">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="invite-email-connection-notice" class="callout callout-info u-stack-2" hidden>
-          <div class="callout-body u-stack-1">
-            <p class="callout-title"><?= __('admin.invite_email_connection_title') ?></p>
-            <p id="invite-email-connection-copy"><?= __('admin.invite_email_connection_help') ?></p>
+        <div id="invite-email-connection-notice" class="signal is-info" hidden>
+          <div class="signal-body">
+            <p class="signal-title"><?= __('admin.invite_email_connection_title') ?></p>
+            <p class="signal-text" id="invite-email-connection-copy"><?= __('admin.invite_email_connection_help') ?></p>
             <p class="u-text-sm"><a id="invite-email-connection-link" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'connections', 'section' => 'email'])) ?>"><?= __('admin.open_email_connections') ?></a></p>
           </div>
         </div>
-        <div id="invite-link-result" class="callout callout-success u-stack-2" hidden>
-          <div class="callout-body u-stack-2">
-            <p class="callout-title"><?= __('admin.invite_link_ready') ?></p>
+        <div id="invite-link-result" class="signal is-success" hidden>
+          <div class="signal-body">
+            <p class="signal-title"><?= __('admin.invite_link_ready') ?></p>
             <p class="u-text-sm u-fg-secondary"><?= __('admin.invite_link_share_help') ?></p>
             <div class="u-cluster">
               <input type="text" id="invite-link-copy-field" class="input" readonly>
@@ -1685,7 +1694,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <button type="button" class="modal-close-btn" id="close-rebuild-system-modal" aria-label="<?= __('admin.cancel') ?>">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="callout callout-danger"><?= __('admin.rebuild_system_warning') ?></p>
+        <div class="signal is-danger" role="alert"><div class="signal-body"><p class="signal-text"><?= __('admin.rebuild_system_warning') ?></p></div></div>
         <div class="form-group">
           <label for="rebuild-system-confirmation"><?= __('admin.rebuild_system_confirm_label') ?></label>
           <input type="text" id="rebuild-system-confirmation" class="input" autocomplete="off" placeholder="<?= __('admin.rebuild_system_confirm_placeholder') ?>">
@@ -1735,7 +1744,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Webhook Modal -->
-  <div id="webhook-modal" class="modal-backdrop">
+  <div id="webhook-modal" class="modal-backdrop is-sheet is-wide">
     <div class="modal-content modal--md">
       <div class="modal-header">
         <h2 id="webhook-modal-title"><?= __('admin.create_webhook') ?></h2>

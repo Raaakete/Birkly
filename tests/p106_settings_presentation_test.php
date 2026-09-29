@@ -43,6 +43,13 @@ p106_assert('domain table keeps edit delete and analytics toggle', str_contains(
 p106_assert('permission all checkbox is not submitted', str_contains($settingsJs, 'data-all') && !str_contains($settingsJs, 'name="permissions-all"'));
 p106_assert('delivery checks can be shown', str_contains($deliveryJs, 'delivery-status-toggle-checks'));
 p106_assert('project filter binds', str_contains($projectJs, 'bindFileFilter'));
+$gitJs = (string) file_get_contents($root . '/admin/js/project-git.js');
+$hostingJs = (string) file_get_contents($root . '/admin/js/hosting-wizard.js');
+$connJs = (string) file_get_contents($root . '/admin/js/connections-settings.js');
+p106_assert('git form keeps connect and auth fields', str_contains($gitJs, 'id="project-git-form"') && str_contains($gitJs, 'id="project-git-token"') && str_contains($gitJs, 'id="project-git-connect-btn"') && str_contains($gitJs, 'id="project-git-push-btn"'));
+p106_assert('hosting modes stay radios inside choice cards', str_contains($hostingJs, 'choice-card') && str_contains($hostingJs, '-public-mode" value="project"'));
+p106_assert('connection rows keep actions', str_contains($connJs, 'list-row sys-conn-card') && str_contains($connJs, 'data-action="set-default"') && str_contains($connJs, 'data-action="test"'));
+p106_assert('closing the analytics sheet restores the saved preset', str_contains($analyticsJs, 'function restoreSavedAnalytics'));
 
 foreach (['en', 'de', 'fr', 'ja', 'es'] as $locale) {
     $catalog = json_decode((string) file_get_contents($root . '/lang/' . $locale . '.json'), true);
