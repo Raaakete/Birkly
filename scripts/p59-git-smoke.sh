@@ -3,13 +3,13 @@
 # repo. Requires a running dev server and an admin login.
 #
 #   php -S localhost:8080 -t . server-router.php
-#   php scripts/create-default-user.php
+#   BIRKLY_ADMIN_PASSWORD='YourPassword123!' php scripts/create-default-user.php
 #   ./scripts/p59-git-smoke.sh
 set -euo pipefail
 
 BASE="${BASE:-http://localhost:8080}"
 EMAIL="${EMAIL:-admin@localhost}"
-PASSWORD="${PASSWORD:-password}"
+PASSWORD="${PASSWORD:-YourPassword123!}"
 JAR="$(mktemp)"
 BARE="${BARE:-$(mktemp -d)/project.git}"
 

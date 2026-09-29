@@ -619,7 +619,42 @@ function birkly_ensure_public_site_path(): void
  */
 function birkly_is_git_metadata_path(string $uri): bool
 {
-    return preg_match('#(^|/)\.git(/|$)#', rawurldecode($uri)) === 1;
+    return preg_match('#(^|/)\.git(/|$)#i', rawurldecode($uri)) === 1;
+}
+
+/**
+ * Directories that hold secrets, content, or maintenance scripts.
+ * The Commerce import cron file stays reachable and checks its own token.
+ */
+function birkly_private_tree_names(): array
+{
+    return ['core', 'settings', 'users', 'content', 'data', 'cache', 'logs', 'scripts', 'tests'];
+}
+
+function birkly_normalize_request_path(string $uri): string
+{
+    $path = rawurldecode(str_replace('\\', '/', $uri));
+    $path = preg_replace('#/+#', '/', $path) ?? $path;
+    if ($path === '') {
+        return '/';
+    }
+    if ($path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    return $path;
+}
+
+function birkly_is_private_tree_uri(string $uri): bool
+{
+    $path = birkly_normalize_request_path($uri);
+    if (preg_match('#^/scripts/commerce-import-sync\.php$#i', $path) === 1) {
+        return false;
+    }
+
+    $names = implode('|', birkly_private_tree_names());
+
+    return preg_match('#^/(' . $names . ')(/|$)#i', $path) === 1;
 }
 
 /**
@@ -628,6 +663,23 @@ function birkly_is_git_metadata_path(string $uri): bool
 function birkly_deny_git_metadata_request(string $uri): bool
 {
     if (!birkly_is_git_metadata_path($uri)) {
+        return false;
+    }
+
+    http_response_code(403);
+    if (!headers_sent()) {
+        header('Content-Type: text/plain; charset=utf-8');
+    }
+    echo "Forbidden\n";
+    return true;
+}
+
+/**
+ * @return bool True when the request was rejected and the caller should stop.
+ */
+function birkly_deny_private_tree_request(string $uri): bool
+{
+    if (!birkly_is_private_tree_uri($uri)) {
         return false;
     }
 

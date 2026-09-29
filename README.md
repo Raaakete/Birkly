@@ -15,13 +15,13 @@ chmod +x ./start-server.sh
 
 Admin: [http://localhost:8080/admin](http://localhost:8080/admin)
 
-Create the default admin user:
+Create the first admin user when the browser setup has not done it yet:
 
 ```bash
-php scripts/create-default-user.php
+BIRKLY_ADMIN_PASSWORD='YourPassword123!' php scripts/create-default-user.php
 ```
 
-Default login after that script: `admin@localhost` / `password` — change it immediately.
+The default email is `admin@localhost`. Pass `--email=you@example.com` to use another. If an admin account already exists, the script leaves it unchanged.
 
 ## Where your site lives
 

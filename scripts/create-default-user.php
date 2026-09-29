@@ -1,58 +1,61 @@
 #!/usr/bin/env php
 <?php
 /**
- * Create Default Admin User Script
- * 
- * This script creates the default admin user for Birkly.
- * Run this after a fresh installation if you don't have a user account.
- * 
- * Usage: php scripts/create-default-user.php
+ * Create the first admin account when the install has none.
+ *
+ *   BIRKLY_ADMIN_PASSWORD='YourPassword123!' php scripts/create-default-user.php
+ *   php scripts/create-default-user.php --email=you@example.com
+ *
+ * If any admin already exists, the script leaves it unchanged.
+ * The password is not accepted on the command line.
  */
 
-// Get the base directory
-$baseDir = dirname(__DIR__);
+declare(strict_types=1);
 
-// Ensure users directory exists
-$usersDir = "$baseDir/users";
-if (!is_dir($usersDir)) {
-    mkdir($usersDir, 0755, true);
+require_once dirname(__DIR__) . '/core/cli_only.php';
+birkly_require_cli();
+
+foreach (array_slice($argv, 1) as $arg) {
+    if ($arg === '--password' || str_starts_with($arg, '--password=')) {
+        fwrite(STDERR, "Do not pass --password on the command line (visible in process list).\n");
+        fwrite(STDERR, "Set BIRKLY_ADMIN_PASSWORD or type the password at the prompt.\n");
+        exit(1);
+    }
 }
 
-// Default admin credentials
-$email = 'admin@localhost';
-$password = 'password';
-$role = 'admin';
+$options = getopt('', ['email:', 'help']);
 
-// Check if user already exists
-$userFile = md5(strtolower(trim($email))) . '.json';
-$userPath = "$usersDir/$userFile";
-
-if (file_exists($userPath)) {
-    echo "⚠️  User already exists: $email\n";
-    echo "File: $userPath\n";
-    exit(1);
-}
-
-// Create user data
-$user = [
-    'id' => bin2hex(random_bytes(16)),
-    'email' => $email,
-    'password' => password_hash($password, PASSWORD_DEFAULT),
-    'role' => $role,
-    'created_at' => date('c'),
-    'note' => 'Default admin user'
-];
-
-// Save user file
-if (file_put_contents($userPath, json_encode($user, JSON_PRETTY_PRINT))) {
-    echo "✅ Default admin user created successfully!\n\n";
-    echo "Email: $email\n";
-    echo "Password: $password\n";
-    echo "File: $userPath\n\n";
-    echo "You can now log in to the admin panel.\n";
+if (isset($options['help'])) {
+    echo "Create the first admin account\n\n";
+    echo "  BIRKLY_ADMIN_PASSWORD='…' php scripts/create-default-user.php\n";
+    echo "  php scripts/create-default-user.php --email=you@example.com\n\n";
+    echo "Does nothing when an admin account already exists.\n";
     exit(0);
-} else {
-    echo "❌ Failed to create user file: $userPath\n";
-    exit(1);
 }
 
+require_once dirname(__DIR__) . '/core/initial_admin.php';
+
+if (birkly_has_users()) {
+    fwrite(STDOUT, "An admin account already exists. No account was created.\n");
+    exit(0);
+}
+
+$email = strtolower(trim((string) ($options['email'] ?? getenv('BIRKLY_ADMIN_EMAIL') ?: 'admin@localhost')));
+$password = trim((string) (getenv('BIRKLY_ADMIN_PASSWORD') ?: ''));
+
+if ($password === '') {
+    if (function_exists('posix_isatty') && posix_isatty(STDIN)) {
+        fwrite(STDOUT, 'New admin password: ');
+        system('stty -echo 2>/dev/null');
+        $password = trim((string) fgets(STDIN));
+        system('stty echo 2>/dev/null');
+        fwrite(STDOUT, "\n");
+    } else {
+        fwrite(STDERR, "Set BIRKLY_ADMIN_PASSWORD or run interactively with a TTY.\n");
+        exit(1);
+    }
+}
+
+$result = birkly_create_initial_admin($email, $password);
+fwrite($result['ok'] ? STDOUT : STDERR, $result['message'] . "\n");
+exit($result['ok'] ? 0 : 1);

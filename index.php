@@ -16,7 +16,7 @@ if ($base !== '' && str_starts_with($uri, $base)) {
     }
 }
 
-if (birkly_deny_git_metadata_request($uri)) {
+if (birkly_deny_git_metadata_request($uri) || birkly_deny_private_tree_request($uri)) {
     exit;
 }
 
