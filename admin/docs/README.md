@@ -1,27 +1,11 @@
-# Admin docs (legacy)
+# Admin docs
 
-**Do not edit authoritative human product documentation here.**
+**Do not edit product documentation here.**
 
-Human-facing docs are maintained in **[Birkly-Docs](https://github.com/Raaakete/Birkly-Docs)** and published at [docs.birkly.com](https://docs.birkly.com). The CMS admin Help panel loads topics from that manifest (live fetch with offline mirror).
+Human-facing docs are maintained in **[Birkly-Docs](https://github.com/Raaakete/Birkly-Docs)** and published at [docs.birkly.com](https://docs.birkly.com). Admin Help fetches each article from that origin when the topic is opened. This install does not store or serve the article.
 
-## What lives here
-
-| Path | Role |
-|------|------|
-| `snapshots/*.md` | Offline markdown mirrors synced by `./scripts/sync-birkly-docs.sh` |
-| `help-offline-manifest.json` | Offline Help topic index (includes `ai_topic`) |
-| `*.php` | **Legacy** standalone HTML pages — deprecated, not wired to Help v2 |
-
-## Sync workflow
-
-After Birkly-Docs manifest or topic changes:
-
-```bash
-BIRKLY_DOCS_PATH=/path/to/Birkly-Docs ./scripts/sync-birkly-docs.sh
-```
-
-This updates `admin/docs/snapshots/`, `admin/docs/help-offline-manifest.json`, and `docs/help-manifest.json`.
+`docs/help-manifest.json` is a mirror of the topic list, refreshed by `./scripts/sync-birkly-docs.sh`. It is not the article body.
 
 ## Agent / AI docs
 
-Operational agent playbooks remain in `docs/ai/playbooks/` in the CMS repo. They link to Birkly-Docs via `ai_topic` — do not duplicate full user guides into playbooks.
+Operational agent playbooks remain in `docs/ai/playbooks/` in the CMS repo. They link to Birkly-Docs via `ai_topic`. They are not the owner manual.
