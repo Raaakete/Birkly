@@ -315,26 +315,30 @@ label.field-title { cursor: pointer; }
   border-inline-start: 1px solid var(--line);
 }
 
-/* Collection card — title leads; drag and menu keep their own space */
+/* Collection card — grip beside the title, more menu beside the count */
 [data-birch] .content-page .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-3);
 }
 
 [data-birch] .content-page .collection-card:not(.starter-template-card) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
-    "handle . menu"
-    "title title title"
-    "text text text"
-    "meta meta meta";
-  align-content: start;
-  grid-template-rows: auto auto auto auto;
-  gap: var(--s-2) var(--s-3);
-  min-height: 168px;
-  padding: var(--s-4);
+    "handle title title"
+    ". meta menu";
+  align-items: center;
+  gap: var(--s-1) var(--s-2);
+  min-height: 0;
+  padding: var(--s-3);
   cursor: pointer;
+}
+
+[data-birch] .content-page .collection-card.has-text:not(.is-row) {
+  grid-template-areas:
+    "handle title title"
+    ". text text"
+    ". meta menu";
 }
 
 [data-birch] .content-page .collection-card .drag-handle {
@@ -353,7 +357,7 @@ label.field-title { cursor: pointer; }
 
 [data-birch] .content-page .collection-card-title-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   grid-area: title;
   gap: var(--s-2);
   min-width: 0;
@@ -381,12 +385,20 @@ label.field-title { cursor: pointer; }
   flex-wrap: wrap;
   align-items: baseline;
   grid-area: meta;
-  align-self: end;
+  align-self: center;
   gap: var(--s-2);
   margin: 0;
+  min-width: 0;
   color: var(--text-3);
   font-size: var(--size-small);
   line-height: var(--lh-small);
+}
+
+[data-birch] .content-page .collection-card-meta .entry-count-link {
+  color: var(--text);
+  font-size: var(--size-title);
+  font-weight: var(--weight-semibold);
+  line-height: var(--lh-title);
 }
 
 [data-birch] .content-page .collection-card-meta > :not(:first-child)::before {
@@ -451,22 +463,15 @@ label.field-title { cursor: pointer; }
 [data-birch] .collection-menu-wrapper .icon-button[aria-expanded="true"],
 [data-birch] .collection-menu-wrapper .icon-button:focus-visible { opacity: 1; }
 
-/* Compact cards: title still leads, on one tighter row with the controls */
+/* Compact cards: same arrangement, less padding and a smaller title */
 [data-birch] .content-page.is-compact-cards .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--s-2);
 }
 
 [data-birch] .content-page.is-compact-cards .collection-card:not(.starter-template-card):not(.is-row) {
-  grid-template-areas:
-    "handle title menu"
-    "text text text"
-    "meta meta meta";
-  align-items: center;
-  grid-template-rows: auto auto auto;
-  gap: var(--s-1) var(--s-2);
-  min-height: 0;
-  padding: var(--s-3);
+  gap: 2px var(--s-2);
+  padding: var(--s-2);
 }
 
 [data-birch] .content-page.is-compact-cards .collection-card-title {
@@ -479,6 +484,11 @@ label.field-title { cursor: pointer; }
 
 [data-birch] .content-page.is-compact-cards .collection-card-text { -webkit-line-clamp: 1; }
 
+[data-birch] .content-page.is-compact-cards .collection-card-meta .entry-count-link {
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
+}
+
 /* List mode: one column of rows */
 [data-birch] .content-page.list-view .card-grid,
 [data-birch] .collections-container.list-view .card-grid {
@@ -487,12 +497,36 @@ label.field-title { cursor: pointer; }
 }
 
 [data-birch] .content-page .collection-card.is-row {
-  grid-template-columns: auto minmax(140px, 1.3fr) minmax(0, 2fr) auto auto;
+  grid-template-columns: auto minmax(8rem, 1.2fr) minmax(0, 2fr) auto auto;
   grid-template-areas: "handle title text meta menu";
   align-items: center;
   gap: var(--s-3);
   min-height: var(--row-list);
   padding: var(--s-2) var(--s-3);
+}
+
+[data-birch] .content-page .collection-card.is-row:not(.has-text) {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "handle title meta menu";
+}
+
+[data-birch] .content-page.is-compact-cards .collections-container.list-view .card-grid {
+  gap: 2px;
+}
+
+[data-birch] .content-page.is-compact-cards .collection-card.is-row {
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "handle title meta menu";
+  gap: var(--s-2);
+  min-height: 0;
+  padding: 2px var(--s-2);
+}
+
+[data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-text { display: none; }
+
+[data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-title {
+  font-size: var(--size-small);
+  line-height: var(--lh-small);
 }
 
 [data-birch] .content-page .collection-card.is-row .collection-card-title {
@@ -552,11 +586,13 @@ label.field-title { cursor: pointer; }
 
 @media (max-width: 767px) {
   [data-birch] .search-field { width: 100%; }
-  [data-birch] .content-page .collection-card.is-row {
+  [data-birch] .content-page .collection-card.is-row,
+  [data-birch] .content-page.is-compact-cards .collection-card.is-row {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      "handle title menu"
-      "meta meta meta";
+      "handle title title"
+      ". meta menu";
+    min-height: 0;
   }
   [data-birch] .content-page .collection-card.is-row .collection-card-text { display: none; }
 }
