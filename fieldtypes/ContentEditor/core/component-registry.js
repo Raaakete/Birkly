@@ -2,6 +2,11 @@
 window.ContentEditorComponentRegistry = {
   API_URL: '/api/components.php',
 
+  csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? (meta.getAttribute('content') || '') : '';
+  },
+
   async list() {
     const response = await fetch(`${this.API_URL}?action=list`);
     const result = await response.json();
@@ -21,10 +26,11 @@ window.ContentEditorComponentRegistry = {
   },
 
   async save(data) {
+    const payload = Object.assign({}, data, { _csrf: this.csrfToken() });
     const response = await fetch(`${this.API_URL}?action=save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     return response.json();
   },
@@ -32,6 +38,8 @@ window.ContentEditorComponentRegistry = {
   async delete(slug) {
     const response = await fetch(`${this.API_URL}?action=delete&slug=${encodeURIComponent(slug)}`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, _csrf: this.csrfToken() }),
     });
     return response.json();
   },
@@ -45,7 +53,7 @@ window.ContentEditorComponentRegistry = {
     const response = await fetch(`${this.API_URL}?action=update_entries`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slug }),
+      body: JSON.stringify({ slug, _csrf: this.csrfToken() }),
     });
     return response.json();
   },
