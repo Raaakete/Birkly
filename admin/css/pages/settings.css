@@ -1391,6 +1391,21 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 .settings-shell .settings-panels .card-body > :is(.btn-danger, .button.is-danger) { align-self: flex-start; }
 
 /* Choice cards (analytics presets, email providers): blue ring when chosen */
+[data-birch] .choice-card { position: relative; }
+[data-birch] .choice-card > input[type="radio"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+[data-birch] #edit-domain-modal .modal-footer .button.is-danger { margin-inline-end: auto; }
+[data-birch] .domains-table .switch { margin: 0; }
+[data-birch] .analytics-report .metrics + .metrics { margin-block-start: var(--s-1); }
+
 .settings-shell .analytics-preset-card { padding: var(--s-4); }
 .settings-shell .analytics-preset-card.is-selected {
   border: 0;
@@ -1413,7 +1428,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 
 [data-birch] .permission-matrix > :is(.permission-head, .permission-row) {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) repeat(4, 72px);
+  grid-template-columns: minmax(120px, 1fr) repeat(5, 72px);
   align-items: center;
 }
 

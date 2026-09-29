@@ -151,46 +151,93 @@
             messages.map(function (msg) { return escapeHtml(msg); }).join(' ') + '</p></div>';
     }
 
+    function presetById(id) {
+        var found = null;
+        (state.presets || []).forEach(function (preset) {
+            if (preset.id === id) found = preset;
+        });
+        return found;
+    }
+
+    function setPresetSheetOpen(open) {
+        var sheet = document.getElementById('analytics-preset-sheet');
+        if (!sheet) return;
+        if (open) {
+            sheet.style.display = 'flex';
+            sheet.classList.add('active');
+        } else {
+            sheet.classList.remove('active');
+            sheet.style.display = 'none';
+        }
+    }
+
+    function renderCollectingBanner() {
+        var banner = document.getElementById('analytics-collecting-banner');
+        var title = document.getElementById('analytics-collecting-title');
+        var text = document.getElementById('analytics-collecting-text');
+        if (!banner || !title) return;
+        var id = selectedPreset();
+        var preset = presetById(id);
+        var label = (preset && preset.label) || id;
+        title.textContent = t('analytics_collecting', 'Collecting: {preset}', { preset: label });
+        if (text) {
+            var bits = [];
+            if (preset && preset.summary) bits.push(preset.summary);
+            if (preset && preset.retention_days) {
+                bits.push(t('analytics_default_retention', 'Default retention: {days} days', { days: preset.retention_days }));
+            }
+            text.textContent = bits.join(' ');
+        }
+        banner.hidden = false;
+        banner.classList.toggle('is-success', id !== 'off');
+        banner.classList.toggle('is-info', id === 'off');
+        var detail = document.getElementById('analytics-preset-detail');
+        if (!detail) return;
+        if (!preset) {
+            detail.innerHTML = '';
+            return;
+        }
+        detail.innerHTML =
+            '<div class="signal is-success"><div class="signal-body"><p class="signal-title">' + escapeHtml(t('analytics_label_upside', 'Upside')) + '</p><p class="signal-text">' + escapeHtml(preset.upside || '') + '</p></div></div>' +
+            '<div class="signal"><div class="signal-body"><p class="signal-title">' + escapeHtml(t('analytics_label_downside', 'Downside')) + '</p><p class="signal-text">' + escapeHtml(preset.downside || '') + '</p></div></div>' +
+            (preset.consent_required
+                ? '<p class="form-help">' + escapeHtml(t('analytics_consent_required_help', 'Visitor consent banner is required for this preset.')) + '</p>'
+                : '');
+    }
+
     function renderPresets() {
         var mount = document.getElementById('analytics-preset-cards');
         if (!mount) return;
-        var current = (state.settings && state.settings.preset) || 'off';
+        var current = selectedPreset();
         if (!state.presets.length) {
-            mount.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('analytics_presets_empty', 'No presets available.')) + '</p></div>';
+            mount.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(t('analytics_presets_empty', 'No presets available.')) + '</p></div>';
+            renderCollectingBanner();
             return;
         }
 
-        mount.innerHTML = '<div class="u-grid-auto-lg" role="radiogroup" aria-label="' + escapeHtml(t('analytics_preset_radiogroup', 'Analytics preset')) + '">' +
+        mount.innerHTML = '<div class="choice-grid" role="radiogroup" aria-label="' + escapeHtml(t('analytics_preset_radiogroup', 'Analytics preset')) + '">' +
             state.presets.map(function (p) {
                 var selected = p.id === current;
                 return '' +
-                    '<label class="card card--interactive analytics-preset-card' + (selected ? ' is-selected' : '') + '">' +
-                    '<div class="card-body u-stack-2">' +
-                    '<div class="u-cluster u-justify-between">' +
-                    '<strong>' + escapeHtml(p.label) + '</strong>' +
+                    '<label class="choice-card" aria-pressed="' + (selected ? 'true' : 'false') + '">' +
                     '<input type="radio" name="analytics-preset" value="' + escapeHtml(p.id) + '"' +
                     (selected ? ' checked' : '') + ' aria-label="' + escapeHtml(p.label) + escapeHtml(t('analytics_preset_aria_suffix', ' preset')) + '">' +
-                    '</div>' +
-                    '<p class="form-help">' + escapeHtml(p.summary || '') + '</p>' +
-                    '<p class="u-text-sm"><span class="u-fg-secondary">' + escapeHtml(t('analytics_label_upside', 'Upside')) + '</span> — ' + escapeHtml(p.upside || '') + '</p>' +
-                    '<p class="u-text-sm"><span class="u-fg-secondary">' + escapeHtml(t('analytics_label_downside', 'Downside')) + '</span> — ' + escapeHtml(p.downside || '') + '</p>' +
-                    (p.consent_required
-                        ? '<p class="form-help">' + escapeHtml(t('analytics_consent_required_help', 'Visitor consent banner is required for this preset.')) + '</p>'
-                        : '') +
-                    '<p class="form-help">' + escapeHtml(t('analytics_default_retention', 'Default retention: {days} days', { days: p.retention_days || 0 })) + '</p>' +
-                    '</div></label>';
+                    '<span class="choice-title">' + escapeHtml(p.label) + '</span>' +
+                    '<span class="choice-text">' + escapeHtml(p.summary || '') + '</span>' +
+                    '</label>';
             }).join('') +
             '</div>';
 
         mount.querySelectorAll('input[name="analytics-preset"]').forEach(function (input) {
             input.addEventListener('change', function () {
-                mount.querySelectorAll('.analytics-preset-card').forEach(function (card) {
-                    card.classList.remove('is-selected');
+                mount.querySelectorAll('.choice-card').forEach(function (card) {
+                    card.setAttribute('aria-pressed', 'false');
                 });
-                var card = input.closest('.analytics-preset-card');
-                if (card) card.classList.add('is-selected');
+                var card = input.closest('.choice-card');
+                if (card) card.setAttribute('aria-pressed', 'true');
                 updateExportVisibility();
                 updateConsentFieldsVisibility();
+                renderCollectingBanner();
                 markDirty();
                 if (state.lastReport) {
                     var panel = document.getElementById('analytics-report-panel');
@@ -201,14 +248,23 @@
 
         updateExportVisibility();
         updateConsentFieldsVisibility();
+        renderCollectingBanner();
     }
 
     function kpi(value, label, hint) {
-        return '<div class="analytics-kpi">' +
-            '<span class="analytics-kpi__value u-numeric">' + escapeHtml(String(value)) + '</span>' +
-            '<span class="analytics-kpi__label">' + escapeHtml(label) + '</span>' +
-            (hint ? '<span class="analytics-kpi__hint">' + escapeHtml(hint) + '</span>' : '') +
+        return '<div class="metric">' +
+            '<span class="metric-label">' + escapeHtml(label) + '</span>' +
+            '<span class="metric-value">' + escapeHtml(String(value)) + '</span>' +
+            (hint ? '<span class="metric-meta">' + escapeHtml(hint) + '</span>' : '') +
             '</div>';
+    }
+
+    function metricsHtml(items) {
+        var html = '';
+        for (var i = 0; i < items.length; i += 4) {
+            html += '<div class="metrics">' + items.slice(i, i + 4).join('') + '</div>';
+        }
+        return html;
     }
 
     function sectionHeading(title, subtitle) {
@@ -221,9 +277,9 @@
     function renderBarList(title, rows, labelKey, valueKey) {
         rows = Array.isArray(rows) ? rows : [];
         if (!rows.length) {
-            return '<section class="analytics-panel">' +
-                '<h4 class="analytics-panel__title">' + escapeHtml(title) + '</h4>' +
-                '<p class="form-help u-m-0">' + escapeHtml(t('analytics_no_data', 'No data yet.')) + '</p></section>';
+            return '<section class="card">' +
+                '<div class="card-header"><h3 class="card-title">' + escapeHtml(title) + '</h3></div>' +
+                '<div class="card-body"><div class="empty"><p class="empty-text">' + escapeHtml(t('analytics_no_data', 'No data yet.')) + '</p></div></div></section>';
         }
         var max = 1;
         rows.forEach(function (row) {
@@ -231,20 +287,17 @@
         });
         var items = rows.slice(0, isAdvanced() ? 12 : 8).map(function (row) {
             var count = Number(row[valueKey]) || 0;
-            var pct = Math.max(4, Math.round((count / max) * 100));
+            var pct = Math.max(0, Math.round((count / max) * 100));
             var label = String(row[labelKey] || '—');
-            return '<li class="analytics-bar-row">' +
-                '<div class="analytics-bar-row__meta">' +
-                '<span class="analytics-bar-row__label" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span>' +
-                '<span class="analytics-bar-row__value u-numeric">' + escapeHtml(String(count)) + '</span>' +
-                '</div>' +
-                '<div class="analytics-bar-row__track" aria-hidden="true">' +
-                '<span class="analytics-bar-row__fill" style="width:' + pct + '%"></span>' +
-                '</div></li>';
+            var textClass = label.charAt(0) === '/' ? '' : ' is-text';
+            return '<li>' +
+                '<span class="ranked-label' + textClass + '" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span>' +
+                '<span class="ranked-value">' + escapeHtml(String(count)) + '</span>' +
+                '<div class="meter" style="--value:' + pct + '"><span></span></div></li>';
         }).join('');
-        return '<section class="analytics-panel">' +
-            '<h4 class="analytics-panel__title">' + escapeHtml(title) + '</h4>' +
-            '<ul class="analytics-bar-list">' + items + '</ul></section>';
+        return '<section class="card">' +
+            '<div class="card-header"><h3 class="card-title">' + escapeHtml(title) + '</h3></div>' +
+            '<div class="card-body"><ul class="ranked">' + items + '</ul></div></section>';
     }
 
     function renderTrends(daily) {
@@ -284,12 +337,12 @@
                 '<span><i class="analytics-swatch analytics-swatch--visitors"></i> ' + escapeHtml(t('analytics_legend_visitors', 'Visitors')) + '</span>' +
                 '</div>'
             : '';
-        return '<section class="analytics-panel analytics-panel--wide analytics-panel--chart">' +
-            '<div class="u-cluster u-justify-between u-gap-3">' +
-            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_trend_title', 'Daily page views (last {days} days)', { days: windowDays })) + '</h4>' +
+        return '<section class="card">' +
+            '<div class="card-header">' +
+            '<h3 class="card-title">' + escapeHtml(t('analytics_trend_title', 'Daily page views (last {days} days)', { days: windowDays })) + '</h3>' +
             legend +
             '</div>' +
-            '<ul class="analytics-trend-cols">' + bars + '</ul></section>';
+            '<div class="card-body"><ul class="analytics-trend-cols">' + bars + '</ul></div></section>';
     }
 
     function renderReport(report) {
@@ -305,24 +358,23 @@
         }
 
         var html = '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">';
-
-        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last 30 days · {scope}', { scope: scopeLabel })) +
-            '<div class="analytics-kpi-grid">' +
-            kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Page loads only')) +
-            kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
-
+        var kpis = [
+            kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Page loads only')),
+            kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'))
+        ];
         if (preset !== 'minimal' && preset !== 'off') {
-            html += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')) +
-                kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
+            kpis.push(kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')));
+            kpis.push(kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement')));
         }
         if (isAdvanced()) {
-            html += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions')) +
-                kpi((report.event_counts && report.event_counts.form_submit) || 0, t('analytics_kpi_form_submits', 'Form submits'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.outbound_click) || 0, t('analytics_kpi_outbound_clicks', 'Outbound clicks'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events'));
+            kpis.push(kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions')));
+            kpis.push(kpi((report.event_counts && report.event_counts.form_submit) || 0, t('analytics_kpi_form_submits', 'Form submits'), t('analytics_kpi_advanced_events', 'Advanced events')));
+            kpis.push(kpi((report.event_counts && report.event_counts.outbound_click) || 0, t('analytics_kpi_outbound_clicks', 'Outbound clicks'), t('analytics_kpi_advanced_events', 'Advanced events')));
+            kpis.push(kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events')));
         }
 
-        html += '</div>' + renderTrends(report.daily_stats);
+        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last 30 days · {scope}', { scope: scopeLabel })) +
+            metricsHtml(kpis) + renderTrends(report.daily_stats);
 
         html += sectionHeading(t('analytics_section_content', 'Content & acquisition'), t('analytics_section_content_sub', 'Where traffic lands and comes from')) +
             '<div class="analytics-panel-grid">' +
@@ -488,6 +540,7 @@
                 if (typeof window.markSettingsClean === 'function') {
                     window.markSettingsClean('analytics');
                 }
+                setPresetSheetOpen(false);
                 return loadDomainsAndHealth().then(loadReport);
             });
     }
@@ -525,6 +578,20 @@
                 form.addEventListener('submit', function (e) { e.preventDefault(); });
                 form.addEventListener('input', markDirty);
                 form.addEventListener('change', markDirty);
+            }
+            var openPresets = document.getElementById('analytics-open-presets');
+            if (openPresets) openPresets.addEventListener('click', function () { setPresetSheetOpen(true); });
+            var closePresets = document.getElementById('analytics-preset-close');
+            var donePresets = document.getElementById('analytics-preset-done');
+            if (closePresets) closePresets.addEventListener('click', function () { setPresetSheetOpen(false); });
+            if (donePresets) donePresets.addEventListener('click', function () { setPresetSheetOpen(false); });
+            var savePresets = document.getElementById('analytics-preset-save');
+            if (savePresets) savePresets.addEventListener('click', function () { save(); });
+            var sheet = document.getElementById('analytics-preset-sheet');
+            if (sheet) {
+                sheet.addEventListener('click', function (event) {
+                    if (event.target === sheet) setPresetSheetOpen(false);
+                });
             }
         }
         load();

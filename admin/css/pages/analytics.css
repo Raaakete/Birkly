@@ -82,4 +82,5 @@
 .analytics-trend-col__bar--visitors { background: var(--accent-line); }
 .analytics-trend-col__label { font-size: 0.625rem; color: var(--text-3); white-space: nowrap; }
 
-.analytics-report-card .card-body { background: var(--surface-2); }
+.analytics-report-card > .card-body { background: transparent; }
+.analytics-trend-col__bar { width: 42%; max-width: none; }

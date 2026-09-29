@@ -2,7 +2,11 @@
 <div class="settings-shell" data-birch>
 <div class="page-header settings-page-header">
   <div class="page-header-left">
-    <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
+    <div class="breadcrumbs">
+      <span><?= __('admin.settings') ?></span>
+      <span class="separator">›</span>
+      <span class="current" id="settings-tab-crumb"><?= __('admin.general') ?></span>
+    </div>
   </div>
 </div>
 
@@ -16,7 +20,8 @@ $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="badge badge-w
 $stickySaveBarRightHtml = ''
     . '<label class="u-hidden" for="settings-search-input">' . htmlspecialchars(__('admin.settings_search_settings')) . '</label>'
     . '<span class="search-field settings-search">' . birkly_icon('search') . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="' . htmlspecialchars(__('admin.settings_search_settings')) . '" autocomplete="off"></span>'
-    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="button is-quiet">' . birkly_icon('history') . htmlspecialchars(__('admin.settings_view_activity')) . '</a>';
+    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="button is-quiet">' . birkly_icon('history') . htmlspecialchars(__('admin.settings_view_activity')) . '</a>'
+    . '<a id="settings-how-it-works" class="button is-quiet" data-help-base="' . htmlspecialchars(birkly_admin_url('help', ['topic' => 'settings'])) . '" href="' . htmlspecialchars(birkly_admin_url('help', ['topic' => 'settings'])) . '">' . birkly_icon('question') . htmlspecialchars(__('admin.settings_how_it_works')) . '</a>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
@@ -251,7 +256,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-stack">
           <section class="card">
             <div class="card-header">
-              <h3 class="card-title"><?= __('admin.registered_domains') ?></h3>
+              <div>
+                <h3 class="card-title"><?= __('admin.registered_domains') ?></h3>
+                <p class="form-help" id="domains-summary"></p>
+              </div>
             </div>
             <div class="card-body u-stack-4">
             <div id="domains-list" class="domains-list">
@@ -259,6 +267,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <p><?= __('admin.loading_domains') ?>...</p>
               </div>
             </div>
+            <div id="domains-report-mount" class="u-stack-3" hidden></div>
             </div>
           </section>
 
@@ -390,6 +399,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="card-body u-stack-4">
+            <label class="u-sr-only" for="project-file-filter"><?= __('admin.settings_project_filter_files') ?></label>
+            <span class="search-field">
+              <?= birkly_icon('search') ?>
+              <input type="search" id="project-file-filter" class="input" placeholder="<?= htmlspecialchars(__('admin.settings_project_filter_files')) ?>" autocomplete="off">
+            </span>
+            <p class="form-help" id="project-file-count"></p>
             <div class="project-files-layout">
               <div class="project-file-tree-wrap">
                 <div id="project-file-breadcrumb" class="project-file-breadcrumb">project/</div>
@@ -605,6 +620,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <div class="row-title">
                       <span class="u-truncate"><?= htmlspecialchars($userLabel) ?></span>
                       <span class="tag"><?= htmlspecialchars($userRole) ?></span>
+                      <?php $aiCount = count($mcpSessions) + count($byoaiConnections); ?>
+                      <?php if ($aiCount > 0): ?><span class="tag"><?= (int) $aiCount ?> <?= __('admin.settings_team_ai_connections_label') ?></span><?php endif; ?>
                     </div>
                     <div class="row-meta">
                       <?php if ($userSubtitle !== ''): ?><span class="u-truncate"><?= htmlspecialchars($userSubtitle) ?></span><?php endif; ?>
@@ -657,7 +674,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div id="team-invitations-empty" class="empty-state empty-state--compact" hidden>
               <p class="empty-state__description"><?= __('admin.no_invitations_yet') ?></p>
             </div>
-            <div id="team-invitations-list" class="data-list" hidden></div>
+            <div id="team-invitations-list" class="list-rows" hidden></div>
           </div>
           </section></div>
           <div id="roles" class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
@@ -675,7 +692,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <span class="row-icon"><?= birkly_icon('shield') ?></span>
               <div class="row-body">
                 <div class="row-title"><?= htmlspecialchars($role['name']) ?></div>
-                <?php if (!empty($role['description'])): ?><div class="row-meta"><?= htmlspecialchars($role['description']) ?></div><?php endif; ?>
+                <?php
+                  $roleId = (string) ($role['id'] ?? '');
+                  $roleUserCount = 0;
+                  foreach ($users ?? [] as $roleUser) {
+                      if ((string) ($roleUser['role'] ?? '') === $roleId) {
+                          $roleUserCount++;
+                      }
+                  }
+                ?>
+                <div class="row-meta"><?= (int) $roleUserCount ?> <?= __('admin.users') ?><?php if (!empty($role['description'])): ?> · <?= htmlspecialchars($role['description']) ?><?php endif; ?></div>
                 <div class="role-permissions">
                 <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
                   $resourceLabel = $resource === '*' ? __('admin.all_resources') : ucfirst(str_replace('_', ' ', (string) $resource));
@@ -889,36 +915,43 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="card-header">
             <h2><?= __('admin.api_information') ?></h2>
 </div>
-          <div class="card-body u-stack-4">
+          <div class="card-body">
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
-          
-          <div class="u-grid-auto">
-            <div class="card card--sunken u-p-4 u-stack-2">
-              <h3 class="u-label"><?= __('admin.settings_api_endpoint_label') ?></h3>
-              <p class="u-text-sm"><?= __('admin.settings_api_endpoint_text') ?> <code class="u-mono u-break-word"><?= htmlspecialchars($apiEndpoint) ?></code></p>
+          <div class="setting-rows">
+            <div class="setting-row">
+              <div class="setting-label">
+                <label><?= __('admin.settings_api_endpoint_label') ?></label>
+                <small><?= __('admin.settings_api_endpoint_text') ?></small>
+              </div>
+              <div class="setting-value"><code class="u-mono u-break-word"><?= htmlspecialchars($apiEndpoint) ?></code></div>
             </div>
-            <div class="card card--sunken u-p-4 u-stack-2">
-              <h3 class="u-label"><?= __('admin.settings_api_auth_label') ?></h3>
-              <p class="u-text-sm"><?= __('admin.settings_api_auth_text_before') ?><?= $domainCount > 0 ? ' (' . (int) $domainCount . ' ' . __('admin.settings_api_auth_registered_suffix') . ')' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.settings_api_auth_text_link') ?></a></p>
+            <div class="setting-row">
+              <div class="setting-label">
+                <label><?= __('admin.settings_api_auth_label') ?></label>
+                <small><?= __('admin.settings_api_auth_text_before') ?><?= $domainCount > 0 ? ' (' . (int) $domainCount . ' ' . __('admin.settings_api_auth_registered_suffix') . ')' : '' ?></small>
+              </div>
+              <div class="setting-value"><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.settings_api_auth_text_link') ?></a></div>
             </div>
-            <div class="card card--sunken u-p-4 u-stack-2">
-              <h3 class="u-label"><?= __('admin.settings_api_rate_limit_label') ?></h3>
-              <?php if ($domainCount > 0): ?>
-              <p class="u-text-sm"><?= __('admin.settings_api_rate_limit_text_before') ?><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.settings_api_rate_limit_text_link') ?></a><?= __('admin.settings_api_rate_limit_text_after') ?></p>
-              <?php else: ?>
-              <p class="u-text-sm"><?= __('admin.settings_domains_rate_limit_before') ?><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.domains') ?></a><?= __('admin.settings_domains_rate_limit_after') ?></p>
-              <?php endif; ?>
+            <div class="setting-row">
+              <div class="setting-label">
+                <label><?= __('admin.settings_api_rate_limit_label') ?></label>
+              </div>
+              <div class="setting-value">
+                <?php if ($domainCount > 0): ?>
+                <span><?= __('admin.settings_api_rate_limit_text_before') ?><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.settings_api_rate_limit_text_link') ?></a><?= __('admin.settings_api_rate_limit_text_after') ?></span>
+                <?php else: ?>
+                <span><?= __('admin.settings_domains_rate_limit_before') ?><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.domains') ?></a><?= __('admin.settings_domains_rate_limit_after') ?></span>
+                <?php endif; ?>
+              </div>
+            </div>
+            <div class="setting-row">
+              <div class="setting-label">
+                <label><?= __('admin.api_documentation') ?></label>
+                <small><?= __('admin.settings_integrations_api_doc_help') ?></small>
+              </div>
+              <div class="setting-value"><a href="<?= htmlspecialchars(birkly_admin_url('help', ['topic' => 'settings'])) ?>"><?= __('admin.api_documentation') ?></a></div>
             </div>
           </div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-header">
-            <h2><?= __('admin.api_documentation') ?></h2>
-</div>
-          <div class="card-body u-stack-4">
-          <p class="settings-help"><?= __('admin.settings_integrations_api_doc_help') ?></p>
           </div>
         </section>
 <section class="card" id="webhooks">
@@ -951,6 +984,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </tbody>
             </table>
           </div>
+          <p class="form-help"><?= __('admin.settings_plugin_webhooks_note') ?></p>
   </div>
 </section>
         </div></div>
@@ -967,42 +1001,54 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <div class="tab-pane" id="analytics">
         <div class="settings-stack" id="analytics-settings-root">
-          <form id="analytics-settings-form" class="settings-form" data-settings-search="analytics presets privacy consent">
-          <div class="settings-pane-section">
-            <section class="card">
-              <div class="card-header">
-                <div>
-                  <h2 class="section-title"><?= __('admin.settings_analytics_section_title') ?></h2>
-                  <p class="settings-help"><?= __('admin.settings_analytics_preset_help') ?></p>
-                </div>
-                <button type="button" class="button is-small" id="analytics-csv-export" hidden><?= __('admin.settings_analytics_export_csv') ?></button>
-              </div>
-              <div class="card-body u-stack-4">
-                <div id="analytics-preset-cards" class="u-stack-3" aria-live="polite">
-                  <div class="loading-state"><p><?= __('admin.loading_presets') ?></p></div>
-                </div>
-                <p class="form-help"><?= __('admin.settings_analytics_legal_disclaimer') ?></p>
-                <div id="analytics-consent-fields" class="u-stack-3" hidden>
-                  <div class="form-group setting-row">
-                    <div class="setting-label">
-                      <label for="analytics-consent-text"><?= __('admin.settings_analytics_consent_label') ?></label>
-                    </div>
-                    <div class="setting-value">
-                      <textarea id="analytics-consent-text" name="analytics_consent_text" class="input" rows="3"></textarea>
-                    </div>
-                  </div>
-                  <div class="form-group setting-row">
-                    <div class="setting-label">
-                      <label for="analytics-retention-days"><?= __('admin.settings_analytics_retention_label') ?></label>
-                    </div>
-                    <div class="setting-value">
-                      <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="<?= htmlspecialchars(__('admin.settings_analytics_retention_ph')) ?>">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+          <div class="signal" id="analytics-collecting-banner" hidden>
+            <div class="signal-body">
+              <p class="signal-title" id="analytics-collecting-title"></p>
+              <p class="signal-text" id="analytics-collecting-text"></p>
+            </div>
+            <button type="button" class="button is-small" id="analytics-open-presets"><?= __('admin.analytics_change_collecting') ?></button>
           </div>
+          <form id="analytics-settings-form" class="settings-form" data-settings-search="analytics presets privacy consent">
+            <div id="analytics-preset-sheet" class="modal-backdrop is-sheet is-wide">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <div>
+                    <h2><?= __('admin.analytics_preset_radiogroup') ?></h2>
+                    <p class="settings-help"><?= __('admin.settings_analytics_preset_help') ?></p>
+                  </div>
+                  <button type="button" class="modal-close-btn" id="analytics-preset-close" aria-label="<?= htmlspecialchars(__('admin.cancel')) ?>">&times;</button>
+                </div>
+                <div class="modal-body">
+                  <div id="analytics-preset-cards" aria-live="polite">
+                    <div class="loading-state"><p><?= __('admin.loading_presets') ?></p></div>
+                  </div>
+                  <div id="analytics-preset-detail" class="u-stack-2"></div>
+                  <p class="form-help"><?= __('admin.settings_analytics_legal_disclaimer') ?></p>
+                  <div id="analytics-consent-fields" class="setting-rows" hidden>
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
+                        <label for="analytics-consent-text"><?= __('admin.settings_analytics_consent_label') ?></label>
+                      </div>
+                      <div class="setting-value">
+                        <textarea id="analytics-consent-text" name="analytics_consent_text" class="input" rows="3"></textarea>
+                      </div>
+                    </div>
+                    <div class="form-group setting-row">
+                      <div class="setting-label">
+                        <label for="analytics-retention-days"><?= __('admin.settings_analytics_retention_label') ?></label>
+                      </div>
+                      <div class="setting-value">
+                        <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="<?= htmlspecialchars(__('admin.settings_analytics_retention_ph')) ?>">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="button" id="analytics-preset-done"><?= __('admin.cancel') ?></button>
+                  <button type="button" class="button is-main" id="analytics-preset-save"><?= __('admin.save_changes') ?></button>
+                </div>
+              </div>
+            </div>
           </form>
           <div class="settings-pane-section" data-settings-search="analytics reports top pages referrers devices campaigns funnel">
             <section class="card analytics-report-card">
@@ -1012,15 +1058,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <p class="settings-help" id="analytics-report-help"><?= __('admin.settings_analytics_report_help') ?></p>
                 </div>
                 <div class="u-cluster u-gap-2">
+                  <span class="tag"><?= __('admin.dash_last_30_days') ?></span>
                   <label class="u-sr-only" for="analytics-domain-scope"><?= __('admin.settings_analytics_report_scope') ?></label>
                   <select id="analytics-domain-scope" class="input input-sm" aria-label="<?= htmlspecialchars(__('admin.settings_analytics_report_scope')) ?>">
                     <option value="all"><?= __('admin.settings_analytics_scope_all_domains') ?></option>
                   </select>
+                  <button type="button" class="button is-small" id="analytics-csv-export" hidden><?= __('admin.settings_analytics_export_csv') ?></button>
                 </div>
               </div>
               <div id="analytics-health-banner" class="card-body" hidden></div>
               <div class="card-body u-stack-5" id="analytics-report-panel">
-                <div class="empty-state"><p><?= __('admin.settings_analytics_select_preset_hint') ?></p></div>
+                <div class="empty"><p class="empty-text"><?= __('admin.settings_analytics_select_preset_hint') ?></p></div>
               </div>
             </section>
           </div>
@@ -1132,25 +1180,25 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                 </div>
 
-                <div class="card card--sunken" id="update-status-card">
-                  <div class="card-header">
-                    <h3 class="card-title"><?= __('admin.update_status') ?></h3>
+                <div class="signal" id="update-status-card">
+                  <div class="signal-body">
                     <div id="update-status">
                       <span class="badge badge-neutral"><?= __('admin.checking_for_updates') ?>...</span>
                     </div>
-                  </div>
-                  <div class="card-body u-stack-3" id="update-details" hidden>
-                    <div id="update-info"></div>
-                    <div class="u-cluster" id="update-actions" hidden>
-                      <button type="button" class="button is-main" id="download-update-btn">
-                        <?= birkly_icon('import', ['size' => 16]) ?>
-                        <?= __('admin.updates_js_download_update_btn') ?>
-                      </button>
-                      <button type="button" class="button" id="check-updates-btn">
-                        <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
-                        <?= __('admin.check_again') ?>
-                      </button>
+                    <div id="update-details" hidden>
+                      <div id="update-info"></div>
+                      <div id="changelog-content" class="form-help"></div>
                     </div>
+                  </div>
+                  <div class="u-cluster" id="update-actions" hidden>
+                    <button type="button" class="button is-main" id="download-update-btn">
+                      <?= birkly_icon('import', ['size' => 16]) ?>
+                      <?= __('admin.updates_js_download_update_btn') ?>
+                    </button>
+                    <button type="button" class="button is-small" id="check-updates-btn">
+                      <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
+                      <?= __('admin.check_again') ?>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1317,7 +1365,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
   <!-- Domain Management Modals -->
   <!-- Add Domain Modal -->
-  <div id="add-domain-modal" class="modal-backdrop">
+  <div id="add-domain-modal" class="modal-backdrop is-sheet is-wide">
     <div class="modal-content modal--md">
       <div class="modal-header">
         <h2><?= __('admin.register_domain') ?></h2>
@@ -1383,15 +1431,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Edit Domain Modal -->
-  <div id="edit-domain-modal" class="modal-backdrop">
+  <div id="edit-domain-modal" class="modal-backdrop is-sheet is-wide">
     <div class="modal-content modal--md">
       <div class="modal-header">
-        <h2><?= __('admin.edit_domain') ?></h2>
+        <div>
+          <h2><?= __('admin.edit_domain') ?></h2>
+          <p class="settings-help" id="edit-domain-host"></p>
+        </div>
         <button class="modal-close-btn" data-admin-action="closeEditDomainModal">&times;</button>
       </div>
       <div class="modal-body">
         <form id="edit-domain-form">
           <input type="hidden" id="edit-domain-original" name="original_domain">
+          <div class="form-group">
+            <label for="edit-domain-delivery-role"><?= __('admin.settings_domain_delivery_role_label') ?></label>
+            <select id="edit-domain-delivery-role" class="input">
+              <option value="public"><?= __('admin.settings_domain_public_alias_option') ?></option>
+              <option value="cms"><?= __('admin.settings_domain_cms_alias_option') ?></option>
+              <option value="api_only">API only (CORS) — Public API access, no site routing</option>
+            </select>
+            <small class="form-help"><?= __('admin.settings_domain_delivery_role_help') ?></small>
+          </div>
           <div class="form-group">
             <label for="edit-domain-permission-level"><?= __('admin.permission_level') ?></label>
             <select id="edit-domain-permission-level" name="permission_level" class="input">
@@ -1428,18 +1488,29 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </label>
             </div>
           </div>
+          <div id="edit-domain-snippet-wrap" class="u-stack-2" hidden>
+            <p class="u-label"><?= __('admin.copy_code') ?></p>
+            <pre class="domains-code-pre"><code id="edit-domain-snippet"></code></pre>
+            <div class="u-cluster">
+              <button type="button" class="button is-small domains-copy-btn" data-copy-target="edit-domain-snippet"><?= birkly_icon('copy', ['size' => 14]) ?><?= __('admin.copy_code') ?></button>
+              <button type="button" class="button is-small" id="edit-domain-report-btn"><?= __('admin.settings_analytics_report_title') ?></button>
+            </div>
+            <p class="form-help"><?= __('admin.settings_domain_snippet_help') ?></p>
+            <div id="edit-domain-report" hidden></div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
+        <button type="button" class="button is-danger" id="edit-domain-delete-btn"><?= __('admin.delete') ?></button>
         <button type="button" class="button" data-admin-action="closeEditDomainModal"><?= __('admin.cancel') ?></button>
-                <button type="button" class="button is-main" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
+        <button type="button" class="button is-main" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
       </div>
     </div>
   </div>
 
   <!-- Role Management Modals -->
   <!-- Add Role Modal -->
-  <div id="add-role-modal" class="modal-backdrop">
+  <div id="add-role-modal" class="modal-backdrop is-sheet is-wide">
     <div class="modal-content modal--lg">
       <div class="modal-header">
         <h2><?= __('admin.add_new_role') ?></h2>
@@ -1476,7 +1547,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Edit Role Modal -->
-  <div id="edit-role-modal" class="modal-backdrop">
+  <div id="edit-role-modal" class="modal-backdrop is-sheet is-wide">
     <div class="modal-content modal--lg">
       <div class="modal-header">
         <h2><?= __('admin.edit_role') ?></h2>
@@ -1517,7 +1588,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
   <!-- User Management Modals -->
   <!-- Invite User Modal -->
-  <div id="invite-user-modal" class="modal-backdrop">
+  <div id="invite-user-modal" class="modal-backdrop is-sheet">
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.invite_new_user') ?></h2>
@@ -1573,7 +1644,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Add User Modal -->
-  <div id="add-user-modal" class="modal-backdrop">
+  <div id="add-user-modal" class="modal-backdrop is-sheet">
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.add_new_user') ?></h2>
@@ -1628,7 +1699,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Edit User Modal -->
-  <div id="edit-user-modal" class="modal-backdrop">
+  <div id="edit-user-modal" class="modal-backdrop is-sheet">
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.edit_user') ?></h2>

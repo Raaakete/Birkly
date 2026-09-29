@@ -98,6 +98,10 @@ function createPermissionsGrid(containerId, permissions = {}) {
         cell.textContent = actionLabel(action);
         head.appendChild(cell);
     });
+    const allHead = document.createElement('span');
+    allHead.setAttribute('role', 'columnheader');
+    allHead.textContent = stT('all', 'All');
+    head.appendChild(allHead);
     container.appendChild(head);
 
     availableResources.forEach(resource => {
@@ -131,6 +135,37 @@ function createPermissionsGrid(containerId, permissions = {}) {
 
             cell.appendChild(checkbox);
             row.appendChild(cell);
+        });
+
+        const allCell = document.createElement('label');
+        allCell.className = 'permission-cell';
+        allCell.setAttribute('role', 'cell');
+        const allBox = document.createElement('input');
+        allBox.type = 'checkbox';
+        allBox.className = 'check';
+        allBox.setAttribute('data-all', resource);
+        allBox.setAttribute('aria-label', resourceLabel + ': ' + stT('all', 'All'));
+        allBox.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+        allBox.addEventListener('change', function () {
+            row.querySelectorAll('input.check[data-resource="' + resource + '"]').forEach(function (box) {
+                box.checked = allBox.checked;
+            });
+        });
+        allCell.appendChild(allBox);
+        row.appendChild(allCell);
+
+        const resourceBoxes = row.querySelectorAll('input.check[data-resource="' + resource + '"]');
+        allBox.checked = resourceBoxes.length > 0 && Array.from(resourceBoxes).every(function (box) {
+            return box.checked;
+        });
+        resourceBoxes.forEach(function (box) {
+            box.addEventListener('change', function () {
+                allBox.checked = Array.from(resourceBoxes).every(function (item) {
+                    return item.checked;
+                });
+            });
         });
 
         container.appendChild(row);
@@ -1142,6 +1177,27 @@ window.migrateStorage = migrateStorage;
         return false;
     }
 
+    function settingsHelpTopic(tabId) {
+        var topics = {
+            analytics: 'analytics-presets',
+            ai: 'mcp-connections'
+        };
+        return topics[tabId] || 'settings';
+    }
+
+    function updateSettingsChrome(tabButton, tabId) {
+        var crumb = document.getElementById('settings-tab-crumb');
+        if (crumb && tabButton) {
+            crumb.textContent = String(tabButton.textContent || '').replace(/\s+/g, ' ').trim();
+        }
+        var help = document.getElementById('settings-how-it-works');
+        if (!help) return;
+        var base = help.getAttribute('data-help-base') || help.href || '';
+        if (base.indexOf('topic=') !== -1) {
+            help.href = base.replace(/topic=[^&]*/, 'topic=' + encodeURIComponent(settingsHelpTopic(tabId)));
+        }
+    }
+
     async function activateTab(tabId, tabButtons, tabPanes, scrollTo, options) {
         options = options || {};
         if (!tabId) return false;
@@ -1162,6 +1218,7 @@ window.migrateStorage = migrateStorage;
         }
 
         currentTab = tabId;
+        updateSettingsChrome(tabButton, tabId);
 
         for (var j = 0; j < tabButtons.length; j++) {
             var isActive = tabButtons[j] === tabButton;
@@ -1537,17 +1594,19 @@ async function loadTeamInvitations() {
                 actions.push('<button type="button" class="button is-quiet is-small" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(stT('cancel', 'Cancel')) + '</button>');
             }
 
-            return '<div class="data-list-item">' +
-                '<div class="data-list-main">' +
-                    '<span class="data-list-title">' + escapeHtml(invite.email || '') + '</span>' +
-                    '<span class="data-list-meta">' +
-                        escapeHtml((invite.role || 'viewer')) + ' · ' + escapeHtml(delivery) +
-                        ' · Created ' + escapeHtml(formatInvitationDate(invite.created_at)) +
-                        ' · Expires ' + escapeHtml(formatInvitationDate(invite.expires_at)) +
-                    '</span>' +
+            return '<div class="list-row">' +
+                '<span class="avatar" aria-hidden="true">' + escapeHtml(String(invite.email || '?').charAt(0).toUpperCase()) + '</span>' +
+                '<div class="row-body">' +
+                    '<div class="row-title"><span class="u-truncate">' + escapeHtml(invite.email || '') + '</span>' +
+                        '<span class="tag">' + escapeHtml(invite.role || 'viewer') + '</span></div>' +
+                    '<div class="row-meta">' +
+                        escapeHtml(delivery) +
+                        ' · ' + escapeHtml(formatInvitationDate(invite.created_at)) +
+                        ' · ' + escapeHtml(formatInvitationDate(invite.expires_at)) +
+                    '</div>' +
                     emailError +
                 '</div>' +
-                '<div class="data-list-actions u-cluster-2">' +
+                '<div class="row-actions">' +
                     '<span class="badge ' + badge.className + '">' + escapeHtml(badge.label) + '</span>' +
                     actions.join('') +
                 '</div>' +
@@ -2364,13 +2423,24 @@ async function deletePlugin(pluginId) {
 
         attachDomainsCopyButtons(document.getElementById('domains'));
         domainRoles = domainRoles || {};
+        var summary = document.getElementById('domains-summary');
+        var analyticsCount = domains.filter(function (domain) { return !!domain.analytics_enabled; }).length;
+        if (summary) {
+            summary.textContent = domains.length
+                ? stT('settings_domains_summary', '{domains} domains · {api} registered for API · {analytics} counted in Analytics', {
+                    domains: domains.length,
+                    api: domains.length,
+                    analytics: analyticsCount
+                })
+                : '';
+        }
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
+            listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
             return;
         }
 
-        listContainer.innerHTML = domains.map(function(domain) {
+        var rows = domains.map(function(domain) {
             var permissions = domain.permissions || {};
             var permissionLevel = permissions.permission_level || 'read_write';
             var readCollections = permissions.read_collections || [];
@@ -2380,66 +2450,39 @@ async function deletePlugin(pluginId) {
             var domainName = String(domain.domain || '');
             var domainEscaped = escapeHtml(domainName);
             var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
-            var statusClass = domain.status === 'active' ? 'success' : 'neutral';
-            var statusText = domain.status || 'active';
-            var permClass = permissionLevel === 'read_write' ? 'accent' : 'info';
+            var host = domainName.toLowerCase();
+            var role = (domainRoles && domainRoles[host]) ? domainRoles[host] : 'unassigned';
             var permText = permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only';
             var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
             var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
             var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
-            var readColsHtml = readCollections.length > 0 ? '<span class="kv-key">Read collections</span><span class="kv-value">' + escapeHtml(readCollections.join(', ')) + '</span>' : '';
-            var writeColsHtml = writeCollections.length > 0 ? '<span class="kv-key">Write collections</span><span class="kv-value">' + escapeHtml(writeCollections.join(', ')) + '</span>' : '';
-            var trackingScriptHtml = renderDomainTrackingScript(domainName, analyticsEnabled);
-            var deliveryRoleHtml = renderDomainDeliveryRole(domainName, domainRoles);
+            var collectionBits = [];
+            if (readCollections.length) collectionBits.push('Read ' + readCollections.join(', '));
+            if (writeCollections.length) collectionBits.push('Write ' + writeCollections.join(', '));
+            var meta = emailEscaped + ' · ' + escapeHtml(registeredDate) + ' · Read ' + readLimit + '/min · Write ' + writeLimit + '/hour';
+            if (collectionBits.length) meta += ' · ' + escapeHtml(collectionBits.join(' · '));
+            var apiBadge = domain.status === 'active'
+                ? '<span class="badge badge-success">' + escapeHtml(permText) + '</span>'
+                : '<span class="badge badge-neutral">' + escapeHtml(domain.status || 'inactive') + '</span>';
 
-            return '' +
-                '<article class="domain-card card">' +
-                '<div class="card-header">' +
-                '<div class="u-stack-2 u-min-w-0">' +
-                '<h4 class="card-title u-text-base">' + domainEscaped + '</h4>' +
-                '<div class="u-cluster">' +
-                '<span class="badge badge-' + statusClass + '">' + escapeHtml(statusText) + '</span>' +
-                '<span class="badge badge-' + permClass + '">' + permText + '</span>' +
-                (analyticsEnabled ? '<span class="badge badge-success">Analytics on</span>' : '') +
-                '</div>' +
-                '</div>' +
-                '<div class="card-actions">' +
-                '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
-                '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
-                '</div>' +
-                '</div>' +
-                '<div class="card-body u-stack-4">' +
-                '<div class="kv">' +
-                '<span class="kv-key">Email</span><span class="kv-value">' + emailEscaped + '</span>' +
-                '<span class="kv-key">Registered</span><span class="kv-value">' + registeredDate + '</span>' +
-                '<span class="kv-key">Delivery role</span><span class="kv-value">' + deliveryRoleHtml + '</span>' +
-                '<span class="kv-key">Rate limits</span><span class="kv-value">Read ' + readLimit + '/min · Write ' + writeLimit + '/hour</span>' +
-                readColsHtml +
-                writeColsHtml +
-                '</div>' +
-                '<div class="u-stack-3">' +
-                '<div class="data-list-item domain-analytics-toggle-row">' +
-                '<div class="data-list-main">' +
-                '<span class="data-list-title">Website analytics</span>' +
-                '<small class="data-list-meta">Self-hosted visitor tracking for this domain.</small>' +
-                '</div>' +
-                '<label class="switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
-                '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
-                '<span class="switch__slider"></span>' +
-                '</label>' +
-                '</div>' +
-                (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
-                (analyticsEnabled ?
-                    '<div class="u-cluster">' +
-                    '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
-                    '</div>' +
-                    '<div class="domain-analytics-report" hidden></div>' : '') +
-                '</div>' +
-                '</div>' +
-                '</article>';
+            return '<tr>' +
+                '<td><div class="row-title">' + domainEscaped + '</div><div class="row-meta">' + meta + '</div></td>' +
+                '<td><span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span></td>' +
+                '<td>' + apiBadge + '</td>' +
+                '<td><label class="switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
+                    '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
+                    '<span class="switch__slider"></span></label></td>' +
+                '<td class="cell-actions">' +
+                    (analyticsEnabled ? '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button> ' : '') +
+                    '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">' + escapeHtml(stT('edit', 'Edit')) + '</button> ' +
+                    '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">' + escapeHtml(stT('delete', 'Delete')) + '</button>' +
+                '</td></tr>';
         }).join('');
 
-        attachDomainsCopyButtons(listContainer);
+        listContainer.innerHTML =
+            '<div class="table-container"><table class="table table--hover domains-table">' +
+            '<thead><tr><th>' + escapeHtml(stT('domain_name', 'Domain name')) + '</th><th>' + escapeHtml(stT('settings_domain_delivery_role_label', 'Delivery role')) + '</th><th>' + escapeHtml(stT('permission_level', 'Permission level')) + '</th><th>' + escapeHtml(stT('settings_tab_analytics', 'Analytics')) + '</th><th></th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table></div>';
 
         var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
         for (var i = 0; i < domainActions.length; i++) {
@@ -2471,34 +2514,29 @@ async function deletePlugin(pluginId) {
             (function(btn) {
                 btn.addEventListener('click', async function () {
                     var domain = btn.getAttribute('data-domain');
-                    var card = btn.closest('.domain-card');
-                    var reportContainer = card ? card.querySelector('.domain-analytics-report') : null;
-                    if (reportContainer && !reportContainer.dataset.loaded) {
-                        reportContainer.dataset.loaded = '1';
-                        loadDomainAnalyticsReport(domain, reportContainer);
-                    } else if (reportContainer) {
+                    var reportContainer = document.getElementById('domains-report-mount');
+                    if (!reportContainer) return;
+                    if (reportContainer.dataset.domain === domain && reportContainer.dataset.loaded === '1') {
                         reportContainer.hidden = !reportContainer.hidden;
+                        return;
                     }
+                    reportContainer.dataset.domain = domain;
+                    reportContainer.dataset.loaded = '1';
+                    loadDomainAnalyticsReport(domain, reportContainer);
                 });
             })(reportButtons[k]);
         }
-
-        var roleSelects = listContainer.querySelectorAll('.domain-delivery-role');
-        for (var r = 0; r < roleSelects.length; r++) {
-            (function(select) {
-                select.addEventListener('change', function () {
-                    setDomainDeliveryRole(select.getAttribute('data-domain'), select.value, select);
-                });
-            })(roleSelects[r]);
-        }
     }
-    
-        
+
     // Expose functions globally
     window.loadDomains = loadDomains;
     window.renderDomains = renderDomains;
     window.loadDeliveryMatrix = loadDeliveryMatrix;
     window.renderDeliveryMatrix = renderDeliveryMatrix;
+    window.setDomainDeliveryRole = setDomainDeliveryRole;
+    window.buildDomainTrackingScript = buildDomainTrackingScript;
+    window.loadDomainAnalyticsReport = loadDomainAnalyticsReport;
+    window.attachDomainsCopyButtons = attachDomainsCopyButtons;
 })();
 
 function openAddDomainModal() {
@@ -2679,11 +2717,17 @@ window.editDomain = async function(domainName) {
                 document.getElementById('edit-domain-read-limit').value = rateLimits.read?.limit || 100;
                 document.getElementById('edit-domain-write-limit').value = rateLimits.write?.limit || 10;
                 document.getElementById('edit-domain-enable-analytics').checked = domain.analytics_enabled || false;
+                var hostLabel = document.getElementById('edit-domain-host');
+                if (hostLabel) hostLabel.textContent = domainName;
+                fillEditDomainExtras(domainName, !!domain.analytics_enabled);
                 
                 var editModal = document.getElementById('edit-domain-modal');
                 if (editModal) {
                     editModal.style.display = 'flex';
                     editModal.classList.add('active');
+                    if (typeof window.attachDomainsCopyButtons === 'function') {
+                        window.attachDomainsCopyButtons(editModal);
+                    }
                 } else {
                     console.error('Edit domain modal not found');
                 }
@@ -2696,6 +2740,74 @@ window.editDomain = async function(domainName) {
         showMessage(stT('settings_js_err_loading_domain', 'Error loading domain details:') + ' ' + error.message, 'error');
     }
 };
+
+function fillEditDomainExtras(domainName, analyticsEnabled) {
+    var roleSelect = document.getElementById('edit-domain-delivery-role');
+    var wrap = document.getElementById('edit-domain-snippet-wrap');
+    var code = document.getElementById('edit-domain-snippet');
+    if (code && typeof window.buildDomainTrackingScript === 'function') {
+        code.textContent = window.buildDomainTrackingScript(domainName);
+    }
+    if (wrap) wrap.hidden = !analyticsEnabled;
+    var analyticsBox = document.getElementById('edit-domain-enable-analytics');
+    if (analyticsBox && analyticsBox.dataset.snippetBound !== '1') {
+        analyticsBox.dataset.snippetBound = '1';
+        analyticsBox.addEventListener('change', function () {
+            var host = document.getElementById('edit-domain-original').value;
+            if (code && typeof window.buildDomainTrackingScript === 'function') {
+                code.textContent = window.buildDomainTrackingScript(host);
+            }
+            if (wrap) wrap.hidden = !analyticsBox.checked;
+        });
+    }
+    var deleteBtn = document.getElementById('edit-domain-delete-btn');
+    if (deleteBtn && deleteBtn.dataset.bound !== '1') {
+        deleteBtn.dataset.bound = '1';
+        deleteBtn.addEventListener('click', function () {
+            var host = document.getElementById('edit-domain-original').value;
+            if (host && window.deleteDomain) window.deleteDomain(host);
+        });
+    }
+    var reportBtn = document.getElementById('edit-domain-report-btn');
+    if (reportBtn && reportBtn.dataset.bound !== '1') {
+        reportBtn.dataset.bound = '1';
+        reportBtn.addEventListener('click', function () {
+            var host = document.getElementById('edit-domain-original').value;
+            var mount = document.getElementById('edit-domain-report');
+            if (host && mount && typeof window.loadDomainAnalyticsReport === 'function') {
+                window.loadDomainAnalyticsReport(host, mount);
+            }
+        });
+    }
+    if (!roleSelect || typeof window.setDomainDeliveryRole !== 'function') return;
+    roleSelect.setAttribute('data-ready', '0');
+    fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
+        .then(function (response) { return response.json(); })
+        .then(function (payload) {
+            var roles = payload.status === 'ok' && payload.data ? (payload.data.domain_roles || {}) : {};
+            var role = roles[String(domainName || '').toLowerCase()] || 'unassigned';
+            var aliasable = role === 'cms' || role === 'public' || role === 'api_only' || role === 'unassigned';
+            roleSelect.disabled = !aliasable;
+            if (role === 'unassigned' && !Array.from(roleSelect.options).some(function (option) { return option.value === 'unassigned'; })) {
+                var unassigned = document.createElement('option');
+                unassigned.value = 'unassigned';
+                unassigned.textContent = 'Unassigned';
+                roleSelect.insertBefore(unassigned, roleSelect.firstChild);
+            }
+            if (!aliasable && !Array.from(roleSelect.options).some(function (option) { return option.value === role; })) {
+                var option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                roleSelect.appendChild(option);
+            }
+            roleSelect.value = aliasable
+                ? ((role === 'cms' || role === 'public' || role === 'unassigned') ? role : 'api_only')
+                : role;
+            roleSelect.setAttribute('data-original-role', roleSelect.value);
+            roleSelect.setAttribute('data-ready', '1');
+        })
+        .catch(function () { /* role stays editable as an alias */ });
+}
 
 function closeEditDomainModal() {
     var modal = document.getElementById('edit-domain-modal');
@@ -2756,8 +2868,15 @@ async function updateDomain() {
         
         if (result.status === 'ok') {
             showMessage(stT('settings_js_domain_updated', 'Domain updated successfully!'), 'success');
+            var roleSelect = document.getElementById('edit-domain-delivery-role');
+            var nextRole = roleSelect ? roleSelect.value : '';
+            var prevRole = roleSelect ? (roleSelect.getAttribute('data-original-role') || '') : '';
             closeEditDomainModal();
-            loadDomains();
+            if (roleSelect && roleSelect.getAttribute('data-ready') === '1' && !roleSelect.disabled && nextRole && nextRole !== 'unassigned' && nextRole !== prevRole && typeof window.setDomainDeliveryRole === 'function') {
+                window.setDomainDeliveryRole(originalDomain, nextRole, null);
+            } else {
+                loadDomains();
+            }
         } else {
             showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
@@ -2788,6 +2907,7 @@ window.deleteDomain = async function(domainName) {
         
         if (result.status === 'ok') {
             showMessage(stT('settings_js_domain_deleted', 'Domain deleted successfully!'), 'success');
+            closeEditDomainModal();
             loadDomains();
         } else {
             showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');

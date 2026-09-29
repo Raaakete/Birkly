@@ -149,7 +149,7 @@
 
         if (!webhooks.length) {
             const emptyMsg = escapeHtml(t('webhook_empty', 'No webhooks configured yet.'));
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + emptyMsg + '</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><p class="empty-title">' + emptyMsg + '</p></div></td></tr>';
             return;
         }
 
