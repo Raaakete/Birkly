@@ -193,6 +193,7 @@
 
             wrapToolbarScroll(toolbar);
             initToolbarOverflow(toolbar);
+            initToolbarTooltips(toolbar);
 
             // Initialize table controls for existing tables
             const existingTables = editor.querySelectorAll('table.content-editor-table[data-editable-table="true"]');
@@ -735,6 +736,7 @@
       
       // Copy toolbar HTML
       fullscreenToolbar.innerHTML = toolbar.innerHTML;
+      initToolbarTooltips(fullscreenToolbar);
       
       // Copy editor content
       fullscreenEditor.innerHTML = editor.innerHTML;
@@ -802,6 +804,7 @@
       setTimeout(() => {
         overlay.classList.add('active');
         isFullscreen = true;
+        document.body.classList.add('content-editor-fullscreen-active');
         
         // Focus the fullscreen editor
         setTimeout(() => {
@@ -860,6 +863,9 @@
       // Hide overlay
       fullscreenOverlay.classList.remove('active');
       isFullscreen = false;
+      if (!document.querySelector('.content-editor-fullscreen-overlay.active')) {
+        document.body.classList.remove('content-editor-fullscreen-active');
+      }
       
       // Remove keyboard event listeners
       if (escHandler) {
@@ -893,6 +899,18 @@
       if (e.key === 'F11' && !isFullscreen) {
         e.preventDefault();
         openFullscreen();
+      }
+    });
+  }
+
+  function initToolbarTooltips(toolbar) {
+    if (!toolbar) return;
+    toolbar.querySelectorAll('.toolbar-btn[title]').forEach((btn) => {
+      const label = btn.getAttribute('title');
+      if (!label) return;
+      btn.setAttribute('data-ce-tooltip', label);
+      if (!btn.getAttribute('aria-label')) {
+        btn.setAttribute('aria-label', label.split(' - ')[0] || label);
       }
     });
   }

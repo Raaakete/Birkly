@@ -41,6 +41,8 @@
   position: relative;
   min-height: 200px;
   z-index: 1;
+  background: var(--surface-2);
+  border-radius: var(--r);
 }
 
 .content-editor-area.is-mode-hidden {
@@ -310,20 +312,25 @@
   height: var(--icon);
 }
 
-.toolbar-btn[title]:hover::after {
-  content: attr(title);
+.content-editor-toolbar .toolbar-btn[data-ce-tooltip]:hover::after,
+.content-editor-toolbar .toolbar-btn[data-ce-tooltip]:focus-visible::after {
+  content: attr(data-ce-tooltip);
   position: absolute;
-  inset-block-end: calc(100% + 6px);
+  inset-block-end: calc(100% + var(--s-2));
   inset-inline-start: 50%;
-  z-index: 10000;
-  padding: 4px var(--s-2);
-  border-radius: var(--r-inset);
-  background: var(--text);
-  color: var(--bg);
-  font: var(--weight-regular) var(--size-caption) / var(--lh-caption) var(--font-sans);
-  white-space: nowrap;
+  translate: -50% 0;
+  z-index: 10050;
+  width: max-content;
+  max-width: 16rem;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r);
+  background: var(--ink-float);
+  box-shadow: var(--shadow-float-2);
+  color: var(--on-ink-float);
+  font: var(--weight-regular) var(--size-small) / 1.45 var(--font-sans);
+  white-space: normal;
+  text-align: start;
   pointer-events: none;
-  transform: translateX(-50%);
 }
 
 .toolbar-btn:hover {
@@ -720,12 +727,14 @@
   min-height: 200px;
   max-height: 600px;
   overflow-y: auto;
-  padding: var(--s-2) 0 0;
+  padding: var(--s-3);
   font-size: var(--size-slab-title);
   line-height: 1.6;
   color: var(--text);
   outline: none;
-  background: none;
+  background: var(--surface-2);
+  border-radius: var(--r);
+  box-sizing: border-box;
 }
 
 .content-editor-area:focus {
@@ -1379,6 +1388,11 @@
   visibility: visible;
 }
 
+/* Global admin media picker must sit above the fullscreen editor shell */
+body.content-editor-fullscreen-active .media-modal-overlay.modal-backdrop {
+  z-index: 9200;
+}
+
 .content-editor-fullscreen-header {
   display: flex;
   align-items: center;
@@ -1431,7 +1445,7 @@
   min-height: 0;
   border: none;
   border-radius: 0;
-  background: var(--surface);
+  background: var(--surface-2);
   overflow: visible;
 }
 
@@ -1454,6 +1468,7 @@
   font-size: 16px;
   line-height: 1.7;
   max-height: 100%;
+  background: var(--surface-2);
 }
 
 .content-editor-fullscreen-wrapper .content-editor-area:focus {
@@ -1907,7 +1922,12 @@
   opacity: 0;
   transform: translateY(-4px);
   transition: opacity var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
-  z-index: 5;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.content-editor-image-wrapper[contenteditable="false"] {
+  user-select: none;
 }
 
 .content-editor-image-with-controls:hover .content-editor-image-controls,

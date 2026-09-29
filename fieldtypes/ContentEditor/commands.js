@@ -1534,17 +1534,21 @@ window.ContentEditorCommands = {
   insertImage() {
     const editor = this.getActiveEditor();
     if (!editor) return;
-    
-    // Save selection before opening modal
+
+    window.ContentEditorState = window.ContentEditorState || {};
+    window.ContentEditorState.activeEditor = editor;
+
+    // Save selection before opening modal (paths are relative to this editor root)
     window.ContentEditorSelection.save();
-    
+    const insertTargetEditor = editor;
+
     // Check if media modal is available
     if (window.Birkly && window.Birkly.MediaModal && typeof window.Birkly.MediaModal.open === 'function') {
       window.Birkly.MediaModal.open((media) => {
         if (media && media.url) {
           // Use media title/name as alt text if available
           const altText = media.title || media.name || '';
-          this.insertImageElement(media.url, altText);
+          this.insertImageElement(media.url, altText, insertTargetEditor);
         }
       });
     } else {
@@ -1557,11 +1561,17 @@ window.ContentEditorCommands = {
   },
 
   // Insert image element at cursor position
-  insertImageElement(url, alt = '') {
-    const editor = this.getActiveEditor();
+  insertImageElement(url, alt = '', targetEditor = null) {
+    const editor = targetEditor
+      || (window.ContentEditorSelection && window.ContentEditorSelection.savedEditorRoot)
+      || this.getActiveEditor();
     if (!editor) return;
-    
-    // Restore selection with editor as root element
+
+    window.ContentEditorState = window.ContentEditorState || {};
+    window.ContentEditorState.activeEditor = editor;
+    editor.focus();
+
+    // Restore selection with the same editor root used when saving
     window.ContentEditorSelection.restore(editor);
     
     const selection = window.getSelection();
@@ -1589,6 +1599,7 @@ window.ContentEditorCommands = {
     // Create image wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'content-editor-image-wrapper content-editor-image-with-controls';
+    wrapper.setAttribute('contenteditable', 'false');
     wrapper.style.position = 'relative';
     wrapper.style.display = 'inline-block';
     wrapper.style.maxWidth = '100%';
@@ -1690,13 +1701,8 @@ window.ContentEditorCommands = {
       selection.addRange(newRange);
     }
     
-    // Sync and update toolbar
-    if (window.ContentEditorSync) {
-      const hiddenInput = document.getElementById('field_' + editor.dataset.fieldName);
-      if (hiddenInput) {
-        window.ContentEditorSync.toHidden(editor, hiddenInput);
-      }
-    }
+    this.syncPairedEditors(editor);
+
     if (window.ContentEditorToolbar) {
       const toolbar = editor.closest('.content-editor-wrapper')?.querySelector('.content-editor-toolbar') ||
                      document.querySelector('.content-editor-toolbar');
@@ -3608,6 +3614,13 @@ window.ContentEditorCommands = {
       this.setImageLightbox(wrapper, enable);
     });
     
+    [editBtn, resizeBtn, lightboxBtn, deleteBtn].forEach((btn) => {
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+    });
+
     deleteBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -4026,6 +4039,8 @@ window.ContentEditorCommands = {
   // Delete image element
   deleteImageElement(wrapper) {
     if (!wrapper) return;
+
+    const editor = wrapper.closest('.content-editor-area') || this.getActiveEditor();
     
     // Remove resize handles if visible
     const handles = wrapper.querySelector('.content-editor-image-resize-handles');
@@ -4036,14 +4051,7 @@ window.ContentEditorCommands = {
     // Remove the wrapper (which contains the image and controls)
     wrapper.remove();
     
-    // Sync content
-    const editor = this.getActiveEditor();
-    if (editor && window.ContentEditorSync) {
-      const hiddenInput = document.getElementById('field_' + editor.dataset.fieldName);
-      if (hiddenInput) {
-        window.ContentEditorSync.toHidden(editor, hiddenInput);
-      }
-    }
+    this.syncPairedEditors(editor);
     
     // Save history
     if (window.ContentEditorHistory) {
@@ -4236,6 +4244,7 @@ window.ContentEditorCommands = {
         // Not wrapped, wrap it and add controls
         const wrapper = document.createElement('div');
         wrapper.className = 'content-editor-image-wrapper content-editor-image-with-controls';
+        wrapper.setAttribute('contenteditable', 'false');
         wrapper.style.position = 'relative';
         wrapper.style.display = 'inline-block';
         wrapper.style.maxWidth = '100%';
@@ -4734,12 +4743,41 @@ window.ContentEditorCommands = {
   },
 
   getActiveEditor() {
+    const fsOverlay = document.querySelector('.content-editor-fullscreen-overlay.active');
+    if (fsOverlay) {
+      const fsEditor = fsOverlay.querySelector('.content-editor-area[contenteditable="true"]');
+      if (fsEditor) return fsEditor;
+    }
     if (window.ContentEditorState && window.ContentEditorState.activeEditor) {
-      return window.ContentEditorState.activeEditor;
+      const active = window.ContentEditorState.activeEditor;
+      if (document.contains(active)) {
+        return active;
+      }
     }
     const active = document.activeElement ? document.activeElement.closest('.content-editor-area') : null;
     if (active) return active;
     return document.querySelector('.content-editor-area');
+  },
+
+  syncPairedEditors(sourceEditor) {
+    if (!sourceEditor) return;
+    const fieldName = sourceEditor.dataset.fieldName;
+    if (!fieldName) return;
+
+    const hiddenInput = document.getElementById('field_' + fieldName);
+    if (hiddenInput && window.ContentEditorSync) {
+      window.ContentEditorSync.toHidden(sourceEditor, hiddenInput);
+    }
+
+    const inlineEditor = document.getElementById('editor_' + fieldName);
+    const fsEditor = document.getElementById('editor_' + fieldName + '_fullscreen');
+    if (inlineEditor && fsEditor) {
+      if (sourceEditor === fsEditor) {
+        inlineEditor.innerHTML = fsEditor.innerHTML;
+      } else if (sourceEditor === inlineEditor) {
+        fsEditor.innerHTML = inlineEditor.innerHTML;
+      }
+    }
   },
 
   getMetadataEndpoint() {
