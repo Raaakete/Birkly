@@ -41,6 +41,14 @@ if (empty($browse['ok']) || empty($browse['fallback'])) {
 if (count($browse['offers'] ?? []) < 2) {
     $errors[] = 'Browse fallback should return official offers';
 }
+
+$byPrice = birkly_marketplace_browse('', '', '', 'price_desc');
+$priceTitles = array_map(static fn ($offer) => (string) ($offer['title'] ?? ''), $byPrice['offers'] ?? []);
+$commerceAt = array_search('Birkly Commerce', $priceTitles, true);
+$automationAt = array_search('Birkly Automation', $priceTitles, true);
+if ($commerceAt === false || $automationAt === false || $commerceAt > $automationAt) {
+    $errors[] = 'Price high-to-low sort should list paid offers before free offers';
+}
 if ($elapsed > 2.0) {
     $errors[] = 'Browse fallback should fail fast without waiting for registry timeouts';
 }
