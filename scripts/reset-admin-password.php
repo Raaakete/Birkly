@@ -15,6 +15,9 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/core/cli_only.php';
+birkly_require_cli();
+
 foreach (array_slice($argv, 1) as $arg) {
     if ($arg === '--password' || str_starts_with($arg, '--password=')) {
         fwrite(STDERR, "Do not pass --password on the command line (visible in process list).\n");
