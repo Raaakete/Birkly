@@ -173,6 +173,32 @@ if ($__cmsMcpComponentsFunctionsOnly) {
     return;
 }
 
+require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/csrf.php';
+
+haru_secure_session_start();
+requireAuth('manage_content');
+
+// CLI tests have no HTTP body. Production requests never set this global.
+$rawBody = (isset($GLOBALS['__components_test_raw_body']) && is_string($GLOBALS['__components_test_raw_body']))
+    ? $GLOBALS['__components_test_raw_body']
+    : file_get_contents('php://input');
+$jsonBody = json_decode(is_string($rawBody) && $rawBody !== '' ? $rawBody : 'null', true);
+if (!is_array($jsonBody)) {
+    $jsonBody = [];
+}
+
+$mutatingActions = ['save', 'delete', 'update_entries'];
+if (in_array($action, $mutatingActions, true)) {
+    $csrf = (string) ($jsonBody['_csrf'] ?? $_POST['_csrf'] ?? '');
+    if (!validate_csrf_token($csrf)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Invalid CSRF token']);
+        exit;
+    }
+}
+
 try {
     switch ($action) {
         case 'list':
@@ -194,15 +220,15 @@ try {
             break;
 
         case 'save':
-            $data = json_decode(file_get_contents('php://input'), true);
-            if (!$data) {
-                $data = $_POST;
+            $data = $jsonBody !== [] ? $jsonBody : $_POST;
+            if (is_array($data)) {
+                unset($data['_csrf']);
             }
-            echo json_encode($registry->save($data));
+            echo json_encode($registry->save(is_array($data) ? $data : []));
             break;
 
         case 'delete':
-            $slug = $_GET['slug'] ?? $_POST['slug'] ?? '';
+            $slug = $_GET['slug'] ?? $_POST['slug'] ?? ($jsonBody['slug'] ?? '');
             if (empty($slug)) {
                 echo json_encode(['success' => false, 'error' => 'Slug is required']);
                 break;
@@ -240,11 +266,8 @@ try {
             break;
 
         case 'update_entries':
-            $data = json_decode(file_get_contents('php://input'), true);
-            if (!$data) {
-                $data = $_POST;
-            }
-            $slug = $data['slug'] ?? '';
+            $data = $jsonBody !== [] ? $jsonBody : $_POST;
+            $slug = is_array($data) ? ($data['slug'] ?? '') : '';
             if (empty($slug)) {
                 echo json_encode(['success' => false, 'error' => 'Slug is required']);
                 break;
