@@ -883,17 +883,19 @@
       }, 200);
     }
     
-    // Fullscreen button click handler
-    fullscreenBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (isFullscreen) {
-        closeFullscreen();
-      } else {
-        openFullscreen();
-      }
-    });
-    
+    window.ContentEditorFullscreenRegistry = window.ContentEditorFullscreenRegistry || {};
+    window.ContentEditorFullscreenRegistry[fieldName] = {
+      toggle() {
+        if (isFullscreen) {
+          closeFullscreen();
+        } else {
+          openFullscreen();
+        }
+      },
+      open: openFullscreen,
+      close: closeFullscreen,
+    };
+
     // F11 key handler to open fullscreen from original editor
     editor.addEventListener('keydown', (e) => {
       if (e.key === 'F11' && !isFullscreen) {
@@ -903,15 +905,87 @@
     });
   }
 
+  function ensureContentEditorTooltipLayer() {
+    if (window._contentEditorTooltipController) {
+      return window._contentEditorTooltipController;
+    }
+
+    const el = document.createElement('div');
+    el.id = 'content-editor-toolbar-tooltip';
+    el.className = 'content-editor-toolbar-tooltip';
+    el.hidden = true;
+    el.setAttribute('role', 'tooltip');
+    document.body.appendChild(el);
+
+    let activeBtn = null;
+    let hideTimer = null;
+
+    const position = (btn) => {
+      const rect = btn.getBoundingClientRect();
+      el.style.left = `${rect.left + rect.width / 2}px`;
+      el.style.top = `${rect.top}px`;
+    };
+
+    const show = (btn) => {
+      const text = btn.getAttribute('data-ce-tooltip');
+      if (!text) return;
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      activeBtn = btn;
+      el.textContent = text;
+      el.hidden = false;
+      position(btn);
+      el.classList.remove('is-visible');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => el.classList.add('is-visible'));
+      });
+    };
+
+    const hide = () => {
+      activeBtn = null;
+      el.classList.remove('is-visible');
+      hideTimer = setTimeout(() => {
+        el.hidden = true;
+        el.textContent = '';
+      }, 140);
+    };
+
+    const onReposition = () => {
+      if (activeBtn && !el.hidden) {
+        position(activeBtn);
+      }
+    };
+
+    window.addEventListener('scroll', onReposition, true);
+    window.addEventListener('resize', onReposition);
+
+    window._contentEditorTooltipController = { show, hide, el };
+    return window._contentEditorTooltipController;
+  }
+
   function initToolbarTooltips(toolbar) {
     if (!toolbar) return;
-    toolbar.querySelectorAll('.toolbar-btn[title]').forEach((btn) => {
-      const label = btn.getAttribute('title');
+    const controller = ensureContentEditorTooltipLayer();
+
+    toolbar.querySelectorAll('.toolbar-btn').forEach((btn) => {
+      if (btn.dataset.ceTooltipInit === 'true') return;
+
+      let label = btn.getAttribute('data-ce-tooltip') || btn.getAttribute('title');
       if (!label) return;
+
       btn.setAttribute('data-ce-tooltip', label);
+      btn.removeAttribute('title');
       if (!btn.getAttribute('aria-label')) {
         btn.setAttribute('aria-label', label.split(' - ')[0] || label);
       }
+      btn.dataset.ceTooltipInit = 'true';
+
+      btn.addEventListener('pointerenter', () => controller.show(btn));
+      btn.addEventListener('pointerleave', () => controller.hide());
+      btn.addEventListener('focus', () => controller.show(btn));
+      btn.addEventListener('blur', () => controller.hide());
     });
   }
 

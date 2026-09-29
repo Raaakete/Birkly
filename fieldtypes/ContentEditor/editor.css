@@ -263,6 +263,7 @@
   gap: 2px;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: visible;
   scrollbar-width: thin;
 }
 
@@ -312,25 +313,33 @@
   height: var(--icon);
 }
 
-.content-editor-toolbar .toolbar-btn[data-ce-tooltip]:hover::after,
-.content-editor-toolbar .toolbar-btn[data-ce-tooltip]:focus-visible::after {
-  content: attr(data-ce-tooltip);
-  position: absolute;
-  inset-block-end: calc(100% + var(--s-2));
-  inset-inline-start: 50%;
-  translate: -50% 0;
-  z-index: 10050;
+.content-editor-toolbar-tooltip {
+  position: fixed;
+  z-index: 10060;
   width: max-content;
-  max-width: 16rem;
+  max-width: 18rem;
   padding: var(--s-2) var(--s-3);
   border-radius: var(--r);
   background: var(--ink-float);
   box-shadow: var(--shadow-float-2);
   color: var(--on-ink-float);
   font: var(--weight-regular) var(--size-small) / 1.45 var(--font-sans);
-  white-space: normal;
   text-align: start;
   pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 6px);
+  transition:
+    opacity 120ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+.content-editor-toolbar-tooltip.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -8px);
+}
+
+.content-editor-toolbar-tooltip[hidden] {
+  display: none !important;
 }
 
 .toolbar-btn:hover {
