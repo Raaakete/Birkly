@@ -51,4 +51,4 @@ Editor HTML stored in entry JSON; templates output with `{'content'}` or field s
 
 ## Reference
 
-Context pack §ContentEditor; `admin/docs/snapshots/content-editor.md`
+Context pack §ContentEditor; https://docs.birkly.com/02-content/content-editor.html
