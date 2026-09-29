@@ -8,9 +8,46 @@
 
 declare(strict_types=1);
 
+$GLOBALS['haru_plugins_loaded'] = true;
+$GLOBALS['birkly_plugin_playbooks'] = [];
+$pluginRepos = dirname(__DIR__, 2);
+$playbookSettingsDir = sys_get_temp_dir() . '/birkly-playbook-eval-' . getmypid();
+mkdir($playbookSettingsDir);
+$playbookStates = [];
+foreach (['commerce', 'user_management', 'events', 'automation'] as $playbookPluginId) {
+    $playbookStates[$playbookPluginId] = ['active' => true, 'settings' => []];
+}
+file_put_contents($playbookSettingsDir . '/plugins.json', json_encode($playbookStates));
+$GLOBALS['__birkly_plugin_state_settings_dir'] = $playbookSettingsDir;
+$GLOBALS['birkly_plugins'] = [
+    'commerce' => ['active' => true, 'path' => $pluginRepos . '/Birkly-Plugin-Commerce'],
+    'user_management' => ['active' => true, 'path' => $pluginRepos . '/Birkly-Plugin-User'],
+    'events' => ['active' => true, 'path' => $pluginRepos . '/Birkly-Plugin-Events'],
+    'automation' => ['active' => true, 'path' => $pluginRepos . '/Birkly-Plugin-Automation'],
+];
+
 require_once dirname(__DIR__) . '/api/ai_helpers.php';
 require_once dirname(__DIR__) . '/core/ai_playbooks.php';
 require_once dirname(__DIR__) . '/core/help_docs.php';
+require_once dirname(__DIR__) . '/core/plugins/docs_shelf.php';
+foreach ($GLOBALS['birkly_plugins'] as $id => $plugin) {
+    $GLOBALS['birkly_plugins'][$id]['active'] = true;
+    if (!isset($GLOBALS['birkly_plugins'][$id]['path'])) {
+        $GLOBALS['birkly_plugins'][$id]['path'] = $pluginRepos . '/Birkly-Plugin-' . $id;
+    }
+}
+foreach ([
+    'commerce' => $pluginRepos . '/Birkly-Plugin-Commerce/docs/playbooks.php',
+    'user_management' => $pluginRepos . '/Birkly-Plugin-User/docs/playbooks.php',
+    'events' => $pluginRepos . '/Birkly-Plugin-Events/docs/playbooks.php',
+    'automation' => $pluginRepos . '/Birkly-Plugin-Automation/docs/playbooks.php',
+] as $id => $playbooks) {
+    $GLOBALS['birkly_plugins'][$id]['active'] = true;
+    $GLOBALS['birkly_plugins'][$id]['path'] = dirname($playbooks, 2);
+    if (is_file($playbooks)) {
+        require_once $playbooks;
+    }
+}
 
 $failures = 0;
 
@@ -66,7 +103,7 @@ foreach ($scenarios as [$prompt, $expectedTopics]) {
 $expandedPlaybooks = [
     'events' => ['Setup order', 'Common failure modes', 'Admin cross-reference'],
     'user-management' => ['Admin users vs site users', 'user_submit', 'Admin cross-reference'],
-    'settings-roles' => ['Default CMS roles', 'No `create_user`', 'Admin cross-reference'],
+    'settings-roles' => ['Default CMS roles', 'cms_create_user', 'Admin cross-reference'],
     'cms-pages' => ['Pages vs project site', 'Anti-patterns', 'Admin cross-reference'],
     'plugins-overview' => ['Dependency order', 'list_plugins', 'Admin cross-reference'],
 ];
