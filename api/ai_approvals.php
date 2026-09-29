@@ -1065,63 +1065,101 @@ function birkly_ai_execute_delete_collection($actionData, $aiUser = null, $origi
     return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete collection'];
 }
 
+function birkly_ai_media_extension(string $filename, string $fallback): string
+{
+    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+    if (!is_string($ext) || preg_match('/^[A-Za-z0-9]{1,8}$/', $ext) !== 1) {
+        return $fallback;
+    }
+
+    return strtolower($ext);
+}
+
+function birkly_ai_media_path_inside(string $path, string $root): bool
+{
+    return $path === $root || str_starts_with($path, $root . DIRECTORY_SEPARATOR);
+}
+
 // Execute upload media
 function executeUploadMedia($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/media_storage.php';
+    require_once __DIR__ . '/../core/safe_http_fetch.php';
+
     $url = $actionData['url'] ?? '';
     $base64 = $actionData['base64'] ?? '';
     $name = $actionData['name'] ?? 'uploaded-file';
-    $folder = $actionData['folder'] ?? '';
-    
+    $folder = is_string($actionData['folder'] ?? null) ? $actionData['folder'] : '';
+
     if (empty($url) && empty($base64)) {
         return ['success' => false, 'message' => 'URL or base64 data is required'];
     }
-    
-    $mediaDir = __DIR__ . '/../media';
-    if ($folder) {
-        $mediaDir .= '/' . $folder;
+
+    $dirResult = birkly_ensure_media_folder($folder);
+    if (empty($dirResult['ok']) || empty($dirResult['path'])) {
+        return ['success' => false, 'message' => $dirResult['message'] ?? 'Invalid media folder.'];
     }
-    if (!is_dir($mediaDir)) {
-        mkdir($mediaDir, 0755, true);
+
+    $mediaRoot = realpath(birkly_media_dir());
+    $mediaDir = realpath($dirResult['path']);
+    if ($mediaRoot === false || $mediaDir === false || !birkly_ai_media_path_inside($mediaDir, $mediaRoot)) {
+        return ['success' => false, 'message' => 'Invalid media folder.'];
     }
-    
-    // Handle URL download
+
+    // Handle URL download through the shared SSRF-resistant fetch.
     if ($url) {
-        $fileContent = @file_get_contents($url);
-        if ($fileContent === false) {
+        $fetched = birkly_safe_http_fetch((string) $url);
+        if (empty($fetched['ok']) || !isset($fetched['body']) || !is_string($fetched['body'])) {
             return ['success' => false, 'message' => 'Failed to download file from URL'];
         }
-        $extension = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+        $fileContent = $fetched['body'];
+        $path = parse_url((string) $url, PHP_URL_PATH);
+        $extension = birkly_ai_media_extension(is_string($path) ? $path : '', 'jpg');
     } else {
         // Handle base64
-        $fileContent = base64_decode($base64);
+        $fileContent = base64_decode((string) $base64);
         if ($fileContent === false) {
             return ['success' => false, 'message' => 'Invalid base64 data'];
         }
-        $extension = pathinfo($name, PATHINFO_EXTENSION) ?: 'jpg';
+        $extension = birkly_ai_media_extension((string) $name, 'jpg');
     }
-    
+
     $mediaId = uniqid();
     $filename = $mediaId . '.' . $extension;
     $filepath = $mediaDir . '/' . $filename;
-    
+
     if (file_put_contents($filepath, $fileContent) === false) {
         return ['success' => false, 'message' => 'Failed to save file'];
     }
-    
-    // Update metadata
-    $metadataFile = __DIR__ . '/../media/.metadata.json';
-    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
+
+    $realFile = realpath($filepath);
+    if ($realFile === false || !birkly_ai_media_path_inside($realFile, $mediaRoot)) {
+        if (is_file($filepath)) {
+            @unlink($filepath);
+        }
+        return ['success' => false, 'message' => 'Invalid media folder.'];
+    }
+
+    $metadata = birkly_load_media_metadata();
+    if (!is_array($metadata)) {
+        $metadata = [];
+    }
     $metadata[$mediaId] = [
         'name' => $name,
-        'type' => mime_content_type($filepath),
-        'size' => filesize($filepath),
+        'type' => mime_content_type($realFile) ?: 'application/octet-stream',
+        'size' => filesize($realFile),
         'ext' => $extension,
         'folder' => $folder,
-        'created_at' => date('c')
+        'created_at' => date('c'),
     ];
-    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
-    
-    return ['success' => true, 'data' => ['media_id' => $mediaId, 'url' => '/media/' . ($folder ? $folder . '/' : '') . $filename]];
+    if (!birkly_save_media_metadata($metadata)) {
+        @unlink($realFile);
+        return ['success' => false, 'message' => 'Failed to save file'];
+    }
+
+    return ['success' => true, 'data' => [
+        'media_id' => $mediaId,
+        'url' => birkly_media_public_url($folder, $mediaId, $extension),
+    ]];
 }
 
 // Execute delete media

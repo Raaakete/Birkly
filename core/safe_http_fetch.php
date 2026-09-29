@@ -65,6 +65,12 @@ function birkly_safe_http_fetch(string $url, array $options = []): array
         return ['ok' => false, 'error' => 'Invalid URL host'];
     }
 
+    // Tests may supply a finished response only after the URL policy above has
+    // already rejected private, loopback, and non-http targets.
+    if (array_key_exists('__birkly_safe_http_fetch_override', $GLOBALS) && is_array($GLOBALS['__birkly_safe_http_fetch_override'])) {
+        return $GLOBALS['__birkly_safe_http_fetch_override'];
+    }
+
     $ip = birkly_safe_http_resolve_public_ip($host);
     if ($ip === null) {
         return ['ok' => false, 'error' => 'URL host resolves to a blocked address'];
