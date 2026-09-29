@@ -96,10 +96,10 @@
         const expandable = opts.expandable !== false && detailText !== '' && !detailSummary;
         const rowClass = 'activity-row' + (opts.compact ? ' activity-row--compact' : '');
         const linkBtn = href
-            ? '<a class="btn btn-ghost btn-sm activity-row__link" href="' + escapeHtml(href) + '">Open</a>'
+            ? '<a class="button is-quiet is-small activity-row__link" href="' + escapeHtml(href) + '">Open</a>'
             : '';
         const expandBtn = expandable
-            ? '<button type="button" class="btn btn-ghost btn-sm activity-row__toggle" data-activity-toggle="' + id + '" aria-expanded="false">Details</button>'
+            ? '<button type="button" class="button is-quiet is-small activity-row__toggle" data-activity-toggle="' + id + '" aria-expanded="false">Details</button>'
             : '';
         const targetHtml = target
             ? '<span class="activity-row__target">' + escapeHtml(target) + '</span>'

@@ -36,7 +36,7 @@ if ($showVisitProjectButton) {
         ?>
         <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="<?= htmlspecialchars(__('admin.developer_mode_on'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(__('admin.developer_mode_badge'), ENT_QUOTES, 'UTF-8') ?></span>
         <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
-        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
+        <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="button is-small admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
             <?= htmlspecialchars(__('admin.visit_project'), ENT_QUOTES, 'UTF-8') ?>
         </a>
         <?php endif; ?>

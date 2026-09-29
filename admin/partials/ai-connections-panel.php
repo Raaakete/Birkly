@@ -74,7 +74,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                   <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_service_title')) ?></h3>
                   <p class="card-description" id="ai-service-intro"><?= htmlspecialchars(__('admin.ai_conn_service_card_desc')) ?></p>
                 </div>
-                <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" hidden>
+                <button class="button is-main" id="add-mcp-endpoint-btn" type="button" hidden>
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   <?= htmlspecialchars(__('admin.ai_conn_add_agent')) ?>
                 </button>
@@ -90,7 +90,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                   <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_title')) ?></h3>
                   <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_assistant_card_desc')) ?></p>
                 </div>
-                <button class="btn btn-primary" id="add-connection-btn" type="button">
+                <button class="button is-main" id="add-connection-btn" type="button">
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   <?= htmlspecialchars(__('admin.ai_conn_quick_connect')) ?>
                 </button>
@@ -161,7 +161,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
 
               <div class="form-group" id="test-connection-group">
-                <button type="button" class="btn btn-secondary" id="test-connection-btn"><?= htmlspecialchars(__('admin.test_connection')) ?></button>
+                <button type="button" class="button" id="test-connection-btn"><?= htmlspecialchars(__('admin.test_connection')) ?></button>
                 <span id="test-connection-status" class="test-connection-status"></span>
               </div>
 
@@ -170,7 +170,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                 <div class="u-stack-2" id="connection-model-picker">
                   <div class="u-cluster">
                     <input type="search" id="connection-model-search" class="input" placeholder="<?= htmlspecialchars(__('admin.ai_conn_search_models_placeholder')) ?>" autocomplete="off" aria-controls="connection-model-list">
-                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh"><?= htmlspecialchars(__('admin.refresh')) ?></button>
+                    <button type="button" class="button is-small" id="connection-model-refresh"><?= htmlspecialchars(__('admin.refresh')) ?></button>
                   </div>
                   <input type="hidden" id="connection-model" name="model" value="">
                   <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="<?= htmlspecialchars(__('admin.ai_conn_models_list_aria')) ?>"></div>
@@ -198,8 +198,8 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
 
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close"><?= __('admin.cancel') ?></button>
-                <button type="submit" class="btn btn-primary" id="connection-submit-btn"><?= __('admin.connect') ?></button>
+                <button type="button" class="button modal-close"><?= __('admin.cancel') ?></button>
+                <button type="submit" class="button is-main" id="connection-submit-btn"><?= __('admin.connect') ?></button>
               </div>
             </form>
           </div>
@@ -256,8 +256,8 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                 <div class="u-stack-2" role="group" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_quick_presets')) ?>">
                   <div class="u-cluster">
                     <span class="u-label"><?= htmlspecialchars(__('admin.ai_mcp_quick_presets')) ?></span>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content"><?= htmlspecialchars(__('admin.ai_mcp_preset_content')) ?></button>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder"><?= htmlspecialchars(__('admin.ai_mcp_preset_site_builder')) ?></button>
+                    <button type="button" class="button is-small mcp-preset-btn" data-mcp-preset="content"><?= htmlspecialchars(__('admin.ai_mcp_preset_content')) ?></button>
+                    <button type="button" class="button is-small mcp-preset-btn" data-mcp-preset="site-builder"><?= htmlspecialchars(__('admin.ai_mcp_preset_site_builder')) ?></button>
                   </div>
                   <small class="form-help"><?= htmlspecialchars(__('admin.ai_mcp_preset_site_builder_help')) ?></small>
                 </div>
@@ -320,9 +320,9 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
 
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-mcp-modal-close><?= htmlspecialchars(__('admin.cancel')) ?></button>
-                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn"><?= htmlspecialchars(__('admin.ai_mcp_use_personal')) ?></button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden><?= htmlspecialchars(__('admin.ai_mcp_create_service')) ?></button>
+                <button type="button" class="button" data-mcp-modal-close><?= htmlspecialchars(__('admin.cancel')) ?></button>
+                <button type="button" class="button is-main" id="mcp-personal-done-btn"><?= htmlspecialchars(__('admin.ai_mcp_use_personal')) ?></button>
+                <button type="submit" class="button is-main" id="mcp-submit-btn" hidden><?= htmlspecialchars(__('admin.ai_mcp_create_service')) ?></button>
               </div>
             </form>
           </div>
@@ -355,7 +355,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-primary" data-ai-conn-intro-close><?= htmlspecialchars(__('admin.ai_connections_intro_got_it')) ?></button>
+      <button type="button" class="button is-main" data-ai-conn-intro-close><?= htmlspecialchars(__('admin.ai_connections_intro_got_it')) ?></button>
     </div>
   </div>
 </div>

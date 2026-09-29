@@ -331,7 +331,7 @@
                     <p>${escapeHtml(terminalStepText)}</p>
                     <div class="desktop-mcp-terminal">
                         <textarea id="mcp-desktop-terminal-cmd" data-mcp-desktop-terminal-install class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false">${initialInstallCmd}</textarea>
-                        <button type="button" class="btn btn-primary" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
+                        <button type="button" class="button is-main" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                     </div>
                 </div>
             </li>`;
@@ -378,7 +378,7 @@
                             ${macPrimary ? '' : `<p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_claude_win_msix', 'Store/WinGet Claude on Windows uses a different config folder than “Edit Config” may show — check the path printed when the install command succeeds.'))}</p>`}
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-cluster-3 u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="claude" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="button is-small" data-download-desktop-helper="claude" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                         <div data-desktop-panel="cursor" hidden>
@@ -386,7 +386,7 @@
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_cursor', 'Cursor → MCP settings: look for “birkly”.'))}</p>
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="cursor" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="button is-small" data-download-desktop-helper="cursor" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                         <div data-desktop-panel="copilot" hidden>
@@ -394,7 +394,7 @@
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_copilot', 'Requires the Copilot CLI (`copilot` in Terminal or PowerShell). Run /mcp or copilot mcp list — “birkly” should appear. This is not the Windows Copilot sidebar app.'))}</p>
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="copilot" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="button is-small" data-download-desktop-helper="copilot" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                         <div data-desktop-panel="gemini" hidden>
@@ -402,7 +402,7 @@
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_gemini', 'In Gemini CLI, run /mcp or check settings — “birkly” should appear as an MCP server.'))}</p>
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="gemini" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="button is-small" data-download-desktop-helper="gemini" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                         <div data-desktop-panel="vscode" hidden>
@@ -410,7 +410,7 @@
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_vscode', 'VS Code → Command Palette → “MCP: List Servers” — look for “birkly”. Copilot in VS Code can use MCP tools when agent mode is enabled.'))}</p>
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="vscode" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="button is-small" data-download-desktop-helper="vscode" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                     </div>
@@ -421,7 +421,7 @@
                 <summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_advanced_summary', 'Advanced: copy JSON manually'))}</summary>
                 <div class="mcp-snippet-block u-stack-2 u-pt-2">
                     <textarea id="mcp-desktop-config-json" class="input input-mono" rows="8" readonly>${escapeHtml(json)}</textarea>
-                    <button type="button" class="btn btn-sm btn-secondary" data-copy-desktop-config>${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}</button>
+                    <button type="button" class="button is-small" data-copy-desktop-config>${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}</button>
                 </div>
             </details>
             <details class="desktop-mcp-advanced u-pt-3">
@@ -431,7 +431,7 @@
                 </div>
                 <div class="desktop-mcp-terminal u-stack-2 u-pt-2">
                     <textarea id="mcp-desktop-terminal-uninstall-cmd" data-mcp-desktop-terminal-uninstall class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
-                    <button type="button" class="btn btn-secondary btn-sm" data-copy-terminal-uninstall>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
+                    <button type="button" class="button is-small" data-copy-terminal-uninstall>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                 </div>
             </details>
         </div>`;
@@ -449,7 +449,7 @@
         if (!data.paired) {
             body.innerHTML = `
             <p class="settings-help">${escapeHtml(mcpT('ai_conn_desktop_unpaired_body', 'Pair this Birkly site with Claude Desktop or Cursor on the same computer. Uses PHP only — no Node or extra installs.'))}</p>
-            <button type="button" class="btn btn-primary" id="mcp-desktop-pair-btn">${escapeHtml(mcpT('ai_conn_desktop_pair_btn', 'Pair this computer'))}</button>`;
+            <button type="button" class="button is-main" id="mcp-desktop-pair-btn">${escapeHtml(mcpT('ai_conn_desktop_pair_btn', 'Pair this computer'))}</button>`;
             document.getElementById('mcp-desktop-pair-btn')?.addEventListener('click', pairDesktopConnector);
             return;
         }
@@ -466,8 +466,8 @@
             <p class="settings-help">${escapeHtml(pairedAt)}</p>
             ${renderDesktopSetupBlock(data)}
             <div class="u-cluster-3">
-                <button type="button" class="btn btn-sm btn-secondary" id="mcp-desktop-repair-btn">${escapeHtml(mcpT('ai_conn_desktop_repair_btn', 'Re-pair'))}</button>
-                <button type="button" class="btn btn-sm btn-danger" id="mcp-desktop-revoke-btn">${escapeHtml(mcpT('ai_conn_desktop_revoke_btn', 'Revoke'))}</button>
+                <button type="button" class="button is-small" id="mcp-desktop-repair-btn">${escapeHtml(mcpT('ai_conn_desktop_repair_btn', 'Re-pair'))}</button>
+                <button type="button" class="button is-small is-danger" id="mcp-desktop-revoke-btn">${escapeHtml(mcpT('ai_conn_desktop_revoke_btn', 'Revoke'))}</button>
             </div>`;
 
         bindDesktopSetupUi(body, data);
@@ -723,7 +723,7 @@
                 <div class="ai-connection-entry-setup">
                     ${renderSetupSteps(agentId, url, true)}
                 </div>
-                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${escapeHtml(toggleLabel)}</button></div>` : ''}
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="button is-small" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${escapeHtml(toggleLabel)}</button></div>` : ''}
             </div>`;
     }
 
@@ -769,7 +769,7 @@
                 <div class="ai-connection-entry-setup">
                     ${renderSetupSteps(agent.id, url, false)}
                 </div>
-                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">${escapeHtml(mcpT('ai_mcp_btn_remove', 'Remove'))}</button></div>` : ''}
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="button is-small is-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">${escapeHtml(mcpT('ai_mcp_btn_remove', 'Remove'))}</button></div>` : ''}
             </div>`;
         }).join('');
     }

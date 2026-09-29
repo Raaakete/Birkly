@@ -20,10 +20,10 @@
                     {{content | raw}}
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-modal-close="#{modal_id}">
+                    <button type="button" class="button" data-modal-close="#{modal_id}">
                         {if cancel_label exist}{cancel_label}{else}Cancel{endif}
                     </button>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="button is-main">
                         {if submit_label exist}{submit_label}{else}Save{endif}
                     </button>
                 </div>
@@ -33,7 +33,7 @@
                 {{content | raw}}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-modal-close="#{modal_id}">
+                <button type="button" class="button is-main" data-modal-close="#{modal_id}">
                     Close
                 </button>
             </div>

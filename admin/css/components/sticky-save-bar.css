@@ -97,8 +97,8 @@
   line-height: 1.5;
 }
 
-.main-actions-bar--sticky .main-actions-tools .btn,
-.main-actions-bar--sticky .main-actions-tools .btn-sm {
+.main-actions-bar--sticky .main-actions-tools :is(.btn, .button),
+.main-actions-bar--sticky .main-actions-tools :is(.btn-sm, .button.is-small) {
   height: var(--sticky-save-bar-control);
   min-height: var(--sticky-save-bar-control);
   display: inline-flex;
@@ -145,7 +145,7 @@
     min-width: 0;
   }
 
-  .main-actions-bar--sticky .main-actions-left .btn {
+  .main-actions-bar--sticky .main-actions-left :is(.btn, .button) {
     flex: 1 1 auto;
   }
 }

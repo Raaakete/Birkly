@@ -114,7 +114,7 @@
             <section class="u-stack-4" aria-labelledby="hub-installed-packs-heading">
                 <div class="section-header">
                     <h2 id="hub-installed-packs-heading" class="section-title">{translate 'admin.hub_installed_site_packs'}</h2>
-                    <button class="btn btn-secondary btn-sm" type="button" data-plugin-action="switch-upload">
+                    <button class="button is-small" type="button" data-plugin-action="switch-upload">
                         {translate 'admin.upload_site_pack'}
                     </button>
                 </div>
@@ -141,7 +141,7 @@
     <div class="tab-panel plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" aria-labelledby="hub-tab-updates" hidden>
         <div class="main-actions-bar">
             <div class="main-actions-left">
-                <button class="btn btn-secondary" type="button" data-plugin-action="check-updates"><?= birkly_icon('refresh') ?>{translate 'admin.check_updates'}</button>
+                <button class="button" type="button" data-plugin-action="check-updates"><?= birkly_icon('refresh') ?>{translate 'admin.check_updates'}</button>
             </div>
         </div>
         <div class="plugins-grid list-rows" id="hub-updates-grid">
@@ -171,7 +171,7 @@
                         </div>
                     </div>
                     <div class="setting-actions">
-                        <button type="button" class="btn btn-primary" data-plugin-action="activate-license">{translate 'admin.hub_activate_license'}</button>
+                        <button type="button" class="button is-main" data-plugin-action="activate-license">{translate 'admin.hub_activate_license'}</button>
                     </div>
                 </div>
             </section>
@@ -229,7 +229,7 @@
                     </div>
                 </div>
                 <div class="setting-actions">
-                    <button type="button" class="btn btn-primary" data-plugin-action="install-from-file">{translate 'admin.install_site_pack'}</button>
+                    <button type="button" class="button is-main" data-plugin-action="install-from-file">{translate 'admin.install_site_pack'}</button>
                 </div>
             </form>
         </section>
@@ -268,7 +268,7 @@
             <div id="marketplace-embed-provider-box" class="marketplace-embed-provider-box" hidden></div>
         </div>
         <div class="modal-footer marketplace-embed-footer">
-            <button type="button" class="btn btn-secondary btn-sm marketplace-embed-back" id="marketplace-embed-back" hidden data-plugin-action="back-offer-detail">{translate 'admin.marketplace_back_to_offer'}</button>
+            <button type="button" class="button is-small marketplace-embed-back" id="marketplace-embed-back" hidden data-plugin-action="back-offer-detail">{translate 'admin.marketplace_back_to_offer'}</button>
             <div class="marketplace-embed-offer-actions" id="marketplace-embed-offer-actions"></div>
         </div>
     </div>
@@ -288,8 +288,8 @@
             <div id="marketplace-consent-manifest" class="prose u-text-sm"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-plugin-action="close-install-consent">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" id="marketplace-consent-accept-btn" data-plugin-action="accept-install-consent">
+            <button type="button" class="button" data-plugin-action="close-install-consent">{translate 'admin.cancel'}</button>
+            <button type="button" class="button is-main" id="marketplace-consent-accept-btn" data-plugin-action="accept-install-consent">
                 {translate 'admin.marketplace_accept_and_install'}
             </button>
         </div>
@@ -310,8 +310,8 @@
             <div id="marketplace-prerelease-stability" class="u-cluster u-gap-2"></div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-plugin-action="close-prerelease-ack">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" id="marketplace-prerelease-accept-btn" data-plugin-action="accept-prerelease-ack">
+            <button type="button" class="button" data-plugin-action="close-prerelease-ack">{translate 'admin.cancel'}</button>
+            <button type="button" class="button is-main" id="marketplace-prerelease-accept-btn" data-plugin-action="accept-prerelease-ack">
                 {translate 'admin.marketplace_pre_release_accept_install'}
             </button>
         </div>
@@ -353,8 +353,8 @@
             <input type="hidden" id="marketplace-install-offer-type" value="plugin">
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-plugin-action="close-marketplace-install">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" id="marketplace-install-btn" data-plugin-action="install-marketplace">{translate 'admin.install_plugin'}</button>
+            <button type="button" class="button" data-plugin-action="close-marketplace-install">{translate 'admin.cancel'}</button>
+            <button type="button" class="button is-main" id="marketplace-install-btn" data-plugin-action="install-marketplace">{translate 'admin.install_plugin'}</button>
         </div>
     </div>
 </div>
@@ -387,8 +387,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-plugin-action="close-review-modal">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" id="plugin-review-submit-btn" data-plugin-action="submit-review">{translate 'admin.marketplace_review_submit_btn'}</button>
+            <button type="button" class="button" data-plugin-action="close-review-modal">{translate 'admin.cancel'}</button>
+            <button type="button" class="button is-main" id="plugin-review-submit-btn" data-plugin-action="submit-review">{translate 'admin.marketplace_review_submit_btn'}</button>
         </div>
     </div>
 </div>
@@ -408,8 +408,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-admin-action="closePluginSettingsModal" data-plugin-action="close-settings-modal">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" data-admin-action="savePluginSettings" data-plugin-action="save-settings">{translate 'admin.save_settings'}</button>
+            <button type="button" class="button" data-admin-action="closePluginSettingsModal" data-plugin-action="close-settings-modal">{translate 'admin.cancel'}</button>
+            <button type="button" class="button is-main" data-admin-action="savePluginSettings" data-plugin-action="save-settings">{translate 'admin.save_settings'}</button>
         </div>
     </div>
 </div>
@@ -427,7 +427,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-admin-action="closePluginPermissionsModal">{translate 'admin.close'}</button>
+            <button type="button" class="button" data-admin-action="closePluginPermissionsModal">{translate 'admin.close'}</button>
         </div>
     </div>
 </div>

@@ -51,7 +51,7 @@
             container.innerHTML =
                 '<div class="empty-state" style="text-align: center; padding: 3rem;">' +
                 '<p style="color: #6b7280; margin-bottom: 1rem;">' + escapeHtml(anaT('analytics_js_empty_not_tracked', 'No websites are being tracked yet.')) + '</p>' +
-                '<button type="button" class="btn btn-primary" onclick="openAddTrackingModal()">' + escapeHtml(anaT('analytics_js_add_first_website', 'Add Your First Website')) + '</button>' +
+                '<button type="button" class="button is-main" onclick="openAddTrackingModal()">' + escapeHtml(anaT('analytics_js_add_first_website', 'Add Your First Website')) + '</button>' +
                 '</div>';
             return;
         }
@@ -103,10 +103,10 @@
                             <small>${escapeHtml(embedHint)}</small>
                         </div>
                         <div class="tracking-actions">
-                            <button class="btn btn-secondary toggle-tracking-btn" data-id="${config.id}" data-enabled="${config.enabled}">
+                            <button class="button toggle-tracking-btn" data-id="${config.id}" data-enabled="${config.enabled}">
                                 ${escapeHtml(toggleLabel)}
                             </button>
-                            <button class="btn btn-danger delete-tracking-btn" data-id="${config.id}">${escapeHtml(deleteLabel)}</button>
+                            <button class="button is-danger delete-tracking-btn" data-id="${config.id}">${escapeHtml(deleteLabel)}</button>
                         </div>
                     </div>
                 </div>

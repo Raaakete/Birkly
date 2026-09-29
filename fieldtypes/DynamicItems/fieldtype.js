@@ -128,8 +128,8 @@ window.HaruFieldtypes['dynamicitems'] = {
             </div>
           </div>
           <div class="dynamicitems-modal-footer">
-            <button type="button" class="btn btn-secondary" data-dynamicitems-action="modal-cancel">Cancel</button>
-            <button type="button" class="btn btn-primary" data-dynamicitems-action="modal-confirm">Add block</button>
+            <button type="button" class="button" data-dynamicitems-action="modal-cancel">Cancel</button>
+            <button type="button" class="button is-main" data-dynamicitems-action="modal-confirm">Add block</button>
           </div>
         </div>
       </div>
@@ -343,8 +343,8 @@ window.HaruFieldtypes['dynamicitems'] = {
           <span class="block-item-name">${this.escapeHtml(block.name)}</span>
         </div>
         <div class="block-item-actions">
-          <button type="button" class="btn btn-sm" data-dynamicitems-action="edit-block" data-block-idx="${idx}">Edit</button>
-          <button type="button" class="btn btn-sm" data-dynamicitems-action="remove-block" data-block-idx="${idx}">Remove</button>
+          <button type="button" class="button is-small" data-dynamicitems-action="edit-block" data-block-idx="${idx}">Edit</button>
+          <button type="button" class="button is-small" data-dynamicitems-action="remove-block" data-block-idx="${idx}">Remove</button>
         </div>
       </div>
       <div class="block-item-content" id="${blockId}_content">

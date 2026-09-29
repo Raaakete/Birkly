@@ -454,7 +454,7 @@
 }
 
 .ai-chat-approval-data div + div { margin-block-start: var(--s-1); }
-.ai-chat-approval-actions .btn { flex: 1 1 auto; }
+.ai-chat-approval-actions :is(.btn, .button) { flex: 1 1 auto; }
 
 .ai-chat-approval-status { padding: var(--s-2) var(--s-4); border-radius: var(--r); text-align: center; font-size: var(--size-small); font-weight: var(--weight-medium); }
 .ai-chat-approval-status.approved { background: var(--success-soft); color: var(--success); }

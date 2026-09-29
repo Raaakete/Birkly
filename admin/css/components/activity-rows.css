@@ -126,7 +126,7 @@
   margin-block-end: var(--s-3);
 }
 
-.project-activity-filters .btn.is-active {
+.project-activity-filters :is(.btn, .button).is-active {
   border-color: var(--accent);
   color: var(--accent-text);
 }

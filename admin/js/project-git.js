@@ -261,9 +261,9 @@
                 '<small class="form-help">Buzz signs git requests with NIP-98. Prefer a relay-scoped key. Encrypted at rest; never committed under <code>project/</code>.</small>' +
             '</div>' +
             '<div class="u-cluster">' +
-                '<button type="submit" class="btn btn-primary btn-sm" id="project-git-connect-btn">' + (isEdit ? 'Save connection' : 'Connect') + '</button>' +
-                (isEdit ? '<button type="button" class="btn btn-secondary btn-sm" id="project-git-test-btn">Test connection</button>' : '') +
-                (isEdit ? '<button type="button" class="btn btn-secondary btn-sm" id="project-git-cancel-edit-btn">Cancel</button>' : '') +
+                '<button type="submit" class="button is-main is-small" id="project-git-connect-btn">' + (isEdit ? 'Save connection' : 'Connect') + '</button>' +
+                (isEdit ? '<button type="button" class="button is-small" id="project-git-test-btn">Test connection</button>' : '') +
+                (isEdit ? '<button type="button" class="button is-small" id="project-git-cancel-edit-btn">Cancel</button>' : '') +
             '</div>' +
         '</form>';
     }
@@ -307,11 +307,11 @@
         }
 
         var actions = '<div class="u-cluster">' +
-            '<button type="button" class="btn btn-primary btn-sm" id="project-git-push-btn">Push to remote</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm" id="project-git-pull-btn">Pull from remote</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm" id="project-git-test-btn">Test connection</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm" id="project-git-edit-btn">Edit connection</button>' +
-            '<button type="button" class="btn btn-danger btn-sm" id="project-git-disconnect-btn">Disconnect</button>' +
+            '<button type="button" class="button is-main is-small" id="project-git-push-btn">Push to remote</button>' +
+            '<button type="button" class="button is-small" id="project-git-pull-btn">Pull from remote</button>' +
+            '<button type="button" class="button is-small" id="project-git-test-btn">Test connection</button>' +
+            '<button type="button" class="button is-small" id="project-git-edit-btn">Edit connection</button>' +
+            '<button type="button" class="button is-danger is-small" id="project-git-disconnect-btn">Disconnect</button>' +
         '</div>';
 
         var changes = '<div class="u-stack-2"><p class="u-label">Local changes not yet pushed</p>' +
@@ -628,8 +628,8 @@
                     '<p class="u-text-sm u-fg-secondary">Applying replaces these files in <code>project/</code> with the remote version. CMS content and media are not affected.</p>' +
                     renderChangeList(incoming, 'No incoming changes.') +
                     '<div class="u-cluster">' +
-                        '<button type="button" class="btn btn-primary btn-sm" id="project-git-pull-apply-btn">Apply changes</button>' +
-                        '<button type="button" class="btn btn-secondary btn-sm" id="project-git-pull-cancel-btn">Cancel</button>' +
+                        '<button type="button" class="button is-main is-small" id="project-git-pull-apply-btn">Apply changes</button>' +
+                        '<button type="button" class="button is-small" id="project-git-pull-cancel-btn">Cancel</button>' +
                     '</div>' +
                 '</div>'
             );
@@ -694,9 +694,9 @@
                     renderPathList(remote, 'No incoming file changes.') +
                 '</div>' +
                 '<div class="u-cluster">' +
-                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-keep-birkly-btn">Keep Birkly</button>' +
-                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-keep-remote-btn">Keep remote</button>' +
-                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-conflict-cancel-btn">Cancel</button>' +
+                    '<button type="button" class="button is-small" id="project-git-keep-birkly-btn">Keep Birkly</button>' +
+                    '<button type="button" class="button is-small" id="project-git-keep-remote-btn">Keep remote</button>' +
+                    '<button type="button" class="button is-small" id="project-git-conflict-cancel-btn">Cancel</button>' +
                 '</div>' +
             '</div>'
         );

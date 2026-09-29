@@ -6,16 +6,16 @@
 <div class="main-actions-bar">
     {if primary_action exist}
         {if primary_action.form exist}
-            <button type="submit" form="{primary_action.form}" class="btn btn-primary">
+            <button type="submit" form="{primary_action.form}" class="button is-main">
                 {primary_action.label}
             </button>
         {else}
             {if primary_action.url exist}
-                <a href="{primary_action.url}" class="btn btn-primary">
+                <a href="{primary_action.url}" class="button is-main">
                     {primary_action.label}
                 </a>
             {else}
-                <button type="button" class="btn btn-primary" id="{primary_action.id}">
+                <button type="button" class="button is-main" id="{primary_action.id}">
                     {primary_action.label}
                 </button>
             {endif}
@@ -25,11 +25,11 @@
     {if secondary_actions exist}
         {for each action in secondary_actions}
             {if action.url exist}
-                <a href="{action.url}" class="btn btn-secondary">
+                <a href="{action.url}" class="button">
                     {action.label}
                 </a>
             {else}
-                <button type="button" class="btn btn-secondary" id="{action.id}">
+                <button type="button" class="button" id="{action.id}">
                     {action.label}
                 </button>
             {endif}

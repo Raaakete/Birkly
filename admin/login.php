@@ -285,7 +285,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                             <p><?= htmlspecialchars($notice) ?></p>
                             <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>">
                                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
-                                <button type="submit" class="btn btn-secondary btn-sm"><?= htmlspecialchars(__('admin.auth_log_out')) ?></button>
+                                <button type="submit" class="button is-small"><?= htmlspecialchars(__('admin.auth_log_out')) ?></button>
                             </form>
                         </div>
                     </div>
@@ -321,7 +321,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                         >
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-full u-mt-2" id="login-submit">
+                    <button type="submit" class="button is-main btn-full u-mt-2" id="login-submit">
                         <?= htmlspecialchars(__('admin.auth_sign_in')) ?>
                     </button>
                 </form>

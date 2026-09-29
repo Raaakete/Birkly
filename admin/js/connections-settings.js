@@ -239,10 +239,10 @@ function connT(key, fallback, params) {
                 signingSecretMarkup(c) +
                 '</div>' +
                 '<div class="u-cluster">' + statusBadge +
-                '<button type="button" class="btn btn-secondary btn-sm" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Send test</button>' +
-                '<button type="button" class="btn btn-secondary btn-sm" data-action="edit">Edit</button>' +
-                (c.is_default ? '' : '<button type="button" class="btn btn-secondary btn-sm" data-action="set-default">Make default</button>') +
-                '<button type="button" class="btn btn-danger btn-sm" data-action="delete">Delete</button>' +
+                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Send test</button>' +
+                '<button type="button" class="button is-small" data-action="edit">Edit</button>' +
+                (c.is_default ? '' : '<button type="button" class="button is-small" data-action="set-default">Make default</button>') +
+                '<button type="button" class="button is-danger is-small" data-action="delete">Delete</button>' +
                 '</div></div></div>';
         }).join('');
 
@@ -273,9 +273,9 @@ function connT(key, fallback, params) {
                 signingSecretMarkup(c) +
                 '</div>' +
                 '<div class="u-cluster">' + statusBadge +
-                '<button type="button" class="btn btn-secondary btn-sm" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Test</button>' +
-                '<button type="button" class="btn btn-secondary btn-sm" data-action="edit">Edit</button>' +
-                '<button type="button" class="btn btn-danger btn-sm" data-action="delete">Delete</button>' +
+                '<button type="button" class="button is-small" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Test</button>' +
+                '<button type="button" class="button is-small" data-action="edit">Edit</button>' +
+                '<button type="button" class="button is-danger is-small" data-action="delete">Delete</button>' +
                 '</div></div></div>';
         }).join('');
 

@@ -107,8 +107,7 @@
         if (!publishBtn || !saveBtn) return;
         const published = ($('status')?.value || '') === 'published';
         publishBtn.hidden = published;
-        saveBtn.classList.toggle('btn-primary', published);
-        saveBtn.classList.toggle('btn-secondary', !published);
+        saveBtn.classList.toggle('is-main', published);
     }
 
     function updateSlugMirrors() {
@@ -409,7 +408,7 @@
                 '<div class="entry-revision-actions">' +
                     (isCurrent
                         ? '<span class="status is-info is-plain">' + escapeHtml(sidebarT('entry_editor_current', 'Current')) + '</span>'
-                        : '<button type="button" class="btn btn-ghost btn-sm restore-entry-version-btn" data-version="' + number + '">' + escapeHtml(sidebarT('entry_editor_restore', 'Restore')) + '</button>') +
+                        : '<button type="button" class="button is-quiet is-small restore-entry-version-btn" data-version="' + number + '">' + escapeHtml(sidebarT('entry_editor_restore', 'Restore')) + '</button>') +
                 '</div>' +
             '</div>';
         }).join('');

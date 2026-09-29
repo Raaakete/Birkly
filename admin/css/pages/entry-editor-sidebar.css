@@ -87,7 +87,7 @@
   gap: var(--s-2);
 }
 
-.entry-review-actions__buttons .btn { width: 100%; }
+.entry-review-actions__buttons :is(.btn, .button) { width: 100%; }
 
 /* ============================================
    4. Meta tab — character counters and previews
@@ -299,22 +299,22 @@
 /* ============================================
    7. Save states (action bar)
    ============================================ */
-.main-actions-bar--saving .btn-primary {
+.main-actions-bar--saving :is(.btn-primary, .button.is-main) {
   opacity: 0.85;
   pointer-events: none;
 }
 
-.main-actions-bar--busy .main-actions-left .btn,
-.main-actions-bar--busy .main-actions-left a.btn {
+.main-actions-bar--busy .main-actions-left :is(.btn, .button),
+.main-actions-bar--busy .main-actions-left a:is(.btn, .button) {
   pointer-events: none;
   opacity: 0.7;
 }
 
-.main-actions-bar--busy a.btn.is-disabled {
+.main-actions-bar--busy a:is(.btn, .button).is-disabled {
   cursor: wait;
 }
 
-.main-actions-bar--saved .btn-primary {
+.main-actions-bar--saved :is(.btn-primary, .button.is-main) {
   box-shadow: 0 0 0 2px var(--success-soft);
 }
 

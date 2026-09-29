@@ -99,8 +99,8 @@
                     : '<span class="badge badge-neutral">' + escapeHtml(t('disabled', 'Disabled')) + '</span>') + '</td>' +
                 '<td>' + escapeHtml(redirect.updated_at || '—') + '</td>' +
                 '<td class="cell-actions">' +
-                    '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('edit', 'Edit')) + '</button>' +
-                    '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('delete', 'Delete')) + '</button>' +
+                    '<button type="button" class="button is-small redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('edit', 'Edit')) + '</button>' +
+                    '<button type="button" class="button is-danger is-small redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('delete', 'Delete')) + '</button>' +
                 '</td>' +
             '</tr>';
         }).join('');
