@@ -99,6 +99,16 @@ assert_true('registered plugin id', ($catalogs[0]['plugin_id'] ?? '') === 'activ
 $activeHello = __('plugins.active_plugin.hello');
 assert_true('active plugin key resolves in en', $activeHello === 'Active hello');
 
+$jsDictionary = I18n::getJsDictionary(null);
+assert_true(
+    'js dictionary includes every active plugin',
+    ($jsDictionary['plugins.active_plugin.hello'] ?? '') === 'Active hello'
+);
+assert_true(
+    'js dictionary omits inactive plugin',
+    !array_key_exists('plugins.inactive_plugin.secret', $jsDictionary)
+);
+
 $inactiveSecret = __('plugins.inactive_plugin.secret');
 assert_true('inactive plugin key not merged', $inactiveSecret === 'plugins.inactive_plugin.secret');
 

@@ -359,8 +359,8 @@ function resolveMediaItemUrl(url) {
       const addButton = document.createElement('button');
       addButton.type = 'button';
       addButton.className = 'icon-button is-small';
-      addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
-      addButton.title = 'Create subfolder';
+      addButton.setAttribute('aria-label', mdT('media_create_subfolder_in', 'Create subfolder in {name}', { name: folder.name || mdT('media_folder_fallback', 'folder') }));
+      addButton.title = mdT('create_subfolder', 'Create subfolder');
       addButton.innerHTML = icon('plus');
       addButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -370,8 +370,8 @@ function resolveMediaItemUrl(url) {
       const renameButton = document.createElement('button');
       renameButton.type = 'button';
       renameButton.className = 'icon-button is-small';
-      renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
-      renameButton.title = 'Rename folder';
+      renameButton.setAttribute('aria-label', mdT('media_rename_folder_named', 'Rename folder {name}', { name: folder.name || mdT('media_folder_fallback', 'folder') }));
+      renameButton.title = mdT('rename_folder', 'Rename folder');
       renameButton.innerHTML = icon('pencil');
       renameButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -381,8 +381,8 @@ function resolveMediaItemUrl(url) {
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.className = 'icon-button is-small is-danger';
-      deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
-      deleteButton.title = 'Delete folder';
+      deleteButton.setAttribute('aria-label', mdT('media_delete_folder_named', 'Delete folder {name}', { name: folder.name || mdT('media_folder_fallback', 'folder') }));
+      deleteButton.title = mdT('delete_folder', 'Delete folder');
       deleteButton.innerHTML = icon('trash');
       deleteButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -758,7 +758,7 @@ function resolveMediaItemUrl(url) {
   async function renameFolder(folderPath) {
     const currentName = folderPath.split('/').pop();
     const newName = await BirklyFeedback.prompt(mdT('media_js_rename_folder_message', 'Enter a new name for this folder.'), currentName, {
-      title: 'Rename folder',
+      title: mdT('rename_folder', 'Rename folder'),
       placeholder: 'Folder name',
       confirmLabel: 'Rename',
     });

@@ -365,19 +365,11 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
       <?php
-      $adminI18nLang = getCurrentLanguage();
-      $adminI18nFile = __DIR__ . '/../lang/' . $adminI18nLang . '.json';
-      $adminI18nFallbackFile = __DIR__ . '/../lang/en.json';
-      $adminI18nData = [];
-      if (is_file($adminI18nFallbackFile)) {
-          $decoded = json_decode((string) file_get_contents($adminI18nFallbackFile), true);
-          $adminI18nData = is_array($decoded['admin'] ?? null) ? $decoded['admin'] : [];
-      }
-      if ($adminI18nLang !== 'en' && is_file($adminI18nFile)) {
-          $decoded = json_decode((string) file_get_contents($adminI18nFile), true);
-          if (is_array($decoded['admin'] ?? null)) {
-              $adminI18nData = array_merge($adminI18nData, $decoded['admin']);
-          }
+      if (class_exists('I18n')) {
+          I18n::mergePluginCatalogs();
+          $adminI18nData = I18n::getJsDictionary(null);
+      } else {
+          $adminI18nData = [];
       }
       ?>
       window.BirklyAdminI18n = <?= json_encode($adminI18nData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;

@@ -64,7 +64,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     </script>
     <?php require_once __DIR__ . '/../../core/build_info.php'; ?>
     <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_release_identifier() ?? birkly_admin_asset_version('admin/js/settings-page.js'))) ?>">
-    <title>Birkly Admin</title>
+    <title><?= htmlspecialchars(__('admin.admin_document_title'), ENT_QUOTES, 'UTF-8') ?></title>
     <!-- Main Stylesheet - Imports all CSS modules -->
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_asset_url('/admin/css/style.css')) ?>">
     <?php if (isset($page) && $page === 'entry-editor'): ?>
