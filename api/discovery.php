@@ -24,13 +24,13 @@ require_once __DIR__ . '/../core/discovery.php';
 require_once __DIR__ . '/../core/site_seo.php';
 require_once __DIR__ . '/../core/site_seo_url_map.php';
 
-if (!isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-    exit;
-}
+// Same permission as the Discovery, Agent Guide, and AI Presence screens.
+requireAuth('read');
 
-$raw = file_get_contents('php://input');
+$raw = $GLOBALS['__birkly_discovery_test_raw_body'] ?? file_get_contents('php://input');
+if (!is_string($raw)) {
+    $raw = '';
+}
 $input = json_decode($raw ?: '{}', true);
 if (!is_array($input)) {
     $input = [];

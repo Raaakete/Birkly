@@ -24,13 +24,13 @@ require_once 'validate.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/webmcp.php';
 
-if (!isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-    exit;
-}
+// Same permission as the Agent Guide and Discovery screens (admin/index.php).
+requireAuth('read');
 
-$raw = file_get_contents('php://input');
+$raw = $GLOBALS['__birkly_webmcp_test_raw_body'] ?? file_get_contents('php://input');
+if (!is_string($raw)) {
+    $raw = '';
+}
 $input = json_decode($raw ?: '{}', true);
 if (!is_array($input)) {
     $input = [];
