@@ -327,15 +327,26 @@
   text-align: start;
   pointer-events: none;
   opacity: 0;
-  transform: translate(-50%, 6px);
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -100%);
   transition:
     opacity 120ms var(--ease),
     transform 120ms var(--ease);
 }
 
-.content-editor-toolbar-tooltip.is-visible {
+.content-editor-toolbar-tooltip.is-below {
+  transform: translate(-50%, 0);
+}
+
+.content-editor-toolbar-tooltip.is-above.is-visible {
   opacity: 1;
-  transform: translate(-50%, -8px);
+  transform: translate(-50%, calc(-100% - 2px));
+}
+
+.content-editor-toolbar-tooltip.is-below.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 2px);
 }
 
 .content-editor-toolbar-tooltip[hidden] {

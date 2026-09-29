@@ -919,11 +919,35 @@
 
     let activeBtn = null;
     let hideTimer = null;
+    const GAP = 8;
+    const VIEWPORT_MARGIN = 8;
 
     const position = (btn) => {
       const rect = btn.getBoundingClientRect();
-      el.style.left = `${rect.left + rect.width / 2}px`;
-      el.style.top = `${rect.top}px`;
+      el.classList.remove('is-above', 'is-below');
+
+      const tipHeight = el.offsetHeight;
+      const tipWidth = el.offsetWidth;
+      const spaceAbove = rect.top - VIEWPORT_MARGIN;
+      const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_MARGIN;
+      const placeAbove = spaceAbove >= tipHeight + GAP || spaceAbove >= spaceBelow;
+
+      let centerX = rect.left + rect.width / 2;
+      const halfW = tipWidth / 2;
+      centerX = Math.max(
+        VIEWPORT_MARGIN + halfW,
+        Math.min(window.innerWidth - VIEWPORT_MARGIN - halfW, centerX)
+      );
+
+      el.style.left = `${centerX}px`;
+
+      if (placeAbove) {
+        el.classList.add('is-above');
+        el.style.top = `${rect.top - GAP}px`;
+      } else {
+        el.classList.add('is-below');
+        el.style.top = `${rect.bottom + GAP}px`;
+      }
     };
 
     const show = (btn) => {
@@ -936,8 +960,10 @@
       activeBtn = btn;
       el.textContent = text;
       el.hidden = false;
-      position(btn);
       el.classList.remove('is-visible');
+      el.style.visibility = 'hidden';
+      position(btn);
+      el.style.visibility = 'visible';
       requestAnimationFrame(() => {
         requestAnimationFrame(() => el.classList.add('is-visible'));
       });
@@ -949,6 +975,7 @@
       hideTimer = setTimeout(() => {
         el.hidden = true;
         el.textContent = '';
+        el.classList.remove('is-above', 'is-below');
       }, 140);
     };
 
@@ -960,6 +987,12 @@
 
     window.addEventListener('scroll', onReposition, true);
     window.addEventListener('resize', onReposition);
+
+    document.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.content-editor-toolbar')) {
+        hide();
+      }
+    }, true);
 
     window._contentEditorTooltipController = { show, hide, el };
     return window._contentEditorTooltipController;
