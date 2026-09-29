@@ -215,7 +215,10 @@ function connections_provider_schema(): array
 }
 
 if ($action === 'list') {
-    connections_json_response(['status' => 'ok', 'connections' => birkly_connections_list(false)]);
+    birkly_connections_ensure_inbound_signing_secrets();
+    $store = birkly_connections_load();
+    $connections = array_map('birkly_connection_admin_view', $store['connections']);
+    connections_json_response(['status' => 'ok', 'connections' => $connections]);
 }
 
 if ($action === 'providers') {
@@ -233,8 +236,16 @@ if ($action === 'email_picker') {
 }
 
 if ($action === 'get') {
+    birkly_connections_ensure_inbound_signing_secrets();
     $id = $_GET['id'] ?? $input['id'] ?? '';
-    $connection = birkly_connection_get($id, false);
+    $stored = null;
+    foreach (birkly_connections_load()['connections'] as $row) {
+        if (is_array($row) && (string) ($row['id'] ?? '') === (string) $id) {
+            $stored = $row;
+            break;
+        }
+    }
+    $connection = is_array($stored) ? birkly_connection_admin_view($stored) : null;
     if ($connection === null) {
         connections_json_response(['status' => 'error', 'message' => 'Connection not found.'], 404);
     }

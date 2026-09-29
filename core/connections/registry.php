@@ -64,11 +64,59 @@ function birkly_connections_sanitize_alias(string $alias): string
     return trim($alias, '-_.');
 }
 
+function birkly_connection_generate_signing_secret(): string
+{
+    return bin2hex(random_bytes(32));
+}
+
+/**
+ * Fill signing_secret on records saved before inbound webhooks required one.
+ * Existing secrets are left unchanged.
+ */
+function birkly_connections_ensure_inbound_signing_secrets(): void
+{
+    $store = birkly_connections_load();
+    $changed = false;
+    foreach ($store['connections'] as $index => $connection) {
+        if (!is_array($connection)) {
+            continue;
+        }
+        $decrypted = birkly_connection_decrypt_for_use($connection);
+        $secrets = is_array($decrypted['secrets'] ?? null) ? $decrypted['secrets'] : [];
+        if (trim((string) ($secrets['signing_secret'] ?? '')) !== '') {
+            continue;
+        }
+        $secrets['signing_secret'] = birkly_connection_generate_signing_secret();
+        $store['connections'][$index]['secrets_ciphertext'] = birkly_connection_encrypt_secret($secrets);
+        $store['connections'][$index]['updated_at'] = birkly_connections_now();
+        $changed = true;
+    }
+    if ($changed) {
+        birkly_connections_save($store);
+    }
+}
+
 function birkly_connection_mask_secrets(array $connection): array
 {
     $connection['secrets'] = ['_masked' => true];
     unset($connection['secrets_ciphertext']);
     return $connection;
+}
+
+/**
+ * Admin connection screen view. Other secrets stay masked. The inbound
+ * signing secret is visible so the operator can copy it to the sender.
+ */
+function birkly_connection_admin_view(array $connection): array
+{
+    $decrypted = birkly_connection_decrypt_for_use($connection);
+    $masked = birkly_connection_mask_secrets($decrypted);
+    $secrets = is_array($decrypted['secrets'] ?? null) ? $decrypted['secrets'] : [];
+    $secret = trim((string) ($secrets['signing_secret'] ?? ''));
+    if ($secret !== '') {
+        $masked['inbound_signing_secret'] = $secret;
+    }
+    return $masked;
 }
 
 function birkly_connections_list(bool $withSecrets = false): array
@@ -225,6 +273,13 @@ function birkly_connection_prepare_record(array $input, ?array $existing = null)
     $secrets = array_merge($existingSecrets, array_filter($incomingSecrets, function ($v) {
         return $v !== null && $v !== '';
     }));
+
+    // Every connection can be addressed as an inbound webhook. An empty
+    // signing secret used to accept unsigned posts. Fill it here so new
+    // and edited connections are never stored open.
+    if (trim((string) ($secrets['signing_secret'] ?? '')) === '') {
+        $secrets['signing_secret'] = birkly_connection_generate_signing_secret();
+    }
 
     if (!empty($secrets)) {
         $record['secrets_ciphertext'] = birkly_connection_encrypt_secret($secrets);

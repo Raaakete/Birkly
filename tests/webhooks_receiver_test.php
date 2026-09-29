@@ -92,7 +92,7 @@ assert_true('unknown connection rejected', $result4['status'] === 'error' && str
 $result5 = birkly_webhook_process_request('incoming-hook', 'GET', $payload, $headers);
 assert_true('non-post rejected', $result5['status'] === 'error' && strpos($result5['error'] ?? '', 'POST') !== false);
 
-// Connection without signing secret accepts unsigned payload.
+// A connection saved with no signing secret is upgraded, then unsigned posts fail.
 $openConn = birkly_connection_create([
     'type' => 'http_credential',
     'provider' => 'bearer',
@@ -102,9 +102,54 @@ $openConn = birkly_connection_create([
     'secrets' => ['token' => 'outbound-token'],
 ]);
 assert_true('open webhook connection created', $openConn['ok'] === true);
+$openId = (string) ($openConn['connection']['id'] ?? '');
+$storedOpen = birkly_connection_get($openId, true);
+$generated = (string) ($storedOpen['secrets']['signing_secret'] ?? '');
+assert_true('empty signing secret was generated', preg_match('/^[a-f0-9]{64}$/', $generated) === 1, $generated);
+assert_true('outbound token is kept', ($storedOpen['secrets']['token'] ?? '') === 'outbound-token');
 
 $result6 = birkly_webhook_process_request('open-hook', 'POST', $payload, []);
-assert_true('unsigned webhook accepted when no secret', $result6['status'] === 'ok' && $result6['verified'] === false);
+assert_true('unsigned webhook rejected', $result6['status'] === 'error' && strpos($result6['error'] ?? '', 'Missing') !== false);
+
+$signedHeaders = ['X-Birkly-Signature' => hash_hmac('sha256', $payload, $generated)];
+$result7 = birkly_webhook_process_request('open-hook', 'POST', $payload, $signedHeaders);
+assert_true('post signed with the generated secret is accepted', $result7['status'] === 'ok' && ($result7['verified'] ?? false) === true);
+
+$storedAgain = birkly_connection_get($openId, true);
+assert_true('generated secret is not rotated', ($storedAgain['secrets']['signing_secret'] ?? '') === $generated);
+
+$adminView = birkly_connection_admin_view($storedAgain);
+assert_true('connection screen shows the signing secret', ($adminView['inbound_signing_secret'] ?? '') === $generated);
+assert_true('connection screen still masks other secrets', ($adminView['secrets']['_masked'] ?? false) === true && !isset($adminView['secrets']['token']));
+
+// A record written before this change, with no signing secret, is filled on the next post.
+$legacySecrets = birkly_connection_encrypt_secret(['token' => 'legacy-token']);
+$legacy = [
+    'id' => 'conn_legacy_open',
+    'type' => 'http_credential',
+    'provider' => 'bearer',
+    'alias' => 'legacy-open',
+    'name' => 'Legacy Open',
+    'enabled' => true,
+    'config' => ['base_url' => 'https://example.com'],
+    'secrets_ciphertext' => $legacySecrets,
+    'created_at' => date('c'),
+    'updated_at' => date('c'),
+];
+$store = birkly_connections_load();
+$store['connections'][] = $legacy;
+birkly_connections_save($store);
+
+$legacyUnsigned = birkly_webhook_process_request('legacy-open', 'POST', $payload, []);
+assert_true('legacy unsigned post is rejected', ($legacyUnsigned['status'] ?? '') === 'error');
+$legacyStored = birkly_connection_get('conn_legacy_open', true);
+$legacySecret = (string) ($legacyStored['secrets']['signing_secret'] ?? '');
+assert_true('legacy empty secret was generated', preg_match('/^[a-f0-9]{64}$/', $legacySecret) === 1, $legacySecret);
+assert_true('legacy token is kept', ($legacyStored['secrets']['token'] ?? '') === 'legacy-token');
+$legacySigned = birkly_webhook_process_request('legacy-open', 'POST', $payload, [
+    'X-Birkly-Signature' => hash_hmac('sha256', $payload, $legacySecret),
+]);
+assert_true('legacy post signed with the generated secret is accepted', ($legacySigned['status'] ?? '') === 'ok');
 
 rrmdir($testRoot);
 
