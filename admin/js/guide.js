@@ -361,7 +361,7 @@
             '<h2 class="guide-panel-title">' + escapeHtml(t('guide_panel_title', 'Guide')) + '</h2>' +
             '<p class="guide-panel-subtitle">' + escapeHtml(t('guide_panel_subtitle', 'Setup, journeys, and concepts')) + '</p>' +
             '</div></div>' +
-            '<button type="button" class="btn-icon guide-panel-close" id="guide-panel-close" aria-label="' +
+            '<button type="button" class="icon-button guide-panel-close" id="guide-panel-close" aria-label="' +
             escapeHtml(t('close', 'Close')) + '">' + icon('x', 18) + '</button>' +
             '</div>' +
             '<div class="guide-panel-tabs" id="guide-panel-tabs" role="tablist">' +

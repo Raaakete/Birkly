@@ -69,7 +69,7 @@ class File extends BaseField {
             <div class="file-controls">
                 <button type="button" class="button is-small select-file-btn" data-field="{$name}">{$mediaIcon}<span class="file-select-label">{$selectLabel}</span></button>
                 <button type="button" class="button is-quiet is-small upload-file-btn" data-field="{$name}">{$uploadIcon}<span class="file-upload-label">Upload</span></button>
-                <button type="button" class="btn-icon remove-file-btn" data-field="{$name}" title="Remove file" aria-label="Remove file"{$removeHidden}>{$trashIcon}</button>
+                <button type="button" class="icon-button remove-file-btn" data-field="{$name}" title="Remove file" aria-label="Remove file"{$removeHidden}>{$trashIcon}</button>
             </div>
             <input type="file" id="file_input_{$name}" accept="{$accept}" hidden {$multipleAttr}>
             <input type="hidden" name="{$name}" id="field_{$name}_value" value="{$idAttr}">
@@ -277,11 +277,11 @@ class File extends BaseField {
             inset-inline-end: var(--s-2);
         }
         .file-field[data-state="filled"] .file-controls :is(.btn, .button),
-        .file-field[data-state="filled"] .file-controls .btn-icon {
+        .file-field[data-state="filled"] .file-controls .icon-button {
             background: var(--surface);
         }
         .file-field[data-state="filled"] .upload-file-btn { display: none; }
-        .file-controls .btn-icon {
+        .file-controls .icon-button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -291,7 +291,7 @@ class File extends BaseField {
             border-radius: var(--r);
             color: var(--text-2);
         }
-        .file-controls .btn-icon:hover { color: var(--danger); }
+        .file-controls .icon-button:hover { color: var(--danger); }
         .file-field [hidden] { display: none; }
         CSS;
     }

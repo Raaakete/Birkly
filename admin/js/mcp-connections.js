@@ -839,7 +839,7 @@
             <button type="button" class="connector-url-value" data-copy-source="${escapeHtml(textId)}" title="${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}">
                 <span id="${escapeHtml(textId)}" class="connector-url-text">${escapeHtml(url)}</span>
             </button>
-            <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="${escapeHtml(textId)}" aria-label="${escapeHtml(mcpT('ai_mcp_copy_url_aria', 'Copy connector URL'))}">
+            <button type="button" class="icon-button connector-url-copy-icon" data-copy-source="${escapeHtml(textId)}" aria-label="${escapeHtml(mcpT('ai_mcp_copy_url_aria', 'Copy connector URL'))}">
                 ${copyIconHtml()}
             </button>
         </div>`;

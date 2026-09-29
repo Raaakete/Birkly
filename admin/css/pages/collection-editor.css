@@ -571,7 +571,7 @@
 
 [data-birch] .fieldtype-summary { margin-inline-end: var(--s-2); }
 
-[data-birch] .fieldtype-header-actions .btn-icon {
+[data-birch] .fieldtype-header-actions .icon-button {
   width: var(--control-sm);
   height: var(--control-sm);
   border: 0;
@@ -580,7 +580,7 @@
   color: var(--text-3);
 }
 
-[data-birch] .fieldtype-header-actions .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+[data-birch] .fieldtype-header-actions .icon-button:hover { background: var(--surface-2); color: var(--text); }
 [data-birch] .fieldtype-header-actions .remove-field-btn:hover { color: var(--danger); }
 
 [data-birch] .fieldtype-section.is-collapsed > .fieldtype-body { display: none; }

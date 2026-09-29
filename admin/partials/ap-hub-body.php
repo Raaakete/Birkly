@@ -8,7 +8,7 @@
         <div class="u-cluster">
             <button type="button" class="button is-small" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
             <a class="button is-small" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
-            <button type="button" class="button is-small btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
+            <button type="button" class="button is-small is-quiet ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
         </div>
     </div>
 </div>
@@ -508,7 +508,7 @@
                         <div id="ap-media-picked-preview" class="u-row-2 u-mt-3 u-p-2 u-surface-sunken" hidden>
                             <img id="ap-media-picked-thumb" alt="" class="ap-media-thumb">
                             <span id="ap-media-picked-name" class="u-text-sm u-fg-secondary"></span>
-                            <button type="button" class="btn-link" id="ap-media-picked-clear">{translate 'admin.clear'}</button>
+                            <button type="button" class="button is-quiet" id="ap-media-picked-clear">{translate 'admin.clear'}</button>
                         </div>
                     </div>
                     <div id="ap-media-grid" class="u-grid-auto u-mt-6"></div>
