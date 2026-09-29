@@ -5,12 +5,15 @@
     'use strict';
 
     function t(key, fallback, params) {
-        var text = (window.Birkly && window.Birkly.i18n)
-            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-            : (fallback || key);
+        if ((window.Birkly && window.Birkly.i18n)) {
+            return window.Birkly.i18n.t('admin.' + key, fallback || key, params);
+        }
+        var text = fallback || key;
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
-                text = text.split('{' + name + '}').join(String(params[name]));
+                var value = String(params[name]);
+                text = String(text).split('{{' + name + '}}').join(value);
+                text = text.split('{' + name + '}').join(value);
             });
         }
         return text;

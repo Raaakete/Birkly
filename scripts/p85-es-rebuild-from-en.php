@@ -9,6 +9,9 @@
  */
 declare(strict_types=1);
 
+fwrite(STDERR, "p85-es-rebuild-from-en.php is deprecated. Phrase maps splice Spanish into English. Translate from lang/en.json and run scripts/i18n-audit.php --selectable.\n");
+exit(1);
+
 require __DIR__ . '/p85-es-phrase-pairs.php';
 
 $argv = $_SERVER['argv'] ?? [];

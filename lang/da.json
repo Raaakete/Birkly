@@ -1,8 +1,15 @@
 {
     "_meta": {
+        "code": "da",
         "name": "Danish",
         "native_name": "Dansk",
-        "flag": "🇩🇰"
+        "flag": "🇩🇰",
+        "dir": "ltr",
+        "bcp47": "da-DK",
+        "selectable": false,
+        "date_format": "d-m-Y",
+        "datetime_format": "d-m-Y H:i",
+        "time_format": "H:i"
     },
     "admin": {
         "account_settings": "Account Settings",
