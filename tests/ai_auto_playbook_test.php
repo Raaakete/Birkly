@@ -5,6 +5,10 @@
 
 declare(strict_types=1);
 
+$GLOBALS['haru_plugins_loaded'] = true;
+$GLOBALS['birkly_plugins'] = [];
+$GLOBALS['birkly_plugin_playbooks'] = [];
+
 require_once dirname(__DIR__) . '/core/ai_playbooks.php';
 
 $failures = 0;

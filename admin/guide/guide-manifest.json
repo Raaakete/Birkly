@@ -1,4 +1,5 @@
 {
+  "alpha_plugin_ids": ["user_management", "commerce", "automation"],
   "journeys": [
     {
       "id": "first-content",

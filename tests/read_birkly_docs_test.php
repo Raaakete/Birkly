@@ -5,6 +5,10 @@
 
 declare(strict_types=1);
 
+$GLOBALS['haru_plugins_loaded'] = true;
+$GLOBALS['birkly_plugins'] = [];
+$GLOBALS['birkly_plugin_playbooks'] = [];
+
 require_once dirname(__DIR__) . '/api/ai_helpers.php';
 require_once dirname(__DIR__) . '/core/ai_playbooks.php';
 
@@ -26,9 +30,9 @@ $coreTopics = [
     'templating', 'admin', 'plugins', 'ai', 'mcp',
     'sub-collections', 'site-building', 'site-delivery', 'web-project-patterns', 'playbooks-index',
     'ai-quality-guide', 'fieldtypes', 'collection-groups',
-    'content-model', 'public-forms', 'commerce', 'commerce-store-kit', 'automation',
+    'content-model', 'public-forms',
     'agent-guide', 'webmcp-tools', 'mcp-setup', 'ai-connections', 'plugins-overview',
-    'media', 'cms-pages', 'content-editor', 'settings-roles', 'user-management', 'events',
+    'media', 'cms-pages', 'content-editor', 'settings-roles',
 ];
 
 foreach ($coreTopics as $topic) {
@@ -77,8 +81,8 @@ assert_true(
 
 $quality = readBirklyDocsTopic('ai-quality-guide');
 assert_true(
-    'ai-quality-guide has golden rules',
-    is_array($quality) && str_contains((string) ($quality['text'] ?? ''), 'Golden rules')
+    'ai-quality-guide has principles',
+    is_array($quality) && str_contains((string) ($quality['text'] ?? ''), 'Principles (tips, not policy)')
 );
 
 $publicForms = readBirklyDocsTopic('public-forms');
@@ -99,12 +103,6 @@ assert_true(
     is_array($siteBuilding) && str_contains((string) ($siteBuilding['text'] ?? ''), 'Build order')
 );
 
-$events = readBirklyDocsTopic('events');
-assert_true(
-    'events playbook has failure modes',
-    is_array($events) && str_contains((string) ($events['text'] ?? ''), 'Common failure modes')
-);
-
 $publicFormsBad = readBirklyDocsTopic('public-forms');
 assert_true(
     'public-forms has known bad patterns',
@@ -122,16 +120,8 @@ assert_true(
     'fieldtype-qa playbook has dynamicitems_html guidance',
     is_array($fieldtypeQa) && str_contains((string) ($fieldtypeQa['text'] ?? ''), 'dynamicitems_html')
 );
-assert_true('playbook catalog has commerce-store-kit', isset($catalog['commerce-store-kit']));
 assert_true('playbook catalog count >= 20', count($catalog) >= 20);
-
-$storeKit = readBirklyDocsTopic('commerce-store-kit');
-assert_true(
-    'commerce-store-kit has step order for products + checkout',
-    is_array($storeKit)
-        && str_contains((string) ($storeKit['text'] ?? ''), 'weight_grams')
-        && str_contains((string) ($storeKit['text'] ?? ''), 'commerce-storefront.js')
-);
+assert_true('core catalog omits commerce until the plugin registers it', !isset($catalog['commerce']));
 
 $topics = birkly_ai_detect_playbook_topics('how do I connect Cursor via MCP', []);
 assert_true(

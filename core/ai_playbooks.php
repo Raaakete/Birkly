@@ -4,8 +4,12 @@
  * Playbooks are loaded on demand via read_birkly_docs; summaries are injected into the system prompt.
  */
 
-/** @return array<string, array{title: string, topic: string, summary: string, triggers: string, category: string}> */
-function birkly_ai_playbook_catalog(): array
+/**
+ * Core playbook topics. Plugin-domain playbooks are discovered from the docs shelf.
+ *
+ * @return array<string, array{title: string, topic: string, summary: string, triggers: string, category: string}>
+ */
+function birkly_ai_core_playbook_catalog(): array
 {
     return [
         'playbooks-index' => [
@@ -162,41 +166,6 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'install plugin, marketplace, enable commerce, activate plugin',
             'category' => 'Plugins',
         ],
-        'commerce' => [
-            'title' => 'Commerce (shop & checkout)',
-            'topic' => 'commerce',
-            'summary' => 'Cart, checkout, variants, fulfillment, template buy URLs.',
-            'triggers' => 'shop, e-commerce, cart, checkout, product, sell online',
-            'category' => 'Plugins',
-        ],
-        'commerce-store-kit' => [
-            'title' => 'Commerce store kit (seed shop + checkout)',
-            'topic' => 'commerce-store-kit',
-            'summary' => 'P3-M2: products collection, 3 ship products, tax/ship settings, cart/checkout page.',
-            'triggers' => 'store kit, seed store, online store, demo shop, starter shop, build a shop',
-            'category' => 'Plugins',
-        ],
-        'automation' => [
-            'title' => 'Automation workflows',
-            'topic' => 'automation',
-            'summary' => 'Triggers, webhooks, Slack/email, entry & commerce events.',
-            'triggers' => 'automation, workflow, webhook, slack notification, when entry created',
-            'category' => 'Plugins',
-        ],
-        'events' => [
-            'title' => 'Events & RSVP',
-            'topic' => 'events',
-            'summary' => 'Event listings, RSVP, paid tickets (with Commerce).',
-            'triggers' => 'events, rsvp, calendar, tickets, upcoming events',
-            'category' => 'Plugins',
-        ],
-        'user-management' => [
-            'title' => 'Site users & registration',
-            'topic' => 'user-management',
-            'summary' => 'Registration, login, tiers, user_submit sub-collections.',
-            'triggers' => 'user registration, member login, site users, user profile',
-            'category' => 'Plugins',
-        ],
         'settings-roles' => [
             'title' => 'Settings, roles & permissions',
             'topic' => 'settings-roles',
@@ -205,6 +174,29 @@ function birkly_ai_playbook_catalog(): array
             'category' => 'Admin',
         ],
     ];
+}
+
+/**
+ * Core topics plus playbooks registered by active plugins.
+ *
+ * @return array<string, array{title: string, topic: string, summary: string, triggers: string, category: string}>
+ */
+function birkly_ai_playbook_catalog(): array
+{
+    $catalog = birkly_ai_core_playbook_catalog();
+    $shelf = __DIR__ . '/plugins/docs_shelf.php';
+    if (!function_exists('birkly_plugin_playbook_catalog') && is_file($shelf)) {
+        require_once $shelf;
+    }
+    if (!function_exists('birkly_plugin_playbook_catalog')) {
+        return $catalog;
+    }
+    foreach (birkly_plugin_playbook_catalog() as $topic => $def) {
+        if (!isset($catalog[$topic])) {
+            $catalog[$topic] = $def;
+        }
+    }
+    return $catalog;
 }
 
 /**
@@ -236,12 +228,6 @@ function birkly_ai_core_docs_topics(): array
         'mcp-troubleshooting' => $playbook('mcp-troubleshooting-playbook.md', 'MCP troubleshooting playbook'),
         'ai-connections' => $playbook('ai-connections-playbook.md', 'Built-in AI assistant playbook'),
         'plugins-overview' => $playbook('plugins-overview-playbook.md', 'Plugins & marketplace playbook'),
-        'commerce' => $playbook('commerce-playbook.md', 'Commerce playbook'),
-        'commerce-store-kit' => $playbook('commerce-store-kit-playbook.md', 'Commerce store kit playbook'),
-        'automation' => $playbook('automation-playbook.md', 'Automation playbook'),
-        'events' => $playbook('events-playbook.md', 'Events playbook'),
-        'user-management' => $playbook('user-management-playbook.md', 'User Management playbook'),
-        'user_management' => $playbook('user-management-playbook.md', 'User Management playbook'),
         'media' => $playbook('media-playbook.md', 'Media library playbook'),
         'cms-pages' => $playbook('cms-pages-playbook.md', 'CMS pages playbook'),
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),

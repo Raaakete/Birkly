@@ -131,7 +131,19 @@ function birkly_guide_has_published_entry(): bool
  */
 function birkly_guide_alpha_plugin_ids(): array
 {
-    return ['user_management', 'commerce', 'automation'];
+    $manifest = birkly_guide_load_manifest();
+    $ids = $manifest['alpha_plugin_ids'] ?? [];
+    if (!is_array($ids)) {
+        return [];
+    }
+    $out = [];
+    foreach ($ids as $id) {
+        $id = strtolower(trim((string) $id));
+        if ($id !== '' && preg_match('/^[a-z0-9_-]+$/', $id)) {
+            $out[] = $id;
+        }
+    }
+    return array_values(array_unique($out));
 }
 
 function birkly_guide_has_alpha_plugin_active(): bool
