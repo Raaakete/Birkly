@@ -790,6 +790,7 @@ require_once __DIR__ . '/cms_update_attention.php';
 require_once __DIR__ . '/plugins/mcp_shelf.php';
 require_once __DIR__ . '/plugins/admin_shelf.php';
 require_once __DIR__ . '/plugins/admin_page_data.php';
+require_once __DIR__ . '/connections/email_picker.php';
 require_once __DIR__ . '/plugins/fieldtype_shelf.php';
 
 // Load core admin functionality
