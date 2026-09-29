@@ -54,7 +54,7 @@
   <div class="modal-content modal--md">
     <div class="modal-header">
       <h2 id="sys-conn-email-modal-title"><?= __('admin.connections_panel_wizard_title') ?></h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-email-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
+      <button type="button" class="icon-button modal-close" data-sys-conn-action="close-email-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -158,7 +158,7 @@
   <div class="modal-content modal--md">
     <div class="modal-header">
       <h2 id="sys-conn-http-modal-title"><?= __('admin.connections_panel_add_http_credential') ?></h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
+      <button type="button" class="icon-button modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>

@@ -29,7 +29,7 @@
         if (!el.matches('button, a')) {
             return false;
         }
-        if (el.matches('.icon-button, .btn-icon, .topbar-icon-btn')) {
+        if (el.matches('.icon-button, .topbar-icon-btn')) {
             return true;
         }
         return (el.textContent || '').trim() === '' && !!el.querySelector('svg, .birkly-icon');

@@ -139,7 +139,7 @@ $dashIsAdmin = ($dashUser['role'] ?? '') === 'admin';
                         <a class="data-list-title" href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
                         <?php if (!empty($item['hint'])): ?><span class="data-list-meta"><?= htmlspecialchars($item['hint']) ?></span><?php endif; ?>
                     </div>
-                    <?php if (empty($item['completed'])): ?><button type="button" class="btn-icon btn-icon-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" aria-label="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>" title="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>">×</button><?php endif; ?>
+                    <?php if (empty($item['completed'])): ?><button type="button" class="icon-button checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" aria-label="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>" title="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>">×</button><?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>

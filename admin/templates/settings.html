@@ -632,10 +632,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <?php if (!empty($mcpSessions)): ?>
                     <button type="button" class="button is-small" data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'><?= __('admin.settings_revoke_mcp_access') ?></button>
                     <?php endif; ?>
-                    <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
+                    <button class="icon-button" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
                       <?= birkly_icon('pencil') ?>
                     </button>
-                    <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.settings_delete_user_btn')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_user_aria') . ' ' . $userLabel) ?>">
+                    <button class="icon-button is-danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.settings_delete_user_btn')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_user_aria') . ' ' . $userLabel) ?>">
                       <?= birkly_icon('trash') ?>
                     </button>
                   </div>
@@ -686,10 +686,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
               </div>
               <div class="row-actions">
-                <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.edit_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
+                <button class="icon-button" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.edit_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
                   <?= birkly_icon('pencil') ?>
                 </button>
-                <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.delete_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
+                <button class="icon-button is-danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.delete_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
                   <?= birkly_icon('trash') ?>
                 </button>
               </div>

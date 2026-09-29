@@ -153,6 +153,29 @@
 
 [data-birch] .icon-button:hover { background: var(--surface-2); color: var(--text); }
 
+[data-birch] .icon-button.is-danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+[data-birch] .icon-button.is-main {
+  background: var(--mint);
+  color: var(--on-mint);
+}
+
+[data-birch] .icon-button.is-main:hover { background: var(--mint-hover); color: var(--on-mint); }
+
+[data-birch] .button.is-success {
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--on-status);
+}
+
+[data-birch] .button.is-success:hover { background: var(--success); border-color: var(--success); }
+
+[data-birch] .button.is-warning {
+  border-color: var(--warning);
+  background: var(--warning);
+  color: var(--on-status);
+}
+
 @keyframes birch-spin { to { transform: rotate(360deg); } }
 
 /* ---------- Fields ---------- */

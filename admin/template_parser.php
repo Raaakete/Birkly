@@ -599,6 +599,40 @@ function render_template_file($templatePath, $data = []) {
     if (str_starts_with($template, "\xEF\xBB\xBF")) {
         $template = substr($template, 3);
     }
+    $template = birkly_template_include_partials($template, $templateDir);
     return render_template($template, $data);
+}
+
+/**
+ * Inline {include_partial 'file.html'} from the same directory before parsing.
+ * Partials cannot climb out of that directory.
+ */
+function birkly_template_include_partials(string $template, string $templateDir, int $depth = 0): string
+{
+    if ($depth > 8) {
+        return $template;
+    }
+    $base = realpath($templateDir);
+    if ($base === false) {
+        return $template;
+    }
+    $rendered = preg_replace_callback(
+        '/\{include_partial\s+[\'"]([^\'"]+)[\'"]\}/',
+        static function (array $matches) use ($base, $depth): string {
+            $relative = str_replace('\\', '/', $matches[1]);
+            if ($relative === '' || str_contains($relative, '..')) {
+                return '';
+            }
+            $path = $base . '/' . $relative;
+            $real = realpath($path);
+            if ($real === false || !is_file($real) || !str_starts_with($real, $base . DIRECTORY_SEPARATOR)) {
+                return '';
+            }
+            $partial = (string) file_get_contents($real);
+            return birkly_template_include_partials($partial, dirname($real), $depth + 1);
+        },
+        $template
+    );
+    return is_string($rendered) ? $rendered : $template;
 }
 ?>

@@ -3859,6 +3859,17 @@
     }
 
     function initMarketplaceFilters() {
+        document.querySelectorAll('[data-marketplace-sort]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                var sortEl = document.getElementById('marketplace-sort');
+                if (!sortEl) return;
+                sortEl.value = button.getAttribute('data-marketplace-sort') || 'name';
+                document.querySelectorAll('[data-marketplace-sort]').forEach(function (el) {
+                    el.classList.toggle('is-current', el === button);
+                });
+                sortEl.dispatchEvent(new Event('change'));
+            });
+        });
         ['marketplace-filter-type', 'marketplace-filter-category', 'marketplace-sort', 'marketplace-price'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) {
