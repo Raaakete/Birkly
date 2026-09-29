@@ -25,6 +25,9 @@
   function initContentEditors() {
     const wrappers = document.querySelectorAll('.content-editor-wrapper');
     wrappers.forEach(wrapper => {
+      // Fullscreen shell is initialized by createFullscreenOverlay — never via page scan
+      if (wrapper.classList.contains('content-editor-fullscreen-wrapper')) return;
+
       // SECURITY FIX: Prevent double initialization
       if (wrapper.dataset.initialized === 'true') return;
       
@@ -699,8 +702,16 @@
 
   // Initialize fullscreen functionality
   function initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName) {
-    const fullscreenBtn = wrapper.querySelector('.toolbar-btn-fullscreen[data-field-name="' + fieldName + '"]');
-    if (!fullscreenBtn) return;
+    if (wrapper.classList.contains('content-editor-fullscreen-wrapper')) return;
+
+    window.ContentEditorFullscreenRegistry = window.ContentEditorFullscreenRegistry || {};
+    if (window.ContentEditorFullscreenRegistry[fieldName]) return;
+
+    const fullscreenBtn = wrapper.querySelector('.toolbar-btn-fullscreen[data-field-name="' + fieldName + '"]')
+      || wrapper.querySelector('.toolbar-btn-fullscreen');
+    if (!fullscreenBtn) {
+      console.warn('ContentEditor: fullscreen button not found for field:', fieldName);
+    }
     
     let fullscreenOverlay = null;
     let fullscreenEditor = null;
@@ -729,10 +740,15 @@
         </div>
       `;
       
-      document.body.appendChild(overlay);
       fullscreenOverlay = overlay;
       fullscreenEditor = overlay.querySelector('#editor_' + fieldName + '_fullscreen');
       fullscreenToolbar = overlay.querySelector('#toolbar_' + fieldName + '_fullscreen');
+      const fsWrapper = overlay.querySelector('.content-editor-fullscreen-wrapper');
+
+      // Prevent MutationObserver from treating the shell as a new field instance
+      fsWrapper.dataset.initialized = 'true';
+
+      document.body.appendChild(overlay);
       
       // Copy toolbar HTML
       fullscreenToolbar.innerHTML = toolbar.innerHTML;
@@ -742,7 +758,6 @@
       fullscreenEditor.innerHTML = editor.innerHTML;
       
       // Initialize the fullscreen editor (visual surface only)
-      const fsWrapper = overlay.querySelector('.content-editor-fullscreen-wrapper');
       initEditor(fullscreenEditor, fullscreenToolbar, hiddenInput, fieldName, fsWrapper, null);
       
       // Close button handler
@@ -883,7 +898,6 @@
       }, 200);
     }
     
-    window.ContentEditorFullscreenRegistry = window.ContentEditorFullscreenRegistry || {};
     window.ContentEditorFullscreenRegistry[fieldName] = {
       toggle() {
         if (isFullscreen) {
@@ -1125,11 +1139,43 @@
     layoutOverflow();
   }
 
+  function resolveFullscreenFieldName(btn) {
+    if (!btn) return '';
+    return btn.getAttribute('data-field-name') || btn.dataset.fieldName || '';
+  }
+
+  function attachFullscreenToolbarHandler() {
+    if (window._contentEditorFullscreenClickAttached) return;
+    window._contentEditorFullscreenClickAttached = true;
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.toolbar-btn-fullscreen');
+      if (!btn) return;
+      const fieldName = resolveFullscreenFieldName(btn);
+      const registry = window.ContentEditorFullscreenRegistry;
+      if (!fieldName || !registry || !registry[fieldName] || typeof registry[fieldName].toggle !== 'function') {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      registry[fieldName].toggle();
+    }, true);
+  }
+
+  attachFullscreenToolbarHandler();
+
   // Also initialize on dynamic content
   if (typeof MutationObserver !== 'undefined') {
-    const observer = new MutationObserver(() => {
-      initContentEditors();
-    });
+    let initContentEditorsScheduled = false;
+    const scheduleInitContentEditors = () => {
+      if (initContentEditorsScheduled) return;
+      initContentEditorsScheduled = true;
+      requestAnimationFrame(() => {
+        initContentEditorsScheduled = false;
+        initContentEditors();
+      });
+    };
+    const observer = new MutationObserver(scheduleInitContentEditors);
     observer.observe(document.body, {
       childList: true,
       subtree: true
