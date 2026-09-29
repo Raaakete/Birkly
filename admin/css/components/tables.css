@@ -351,7 +351,7 @@
 .entries-smart-table tbody tr:hover { background: var(--surface-2); }
 .entries-smart-table tbody tr:last-child td { border-block-end: none; }
 
-.entries-smart-table.is-scrolled-x { box-shadow: inset 8px 0 8px -8px var(--scroll-shade); }
+.entries-smart-table .table-viewport.is-scrolled-x { box-shadow: inset 8px 0 8px -8px var(--scroll-shade); }
 
 .table-row.dragging:not(.drop-target) {
   opacity: 0.85;

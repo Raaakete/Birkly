@@ -81,7 +81,6 @@
     let listRequestId = 0;
     let listRequestController = null;
     let searchDebounceId = 0;
-    let listState = normalizeListState(initialListState);
 
     function normalizePositiveInteger(value, fallback) {
         const parsed = Number.parseInt(value, 10);
@@ -132,6 +131,8 @@
             status: status,
         };
     }
+
+    let listState = normalizeListState(initialListState);
 
     function refreshTableElements() {
         entriesTable = document.querySelector('.entries-smart-table');
@@ -1042,15 +1043,60 @@
         }
     });
 
+    async function fetchOrderedEntryIds() {
+        const params = new URLSearchParams({
+            action: 'list',
+            collection: collectionSlug,
+            page: '1',
+            per_page: 'all',
+        });
+        const response = await fetch(apiUrl('/api/admin_entries.php?' + params.toString()), {
+            credentials: 'same-origin',
+        });
+        const payload = await response.json();
+        if (!response.ok || payload?.status === 'error') {
+            throw new Error(payload?.message || ('HTTP ' + response.status));
+        }
+        const entries = Array.isArray(payload?.data?.entries) ? payload.data.entries : [];
+        return entries.map(function (entry) {
+            return entry && entry.id ? String(entry.id) : '';
+        }).filter(Boolean);
+    }
+
+    function mergePageOrderIntoFullOrder(fullOrder, pageOrderedIds, page, perPage) {
+        if (!Array.isArray(fullOrder) || fullOrder.length === 0) {
+            return pageOrderedIds.slice();
+        }
+        const pageIdSet = new Set(pageOrderedIds);
+        const withoutPage = fullOrder.filter(function (entryId) {
+            return !pageIdSet.has(entryId);
+        });
+        const insertAt = Math.max(0, (Math.max(1, page) - 1) * Math.max(1, perPage));
+        return withoutPage.slice(0, insertAt).concat(pageOrderedIds, withoutPage.slice(insertAt));
+    }
+
     async function saveEntryOrder(orderedIds) {
         if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
             return;
         }
 
         try {
+            let finalOrder = orderedIds.slice();
+            const total = Math.max(0, Number(listState.total || 0));
+            const perPage = normalizePerPage(listState.per_page, defaultEntriesPerPage);
+            if (perPage > 0 && total > orderedIds.length) {
+                const fullOrder = await fetchOrderedEntryIds();
+                finalOrder = mergePageOrderIntoFullOrder(
+                    fullOrder,
+                    orderedIds,
+                    Number(listState.page || 1),
+                    perPage
+                );
+            }
+
             const response = await requestJson('/api/content.php?action=set_entry_order', {
                 collection: collectionSlug,
-                order: orderedIds,
+                order: finalOrder,
                 _csrf: getCSRFToken(),
             });
 
@@ -1305,17 +1351,22 @@
     }
 
     function isViewportScrolledHorizontally(viewport) {
-        return viewport.scrollLeft > 1;
+        return viewport.scrollLeft > 0.5;
+    }
+
+    function updateViewportScrollClasses(viewport) {
+        const table = viewport.closest('.entries-smart-table');
+        const scrolled = isViewportScrolledHorizontally(viewport);
+        viewport.classList.toggle('is-scrolled-x', scrolled);
+        if (table) {
+            table.classList.toggle('is-scrolled-x', scrolled);
+        }
     }
 
     function initializeViewportScrollState() {
         document.querySelectorAll('.entries-smart-table .table-viewport').forEach(function (viewport) {
-            const table = viewport.closest('.entries-smart-table');
             const onScroll = function () {
-                if (!table) {
-                    return;
-                }
-                table.classList.toggle('is-scrolled-x', isViewportScrolledHorizontally(viewport));
+                updateViewportScrollClasses(viewport);
             };
             if (viewport.dataset.entriesViewportBound !== 'true') {
                 viewport.dataset.entriesViewportBound = 'true';
