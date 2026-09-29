@@ -123,7 +123,7 @@
 
     return html.replace(
       /<h2>Advanced Users<\/h2>([\s\S]*?)(?=<h2>|$)/i,
-      '<details class="plugin-docs-advanced"><summary>Advanced Users</summary>$1</details>'
+      '<details class="plugin-docs-advanced"><summary>Advanced users</summary>$1</details>'
     );
   }
 

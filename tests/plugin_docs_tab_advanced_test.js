@@ -31,8 +31,8 @@ function fail(message) {
 if (!html.includes('<h2>Summary</h2>')) fail('Summary heading missing');
 if (!html.includes('<h2>Beginner</h2>')) fail('Beginner heading missing');
 if (html.includes('<h2>Advanced Users</h2>')) fail('Advanced Users is still an open heading');
-if (!html.includes('<details class="plugin-docs-advanced"><summary>Advanced Users</summary>')) {
-    fail('Advanced Users is not collapsed');
+if (!html.includes('<details class="plugin-docs-advanced"><summary>Advanced users</summary>')) {
+    fail('Advanced users is not collapsed');
 }
 if (html.includes('plugin-docs-advanced" open')) fail('Advanced Users starts open');
 const advancedAt = html.indexOf('plugin-docs-advanced');
