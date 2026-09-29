@@ -6,48 +6,8 @@ if (isset($fieldtype_assets)) {
     $fieldtypeAssets = $fieldtype_assets;
 }
 
-// Helper function to get user information
-function getUserInfo($userId) {
-    if (empty($userId)) return null;
-    
-    // Try multiple possible paths
-    $possiblePaths = [
-        __DIR__ . '/../../users/' . $userId . '.json',
-        dirname(__DIR__) . '/../users/' . $userId . '.json',
-        $_SERVER['DOCUMENT_ROOT'] . '/users/' . $userId . '.json'
-    ];
-    
-    foreach ($possiblePaths as $userFile) {
-        if (file_exists($userFile)) {
-            $userData = json_decode(file_get_contents($userFile), true);
-            if ($userData) {
-                return [
-                    'name' => $userData['name'] ?? $userData['username'] ?? '',
-                    'email' => $userData['email'] ?? '',
-                    'id' => $userData['id'] ?? $userId
-                ];
-            }
-        }
-    }
-    
-    // Also try using Storage class if available
-    if (class_exists('Storage')) {
-        try {
-            $storage = new Storage('../users');
-            $userData = $storage->read($userId . '.json');
-            if ($userData) {
-                return [
-                    'name' => $userData['name'] ?? $userData['username'] ?? '',
-                    'email' => $userData['email'] ?? '',
-                    'id' => $userData['id'] ?? $userId
-                ];
-            }
-        } catch (Exception $e) {
-            // Storage not available or error
-        }
-    }
-    
-    return null;
+if (!function_exists('birkly_user_public_profile')) {
+    require_once dirname(__DIR__, 2) . '/core/birkly_users.php';
 }
 
 /** Template lines for each schema field, in the canonical syntax (docs/TEMPLATE_LANGUAGE_SPEC.md). */
@@ -465,7 +425,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     // Show Created By user information
                                     $createdByUserId = $entry['created_by'] ?? null;
                                     if ($createdByUserId): 
-                                        $createdByUser = getUserInfo($createdByUserId);
+                                        $createdByUser = birkly_user_public_profile((string) $createdByUserId);
                                         ?>
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_created_by')) ?></div>
@@ -496,7 +456,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     // Show Last Updated By user information
                                     $updatedByUserId = $entry['updated_by'] ?? null;
                                     if ($updatedByUserId): 
-                                        $updatedByUser = getUserInfo($updatedByUserId);
+                                        $updatedByUser = birkly_user_public_profile((string) $updatedByUserId);
                                         ?>
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_updated_by')) ?></div>
@@ -686,6 +646,7 @@ echo htmlspecialchars($collectionExample);
         'publishing' => __('admin.entry_publish_and_save'),
         'processingSave' => __('admin.saving'),
         'processingPublish' => __('admin.entry_publish_and_save'),
+        'untitled' => __('admin.untitled'),
     ],
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
