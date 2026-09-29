@@ -6,6 +6,7 @@
 
 require_once __DIR__ . '/public_read.php';
 require_once __DIR__ . '/birkly_data_paths.php';
+require_once __DIR__ . '/page_bundle_fields.php';
 
 function birkly_page_bundle_collect_collections(array $requests): array {
     $collections = [];
@@ -203,7 +204,8 @@ function birkly_page_bundle_prune_entry($entry, bool $lean = true) {
     if (!$lean || !is_array($entry)) {
         return $entry;
     }
-    $keep = ['id', 'slug', 'status', 'title', 'created_at', 'updated_at', 'published_at', 'excerpt', 'content', 'description', 'price', 'icon', 'featured', 'tags', 'category', 'author', 'date', 'start', 'venue', 'commerce'];
+    $keep = birkly_page_bundle_keep_keys();
+    $withheld = array_fill_keys(birkly_page_bundle_withheld_keys(), true);
     $pruned = [];
     foreach ($keep as $key) {
         if (array_key_exists($key, $entry)) {
@@ -216,10 +218,14 @@ function birkly_page_bundle_prune_entry($entry, bool $lean = true) {
         }
     }
     foreach ($entry as $key => $value) {
-        if (!array_key_exists($key, $pruned) && is_string($key) && $key[0] !== '_' && strpos($key, '__') !== 0) {
-            if (is_scalar($value) || is_array($value)) {
-                $pruned[$key] = $value;
-            }
+        if (!is_string($key) || isset($withheld[$key]) || array_key_exists($key, $pruned)) {
+            continue;
+        }
+        if ($key[0] === '_' || strpos($key, '__') === 0) {
+            continue;
+        }
+        if (is_scalar($value) || is_array($value)) {
+            $pruned[$key] = $value;
         }
     }
     return $pruned;
