@@ -315,41 +315,35 @@ label.field-title { cursor: pointer; }
   border-inline-start: 1px solid var(--line);
 }
 
-/* Collection card — grip beside the title, more menu beside the count */
+/* Collection card — one title line with the grip, one count line with the menu */
 [data-birch] .content-page .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--s-3);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--s-2);
 }
 
 [data-birch] .content-page .collection-card:not(.starter-template-card) {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    "handle title title"
-    ". meta menu";
-  align-items: center;
-  gap: var(--s-1) var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   min-height: 0;
-  padding: var(--s-3);
+  padding: var(--s-2) var(--s-3);
   cursor: pointer;
 }
 
-[data-birch] .content-page .collection-card.has-text:not(.is-row) {
-  grid-template-areas:
-    "handle title title"
-    ". text text"
-    ". meta menu";
+[data-birch] .content-page .collection-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-width: 0;
 }
 
 [data-birch] .content-page .collection-card .drag-handle {
   position: static;
-  grid-area: handle;
-  align-self: center;
-  justify-self: start;
-  width: 28px;
-  height: 28px;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
   opacity: 1;
-  color: var(--text-3);
+  color: var(--text-2);
 }
 
 [data-birch] .content-page .collection-card:hover .drag-handle,
@@ -358,7 +352,7 @@ label.field-title { cursor: pointer; }
 [data-birch] .content-page .collection-card-title-row {
   display: flex;
   align-items: center;
-  grid-area: title;
+  flex: 1 1 auto;
   gap: var(--s-2);
   min-width: 0;
 }
@@ -371,20 +365,28 @@ label.field-title { cursor: pointer; }
   -webkit-line-clamp: 2;
   white-space: normal;
   color: var(--text);
-  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  font: var(--weight-semibold) 15px / 20px var(--font-sans);
 }
 
 [data-birch] .content-page .collection-card-text {
-  grid-area: text;
   margin: 0;
+  margin-inline-start: 20px;
   -webkit-line-clamp: 2;
+}
+
+[data-birch] .content-page .collection-card-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  margin-inline-start: 20px;
 }
 
 [data-birch] .content-page .collection-card-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  grid-area: meta;
+  flex: 1 1 auto;
   align-self: center;
   gap: var(--s-2);
   margin: 0;
@@ -415,13 +417,15 @@ label.field-title { cursor: pointer; }
 
 [data-birch] .content-page .collection-card .collection-menu-wrapper {
   position: relative;
-  grid-area: menu;
-  justify-self: end;
-  align-self: center;
+  inset: auto;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 [data-birch] .content-page .collection-card .collection-menu-wrapper .icon-button {
   position: static;
+  width: 22px;
+  height: 22px;
   opacity: 1;
 }
 
@@ -463,15 +467,15 @@ label.field-title { cursor: pointer; }
 [data-birch] .collection-menu-wrapper .icon-button[aria-expanded="true"],
 [data-birch] .collection-menu-wrapper .icon-button:focus-visible { opacity: 1; }
 
-/* Compact cards: same arrangement, less padding and a smaller title */
+/* Compact cards: same lines, less type and padding */
 [data-birch] .content-page.is-compact-cards .card-grid {
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: var(--s-2);
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--s-1);
 }
 
 [data-birch] .content-page.is-compact-cards .collection-card:not(.starter-template-card):not(.is-row) {
-  gap: 2px var(--s-2);
-  padding: var(--s-2);
+  gap: 0;
+  padding: var(--s-1) var(--s-2);
 }
 
 [data-birch] .content-page.is-compact-cards .collection-card-title {
@@ -497,30 +501,35 @@ label.field-title { cursor: pointer; }
 }
 
 [data-birch] .content-page .collection-card.is-row {
-  grid-template-columns: auto minmax(8rem, 1.2fr) minmax(0, 2fr) auto auto;
-  grid-template-areas: "handle title text meta menu";
+  display: grid;
+  grid-template-columns: minmax(8rem, 1.2fr) minmax(0, 2fr) auto;
   align-items: center;
   gap: var(--s-3);
-  min-height: var(--row-list);
-  padding: var(--s-2) var(--s-3);
+  min-height: 36px;
+  padding: var(--s-1) var(--s-2);
 }
 
+[data-birch] .content-page .collection-card.is-row .collection-card-head { grid-column: 1; }
+[data-birch] .content-page .collection-card.is-row .collection-card-text { grid-column: 2; margin: 0; }
+[data-birch] .content-page .collection-card.is-row .collection-card-foot { grid-column: 3; margin: 0; }
+
 [data-birch] .content-page .collection-card.is-row:not(.has-text) {
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "handle title meta menu";
+  grid-template-columns: minmax(0, 1fr) auto;
 }
+[data-birch] .content-page .collection-card.is-row:not(.has-text) .collection-card-foot { grid-column: 2; }
 
 [data-birch] .content-page.is-compact-cards .collections-container.list-view .card-grid {
   gap: 2px;
 }
 
 [data-birch] .content-page.is-compact-cards .collection-card.is-row {
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "handle title meta menu";
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--s-2);
   min-height: 0;
-  padding: 2px var(--s-2);
+  padding: 1px var(--s-2);
 }
+
+[data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-foot { grid-column: 2; }
 
 [data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-text { display: none; }
 
@@ -588,13 +597,12 @@ label.field-title { cursor: pointer; }
   [data-birch] .search-field { width: 100%; }
   [data-birch] .content-page .collection-card.is-row,
   [data-birch] .content-page.is-compact-cards .collection-card.is-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "handle title title"
-      ". meta menu";
+    grid-template-columns: minmax(0, 1fr);
     min-height: 0;
+    padding: var(--s-2);
   }
   [data-birch] .content-page .collection-card.is-row .collection-card-text { display: none; }
+  [data-birch] .content-page .collection-card.is-row .collection-card-foot { grid-column: 1; margin-inline-start: 20px; }
 }
 
 /* ============================================
