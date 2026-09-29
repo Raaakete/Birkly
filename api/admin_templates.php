@@ -1767,11 +1767,17 @@ function getEntriesData() {
     }
 
     $totalEntries = count($entries);
-    $perPage = max(1, (int) $params['per_page']);
-    $totalPages = max(1, (int) ceil($totalEntries / $perPage));
-    $page = min(max(1, (int) $params['page']), $totalPages);
-    $offset = ($page - 1) * $perPage;
-    $entries = array_slice($entries, $offset, $perPage);
+    $perPage = (int) $params['per_page'];
+    if ($perPage === 0) {
+        $totalPages = 1;
+        $page = 1;
+    } else {
+        $perPage = max(1, $perPage);
+        $totalPages = max(1, (int) ceil($totalEntries / $perPage));
+        $page = min(max(1, (int) $params['page']), $totalPages);
+        $offset = ($page - 1) * $perPage;
+        $entries = array_slice($entries, $offset, $perPage);
+    }
 
     $subCollections = $collectionData['sub_collections'] ?? [];
     if (!empty($subCollections)) {
@@ -2005,16 +2011,30 @@ function getEntriesData() {
     ];
 }
 
+function birkly_admin_parse_entries_per_page($raw, int $defaultPerPage): int {
+    if ($raw === null || $raw === '') {
+        return max(1, min($defaultPerPage, 200));
+    }
+    if (is_string($raw) && strtolower(trim($raw)) === 'all') {
+        return 0;
+    }
+    $parsed = (int) $raw;
+    if ($parsed <= 0) {
+        return max(1, min($defaultPerPage, 200));
+    }
+
+    return max(1, min($parsed, 200));
+}
+
 function birkly_admin_get_entries_list_params(): array {
     $defaultPerPage = birkly_admin_get_default_admin_items_per_page();
-    $requestedPerPage = (int) ($_GET['per_page'] ?? 0);
-    $perPage = $requestedPerPage > 0 ? $requestedPerPage : $defaultPerPage;
+    $perPage = birkly_admin_parse_entries_per_page($_GET['per_page'] ?? null, $defaultPerPage);
 
     return [
         'collection' => trim((string) ($_GET['collection'] ?? '')),
         'status' => trim((string) ($_GET['status'] ?? '')),
         'page' => max(1, (int) ($_GET['page'] ?? 1)),
-        'per_page' => max(1, min($perPage, 200)),
+        'per_page' => $perPage,
         'q' => trim((string) ($_GET['q'] ?? $_GET['search'] ?? '')),
         'sort' => trim((string) ($_GET['sort'] ?? '')),
         'order' => birkly_admin_normalize_sort_order((string) ($_GET['order'] ?? '')),

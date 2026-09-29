@@ -26,10 +26,12 @@ $currentSearchQuery = (string) ($current_search_query ?? '');
 $currentSort = (string) ($current_sort ?? '');
 $currentOrder = (string) ($current_order ?? 'asc');
 $currentPage = max(1, (int) ($entries_page ?? 1));
-$perPage = max(1, (int) ($entries_per_page ?? 20));
+$perPageRaw = (int) ($entries_per_page ?? 20);
+$perPageIsAll = $perPageRaw === 0;
+$perPage = $perPageIsAll ? 0 : max(1, $perPageRaw);
 $entriesTotalCount = max(0, (int) ($entries_total ?? count($entries ?? [])));
 $totalPages = max(1, (int) ($entries_total_pages ?? 1));
-$showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearchQuery === '' && $currentPage === 1;
+$showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearchQuery === '';
 ?>
 <div class="entries-page" data-birch>
     <div class="page-header">
@@ -45,7 +47,6 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     
     <div class="page-bar">
         <a class="button is-main" href="<?= htmlspecialchars(admin_url('entry-editor', ['collection' => $collection['slug'] ?? ''])) ?>" aria-label="Create new entry in <?= $collectionTitle ?>"><?= birkly_icon('plus') ?><?= __('admin.new_entry') ?></a>
-        <a class="button" href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>"><?= birkly_icon('sliders') ?><?= __('admin.entries_collection_settings') ?></a>
         <div class="page-bar-tools">
             <button type="button" class="button entries-filter-toggle" id="entries-filter-toggle" aria-expanded="false" aria-controls="entries-filter-drawer"><?= birkly_icon('sliders') ?><?= __('admin.entries_filters') ?></button>
             <div class="entries-filter-drawer" id="entries-filter-drawer" hidden>
@@ -221,6 +222,12 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
             $paginationBaseParams['order'] = $currentOrder;
         }
     }
+    if ($perPageIsAll) {
+        $paginationBaseParams['per_page'] = 'all';
+    } elseif ($perPage !== (int) birkly_admin_get_default_admin_items_per_page()) {
+        $paginationBaseParams['per_page'] = $perPage;
+    }
+    $entriesPerPageOptions = [20, 50, 100];
     ?>
     <div class="entries-pagination" id="entries-pagination" aria-live="polite">
         <div class="entries-pagination__summary">
@@ -233,6 +240,18 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
             <?php endif; ?>
         </div>
         <div class="entries-pagination__controls">
+            <label class="entries-per-page">
+                <span class="entries-per-page__label"><?= htmlspecialchars(__('admin.entries_per_page')) ?></span>
+                <span class="select-box select-box--compact">
+                    <select id="entries-per-page" class="entries-per-page-select" aria-label="<?= htmlspecialchars(__('admin.entries_per_page')) ?>">
+                        <?php foreach ($entriesPerPageOptions as $option): ?>
+                            <option value="<?= (int) $option ?>" <?= !$perPageIsAll && $perPage === $option ? 'selected' : '' ?>><?= (int) $option ?></option>
+                        <?php endforeach; ?>
+                        <option value="all" <?= $perPageIsAll ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.entries_per_page_all')) ?></option>
+                    </select>
+                    <?= birkly_icon('chev-down') ?>
+                </span>
+            </label>
             <?php if ($totalPages > 1): ?>
                 <?php if ($currentPage > 1): ?>
                     <?php $prevParams = $paginationBaseParams; $prevParams['page'] = $currentPage - 1; ?>
@@ -279,6 +298,7 @@ window.entriesHasDragColumn = <?= json_encode($showDragHandles, JSON_UNESCAPED_U
 window.entriesListState = <?= json_encode([
     'page' => $currentPage,
     'per_page' => $perPage,
+    'default_per_page' => birkly_admin_get_default_admin_items_per_page(),
     'total' => $entriesTotalCount,
     'total_pages' => $totalPages,
     'q' => $currentSearchQuery,
