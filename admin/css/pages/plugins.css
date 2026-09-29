@@ -489,7 +489,6 @@
 .hub-shell .plugins-grid.list-rows > :is(.empty-state, .loading-state) { width: 100%; }
 
 .hub-shell .plugin-row { align-items: center; padding-block: var(--s-3); }
-.hub-shell .plugin-row.has-update { box-shadow: inset 2px 0 0 var(--info); }
 
 .hub-shell .plugin-row .row-title {
   display: flex;

@@ -298,7 +298,19 @@ a.data-list-item:focus-visible .dash-row-arrow {
   display: grid;
   grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   gap: var(--s-4);
-  align-items: start;
+  align-items: stretch;
+}
+
+[data-birch] .dashboard-columns > * {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+}
+
+[data-birch] .dashboard-inbox .dashboard-pane:not([hidden]),
+[data-birch] .dashboard-traffic-body {
+  flex: 1 1 auto;
 }
 
 @media (max-width: 1023px) {
@@ -322,7 +334,13 @@ a.data-list-item:focus-visible .dash-row-arrow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--s-3);
   margin-block-end: var(--s-3);
+}
+
+[data-birch] .dashboard-traffic .segmented {
+  background: var(--surface-2);
+  border-radius: var(--r);
 }
 
 [data-birch] .dashboard-traffic-title {
@@ -336,6 +354,75 @@ a.data-list-item:focus-visible .dash-row-arrow {
 [data-birch] .dashboard-traffic-foot .list-foot {
   padding-block-start: var(--s-3);
   border-block-start: 1px solid var(--line);
+}
+
+[data-birch] .traffic-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  margin-block-end: var(--s-2);
+  color: var(--text-2);
+  font-size: var(--size-small);
+}
+
+[data-birch] .traffic-totals strong {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-birch] .traffic-totals span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+[data-birch] .traffic-swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+[data-birch] .traffic-swatch.is-interactions { background: var(--text); }
+
+[data-birch] .traffic-chart {
+  display: block;
+  width: 100%;
+  height: 8.5rem;
+  margin-block-end: var(--s-3);
+}
+
+[data-birch] .traffic-area {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: none;
+}
+
+[data-birch] .traffic-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+[data-birch] .traffic-line.is-interactions { stroke: var(--text); }
+
+[data-birch] .traffic-axis {
+  fill: var(--text-3);
+  font-size: 11px;
+  font-family: var(--font-sans);
+}
+
+.dashboard-widgets-grid > .dash-widget,
+.card.dash-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.card.dash-widget > .dash-widget-body,
+.card.dash-widget > .card-body {
+  flex: 1 1 auto;
 }
 
 [data-birch] .dashboard-advice {

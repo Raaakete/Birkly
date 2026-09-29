@@ -805,7 +805,7 @@ window.migrateStorage = migrateStorage;
         if (!bar || !saveBtn) return;
 
         bar.classList.remove('is-hidden');
-        saveBtn.hidden = !isTrackedGlobalTab(tabId || currentTab) && !hasDirtyTrackedTabs();
+        saveBtn.hidden = false;
         saveBtn.disabled = !hasDirtyTrackedTabs();
         saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save changes');
 
