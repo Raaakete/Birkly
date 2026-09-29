@@ -374,10 +374,83 @@
         return value;
     }
 
+    let trafficDays = 30;
+
+    function dayKey(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function trafficWindow(days) {
+        const byDate = new Map((analytics?.daily || []).map((row) => [String(row.date || ''), row]));
+        const end = new Date();
+        end.setHours(12, 0, 0, 0);
+        const rows = [];
+        for (let i = days - 1; i >= 0; i -= 1) {
+            const date = new Date(end);
+            date.setDate(end.getDate() - i);
+            const key = dayKey(date);
+            const row = byDate.get(key) || {};
+            rows.push({
+                date: key,
+                views: Number(row.views || 0),
+                interactions: Number(row.interactions || 0),
+            });
+        }
+        return rows;
+    }
+
+    function chartPoints(values, max, width, height) {
+        const step = values.length <= 1 ? 0 : width / (values.length - 1);
+        return values.map((value, index) => {
+            const x = index * step;
+            const y = height - (max > 0 ? (value / max) * height : 0);
+            return { x, y };
+        });
+    }
+
+    function renderTrafficChart() {
+        const host = document.getElementById('dashboard-traffic-chart');
+        if (!host) return;
+        if (!analytics || analytics.analytics_collecting === false || analytics.analytics_preset === 'off') {
+            host.innerHTML = '';
+            host.hidden = true;
+            return;
+        }
+        host.hidden = false;
+        const rows = trafficWindow(trafficDays);
+        const visits = rows.reduce((sum, row) => sum + row.views, 0);
+        const interactions = rows.reduce((sum, row) => sum + row.interactions, 0);
+        const max = Math.max(1, ...rows.map((row) => Math.max(row.views, row.interactions)));
+        const width = 600;
+        const height = 112;
+        const visitPts = chartPoints(rows.map((row) => row.views), max, width, height);
+        const interactionPts = chartPoints(rows.map((row) => row.interactions), max, width, height);
+        const line = (pts) => pts.map((pt) => pt.x.toFixed(1) + ',' + pt.y.toFixed(1)).join(' ');
+        const area = line(visitPts) + ' ' + width + ',' + height + ' 0,' + height;
+        const first = rows[0]?.date?.slice(5) || '';
+        const last = rows[rows.length - 1]?.date?.slice(5) || '';
+        const label = t('dash_visits', 'Visits') + ' ' + number(visits) + ', ' + t('dash_interactions', 'Interactions') + ' ' + number(interactions);
+        host.innerHTML = '<div class="traffic-totals">' +
+            '<span><i class="traffic-swatch is-visits"></i>' + esc(t('dash_visits', 'Visits')) + ' <strong>' + number(visits) + '</strong></span>' +
+            '<span><i class="traffic-swatch is-interactions"></i>' + esc(t('dash_interactions', 'Interactions')) + ' <strong>' + number(interactions) + '</strong></span>' +
+            '</div>' +
+            '<svg class="traffic-chart" viewBox="0 0 ' + width + ' ' + (height + 16) + '" role="img" aria-label="' + esc(label) + '">' +
+            '<polygon class="traffic-area" points="' + area + '"></polygon>' +
+            '<polyline class="traffic-line is-visits" points="' + line(visitPts) + '"></polyline>' +
+            '<polyline class="traffic-line is-interactions" points="' + line(interactionPts) + '"></polyline>' +
+            '<text class="traffic-axis" x="0" y="' + (height + 14) + '">' + esc(first) + '</text>' +
+            '<text class="traffic-axis" x="' + width + '" y="' + (height + 14) + '" text-anchor="end">' + esc(last) + '</text>' +
+            '</svg>';
+    }
+
     function renderTraffic(kind) {
         const body = document.getElementById('dashboard-traffic-body');
         const foot = document.getElementById('dashboard-traffic-foot');
         const settings = adminUrl('settings', { tab: 'analytics' });
+        renderTrafficChart();
         if (!analytics || analytics.analytics_collecting === false || analytics.analytics_preset === 'off') {
             body.innerHTML = '<div class="advice dashed dashboard-advice"><p class="empty-title">' + esc(t('dash_analytics_off', 'Analytics is off')) + '</p>' +
                 '<p class="empty-text">' + esc(t('dash_analytics_off_help', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.')) + '</p>' +
@@ -401,6 +474,16 @@
 
     bindTabs(document.getElementById('dashboard-inbox-tabs'));
     bindTabs(document.getElementById('dashboard-traffic-tabs'), (tab) => renderTraffic(tab.dataset.traffic));
+    const range = document.getElementById('dashboard-traffic-range');
+    range?.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-range]');
+        if (!button || !range.contains(button)) return;
+        trafficDays = Number(button.dataset.range) || 30;
+        range.querySelectorAll('[data-range]').forEach((el) => {
+            el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
+        });
+        renderTrafficChart();
+    });
 
     /* ---------- Load ---------- */
     renderGreeting();

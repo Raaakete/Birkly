@@ -1677,7 +1677,7 @@
             if (state.installed) {
                 if (state.update_available && state.plugin_id) {
                     return (
-                        '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' +
+                        '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' +
                         escapeHtml(state.plugin_id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                     );
                 }
@@ -1696,7 +1696,7 @@
         if (state.installed) {
             if (state.update_available && state.plugin_id) {
                 return (
-                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' +
+                    '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' +
                     escapeHtml(state.plugin_id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                 );
             }
@@ -2187,7 +2187,7 @@
         if (state.installed) {
             if (state.update_available && state.plugin_id) {
                 return (
-                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' +
+                    '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' +
                     escapeHtml(state.plugin_id) + '">' +
                     escapeHtml(t('update', 'Update')) + '</button>'
                 );
@@ -2338,7 +2338,7 @@
                     escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
                 : '') +
             (hasUpdate
-                ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
+                ? '<button type="button" class="btn btn-sm ' + (options.primaryUpdate ? 'btn-primary' : 'btn-secondary') + '" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                 : '') +
             (options.hideManage ? '' :
                 (plugin.has_settings
@@ -2457,7 +2457,7 @@
         }
 
         grid.innerHTML = withUpdates.map(function (plugin) {
-            return renderPluginCard(plugin, { hideManage: true });
+            return renderPluginCard(plugin, { hideManage: true, primaryUpdate: true });
         }).join('');
     }
 

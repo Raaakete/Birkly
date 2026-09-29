@@ -488,6 +488,11 @@
 
 .main-actions-right { margin-inline-start: auto; }
 
+/* No main action in the bar: the remaining controls start on the left. */
+.main-actions-bar:not(:has(:is(.btn-primary, .button.is-main, a.btn-primary))) .main-actions-right {
+  margin-inline-start: 0;
+}
+
 /* Sticky variant — one per page.
    Shadow only while stuck (JS toggles .is-stuck via a sentinel). */
 .main-actions-bar-sentinel {

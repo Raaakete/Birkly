@@ -728,6 +728,19 @@ if ($action === 'analytics') {
                 $response['data']['total_page_views'] = $data['page_views'] ?? 0;
                 $response['data']['total_visitors'] = $data['unique_visitors'] ?? 0;
                 $response['data']['websites'] = $websites;
+                $daily = [];
+                foreach (is_array($data['daily_stats'] ?? null) ? $data['daily_stats'] : [] as $row) {
+                    if (!is_array($row)) {
+                        continue;
+                    }
+                    $daily[] = [
+                        'date' => (string) ($row['date'] ?? ''),
+                        'views' => (int) ($row['views'] ?? 0),
+                        'visitors' => (int) ($row['visitors'] ?? 0),
+                        'interactions' => (int) ($row['interactions'] ?? 0),
+                    ];
+                }
+                $response['data']['daily'] = array_slice($daily, -30);
                 $response['data']['insights'] = $mergedInsights;
                 $response['data']['tracking_count'] = count($combined['tracking_ids'] ?? []);
                 $response['data']['has_domains'] = $response['data']['tracking_count'] > 0;
