@@ -117,12 +117,10 @@ setup_plugin_tree($commerceDir, [
 ]);
 
 $legacyScripts = birkly_get_storefront_scripts();
-assert_true('commerce legacy back-compat when manifest missing', count(array_filter(
+assert_true('commerce without a manifest is not added from a legacy table', count(array_filter(
     $legacyScripts,
     static fn(array $s): bool => ($s['plugin_id'] ?? '') === 'commerce'
-        && ($s['provides'] ?? '') === 'BirklyCommerce'
-        && ($s['url'] ?? '') === '/plugins/commerce/assets/commerce-storefront.js'
-)) === 1);
+)) === 0);
 
 file_put_contents($commerceDir . '/commerce/plugin.json', json_encode([
     'name' => 'Commerce',
@@ -142,8 +140,9 @@ $commerceEntries = array_values(array_filter(
     $manifestScripts,
     static fn(array $s): bool => ($s['provides'] ?? '') === 'BirklyCommerce'
 ));
-assert_true('manifest dedupes legacy commerce entry', count($commerceEntries) === 1);
+assert_true('commerce script comes from the manifest once', count($commerceEntries) === 1);
 assert_true('manifest version used when present', ($commerceEntries[0]['version'] ?? '') === '9.9.9');
+assert_true('manifest entry is not marked legacy', empty($commerceEntries[0]['legacy']));
 
 @unlink($pluginsDir . '/active_plugin/assets/active-storefront.js');
 @unlink($pluginsDir . '/active_plugin/plugin.php');
