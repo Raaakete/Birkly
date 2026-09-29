@@ -81,7 +81,6 @@ function handleLocal(message) {
 function proxyToBirkly(message) {
   const birklyUrl = new URL('/api/mcp_server.php', BIRKLY_URL);
   birklyUrl.searchParams.set('method', message.method);
-  birklyUrl.searchParams.set('api_key', API_KEY);
 
   const urlObj = new URL(birklyUrl.toString());
   const options = {
