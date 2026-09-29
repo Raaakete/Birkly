@@ -560,7 +560,8 @@
 }
 
 [data-birch] .segmented > button[aria-pressed="true"],
-[data-birch] .segmented > button[aria-selected="true"] {
+[data-birch] .segmented > button[aria-selected="true"],
+[data-birch] .segmented > button.is-current {
   background: var(--surface);
   color: var(--text);
 }
