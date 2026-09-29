@@ -43,6 +43,10 @@ if (!function_exists('get_plugin_state')) {
 
 if (!function_exists('get_plugin_setting')) {
     function get_plugin_setting($plugin_id, $key, $default = null) {
+        $live = $GLOBALS['birkly_plugins'][$plugin_id]['settings'] ?? null;
+        if (is_array($live) && array_key_exists($key, $live)) {
+            return $live[$key];
+        }
         $states = birkly_public_plugin_states();
         $settings = $states[$plugin_id]['settings'] ?? [];
         if (is_array($settings) && array_key_exists($key, $settings)) return $settings[$key];
