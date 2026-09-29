@@ -47,8 +47,13 @@ $publicActions = ['list', 'get', 'get_children', 'get_descendants', 'get_ancesto
 // Only start an ADMIN session for non-public actions (or any POST mutation)
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $isPublic = in_array($action, $publicActions, true) && $method === 'GET';
+$subEntriesAdmin = false;
 if (!$isPublic) {
     haru_secure_session_start();
+} elseif (!empty($_COOKIE[BIRKLY_CMS_SESSION_NAME])) {
+    // An existing admin cookie can see drafts. A public page has no admin cookie, so no session is started.
+    haru_secure_session_start();
+    $subEntriesAdmin = isset($_SESSION['user']);
 }
 
 if (!in_array($action, $publicActions) && !isset($_SESSION['user'])) {
@@ -57,6 +62,25 @@ if (!in_array($action, $publicActions) && !isset($_SESSION['user'])) {
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     ob_end_flush();
     exit;
+}
+
+if ($isPublic && !$subEntriesAdmin) {
+    require_once __DIR__ . '/../core/public_read.php';
+    $parentCollection = (string) ($input['parent_collection'] ?? $_GET['parent_collection'] ?? '');
+    $parentEntryId = (string) ($input['parent_entry_id'] ?? $_GET['parent_entry_id'] ?? '');
+    if ($parentCollection !== '' && $parentEntryId !== '') {
+        if (!function_exists('get_storage')) {
+            require_once __DIR__ . '/../core/storage/StorageFactory.php';
+        }
+        $gate = birkly_sub_entries_anonymous_parent_visible(get_storage(), $parentCollection, $parentEntryId);
+        if (!($gate['ok'] ?? false)) {
+            ob_clean();
+            http_response_code((int) ($gate['http'] ?? 403));
+            echo json_encode(['status' => 'error', 'message' => (string) ($gate['message'] ?? 'Not found')]);
+            ob_end_flush();
+            exit;
+        }
+    }
 }
 
 // List sub-entries
@@ -120,6 +144,12 @@ if ($action === 'list') {
             // First-level sub-entries
             $entries = getSubEntries($parent_collection, $parent_entry_id, $sub_collection, $filters, $options);
         }
+
+        if (!is_array($entries)) {
+            $entries = [];
+        }
+        require_once __DIR__ . '/../core/public_read.php';
+        $entries = birkly_sub_entries_for_reader($entries, $subEntriesAdmin);
         
         ob_clean();
         echo json_encode([
@@ -162,6 +192,11 @@ if ($action === 'get') {
     
     try {
         $entry = getSubEntry($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id);
+        if (is_array($entry)) {
+            require_once __DIR__ . '/../core/public_read.php';
+            $visible = birkly_sub_entries_for_reader([$entry], $subEntriesAdmin);
+            $entry = $visible[0] ?? null;
+        }
         
         ob_clean();
         if ($entry) {
