@@ -34,14 +34,16 @@
             <div class="main-actions-left">
                 <span class="search-field marketplace-search"><?= birkly_icon('search') ?><input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" aria-label="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off"></span>
                 <p class="marketplace-result-count" id="marketplace-result-count" hidden></p>
-                <span class="select-box marketplace-filter marketplace-sort-box">
-                    <select id="marketplace-sort" class="marketplace-filter-select" aria-label="{translate 'admin.marketplace_sort'}">
-                        <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
-                        <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
-                        <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
-                    </select>
-                    <?= birkly_icon('chev-down') ?>
-                </span>
+                <div class="segmented marketplace-sort-segments" role="group" aria-label="{translate 'admin.marketplace_sort'}">
+                    <button type="button" class="is-current" data-marketplace-sort="name">{translate 'admin.marketplace_sort_name_labeled'}</button>
+                    <button type="button" data-marketplace-sort="rating">{translate 'admin.marketplace_sort_rating_labeled'}</button>
+                    <button type="button" data-marketplace-sort="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</button>
+                </div>
+                <select id="marketplace-sort" class="u-sr-only" aria-hidden="true" tabindex="-1">
+                    <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
+                    <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
+                    <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
+                </select>
             </div>
             <div class="main-actions-right">
                 <span class="select-box marketplace-filter">

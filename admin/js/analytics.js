@@ -87,7 +87,7 @@
   };
 &lt;/script&gt;
 &lt;script src="${cmsUrl}/birkly-analytics.js"&gt;&lt;/script&gt;</code></pre>
-                                <button class="btn-icon copy-code-btn" data-code="${escapeHtml(`<script>
+                                <button class="icon-button copy-code-btn" data-code="${escapeHtml(`<script>
   window.HaruAnalytics = {
     trackingId: '${config.id}',
     cmsUrl: '${cmsUrl}'

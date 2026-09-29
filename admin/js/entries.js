@@ -598,23 +598,23 @@
         const slug = entry && entry.slug ? String(entry.slug) : '';
         if (isTrashedEntry) {
             return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
-                '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' +
+                '<button type="button" class="icon-button restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' +
                     icon('arrow-counter-clockwise', { size: 16 }) +
                 '</button>' +
             '</div></td>';
         }
 
         const publishBtn = normalizedStatus === 'published'
-            ? '<button type="button" class="btn-icon btn-icon-sm entry-unpublish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('unpublish', 'Unpublish') + ' ' + title) + '" title="' + escapeHtml(t('unpublish', 'Unpublish')) + '">' +
+            ? '<button type="button" class="icon-button entry-unpublish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('unpublish', 'Unpublish') + ' ' + title) + '" title="' + escapeHtml(t('unpublish', 'Unpublish')) + '">' +
                 icon('archive', { size: 16 }) +
               '</button>'
-            : '<button type="button" class="btn-icon btn-icon-sm entry-publish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('publish', 'Publish') + ' ' + title) + '" title="' + escapeHtml(t('publish', 'Publish')) + '">' +
+            : '<button type="button" class="icon-button entry-publish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('publish', 'Publish') + ' ' + title) + '" title="' + escapeHtml(t('publish', 'Publish')) + '">' +
                 icon('globe', { size: 16 }) +
               '</button>';
 
         const moreMenu = '' +
             '<div class="dropdown entry-row-more-menu">' +
-                '<button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="' + escapeHtml(t('more', 'More')) + '" title="' + escapeHtml(t('more', 'More')) + '" aria-expanded="false" aria-haspopup="true">' +
+                '<button type="button" class="dropdown-trigger icon-button" aria-label="' + escapeHtml(t('more', 'More')) + '" title="' + escapeHtml(t('more', 'More')) + '" aria-expanded="false" aria-haspopup="true">' +
                     icon('dots-three-vertical', { size: 16 }) +
                 '</button>' +
                 '<div class="dropdown-menu dropdown-menu-right dropdown-menu--up">' +
@@ -641,7 +641,7 @@
 
         return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
             '<div class="cell-actions-primary">' +
-            '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit', 'Edit')) + '">' +
+            '<a class="icon-button" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit', 'Edit')) + '">' +
                 icon('pencil-simple', { size: 16 }) +
             '</a>' +
             publishBtn +
@@ -719,15 +719,15 @@
                     ? renderL2ActionsCell(entry, entryId, title, editUrl, normalizedStatus, isTrashedEntry)
                     : ('<td class="cell cell-actions">' +
                         '<div class="cell-actions-inner">' +
-                            '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
+                            '<a class="icon-button" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
                                 icon('pencil-simple', { size: 16 }) +
                             '</a>' +
                             (!isTrashedEntry
-                                ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('duplicate', 'Duplicate') + ' ' + title) + '" title="' + escapeHtml(t('duplicate', 'Duplicate')) + '">' + icon('copy', { size: 16 }) + '</button>'
+                                ? '<button type="button" class="icon-button duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('duplicate', 'Duplicate') + ' ' + title) + '" title="' + escapeHtml(t('duplicate', 'Duplicate')) + '">' + icon('copy', { size: 16 }) + '</button>'
                                 : '') +
                             (isTrashedEntry
-                                ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
-                                : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('move_to_trash', 'Move to trash') + ' ' + title) + '" title="' + escapeHtml(t('move_to_trash', 'Move to trash')) + '">' + icon('trash', { size: 16 }) + '</button>') +
+                                ? '<button type="button" class="icon-button restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
+                                : '<button type="button" class="icon-button is-danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('move_to_trash', 'Move to trash') + ' ' + title) + '" title="' + escapeHtml(t('move_to_trash', 'Move to trash')) + '">' + icon('trash', { size: 16 }) + '</button>') +
                         '</div>' +
                     '</td>')) +
             '</tr>';

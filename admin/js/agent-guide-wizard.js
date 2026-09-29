@@ -60,7 +60,7 @@
             '<div class="modal-body u-stack-4" id="ag-wizard-panels"></div>' +
             '<div class="modal-footer ag-wizard-footer">' +
             '<button type="button" class="button ag-wizard-back" hidden>' + escapeHtml(t('ag_wizard_back', 'Back')) + '</button>' +
-            '<button type="button" class="button btn-link ag-wizard-skip-step" hidden>' + escapeHtml(t('ag_wizard_skip_step', 'Skip this step')) + '</button>' +
+            '<button type="button" class="button is-quiet ag-wizard-skip-step" hidden>' + escapeHtml(t('ag_wizard_skip_step', 'Skip this step')) + '</button>' +
             '<div class="u-fill"></div>' +
             '<button type="button" class="button is-main ag-wizard-next">' + escapeHtml(t('ag_wizard_continue', 'Continue')) + '</button>' +
             '<button type="button" class="button is-main ag-wizard-publish" hidden>' + escapeHtml(t('publish_ai_presence', 'Publish')) + '</button>' +

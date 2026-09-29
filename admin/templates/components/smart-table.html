@@ -216,11 +216,11 @@ $getSubEntryCount = function($entry) {
                         </div>
                         
                         <div class="cell cell-actions" role="cell">
-                            <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
+                            <a class="icon-button" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
                                 <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                             </a>
                             <?php if ($deleteCallback): ?>
-                                <button type="button" class="btn-icon btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.delete') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.delete') ?>">
+                                <button type="button" class="icon-button is-danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.delete') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.delete') ?>">
                                     <?= birkly_icon('trash', ['size' => 16]) ?>
                                 </button>
                             <?php endif; ?>
