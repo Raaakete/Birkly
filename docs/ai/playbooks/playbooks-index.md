@@ -62,23 +62,23 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 
 **Bidirectional linking:** Admin Help topics in `docs/help-manifest.json` include an **`ai_topic`** slug pointing at the matching playbook. When viewing Help in admin, the footer shows the AI playbook id — use `read_birkly_docs` or MCP `birkly://docs/{ai_topic}`.
 
-| Help topic id | Playbook (ai_topic) | Admin snapshot |
-|---------------|---------------------|----------------|
-| `entries` | `content-model` | `admin/docs/snapshots/entries.md` |
-| `collection-groups` | `collection-groups` | Collection groups docs |
-| `settings` | `settings-roles` | `admin/docs/snapshots/settings.md` |
-| `mcp-connections` | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
-| `user-plugin` | `user-management` | `admin/docs/snapshots/user-plugin.md` |
-| `plugins` / `marketplace` | `plugins-overview` | `admin/docs/snapshots/plugins.md` |
-| `public-forms` / `public-forms-templating` | `public-forms` | Public forms docs / snapshots |
-| `templating-overview` / `canonical-syntax` / `loops-and-lists` | `templating` | Templating snapshots |
-| `detail-pages-and-url-context` | `web-project-patterns` | Detail pages snapshot |
-| `media` | `media` | `admin/docs/snapshots/media.md` |
-| `content-editor` | `content-editor` | `admin/docs/snapshots/content-editor.md` |
+| Help topic id | Playbook (ai_topic) | Human doc |
+|---------------|---------------------|-----------|
+| `entries` | `content-model` | https://docs.birkly.com/02-content/entries.html |
+| `collection-groups` | `collection-groups` | https://docs.birkly.com/02-content/collection-groups.html |
+| `settings` | `settings-roles` | https://docs.birkly.com/01-admin/settings.html |
+| `mcp-connections` | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html |
+| `user-plugin` | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
+| `plugins` / `marketplace` | `plugins-overview` | https://docs.birkly.com/06-extensibility/plugins.html |
+| `public-forms` / `public-forms-templating` | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html |
+| `templating-overview` / `canonical-syntax` / `loops-and-lists` | `templating` | https://docs.birkly.com/03-templating/templating-overview.html |
+| `detail-pages-and-url-context` | `web-project-patterns` | https://docs.birkly.com/03-templating/detail-pages-and-url-context.html |
+| `media` | `media` | https://docs.birkly.com/01-admin/media-library.html |
+| `content-editor` | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
 | `ai` / `ai-connections` / `mcp-connections` | `ai-connections` / `mcp-setup` | **Settings → AI** (not Agent Guide) |
-| `agent-guide` / `agent-guide-getting-started` / `agent-guide-claims` / `agent-guide-api` | `agent-guide` | Agent Guide snapshots |
-| `webmcp-tools` | `webmcp-tools` | `admin/docs/snapshots/webmcp-tools.md` |
-| `automation` | `automation` | `admin/docs/snapshots/automation-overview.md` |
+| `agent-guide` / `agent-guide-getting-started` / `agent-guide-claims` / `agent-guide-api` | `agent-guide` | https://docs.birkly.com/02-content/agent-guide.html |
+| `webmcp-tools` | `webmcp-tools` | https://docs.birkly.com/04-integration/webmcp-tools.html |
+| `automation` | `automation` | https://docs.birkly.com/05-automation/automation-overview.html |
 | `help` | `playbooks-index` | This index |
 
 | Topic | Playbook | Human doc (Birkly-Docs SSOT) |

@@ -4,7 +4,7 @@ Use when validating **all built-in fieldtypes** on a live or test CMS: MCP seedi
 
 **Reference fixture (copy patterns, do not assume slugs exist):** `Birkly-Marketplace` → `internal/cms/fixtures/fieldtype-qa/` (collection schema + `fieldtype-qa-detail.html`).
 
-Human shelf SSOT: [Core template shelf](https://docs.birkly.com/03-templating/core-template-shelf.html) · offline `admin/docs/snapshots/core-template-shelf.md`.
+Human shelf SSOT: [Core template shelf](https://docs.birkly.com/03-templating/core-template-shelf.html).
 
 ## When to use
 
