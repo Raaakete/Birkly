@@ -405,10 +405,25 @@ window.ContentEditorEventManager = {
     
     const btn = e.target.closest('.toolbar-btn');
     if (!btn) return;
-    
+
+    if (btn.classList.contains('toolbar-btn-fullscreen')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const fieldName = btn.dataset.fieldName;
+      const registry = window.ContentEditorFullscreenRegistry;
+      if (registry && fieldName && registry[fieldName] && typeof registry[fieldName].toggle === 'function') {
+        registry[fieldName].toggle();
+      }
+      return;
+    }
+
+    if (btn.classList.contains('content-editor-toolbar-overflow-btn')) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     const command = btn.dataset.command;
     const value = btn.dataset.value;
     
@@ -424,6 +439,10 @@ window.ContentEditorEventManager = {
       if (window.ContentEditorHistory) {
         window.ContentEditorHistory.redo();
       }
+      return;
+    }
+
+    if (!command) {
       return;
     }
     
