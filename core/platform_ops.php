@@ -97,6 +97,31 @@ function birkly_ops_request_signature(string $body): string
 }
 
 /**
+ * Installation id sent to Ops.
+ * A configured install_id is kept. A CMS that already stored a relay secret
+ * keeps its legacy id and signs with that secret. A new install sends
+ * birkly_installation_id() (inst_ + 32 hex chars) and does not require a platform HMAC.
+ */
+function birkly_ops_registration_install_id(): string
+{
+    $config = birkly_platform_config();
+    $configured = trim((string) ($config['install_id'] ?? ''));
+    if ($configured !== '') {
+        return $configured;
+    }
+
+    if (birkly_feedback_relay_secret() !== '') {
+        return birkly_platform_install_id();
+    }
+
+    if (!function_exists('birkly_installation_id')) {
+        require_once __DIR__ . '/marketplace.php';
+    }
+
+    return birkly_installation_id();
+}
+
+/**
  * Register or refresh this CMS install on Ops (best-effort).
  * Persists per-install feedback_relay_secret when Ops returns one.
  *
@@ -125,9 +150,10 @@ function birkly_ops_register_installation(bool $force = false): string
 
     $hostingConfig = birkly_hosting_load();
     $deliveryProbe = birkly_delivery_probe(['deep' => false]);
+    $installId = birkly_ops_registration_install_id();
 
     $payload = [
-        'installation_id' => birkly_platform_install_id(),
+        'installation_id' => $installId,
         'cms_version' => class_exists('BirklyVersion') ? BirklyVersion::getCurrentVersion() : '0.0.0',
         'channel' => birkly_ops_release_channel(),
         'program_tier' => trim((string) (birkly_platform_config()['program_tier'] ?? 'closed_alpha')),
@@ -168,7 +194,7 @@ function birkly_ops_register_installation(bool $force = false): string
         if ($force) {
             error_log(
                 'ops register failed HTTP ' . $code .
-                ' for install ' . birkly_platform_install_id() .
+                ' for install ' . $installId .
                 ($curlErr !== '' ? (' curl=' . $curlErr) : '') .
                 (is_string($response) ? (' body=' . substr($response, 0, 200)) : '')
             );
@@ -184,7 +210,7 @@ function birkly_ops_register_installation(bool $force = false): string
     if (!is_array($data) || empty($data['ok'])) {
         if ($force) {
             error_log(
-                'ops register returned non-ok payload for install ' . birkly_platform_install_id() .
+                'ops register returned non-ok payload for install ' . $installId .
                 (is_string($response) ? (' body=' . substr($response, 0, 200)) : '')
             );
         }
@@ -201,7 +227,7 @@ function birkly_ops_register_installation(bool $force = false): string
     if ($relaySecret !== '' && birkly_feedback_relay_secret() === '') {
         birkly_platform_persist_config(['feedback_relay_secret' => $relaySecret]);
     } elseif ($force && $relaySecret === '' && birkly_feedback_relay_secret() === '') {
-        error_log('ops register ok but no feedback_relay_secret for install ' . birkly_platform_install_id());
+        error_log('ops register ok but no feedback_relay_secret for install ' . $installId);
     }
 
     return $relaySecret !== '' ? $relaySecret : birkly_feedback_relay_secret();
