@@ -25,9 +25,21 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     $action = $_GET['action'] ?? '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
-    
+    require_once __DIR__ . '/../core/csrf.php';
+    $rawInput = (isset($GLOBALS['__birkly_2fa_test_raw_body']) && is_string($GLOBALS['__birkly_2fa_test_raw_body']))
+        ? $GLOBALS['__birkly_2fa_test_raw_body']
+        : file_get_contents('php://input');
+    $input = json_decode(is_string($rawInput) && $rawInput !== '' ? $rawInput : 'null', true);
+    if (!is_array($input)) {
+        $input = [];
+    }
+    $csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
+    if (!validate_csrf_token($csrf)) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
     switch ($action) {
         case 'setup':
             $result = setup2FA($input);
@@ -70,6 +82,18 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 exit;
         }
     }
+}
+
+function birkly_2fa_users_dir(): string
+{
+    if (isset($GLOBALS['__birkly_2fa_users_dir']) && is_string($GLOBALS['__birkly_2fa_users_dir']) && $GLOBALS['__birkly_2fa_users_dir'] !== '') {
+        return $GLOBALS['__birkly_2fa_users_dir'];
+    }
+    $usersDir = __DIR__ . '/../users';
+    if (!is_dir($usersDir)) {
+        $usersDir = __DIR__ . '/../data/users';
+    }
+    return $usersDir;
 }
 
 /**
@@ -155,10 +179,7 @@ function enable2FA($data) {
     // Save 2FA data to user file
     // Check if users directory exists at root level, otherwise try data/users
     // Use md5() to match the filename format used in users.php
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        $usersDir = __DIR__ . '/../data/users';
-    }
+    $usersDir = birkly_2fa_users_dir();
     $userId = md5(strtolower(trim($userEmail)));
     $userFile = $usersDir . '/' . $userId . '.json';
     
@@ -206,10 +227,7 @@ function disable2FA($data) {
     
     // Verify password first
     // Use md5() to match the filename format used in users.php
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        $usersDir = __DIR__ . '/../data/users';
-    }
+    $usersDir = birkly_2fa_users_dir();
     $userId = md5(strtolower(trim($userEmail)));
     $userFile = $usersDir . '/' . $userId . '.json';
     
@@ -255,10 +273,7 @@ function get2FAStatus() {
     }
     
     // Use md5() to match the filename format used in users.php
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        $usersDir = __DIR__ . '/../data/users';
-    }
+    $usersDir = birkly_2fa_users_dir();
     $userId = md5(strtolower(trim($userEmail)));
     $userFile = $usersDir . '/' . $userId . '.json';
     
@@ -309,10 +324,7 @@ function regenerateBackupCodes($data) {
     $password = $data['password'] ?? '';
     
     // Use md5() to match the filename format used in users.php
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        $usersDir = __DIR__ . '/../data/users';
-    }
+    $usersDir = birkly_2fa_users_dir();
     $userId = md5(strtolower(trim($userEmail)));
     $userFile = $usersDir . '/' . $userId . '.json';
     
@@ -363,10 +375,7 @@ function regenerateBackupCodes($data) {
  */
 function verify2FALogin($userEmail, $code, $isBackupCode = false) {
     // Use md5() to match the filename format used in users.php
-    $usersDir = __DIR__ . '/../users';
-    if (!is_dir($usersDir)) {
-        $usersDir = __DIR__ . '/../data/users';
-    }
+    $usersDir = birkly_2fa_users_dir();
     $userId = md5(strtolower(trim($userEmail)));
     $userFile = $usersDir . '/' . $userId . '.json';
     
