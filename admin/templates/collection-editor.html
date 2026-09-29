@@ -167,7 +167,7 @@ if (!$cancelUrl) {
                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                             </div>
-                                            <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                                            <button type="button" class="icon-button remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                             </button>
                                         </div>
@@ -242,7 +242,7 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-title">
                                                 <span class="fieldtype-name"><?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?></span>
                                             </div>
-                                            <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
+                                            <button type="button" class="icon-button remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                             </button>
                                         </div>
@@ -316,13 +316,13 @@ if (!$cancelUrl) {
                                                 </div>
                                             </div>
                                             <div class="fieldtype-header-actions">
-                                                <button type="button" class="btn-icon field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
+                                                <button type="button" class="icon-button field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
                                                     <?= birkly_icon('caret-up', ['size' => 16]) ?>
                                                 </button>
-                                                <button type="button" class="btn-icon field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
+                                                <button type="button" class="icon-button field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
                                                     <?= birkly_icon('caret-down', ['size' => 16]) ?>
                                                 </button>
-                                                <button type="button" class="btn-icon remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                                                <button type="button" class="icon-button remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                     <?= birkly_icon('trash', ['size' => 16]) ?>
                                                 </button>
                                             </div>
@@ -413,7 +413,7 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-title">
                                             <span class="fieldtype-name"><?= htmlspecialchars($subCollection['name'] ?? '') ?></span>
                                         </div>
-                                        <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
+                                        <button type="button" class="icon-button remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                                             <?= birkly_icon('trash', ['size' => 16]) ?>
                                         </button>
                                     </div>
@@ -466,7 +466,7 @@ if (!$cancelUrl) {
                                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                                             </div>
-                                                            <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                                                            <button type="button" class="icon-button remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                                             </button>
                                                         </div>
@@ -1314,13 +1314,13 @@ echo htmlspecialchars($formCode);
                 </div>
             </div>
             <div class="fieldtype-header-actions">
-                <button type="button" class="btn-icon field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
+                <button type="button" class="icon-button field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
                     <?= birkly_icon('caret-up', ['size' => 16]) ?>
                 </button>
-                <button type="button" class="btn-icon field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
+                <button type="button" class="icon-button field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
                     <?= birkly_icon('caret-down', ['size' => 16]) ?>
                 </button>
-                <button type="button" class="btn-icon remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                <button type="button" class="icon-button remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                 </button>
             </div>
@@ -1600,7 +1600,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${renderFieldtypeTypeBadgeHtml(selectedFieldtype, typeLabel)}
                         <span class="fieldtype-name"><?= __('admin.col_editor_new_field_default') ?></span>
                     </div>
-                    <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                    <button type="button" class="icon-button remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                         <?= birkly_icon('trash', ['size' => 16]) ?>
                     </button>
                 </div>
@@ -2594,7 +2594,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="fieldtype-title">
                     <span class="fieldtype-name">${data.name || colEditorUi.newSubCollectionDefault}</span>
                 </div>
-                <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
+                <button type="button" class="icon-button remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                 </button>
             </div>
@@ -2642,7 +2642,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || colEditorUi.selectType)}
                                         <span class="fieldtype-name">${field.label || field.name || ''}</span>
                                     </div>
-                                    <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                                    <button type="button" class="icon-button remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                         <?= birkly_icon('trash', ['size' => 16]) ?>
                                     </button>
                                 </div>
@@ -2789,7 +2789,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${renderFieldtypeTypeBadgeHtml('', colEditorUi.selectType)}
                                     <span class="fieldtype-name"><?= __('admin.col_editor_new_field_default') ?></span>
                                 </div>
-                                <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
+                                <button type="button" class="icon-button remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                     <?= birkly_icon('trash', ['size' => 16]) ?>
                                 </button>
                             </div>

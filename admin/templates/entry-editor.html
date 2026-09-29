@@ -375,7 +375,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     <div class="permalink-preview-label"><?= __('admin.entry_editor_permalink_preview') ?></div>
                                     <div class="permalink-preview-url">
                                         <code id="permalink-preview-url">/</code>
-                                        <button type="button" class="copy-btn btn-icon" data-copy="" id="copy-permalink-btn" title="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>" aria-label="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>">
+                                        <button type="button" class="copy-btn icon-button" data-copy="" id="copy-permalink-btn" title="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>" aria-label="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         </button>
                                     </div>
@@ -601,7 +601,7 @@ echo htmlspecialchars($collectionExample);
                         <div class="frame-head">
                             <h2 class="frame-title" id="entry-revisions-title"><?= htmlspecialchars(__('admin.entry_editor_revisions')) ?></h2>
                             <span class="count" id="entry-revisions-count" hidden></span>
-                            <button type="button" class="btn-icon" id="refresh-entry-revisions-btn" title="<?= htmlspecialchars(__('admin.refresh')) ?>" aria-label="<?= htmlspecialchars(__('admin.refresh')) ?>"><?= birkly_icon('refresh', ['size' => 13]) ?></button>
+                            <button type="button" class="icon-button" id="refresh-entry-revisions-btn" title="<?= htmlspecialchars(__('admin.refresh')) ?>" aria-label="<?= htmlspecialchars(__('admin.refresh')) ?>"><?= birkly_icon('refresh', ['size' => 13]) ?></button>
                         </div>
                         <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
                         <div id="entry-revisions-list" class="entry-revisions-list">

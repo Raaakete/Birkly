@@ -172,7 +172,7 @@
             var label = btn.getAttribute('title') || btn.textContent.trim();
             btn.setAttribute('aria-label', label);
             btn.innerHTML = AP_ICONS.sparkle;
-            btn.classList.add('btn-icon');
+            btn.classList.add('icon-button');
         });
     }
 
@@ -289,7 +289,7 @@
             li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="u-fg-secondary">' +
                 escapeHtml(meta) + '</span>' +
                 (src.url ? ' <a href="' + escapeHtml(src.url) + '" target="_blank" rel="noopener">↗</a>' : '') +
-                (onRemove ? ' <button type="button" class="btn-link ap-remove-source" data-idx="' + idx + '">Remove</button>' : '');
+                (onRemove ? ' <button type="button" class="button is-quiet ap-remove-source" data-idx="' + idx + '">Remove</button>' : '');
             listEl.appendChild(li);
         });
         if (onRemove) {
@@ -1135,7 +1135,7 @@
                     var wizLi = document.createElement('li');
                     var wizBtn = document.createElement('button');
                     wizBtn.type = 'button';
-                    wizBtn.className = 'btn-link';
+                    wizBtn.className = 'button is-quiet';
                     wizBtn.textContent = t('ag_overview_start_wizard', 'Run guided setup to publish in ~15 minutes');
                     wizBtn.addEventListener('click', openSetupWizard);
                     wizLi.appendChild(wizBtn);
@@ -1145,7 +1145,7 @@
                     var li = document.createElement('li');
                     var btn = document.createElement('button');
                     btn.type = 'button';
-                    btn.className = 'btn-link ai-presence-goto-tab';
+                    btn.className = 'button is-quiet ai-presence-goto-tab';
                     btn.setAttribute('data-tab', step.tab);
                     btn.textContent = step.message;
                     li.appendChild(btn);
@@ -1212,7 +1212,7 @@
                 (detail ? ' · ' + escapeHtml(detail) : '') + '</p></div>' +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-1">' +
-                    '<button type="button" class="btn-icon ap-remove-source" data-idx="' +
+                    '<button type="button" class="icon-button ap-remove-source" data-idx="' +
                     idx + '" aria-label="Remove source" title="Remove">' + AP_ICONS.trash + '</button></div>' : '');
             list.appendChild(li);
         });
@@ -1228,7 +1228,7 @@
             li.innerHTML = '<strong>' + escapeHtml(ref.label || ref.collection || ref.entry_id) + '</strong> ' +
                 '<span class="badge">' + escapeHtml(ref.role || 'reference') + '</span> ' +
                 '<span class="u-fg-secondary">(' + escapeHtml(ref.ref_type) + ')</span>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-connected" data-idx="' +
+                (state.canEdit ? ' <button type="button" class="button is-quiet ap-remove-connected" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
         });
@@ -1287,7 +1287,7 @@
                 '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>' +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-2 u-mt-2">' +
-                    '<button type="button" class="btn-link ap-edit-claim-btn" data-idx="' + idx + '">Edit</button>' +
+                    '<button type="button" class="button is-quiet ap-edit-claim-btn" data-idx="' + idx + '">Edit</button>' +
                     '</div>' : '');
             li.addEventListener('click', function (e) {
                 if (e.target.closest('.ap-edit-claim-btn')) return;
@@ -1322,8 +1322,8 @@
                     ' <span class="badge">' + escapeHtml(ev.link_status) + '</span>' : '') +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-2 u-mt-2">' +
-                    '<button type="button" class="btn-link ap-edit-evidence-btn" data-idx="' + idx + '">Edit</button> ' +
-                    '<button type="button" class="btn-link ap-verify-evidence" data-idx="' + idx + '">Verify</button>' +
+                    '<button type="button" class="button is-quiet ap-edit-evidence-btn" data-idx="' + idx + '">Edit</button> ' +
+                    '<button type="button" class="button is-quiet ap-verify-evidence" data-idx="' + idx + '">Verify</button>' +
                     '</div>' : '');
             list.appendChild(li);
         });
@@ -1421,7 +1421,7 @@
                 '<div class="ap-version-timeline-body">' +
                 '<strong>' + escapeHtml(t('ag_version_label', 'Version {n}').replace('{n}', String(v.version))) + '</strong>' +
                 '<span class="u-fg-secondary">' + escapeHtml(when) + summary + '</span>' +
-                (jsonUrl ? ' <button type="button" class="btn-link ap-version-open-json" data-version="' +
+                (jsonUrl ? ' <button type="button" class="button is-quiet ap-version-open-json" data-version="' +
                     escapeHtml(String(v.version)) + '">' + escapeHtml(t('ag_view_json', 'View JSON')) + '</button>' : '') +
                 '</div>';
             list.appendChild(li);
@@ -1459,9 +1459,9 @@
                     '<p class="u-text-xs u-fg-tertiary u-m-0">' + countProductSources(prod) + ' linked source(s)</p>' : '') +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-1 u-mt-auto u-pt-2">' +
-                    '<button type="button" class="btn-icon ap-edit-product" data-idx="' + idx +
+                    '<button type="button" class="icon-button ap-edit-product" data-idx="' + idx +
                     '" aria-label="Edit" title="Edit">' + AP_ICONS.pencil + '</button>' +
-                    '<button type="button" class="btn-icon ap-delete-product" data-idx="' + idx +
+                    '<button type="button" class="icon-button ap-delete-product" data-idx="' + idx +
                     '" aria-label="Delete" title="Delete">' + AP_ICONS.trash + '</button></div>' : '');
             grid.appendChild(card);
         });
@@ -1477,7 +1477,7 @@
                 '<span class="badge">' + escapeHtml(rel.type || 'partner') + '</span>' +
                 (rel.url ? ' <a href="' + escapeHtml(rel.url) + '" target="_blank" rel="noopener">Link</a>' : '') +
                 (rel.description ? '<p class="u-fg-secondary">' + escapeHtml(rel.description) + '</p>' : '') +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-relationship" data-idx="' +
+                (state.canEdit ? ' <button type="button" class="button is-quiet ap-remove-relationship" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
         });
@@ -1534,7 +1534,7 @@
                 var noLinksMsg = panel.getAttribute('data-msg-no-links') ||
                     'No CMS entries linked yet. Connect entries on the Context tab to track sync.';
                 emptyEl.innerHTML = escapeHtml(noLinksMsg) +
-                    ' <button type="button" class="btn-link ai-presence-goto-tab" data-tab="context">' +
+                    ' <button type="button" class="button is-quiet ai-presence-goto-tab" data-tab="context">' +
                     escapeHtml(panel.getAttribute('data-goto-context-label') || 'Context') + '</button>';
                 emptyEl.hidden = false;
             }

@@ -673,7 +673,7 @@
   background: none;
 }
 
-.entry-editor-page[data-birch] .entry-revisions-section .frame-head .btn-icon {
+.entry-editor-page[data-birch] .entry-revisions-section .frame-head .icon-button {
   width: var(--control-sm);
   height: var(--control-sm);
   border: 0;
@@ -681,7 +681,7 @@
   color: var(--text-3);
 }
 
-.entry-editor-page[data-birch] .entry-revisions-section .frame-head .btn-icon:hover { background: var(--surface-2); color: var(--text); }
+.entry-editor-page[data-birch] .entry-revisions-section .frame-head .icon-button:hover { background: var(--surface-2); color: var(--text); }
 
 .entry-editor-page[data-birch] .entry-revisions-list {
   display: flex;

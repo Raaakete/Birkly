@@ -546,7 +546,7 @@
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(approval.description || chatT('ai_chat_js_no_description', 'No description'))}</div>
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
-                    <button type="button" class="button is-small btn-success" data-ai-approve="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}</button>
+                    <button type="button" class="button is-small is-success" data-ai-approve="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}</button>
                     <button type="button" class="button is-small is-danger" data-ai-reject="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}</button>
                 </div>
             </div>`;
@@ -795,21 +795,21 @@
                     </select>
                 </div>
                 <div class="ai-chat-header-actions u-row-1 u-shrink-0">
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="${chatT('ai_chat_js_history', 'History')}" aria-label="${chatT('ai_chat_js_history', 'History')}" aria-pressed="false">
+                    <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="${chatT('ai_chat_js_history', 'History')}" aria-label="${chatT('ai_chat_js_history', 'History')}" aria-pressed="false">
                         ${icon('clock', { size: 18 })}
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="${chatT('ai_chat_js_console', 'Console')}" aria-label="${chatT('ai_chat_js_console', 'Console')}" aria-pressed="false">
+                    <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="${chatT('ai_chat_js_console', 'Console')}" aria-label="${chatT('ai_chat_js_console', 'Console')}" aria-pressed="false">
                         ${icon('code', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-label="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-pressed="false" hidden>
+                    <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-label="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-pressed="false" hidden>
                         ${icon('list-checks', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="${chatT('ai_chat_js_new_chat', 'New chat')}" aria-label="${chatT('ai_chat_js_new_chat', 'New chat')}">
+                    <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="${chatT('ai_chat_js_new_chat', 'New chat')}" aria-label="${chatT('ai_chat_js_new_chat', 'New chat')}">
                         ${icon('plus', { size: 18 })}
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="${chatT('ai_chat_js_fullscreen', 'Fullscreen')}" aria-label="${chatT('ai_chat_js_toggle_fullscreen', 'Toggle fullscreen')}">
+                    <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="${chatT('ai_chat_js_fullscreen', 'Fullscreen')}" aria-label="${chatT('ai_chat_js_toggle_fullscreen', 'Toggle fullscreen')}">
                         ${icon('arrows-out', { size: 18 })}
                     </button>
                 </div>
@@ -828,7 +828,7 @@
                         <div class="ai-chat-side-panel" id="ai-chat-side-panel" role="dialog" aria-modal="true">
                             <div class="ai-chat-side-panel-head u-split">
                                 <span id="ai-chat-side-panel-title">${chatT('ai_chat_js_history', 'History')}</span>
-                                <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}" aria-label="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}">
+                                <button type="button" class="icon-button ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}" aria-label="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}">
                                     ${icon('x', { size: 16 })}
                                 </button>
                             </div>
@@ -884,7 +884,7 @@
                                     <div class="popover ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
                                 </div>
                             </div>
-                            <button type="button" class="button btn-icon is-main ai-chat-send-btn" id="ai-chat-send-btn" aria-label="${chatT('ai_chat_js_send_message', 'Send message')}">
+                            <button type="button" class="button icon-button is-main ai-chat-send-btn" id="ai-chat-send-btn" aria-label="${chatT('ai_chat_js_send_message', 'Send message')}">
                                 <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 18 })}</span>
                                 <span class="ai-chat-cancel-icon" hidden>${icon('stop', { size: 18 })}</span>
                             </button>
@@ -2719,7 +2719,7 @@
                 ${actionDataHtml ? `<div class="ai-chat-approval-data">${actionDataHtml}</div>` : ''}
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     ${status === 'pending' ? `
-                    <button type="button" class="button is-small btn-success" data-ai-approve="${escapeHtml(approval.id)}">
+                    <button type="button" class="button is-small is-success" data-ai-approve="${escapeHtml(approval.id)}">
                         ✓ ${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}
                     </button>
                     <button type="button" class="button is-small is-danger" data-ai-reject="${escapeHtml(approval.id)}">

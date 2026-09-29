@@ -115,7 +115,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
           <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="connection-modal-title"><?= htmlspecialchars(__('admin.ai_conn_modal_quick_connect')) ?></h2>
-              <button class="btn-icon modal-close" id="close-modal-btn">
+              <button class="icon-button modal-close" id="close-modal-btn">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
@@ -210,7 +210,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
           <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="mcp-modal-title"><?= htmlspecialchars(__('admin.ai_mcp_modal_title')) ?></h2>
-              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="<?= htmlspecialchars(__('admin.close')) ?>">
+              <button class="icon-button modal-close" data-mcp-modal-close aria-label="<?= htmlspecialchars(__('admin.close')) ?>">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
@@ -243,7 +243,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                     <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="<?= htmlspecialchars(__('admin.ai_mcp_click_copy')) ?>">
                       <span id="mcp-modal-personal-url-text" class="connector-url-text"><?= htmlspecialchars(__('admin.ai_mcp_loading')) ?></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
+                    <button type="button" class="icon-button connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
@@ -312,7 +312,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                     <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="<?= htmlspecialchars(__('admin.ai_mcp_click_copy')) ?>">
                       <span id="mcp-new-connector-url-text" class="connector-url-text"></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
+                    <button type="button" class="icon-button connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
