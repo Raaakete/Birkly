@@ -452,7 +452,9 @@
         if (!container) return;
 
         if (!entries.length) {
-            container.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('project_folder_empty', 'This folder is empty.')) + '</p></div>';
+            container.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(t('project_folder_empty', 'This folder is empty.')) + '</p></div>';
+            var emptyCount = document.getElementById('project-file-count');
+            if (emptyCount) emptyCount.textContent = t('settings_project_file_count', '{count} files', { count: 0 });
             return;
         }
 
@@ -461,9 +463,39 @@
                 ? Birkly.icon(entry.type === 'dir' ? 'folder' : 'file-text', { size: 16 })
                 : '';
             var size = entry.type === 'file' && entry.size != null ? ' <span class="project-file-size">' + formatBytes(entry.size) + '</span>' : '';
-            return '<li><button type="button" class="project-file-entry" data-type="' + escapeHtml(entry.type) + '" data-path="' + escapeHtml(entry.path) + '">' +
+            return '<li><button type="button" class="project-file-entry" data-type="' + escapeHtml(entry.type) + '" data-name="' + escapeHtml(entry.name) + '" data-path="' + escapeHtml(entry.path) + '">' +
                 icon + ' ' + escapeHtml(entry.name) + size + '</button></li>';
         }).join('') + '</ul>';
+        var count = document.getElementById('project-file-count');
+        if (count) {
+            count.textContent = t('settings_project_file_count', '{count} files', { count: entries.length });
+        }
+        applyFileFilter();
+    }
+
+    function applyFileFilter() {
+        var input = document.getElementById('project-file-filter');
+        var query = input ? String(input.value || '').trim().toLowerCase() : '';
+        var shown = 0;
+        document.querySelectorAll('#project-file-tree .project-file-entry').forEach(function (button) {
+            var item = button.closest('li');
+            if (!item) return;
+            var name = String(button.getAttribute('data-name') || '').toLowerCase();
+            var match = query === '' || name.indexOf(query) !== -1;
+            item.hidden = !match;
+            if (match) shown += 1;
+        });
+        var count = document.getElementById('project-file-count');
+        if (count && query !== '') {
+            count.textContent = t('settings_project_file_count', '{count} files', { count: shown });
+        }
+    }
+
+    function bindFileFilter() {
+        var input = document.getElementById('project-file-filter');
+        if (!input || input.dataset.bound === '1') return;
+        input.dataset.bound = '1';
+        input.addEventListener('input', applyFileFilter);
     }
 
     function refreshFiles() {
@@ -922,6 +954,7 @@
         }
 
         bindEvents();
+        bindFileFilter();
         loadPublicSiteUrl();
         loadOverview();
         refreshFiles();

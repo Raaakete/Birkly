@@ -115,7 +115,16 @@
                 '</li>';
         }).join('');
 
+        var totalChecks = (checks || []).length;
+        var passedChecks = (checks || []).filter(function (check) { return check.status === 'pass'; }).length;
+        var checksOpen = overall !== 'green';
         var metaBits = [];
+        if (totalChecks) {
+            metaBits.push(t('delivery_checks_summary', '{passed} of {total} checks pass', {
+                passed: passedChecks,
+                total: totalChecks
+            }));
+        }
         if (meta && meta.request_host) {
             metaBits.push(t('delivery_meta_host', 'Host: {host} ({role})', {
                 host: meta.request_host,
@@ -146,11 +155,12 @@
             (metaBits.length ? '<p class="delivery-status-meta">' + metaBits.map(escapeHtml).join(' · ') + '</p>' : '') +
             '</div>' +
             '<div class="delivery-status-actions">' +
+            '<button type="button" class="button is-quiet is-small delivery-status-toggle-checks" aria-expanded="' + (checksOpen ? 'true' : 'false') + '">' + escapeHtml(checksOpen ? t('delivery_btn_hide_checks', 'Hide checks') : t('delivery_btn_show_checks', 'Show checks')) + '</button>' +
             '<button type="button" class="button is-small delivery-status-refresh">' + escapeHtml(t('delivery_btn_refresh', 'Refresh')) + '</button>' +
             '<button type="button" class="button is-small delivery-status-repair">' + escapeHtml(t('delivery_btn_repair', 'Repair delivery')) + '</button>' +
             '</div></div>' +
             guideNudge +
-            '<ul class="delivery-status-checks">' + rows + '</ul>' +
+            '<ul class="delivery-status-checks"' + (checksOpen ? '' : ' hidden') + '>' + rows + '</ul>' +
             '</section>';
     }
 
@@ -214,6 +224,19 @@
                     if (global.BirklyGuide && typeof global.BirklyGuide.open === 'function') {
                         global.BirklyGuide.open({ journeyId: 'first-content', tab: 'journeys' });
                     }
+                });
+            }
+            var toggleChecks = root.querySelector('.delivery-status-toggle-checks');
+            if (toggleChecks) {
+                toggleChecks.addEventListener('click', function () {
+                    var list = root.querySelector('.delivery-status-checks');
+                    if (!list) return;
+                    var open = list.hasAttribute('hidden');
+                    list.hidden = !open;
+                    toggleChecks.setAttribute('aria-expanded', open ? 'true' : 'false');
+                    toggleChecks.textContent = open
+                        ? t('delivery_btn_hide_checks', 'Hide checks')
+                        : t('delivery_btn_show_checks', 'Show checks');
                 });
             }
             var repairBtn = root.querySelector('.delivery-status-repair');
