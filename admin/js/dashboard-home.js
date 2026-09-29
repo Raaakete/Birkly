@@ -19,9 +19,14 @@
     const locale = document.documentElement.lang || navigator.language || 'en';
 
     function t(key, fallback, params) {
-        let text = (window.Birkly && Birkly.i18n) ? Birkly.i18n.t('admin.' + key, fallback) : fallback;
+        if (window.Birkly && Birkly.i18n) {
+            return Birkly.i18n.t('admin.' + key, fallback, params);
+        }
+        let text = fallback;
         Object.keys(params || {}).forEach((name) => {
-            text = text.split('{' + name + '}').join(String(params[name]));
+            const value = String(params[name]);
+            text = String(text).split('{{' + name + '}}').join(value);
+            text = text.split('{' + name + '}').join(value);
         });
         return text;
     }

@@ -16,9 +16,14 @@
 
     function t(key, fallback, params) {
         const i18n = window.Birkly.i18n;
-        let text = i18n && typeof i18n.t === 'function' ? i18n.t('admin.' + key, fallback) : fallback;
+        if (i18n && typeof i18n.t === 'function') {
+            return i18n.t('admin.' + key, fallback, params);
+        }
+        let text = fallback;
         Object.keys(params || {}).forEach(function (name) {
-            text = String(text).split('{' + name + '}').join(String(params[name]));
+            const value = String(params[name]);
+            text = String(text).split('{{' + name + '}}').join(value);
+            text = text.split('{' + name + '}').join(value);
         });
         return text;
     }

@@ -26,12 +26,15 @@
     }
 
     function t(key, fallback, params) {
-        var out = (window.Birkly && window.Birkly.i18n)
-            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-            : (fallback || key);
+        if (window.Birkly && window.Birkly.i18n) {
+            return window.Birkly.i18n.t('admin.' + key, fallback || key, params);
+        }
+        var out = fallback || key;
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
-                out = out.split('{' + name + '}').join(String(params[name]));
+                var value = String(params[name]);
+                out = String(out).split('{{' + name + '}}').join(value);
+                out = out.split('{' + name + '}').join(value);
             });
         }
         return out;
