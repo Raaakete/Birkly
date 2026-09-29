@@ -2869,16 +2869,33 @@
         return (err && err.message) || t('marketplace_request_failed', 'Hub request failed.');
     }
 
-    function isSafeCheckoutRedirectUrl(url) {
+    /* p103-checkout-redirect-begin */
+    function birklyCheckoutRedirectAllowed(url, hubBase) {
         if (!url || typeof url !== 'string') {
             return false;
         }
         try {
             var parsed = new URL(url.trim());
-            return parsed.protocol === 'https:';
+            var host = parsed.hostname.toLowerCase();
+            if (parsed.protocol === 'https:' && host === 'checkout.stripe.com' && (parsed.port === '' || parsed.port === '443')) {
+                return true;
+            }
+            var base = new URL(hubBase || 'https://marketplace.birkly.cloud');
+            if (parsed.protocol !== base.protocol || host !== base.hostname.toLowerCase()) {
+                return false;
+            }
+            var parsedPort = parsed.port || (parsed.protocol === 'https:' ? '443' : '80');
+            var basePort = base.port || (base.protocol === 'https:' ? '443' : '80');
+            return parsedPort === basePort;
         } catch (e) {
             return false;
         }
+    }
+    /* p103-checkout-redirect-end */
+
+    function isSafeCheckoutRedirectUrl(url) {
+        var hubBase = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
+        return birklyCheckoutRedirectAllowed(url, hubBase);
     }
 
     async function startMarketplaceCheckout(slug, options) {

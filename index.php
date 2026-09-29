@@ -65,7 +65,7 @@ if ($file && str_starts_with($uri, '/project')) {
 }
 
 // Serve static files directly (CMS host assets at web root)
-if ($file && strpos($file, $root) === 0 && is_file($file)) {
+if ($file && birkly_resolved_path_is_inside_root($file, $root) && is_file($file)) {
     $mime = mime_content_type($file);
     header('Content-Type: ' . $mime);
     // Public runtimes use versioned URLs + long cache in nginx — avoid duplicate headers here.

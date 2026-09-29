@@ -43,6 +43,32 @@ switch ($action) {
         break;
 }
 
+/**
+ * fieldtype.js for one type. The name is a single segment (Text, oEmbed, URL).
+ * ".." and slashes cannot leave fieldtypes/.
+ */
+function birkly_fieldtype_js_path(string $fieldtypeName): ?string
+{
+    if ($fieldtypeName === '' || preg_match('/^[A-Za-z0-9_-]+$/', $fieldtypeName) !== 1) {
+        return null;
+    }
+    $fieldtypesDir = __DIR__ . '/../fieldtypes';
+    $root = realpath($fieldtypesDir);
+    if ($root === false) {
+        return null;
+    }
+    $jsFile = $root . DIRECTORY_SEPARATOR . ucfirst($fieldtypeName) . DIRECTORY_SEPARATOR . 'fieldtype.js';
+    if (!is_file($jsFile)) {
+        return null;
+    }
+    $real = realpath($jsFile);
+    if ($real === false || !str_starts_with($real, $root . DIRECTORY_SEPARATOR)) {
+        return null;
+    }
+
+    return $real;
+}
+
 function getAllFieldtypes() {
     $fieldtypesDir = __DIR__ . '/../fieldtypes';
     $fieldtypes = [];
@@ -95,14 +121,11 @@ function getAllFieldtypes() {
 }
 
 function getFieldtypeConfig($fieldtypeName) {
-    $fieldtypesDir = __DIR__ . '/../fieldtypes';
-    $fieldtypeDir = $fieldtypesDir . '/' . ucfirst($fieldtypeName);
-    $jsFile = $fieldtypeDir . '/fieldtype.js';
-    
-    if (!file_exists($jsFile)) {
+    $jsFile = birkly_fieldtype_js_path((string) $fieldtypeName);
+    if ($jsFile === null) {
         return ['status' => 'error', 'message' => 'Fieldtype not found'];
     }
-    
+
     $jsContent = file_get_contents($jsFile);
     
     // Extract the fieldtype definition
