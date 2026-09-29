@@ -873,28 +873,21 @@
         entryCount.className = 'entry-count-link';
         entryCount.href = adminUrl('entries', { collection: collection.slug });
         entryCount.title = 'View entries';
-        entryCount.textContent = count.toLocaleString() + ' ' + (count === 1 ? cgT('content_groups_entry', 'entry') : cgT('content_groups_entries', 'entries'));
+        const subCount = Number(collection.sub_entries_count || 0);
+        if (subCount > 0) {
+            entryCount.textContent = count === 1
+                ? cgT('content_groups_entry_plus_sub', '{entries} entry + {sub}', {
+                    entries: count.toLocaleString(),
+                    sub: subCount.toLocaleString()
+                })
+                : cgT('content_groups_entries_plus_sub', '{entries} entries + {sub}', {
+                    entries: count.toLocaleString(),
+                    sub: subCount.toLocaleString()
+                });
+        } else {
+            entryCount.textContent = count.toLocaleString() + ' ' + (count === 1 ? cgT('content_groups_entry', 'entry') : cgT('content_groups_entries', 'entries'));
+        }
         footer.appendChild(entryCount);
-
-        const subCollections = Array.isArray(collection.sub_collections) ? collection.sub_collections : [];
-        const subNames = subCollections.map((sub) => (sub && (sub.name || sub.slug)) || '').filter(Boolean);
-        if (subNames.length) {
-            const subLabel = document.createElement('span');
-            subLabel.className = 'collection-card-subs';
-            subLabel.textContent = subNames.length === 1
-                ? subNames[0]
-                : (subNames.length <= 3
-                    ? subNames.join(', ')
-                    : cgT('content_groups_sub_collections', '{count} sub-collections', { count: subNames.length }));
-            footer.appendChild(subLabel);
-        }
-
-        if (collection.sub_entries_count > 0) {
-            const subEntriesSpan = document.createElement('span');
-            subEntriesSpan.className = 'collection-card-subs';
-            subEntriesSpan.textContent = cgT('content_groups_sub_entries', '{count} sub-entries', { count: collection.sub_entries_count });
-            footer.appendChild(subEntriesSpan);
-        }
 
         const menuWrapper = document.createElement('div');
         menuWrapper.className = 'dropdown collection-menu-wrapper';
