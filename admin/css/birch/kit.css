@@ -29,6 +29,10 @@
   margin-inline-start: auto;
 }
 
+[data-birch] .page-bar:not(:has(:is(.btn-primary, .button.is-main, a.btn-primary))) .page-bar-tools {
+  margin-inline-start: 0;
+}
+
 [data-birch] .bulk-bar {
   display: flex;
   align-items: center;

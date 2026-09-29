@@ -176,8 +176,12 @@ $dashIsAdmin = ($dashUser['role'] ?? '') === 'admin';
         <section class="slab dashboard-traffic" aria-labelledby="dashboard-traffic-title">
             <div class="dashboard-traffic-head">
                 <h2 class="dashboard-traffic-title" id="dashboard-traffic-title"><?= __('admin.dash_traffic') ?></h2>
-                <span class="chip"><?= __('admin.dash_last_30_days') ?></span>
+                <div class="segmented" id="dashboard-traffic-range" role="group" aria-label="<?= htmlspecialchars(__('admin.dash_traffic')) ?>">
+                    <button type="button" data-range="7" aria-pressed="false"><?= __('admin.dash_last_7_days') ?></button>
+                    <button type="button" data-range="30" aria-pressed="true"><?= __('admin.dash_last_30_days') ?></button>
+                </div>
             </div>
+            <div class="dashboard-traffic-chart" id="dashboard-traffic-chart"></div>
             <div class="tabs" role="tablist" id="dashboard-traffic-tabs">
                 <button type="button" role="tab" aria-selected="true" data-traffic="pages"><?= __('admin.dash_tab_entry_pages') ?></button>
                 <button type="button" role="tab" aria-selected="false" tabindex="-1" data-traffic="sources"><?= __('admin.dash_tab_sources') ?></button>

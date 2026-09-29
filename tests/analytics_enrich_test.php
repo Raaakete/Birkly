@@ -128,5 +128,6 @@ $pageOnlyTrend = birkly_analytics_aggregate_events([
     ],
 ]);
 assert_true(($pageOnlyTrend['daily_stats'][0]['views'] ?? 0) === 1, 'daily trend counts page views only');
+assert_true(($pageOnlyTrend['daily_stats'][0]['interactions'] ?? 0) === 1, 'daily trend counts form, click and plugin events as interactions');
 
 echo "analytics_enrich_test: OK\n";
