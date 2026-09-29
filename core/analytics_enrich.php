@@ -355,6 +355,15 @@ function birkly_analytics_aggregate_events(array $events): array
             $pluginEvents[$name] = ($pluginEvents[$name] ?? 0) + 1;
         }
 
+        $timestamp = (int) ($event['timestamp'] ?? time());
+        $date = date('Y-m-d', $timestamp);
+        if (!isset($dailyStats[$date])) {
+            $dailyStats[$date] = ['views' => 0, 'visitors' => [], 'interactions' => 0];
+        }
+        if (in_array($eventType, ['form_submit', 'outbound_click', 'plugin_event'], true)) {
+            $dailyStats[$date]['interactions']++;
+        }
+
         if (!$isPageView) {
             continue;
         }
@@ -416,10 +425,8 @@ function birkly_analytics_aggregate_events(array $events): array
             $sessions[$sessionId]['views']++;
         }
 
-        $timestamp = (int) ($event['timestamp'] ?? time());
-        $date = date('Y-m-d', $timestamp);
-        if (!isset($dailyStats[$date])) {
-            $dailyStats[$date] = ['views' => 0, 'visitors' => []];
+        if (!isset($dailyStats[$date]['interactions'])) {
+            $dailyStats[$date]['interactions'] = 0;
         }
         $dailyStats[$date]['views']++;
         if ($visitorKey !== '') {
@@ -445,6 +452,7 @@ function birkly_analytics_aggregate_events(array $events): array
             'date' => $date,
             'views' => $stats['views'],
             'visitors' => count($stats['visitors']),
+            'interactions' => (int) ($stats['interactions'] ?? 0),
         ];
     }
     usort($formattedDailyStats, static function ($a, $b) {
