@@ -3865,7 +3865,9 @@
                 if (!sortEl) return;
                 sortEl.value = button.getAttribute('data-marketplace-sort') || 'name';
                 document.querySelectorAll('[data-marketplace-sort]').forEach(function (el) {
-                    el.classList.toggle('is-current', el === button);
+                    var on = el === button;
+                    el.classList.toggle('is-current', on);
+                    el.setAttribute('aria-pressed', on ? 'true' : 'false');
                 });
                 sortEl.dispatchEvent(new Event('change'));
             });
