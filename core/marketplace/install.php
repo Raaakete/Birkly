@@ -221,7 +221,62 @@ function birkly_marketplace_plugin_dir_is_leftover(string $dest): bool
 }
 
 /**
- * True when a plugin directory holds commerce-style runtime JSON (orders, keys, etc.).
+ * Names core protects even when plugin.json has no runtime_data block.
+ * `connections` is generic. The other names stay until every installed
+ * Commerce package declares them itself.
+ *
+ * @return array{directories: list<string>, files: list<string>}
+ */
+function birkly_marketplace_builtin_runtime_data(): array
+{
+    return [
+        'directories' => ['orders', 'customers', 'connections', 'subscriptions', 'quotes', 'gift_cards'],
+        'files' => [
+            'email_templates.json',
+            'invoice_templates.json',
+            'invoice_profile.json',
+            'encryption_key.txt',
+            'order_sequence.json',
+        ],
+    ];
+}
+
+/**
+ * Extra names from the destination plugin.json. Invalid names are ignored.
+ *
+ * @return array{directories: list<string>, files: list<string>}
+ */
+function birkly_marketplace_declared_runtime_data(string $dest): array
+{
+    $empty = ['directories' => [], 'files' => []];
+    $file = $dest . '/plugin.json';
+    if (!is_file($file)) {
+        return $empty;
+    }
+
+    $json = json_decode((string) file_get_contents($file), true);
+    $runtime = is_array($json) && is_array($json['runtime_data'] ?? null) ? $json['runtime_data'] : [];
+    $directories = [];
+    $files = [];
+    foreach ($runtime['directories'] ?? [] as $name) {
+        if (is_string($name) && preg_match('/^[a-z0-9_-]+$/i', $name)) {
+            $directories[] = $name;
+        }
+    }
+    foreach ($runtime['files'] ?? [] as $name) {
+        if (is_string($name) && preg_match('/^[a-z0-9_.-]+$/i', $name) && !str_contains($name, '..')) {
+            $files[] = $name;
+        }
+    }
+
+    return [
+        'directories' => array_values(array_unique($directories)),
+        'files' => array_values(array_unique($files)),
+    ];
+}
+
+/**
+ * True when a plugin directory holds runtime files core or the plugin declared.
  */
 function birkly_marketplace_plugin_dir_has_runtime_data(string $dest): bool
 {
@@ -229,7 +284,12 @@ function birkly_marketplace_plugin_dir_has_runtime_data(string $dest): bool
         return false;
     }
 
-    foreach (['orders', 'customers', 'connections', 'subscriptions', 'quotes', 'gift_cards'] as $sub) {
+    $builtin = birkly_marketplace_builtin_runtime_data();
+    $declared = birkly_marketplace_declared_runtime_data($dest);
+    $directories = array_values(array_unique(array_merge($builtin['directories'], $declared['directories'])));
+    $files = array_values(array_unique(array_merge($builtin['files'], $declared['files'])));
+
+    foreach ($directories as $sub) {
         $path = $dest . '/' . $sub;
         if (!is_dir($path)) {
             continue;
@@ -244,13 +304,7 @@ function birkly_marketplace_plugin_dir_has_runtime_data(string $dest): bool
         }
     }
 
-    foreach ([
-        'email_templates.json',
-        'invoice_templates.json',
-        'invoice_profile.json',
-        'encryption_key.txt',
-        'order_sequence.json',
-    ] as $file) {
+    foreach ($files as $file) {
         if (is_file($dest . '/' . $file)) {
             return true;
         }
