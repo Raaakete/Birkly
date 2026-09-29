@@ -285,11 +285,12 @@
             manifest = await res.json();
             manifest._loadedFrom = 'api';
         } catch (apiErr) {
-            const offlineRes = await fetch(Birkly.url('/api/help_offline_manifest.php'));
-            if (!offlineRes.ok) throw apiErr;
-            manifest = await offlineRes.json();
-            manifest._loadedFrom = 'offline';
-            manifest._offlineMessage = 'Showing bundled Help topics — live Birkly-Docs manifest unavailable.';
+            manifest = {
+                topics: [],
+                docs_base_url: 'https://docs.birkly.com',
+                _loadedFrom: 'unavailable',
+                _offlineMessage: 'Documentation is unavailable because docs.birkly.com could not be reached.',
+            };
         }
         buildTopicLinkMaps();
         return manifest;
@@ -394,6 +395,53 @@
         bindTopicLinks(navRoot);
     }
 
+    function rewriteOriginDocHtml(html, contentUrl, docsBase) {
+        const holder = document.createElement('div');
+        holder.innerHTML = html;
+        const contentBase = contentUrl.replace(/[^/]*$/, '');
+
+        holder.querySelectorAll('a[href]').forEach((anchor) => {
+            const href = anchor.getAttribute('href') || '';
+            if (!href || href.charAt(0) === '#') return;
+            if (/^(https?:|mailto:)/i.test(href)) {
+                anchor.setAttribute('target', '_blank');
+                anchor.setAttribute('rel', 'noopener noreferrer');
+                return;
+            }
+            let absolute = '';
+            try {
+                absolute = new URL(href, contentBase).href;
+            } catch (err) {
+                return;
+            }
+            const path = absolute
+                .replace(docsBase + '/content/', '')
+                .replace(docsBase + '/', '')
+                .split('#')[0];
+            const topicId = resolveTopicIdFromHref(path) || resolveTopicIdFromHref(path.replace(/\.html$/i, '.md'));
+            if (topicId) {
+                anchor.setAttribute('href', '#');
+                anchor.setAttribute('data-help-topic-link', topicId);
+                return;
+            }
+            anchor.setAttribute('href', absolute.replace(docsBase + '/content/', docsBase + '/'));
+            anchor.setAttribute('target', '_blank');
+            anchor.setAttribute('rel', 'noopener noreferrer');
+        });
+
+        holder.querySelectorAll('img[src]').forEach((img) => {
+            const src = img.getAttribute('src') || '';
+            if (!src || /^(https?:|data:)/i.test(src)) return;
+            try {
+                img.setAttribute('src', new URL(src, contentBase).href);
+            } catch (err) {
+                /* leave the original src */
+            }
+        });
+
+        return holder.innerHTML;
+    }
+
     async function showTopic(topicId) {
         if (!manifest?.topics) return;
         const topic = manifest.topics.find((t) => t.id === topicId);
@@ -410,30 +458,48 @@
 
         try {
             let banner = '';
-            if (manifest && manifest._loadedFrom === 'offline') {
+            if (manifest && (manifest._loadedFrom === 'offline' || manifest._loadedFrom === 'unavailable')) {
                 banner = '<div class="help-offline-banner callout callout-info callout--block u-mb-4">' +
-                    escapeHtml(manifest._offlineMessage || 'Offline Help mode') + '</div>';
-            }
-            if (!topic.snapshot) {
-                throw new Error('Help topic is missing a snapshot path');
-            }
-            const res = await fetch(resolveUrl(topic.snapshot));
-            if (!res.ok) throw new Error('Snapshot not found');
-            const md = await res.text();
-            if (/^\s*<!DOCTYPE html/i.test(md) || /^\s*<html[\s>]/i.test(md)) {
-                throw new Error('Snapshot returned HTML instead of markdown — check Help manifest snapshot paths');
+                    escapeHtml(manifest._offlineMessage || 'Documentation is unavailable because docs.birkly.com could not be reached.') + '</div>';
             }
 
             const sectionLabel = navSectionLabel(navSectionForTopic(topic));
             const docsBase = String(manifest.docs_base_url || 'https://docs.birkly.com').replace(/\/$/, '');
             const fullDocPath = String(topic.docs_path || '').replace(/^\//, '');
             const fullDocUrl = fullDocPath ? docsBase + '/' + fullDocPath : '';
-            const fullDocLink = fullDocUrl
-                ? '<p class="u-mt-4"><a class="btn btn-secondary btn-sm" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Read full doc on docs.birkly.com</a></p>'
+            const isPluginTopic = topic.source === 'plugin' || String(topic.snapshot || '').indexOf('plugin_doc.php') !== -1;
+            let articleHtml = '';
+
+            if (isPluginTopic) {
+                if (!topic.snapshot) {
+                    throw new Error('Plugin topic is missing its docs path');
+                }
+                const res = await fetch(resolveUrl(topic.snapshot));
+                if (!res.ok) throw new Error('Plugin doc not found');
+                const md = await res.text();
+                articleHtml = renderMarkdown(md);
+            } else {
+                if (!fullDocPath) {
+                    throw new Error('Help topic is missing a docs path');
+                }
+                const contentUrl = docsBase + '/content/' + fullDocPath;
+                let originHtml = '';
+                try {
+                    const res = await fetch(contentUrl, { mode: 'cors', credentials: 'omit' });
+                    if (!res.ok) throw new Error('origin');
+                    originHtml = await res.text();
+                } catch (originErr) {
+                    throw new Error('Documentation is unavailable because docs.birkly.com could not be reached.');
+                }
+                articleHtml = rewriteOriginDocHtml(originHtml, contentUrl, docsBase);
+            }
+
+            const fullDocLink = (!isPluginTopic && fullDocUrl)
+                ? '<p class="u-mt-4"><a class="btn btn-secondary btn-sm" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Open on docs.birkly.com</a></p>'
                 : '';
             content.innerHTML = banner +
                 '<div class="u-mb-4"><span class="badge badge-accent">' + escapeHtml(sectionLabel) + '</span></div>' +
-                '<article class="prose markdown-content">' + renderMarkdown(md) + '</article>' +
+                '<article class="prose markdown-content">' + articleHtml + '</article>' +
                 fullDocLink;
 
             bindTopicLinks(content);
@@ -509,6 +575,13 @@
 
         try {
             await loadManifest();
+            if (manifest && manifest._loadedFrom === 'unavailable') {
+                const content = document.getElementById('help-topic-content');
+                if (content) {
+                    content.innerHTML = '<p class="error-state">' + escapeHtml(manifest._offlineMessage) + '</p>';
+                }
+                return;
+            }
             setupSearch();
             const topicId = getTopicFromUrl();
             await showTopic(manifest.topics.find((t) => t.id === topicId) ? topicId : 'getting-started');
