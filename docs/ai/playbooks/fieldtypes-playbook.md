@@ -90,7 +90,7 @@ Use **parenthesis** shelf calls (documented in human help). Legacy space form `{
 | `relation_titles` / `relation_links` | `relation` | `{relation_titles('related')}` · `<ul>{relation_links('related')}</ul>` |
 | `dynamicitems_html` | `dynamicitems` | `{dynamicitems_html('blocks')}` |
 
-Full table: `admin/docs/snapshots/core-template-shelf.md` · https://docs.birkly.com/03-templating/core-template-shelf.html
+Full table: https://docs.birkly.com/03-templating/core-template-shelf.html
 
 **Anti-pattern:** `{'hero_image'}` inside `<img src>` when the field stores a **media id** — use `{media_img('hero_image', '…')}`.
 
@@ -198,4 +198,4 @@ After schema changes: `read_collection` → match template `name="{slug}"` and `
 - `public-forms` — `{entry for}` and form field mapping
 - `sub-collections` — nested schemas
 - `content-editor` — Editor field HTML tables/grids
-- Human docs: https://docs.birkly.com/02-content/field-types.html (offline: `admin/docs/snapshots/field-types.md`)
+- Human docs: https://docs.birkly.com/02-content/field-types.html

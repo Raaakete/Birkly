@@ -14,7 +14,7 @@ Use for: collections, entries, schema design, publishing, bulk content, slug rul
 2. `read_collection` for target slug if updating schema.
 3. `read_birkly_docs` `content-model` (this doc) if multi-step.
 
-**Human docs (SSOT):** [Content model overview](https://docs.birkly.com/02-content/content-model-overview.html) on docs.birkly.com — offline mirror: `admin/docs/snapshots/content-model-overview.md`.
+**Human docs (SSOT):** [Content model overview](https://docs.birkly.com/02-content/content-model-overview.html) on docs.birkly.com.
 
 ## Create a new collection
 
