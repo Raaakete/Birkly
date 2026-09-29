@@ -953,13 +953,21 @@
         menuWrapper.appendChild(menuButton);
         menuWrapper.appendChild(menuDropdown);
 
-        card.appendChild(createDragHandle(cgT('content_card_drag', 'Drag to reorder')));
-        card.appendChild(titleRow);
+        const head = document.createElement('div');
+        head.className = 'collection-card-head';
+        head.appendChild(createDragHandle(cgT('content_card_drag', 'Drag to reorder')));
+        head.appendChild(titleRow);
+
+        const foot = document.createElement('div');
+        foot.className = 'collection-card-foot';
+        foot.appendChild(footer);
+        foot.appendChild(menuWrapper);
+
+        card.appendChild(head);
         if (description) {
             card.appendChild(description);
         }
-        card.appendChild(footer);
-        card.appendChild(menuWrapper);
+        card.appendChild(foot);
 
         card.addEventListener('click', async function (e) {
             if (e.defaultPrevented) return;
