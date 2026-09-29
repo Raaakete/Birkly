@@ -363,7 +363,7 @@ label.field-title { cursor: pointer; }
   white-space: nowrap;
   text-overflow: ellipsis;
   color: var(--text);
-  font: var(--weight-semibold) var(--size-title-l) / var(--lh-title-l) var(--font-sans);
+  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
 }
 
 [data-birch] .content-page .collection-card-body {
@@ -417,9 +417,7 @@ label.field-title { cursor: pointer; }
 
 [data-birch] .content-page .collection-card-meta .entry-count-link {
   color: var(--text);
-  font-size: var(--size-title);
-  font-weight: var(--weight-semibold);
-  line-height: var(--lh-title);
+  font: var(--weight-semibold) var(--size-small) / var(--lh-small) var(--font-sans);
 }
 
 [data-birch] .content-page .collection-card-meta > :not(:first-child)::before {
@@ -497,10 +495,6 @@ label.field-title { cursor: pointer; }
   padding: var(--s-3);
 }
 
-[data-birch] .content-page.is-compact-cards .collection-card:not(.is-row) .collection-card-title {
-  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
-}
-
 [data-birch] .content-page.is-compact-cards .collection-card:not(.is-row) .collection-card-body {
   flex-basis: calc(var(--lh-small) * 2);
   height: calc(var(--lh-small) * 2);
@@ -561,10 +555,6 @@ label.field-title { cursor: pointer; }
 [data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-foot { grid-column: 2; }
 
 [data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-body { display: none; }
-
-[data-birch] .content-page.is-compact-cards .collection-card.is-row .collection-card-title {
-  font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
-}
 
 [data-birch] .content-page .collection-card.is-row .collection-card-title {
   display: block;
