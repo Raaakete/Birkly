@@ -260,10 +260,10 @@
   position: sticky;
   inset-inline-end: 0;
   z-index: var(--z-raised);
-  width: 10rem;
-  min-width: 10rem;
-  max-width: 10rem;
-  padding: var(--s-1) var(--s-2);
+  width: 8.25rem;
+  min-width: 8.25rem;
+  max-width: 8.25rem;
+  padding: var(--s-1);
   border-inline-start: 1px solid var(--line);
   background: var(--surface);
   text-align: center;
@@ -276,7 +276,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
+  gap: var(--s-1);
   flex-wrap: nowrap;
   height: 100%;
 }
@@ -319,9 +319,9 @@
 
 .entries-smart-table.entries-l2-actions .head-actions,
 .entries-smart-table.entries-l2-actions .cell-actions {
-  width: 12rem;
-  min-width: 12rem;
-  max-width: 12rem;
+  width: 10.5rem;
+  min-width: 10.5rem;
+  max-width: 10.5rem;
 }
 
 .entries-smart-table.entries-l2-actions .cell-actions-inner {
