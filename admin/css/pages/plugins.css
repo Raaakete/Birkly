@@ -362,7 +362,10 @@
 
 /* Two rows: search, count and sort; then the filters, left aligned */
 .hub-shell #marketplace-browse-view .main-actions-left { flex: 1 0 100%; }
-.hub-shell .marketplace-sort-box { margin-inline-start: auto; }
+.hub-shell .marketplace-sort-box {
+  margin-inline-start: auto;
+  min-width: 16rem;
+}
 
 .hub-shell .main-actions-right {
   flex: 1 0 100%;
