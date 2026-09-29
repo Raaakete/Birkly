@@ -110,6 +110,43 @@ assert_true(
     'encryption key survives leftover replace'
 );
 
+// A name that is only in plugin.json runtime_data is protected too.
+birkly_marketplace_remove_directory($pluginsDir . '/commerce');
+mkdir($pluginsDir . '/commerce/ledger', 0755, true);
+file_put_contents($pluginsDir . '/commerce/plugin.json', json_encode([
+    'name' => 'Commerce',
+    'version' => '1.0.0',
+    'runtime_data' => [
+        'directories' => ['ledger', '../outside'],
+        'files' => ['merchant_seal.txt'],
+    ],
+], JSON_THROW_ON_ERROR));
+file_put_contents($pluginsDir . '/commerce/ledger/row.json', '{"id":"row"}');
+file_put_contents($pluginsDir . '/commerce/merchant_seal.txt', 'seal');
+
+$declared = birkly_marketplace_declared_runtime_data($pluginsDir . '/commerce');
+assert_true($declared['directories'] === ['ledger'], 'declared directories ignore unsafe names');
+assert_true($declared['files'] === ['merchant_seal.txt'], 'declared files are read from plugin.json');
+assert_true(
+    birkly_marketplace_plugin_dir_has_runtime_data($pluginsDir . '/commerce'),
+    'declared runtime files count even when they are not in the builtin list'
+);
+
+$declaredInstall = birkly_marketplace_extract_plugin_zip($zipPath, 'commerce', false);
+assert_true((bool) ($declaredInstall['ok'] ?? false), 'fresh install keeps a declared runtime directory');
+assert_true(is_file($pluginsDir . '/commerce/ledger/row.json'), 'declared directory survives leftover replace');
+assert_true(is_file($pluginsDir . '/commerce/merchant_seal.txt'), 'declared file survives leftover replace');
+assert_true(!is_file($pluginsDir . '/outside'), 'declared names cannot escape the plugin directory');
+
+// A leftover with no runtime files and no declaration is still replaceable.
+birkly_marketplace_remove_directory($pluginsDir . '/commerce');
+mkdir($pluginsDir . '/commerce', 0755, true);
+file_put_contents($pluginsDir . '/commerce/notes.txt', 'not runtime');
+$notesInstall = birkly_marketplace_extract_plugin_zip($zipPath, 'commerce', false);
+assert_true((bool) ($notesInstall['ok'] ?? false), 'leftover without runtime data is replaceable');
+assert_true(!is_file($pluginsDir . '/commerce/notes.txt'), 'undeclared leftover file is not preserved');
+assert_true(is_file($pluginsDir . '/commerce/plugin.php'), 'replaceable leftover receives plugin.php');
+
 @unlink($zipPath);
 @unlink($zip2);
 birkly_marketplace_remove_directory($pluginsDir);
