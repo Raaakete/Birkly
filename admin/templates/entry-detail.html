@@ -170,7 +170,7 @@
                         }
                         $addSubEntryUrl = admin_url('entry-editor', $addSubEntryParams);
                         ?>
-                        <a href="<?= $addSubEntryUrl ?>" class="btn btn-primary">
+                        <a href="<?= $addSubEntryUrl ?>" class="button is-main">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -283,10 +283,10 @@
                                 <span class="bulk-selected-count" id="bulk-selected-count-<?= htmlspecialchars($subCollectionSlug) ?>">0</span> <?= __('admin.selected') ?>
                             </span>
                             <div class="bulk-actions-buttons">
-                                <button type="button" class="btn btn-sm bulk-publish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.publish') ?></button>
-                                <button type="button" class="btn btn-sm bulk-unpublish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.unpublish') ?></button>
-                                <button type="button" class="btn btn-sm btn-danger bulk-delete-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.delete') ?></button>
-                                <button type="button" class="btn btn-sm btn-secondary bulk-cancel-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.cancel') ?></button>
+                                <button type="button" class="button is-small bulk-publish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.publish') ?></button>
+                                <button type="button" class="button is-small bulk-unpublish-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.unpublish') ?></button>
+                                <button type="button" class="button is-small is-danger bulk-delete-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.delete') ?></button>
+                                <button type="button" class="button is-small bulk-cancel-btn" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>"><?= __('admin.cancel') ?></button>
                             </div>
                         </div>
                     </div>

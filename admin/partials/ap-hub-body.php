@@ -6,9 +6,9 @@
             <span id="ap-publish-banner-meta" class="u-text-sm u-fg-secondary"></span>
         </div>
         <div class="u-cluster">
-            <button type="button" class="btn btn-sm btn-secondary" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
-            <a class="btn btn-sm btn-secondary" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
-            <button type="button" class="btn btn-sm btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
+            <button type="button" class="button is-small" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
+            <a class="button is-small" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
+            <button type="button" class="button is-small btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
         </div>
     </div>
 </div>
@@ -73,21 +73,21 @@
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_who'}</h3>
                         <div class="card-actions">
-                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                            <button type="button" class="button is-small ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
                         </div>
                     </header>
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                            <div class="ap-field-row"><input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-website">{translate 'admin.ai_presence_website'}</label>
-                            <div class="ap-field-row"><input type="url" id="ap-essentials-website" class="input" data-field="identity.website"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><input type="url" id="ap-essentials-website" class="input" data-field="identity.website"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
@@ -95,7 +95,7 @@
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_sources'}</h3>
                         <div class="card-actions">
-                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="sources">{translate 'admin.ag_manage_all'}</button>
+                            <button type="button" class="button is-small ai-presence-goto-tab" data-tab="sources">{translate 'admin.ag_manage_all'}</button>
                         </div>
                     </header>
                     <ul id="ap-essentials-sources-list" class="ai-presence-item-list"></ul>
@@ -105,17 +105,17 @@
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_messages'}</h3>
                         <div class="card-actions">
-                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                            <button type="button" class="button is-small ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
                         </div>
                     </header>
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
@@ -123,7 +123,7 @@
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_claims'}</h3>
                         <div class="card-actions">
-                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="claims">{translate 'admin.ag_manage_all'}</button>
+                            <button type="button" class="button is-small ai-presence-goto-tab" data-tab="claims">{translate 'admin.ag_manage_all'}</button>
                         </div>
                     </header>
                     <ul id="ap-essentials-claims-list" class="ai-presence-item-list"></ul>
@@ -135,7 +135,7 @@
                             <strong>{translate 'admin.ag_essentials_publish'}</strong>
                             <span id="ap-essentials-publish-status" class="u-block u-text-sm u-fg-secondary u-m-0"></span>
                         </div>
-                        <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="publish">{translate 'admin.ag_hub_manage_in_publish'}</button>
+                        <button type="button" class="button is-small ap-goto-zone" data-hub-zone="publish">{translate 'admin.ag_hub_manage_in_publish'}</button>
                     </div>
                 </div>
             </div>
@@ -163,10 +163,10 @@
 
                         <div class="ap-assist-panel u-stack-2 active" data-assist-panel="auto" role="tabpanel">
                             <p class="form-help">{translate 'admin.ai_presence_assist_auto_hint'}</p>
-                            <button type="button" class="btn btn-secondary u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
+                            <button type="button" class="button u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
+                            <button type="button" class="button is-small u-w-full" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+                            <button type="button" class="button is-small u-w-full" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
+                            <button type="button" class="button is-small u-w-full" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
                             <p id="ap-assist-auto-status" class="form-help"></p>
                         </div>
 
@@ -177,17 +177,17 @@
                             <select id="ap-assist-collections" class="input" multiple size="6" aria-describedby="ap-assist-build-hint"></select>
                             <p id="ap-assist-collections-empty" class="form-help" hidden>{translate 'admin.ai_presence_assist_no_collections'}</p>
                             <p id="ap-assist-build-hint" class="form-help">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
+                            <button type="button" class="button is-small u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
                             <div class="u-cluster u-mt-3 u-pt-3 u-border-top">
-                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
-                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
+                                <button type="button" class="button is-small" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
+                                <button type="button" class="button is-small" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
                             </div>
                         </div>
 
                         <div class="u-stack-2 u-pt-4 u-border-top" id="ap-assist-results">
                             <div class="u-split u-wrap u-gap-2">
                                 <h3 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ai_presence_assist_review'} <span class="badge badge-sm" id="ap-suggestion-count" hidden>0</span></h3>
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-accept-all-suggestions" hidden>{translate 'admin.ai_presence_accept_all'}</button>
+                                <button type="button" class="button is-small" id="ap-accept-all-suggestions" hidden>{translate 'admin.ai_presence_accept_all'}</button>
                             </div>
                             <p class="form-help">{translate 'admin.ai_presence_suggestions_help'}</p>
                             <ul id="ap-assist-suggestions" class="ap-card-list"></ul>
@@ -265,8 +265,8 @@
                             <h3>{translate 'admin.ai_presence_cross_links'}</h3>
                             <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ai_presence_cross_links_help'}</p>
                             <div class="u-cluster-3 u-mb-3">
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-validate-links">{translate 'admin.ai_presence_validate_links'}</button>
+                                <button type="button" class="button is-small" id="ap-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
+                                <button type="button" class="button is-small" id="ap-validate-links">{translate 'admin.ai_presence_validate_links'}</button>
                             </div>
                             <ul id="ap-link-health-list" class="ai-presence-item-list"></ul>
                         </section>
@@ -328,7 +328,7 @@
                                     </div>
                                 </div>
                                 <p class="form-help">{translate 'admin.ai_presence_source_cms_hint'}</p>
-                                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-source">{translate 'admin.ai_presence_add_cms_source'}</button>
+                                <button type="button" class="button is-small" id="ap-add-cms-source">{translate 'admin.ai_presence_add_cms_source'}</button>
                             </div>
                             <div class="ap-source-mode-panel u-stack-3" data-source-mode-panel="url" hidden>
                                 <div class="form-group">
@@ -348,7 +348,7 @@
                                     <label for="ap-source-url">{translate 'admin.url'}</label>
                                     <input type="url" id="ap-source-url" class="input" placeholder="https://…">
                                 </div>
-                                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-url-source">{translate 'admin.ai_presence_add_url_source'}</button>
+                                <button type="button" class="button is-small" id="ap-add-url-source">{translate 'admin.ai_presence_add_url_source'}</button>
                             </div>
                             <div class="ap-source-mode-panel u-stack-3" data-source-mode-panel="document" hidden>
                                 <p class="form-help">{translate 'admin.ai_presence_source_upload_help'}</p>
@@ -371,40 +371,40 @@
                         <div class="ap-context-grid">
                             <div class="form-group ap-span-full">
                                 <label for="ap-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                                <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                                <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-full-desc">{translate 'admin.ai_presence_full_description'}</label>
-                                <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.full_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.full_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-what-we-do">{translate 'admin.ai_presence_what_we_do'}</label>
-                                <div class="ap-field-row"><textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.what_we_do" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.what_we_do" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-industry">{translate 'admin.ai_presence_industry'}</label>
-                                <div class="ap-field-row"><textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.industry" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.industry" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-categories">{translate 'admin.ai_presence_categories'}</label>
-                                <div class="ap-field-row"><textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.categories" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.categories" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-locations">{translate 'admin.ai_presence_locations'}</label>
-                                <div class="ap-field-row"><textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.locations" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.locations" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-website">{translate 'admin.ai_presence_website'}</label>
-                                <div class="ap-field-row"><input type="url" id="ap-website" class="input" data-field="identity.website"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="url" id="ap-website" class="input" data-field="identity.website"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label>{translate 'admin.ai_presence_social_profiles'}</label>
                                 <div id="ap-social-list"></div>
-                                <button type="button" class="btn btn-sm btn-secondary u-mt-3" id="ap-add-social">{translate 'admin.add'}</button>
+                                <button type="button" class="button is-small u-mt-3" id="ap-add-social">{translate 'admin.add'}</button>
                             </div>
                         </div>
                     </section>
@@ -413,23 +413,23 @@
                         <div class="ap-context-grid">
                             <div class="form-group ap-span-full">
                                 <label for="ap-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                                <div class="ap-field-row"><textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-best-suited">{translate 'admin.ai_presence_best_suited_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.best_suited_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_suited_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-not-ideal">{translate 'admin.ai_presence_not_ideal_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.not_ideal_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.not_ideal_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
-                                <div class="ap-field-row"><textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.competitive_positioning" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.competitive_positioning" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                         </div>
                     </section>
@@ -438,26 +438,26 @@
                         <div class="ap-context-grid">
                             <div class="form-group">
                                 <label for="ap-tone">{translate 'admin.ai_presence_tone'}</label>
-                                <div class="ap-field-row"><input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="communication_guidance.tone" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv"><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.tone" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-preferred-json">{translate 'admin.ai_presence_preferred_terms'}</label>
-                                <div class="ap-field-row"><textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="communication_guidance.preferred_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.preferred_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-avoided-json">{translate 'admin.ai_presence_avoided_terms'}</label>
-                                <div class="ap-field-row"><textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="communication_guidance.avoided_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.avoided_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
-                                <div class="ap-field-row"><textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="communication_guidance.custom_guidance" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.custom_guidance" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                         </div>
                     </section>
                     <section class="card u-p-6 u-stack-4 u-mt-4">
                         <h3>{translate 'admin.ai_presence_relationships'}</h3>
                         <ul id="ap-relationships-list" class="ai-presence-item-list"></ul>
-                        <button type="button" class="btn btn-sm btn-secondary u-mt-3" id="ap-add-relationship">{translate 'admin.ai_presence_add_relationship'}</button>
+                        <button type="button" class="button is-small u-mt-3" id="ap-add-relationship">{translate 'admin.ai_presence_add_relationship'}</button>
                     </section>
                     </div>
                 </div>
@@ -465,7 +465,7 @@
                 <div class="tab-content" data-tab-content="products">
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_products_lede'}</p>
                     <div class="main-actions-bar">
-                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
+                        <button type="button" class="button is-small" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
                     </div>
                     <div id="ap-products-list" class="u-grid-auto u-mt-6"></div>
                     <p id="ap-products-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_products_empty'}</p>
@@ -474,9 +474,9 @@
                 <div class="tab-content" data-tab-content="claims">
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_claims_lede'}</p>
                     <div class="main-actions-bar">
-                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
-                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
-                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-evidence">{translate 'admin.ai_presence_add_cms_evidence'}</button>
+                        <button type="button" class="button is-small" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
+                        <button type="button" class="button is-small" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
+                        <button type="button" class="button is-small" id="ap-add-cms-evidence">{translate 'admin.ai_presence_add_cms_evidence'}</button>
                     </div>
                     <div class="u-grid-2 u-mt-6">
                         <div class="card u-p-6 u-stack-3">
@@ -495,14 +495,14 @@
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_media_help'}</p>
                     <div class="card u-p-6 u-stack-4">
                         <div class="u-cluster-3">
-                            <button type="button" class="btn btn-secondary btn-sm" id="ap-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
+                            <button type="button" class="button is-small" id="ap-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
                             <select id="ap-media-represents" class="input">
                                 <option value="brand">{translate 'admin.ai_presence_media_brand'}</option>
                                 <option value="product">{translate 'admin.ai_presence_media_product'}</option>
                                 <option value="person">{translate 'admin.ai_presence_media_person'}</option>
                                 <option value="campaign">{translate 'admin.ai_presence_media_campaign'}</option>
                             </select>
-                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-media-context">{translate 'admin.add'}</button>
+                            <button type="button" class="button is-small" id="ap-add-media-context">{translate 'admin.add'}</button>
                         </div>
                         <input type="hidden" id="ap-media-id">
                         <div id="ap-media-picked-preview" class="u-row-2 u-mt-3 u-p-2 u-surface-sunken" hidden>
@@ -644,7 +644,7 @@
                     <p class="form-help u-m-0">{translate 'admin.ag_publish_option1_help'}</p>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-client" class="input u-font-mono"></textarea>
-                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
+                        <button type="button" class="button is-small ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
@@ -652,13 +652,13 @@
                     <p class="form-help u-m-0">{translate 'admin.ag_publish_option2_help'}</p>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-proxy" class="input u-font-mono"></textarea>
-                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
+                        <button type="button" class="button is-small ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
                     <span class="u-label u-text-sm">{translate 'admin.ag_publish_option3_title'}</span>
                     <p class="form-help u-m-0">{translate 'admin.ag_publish_option3_help'}</p>
-                    <a class="btn btn-sm btn-secondary" id="ap-publish-download-guide" download="agent-guide.json">{translate 'admin.ag_publish_download_btn'}</a>
+                    <a class="button is-small" id="ap-publish-download-guide" download="agent-guide.json">{translate 'admin.ag_publish_download_btn'}</a>
                 </div>
                 <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_publish_external_no_copy'}</p>
             </div>
@@ -677,11 +677,11 @@
                 <label class="u-label u-text-sm">{translate 'admin.ag_publish_webmcp_snippet_label'}</label>
                 <div class="copy-snippet-row">
                     <textarea readonly rows="2" id="ap-publish-snippet-webmcp" class="input u-font-mono"></textarea>
-                    <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
+                    <button type="button" class="button is-small ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
                 </div>
                 <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_publish_webmcp_external_no_copy'}</p>
             </div>
-            <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
+            <button type="button" class="button is-small ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
         </section>
 
         <!-- Layer 3: AI app connections (Birkly MCP) — managed in Settings → AI -->
@@ -694,7 +694,7 @@
                 <dt>{translate 'admin.ag_publish_mcp_url_label'}</dt>
                 <dd><code id="ap-publish-mcp-url"></code></dd>
             </dl>
-            <a class="btn btn-sm btn-secondary" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai']), ENT_QUOTES, 'UTF-8') ?>">{translate 'admin.ag_publish_mcp_manage'}</a>
+            <a class="button is-small" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai']), ENT_QUOTES, 'UTF-8') ?>">{translate 'admin.ag_publish_mcp_manage'}</a>
         </section>
 
         <!-- AI Discovery checklist (P66) -->
@@ -704,7 +704,7 @@
                     <h3 class="u-m-0">{translate 'admin.ag_discovery_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_discovery_help'}</p>
                 </div>
-                <button type="button" class="btn btn-sm btn-secondary" id="ap-discovery-refresh">{translate 'admin.ag_discovery_refresh'}</button>
+                <button type="button" class="button is-small" id="ap-discovery-refresh">{translate 'admin.ag_discovery_refresh'}</button>
             </header>
             <ul class="ai-presence-item-list" id="ap-discovery-checks" aria-live="polite"></ul>
             <details class="u-mt-3">
@@ -767,14 +767,14 @@
             <h3>{translate 'admin.ai_presence_context_preview'}</h3>
             <p class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_preview_help'}</p>
             <div class="u-cluster">
-                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
-                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
-                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What products or services do you offer?">{translate 'admin.ag_preview_preset_products'}</button>
-                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What claims are supported?">{translate 'admin.ag_preview_preset_claims'}</button>
+                <button type="button" class="button is-small ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
+                <button type="button" class="button is-small ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
+                <button type="button" class="button is-small ap-preview-q" data-q="What products or services do you offer?">{translate 'admin.ag_preview_preset_products'}</button>
+                <button type="button" class="button is-small ap-preview-q" data-q="What claims are supported?">{translate 'admin.ag_preview_preset_claims'}</button>
             </div>
             <div class="u-cluster-3 u-mt-3">
                 <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
-                <button type="button" class="btn btn-secondary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
+                <button type="button" class="button is-small" id="ap-preview-ask">{translate 'admin.ask'}</button>
             </div>
             <div id="ap-preview-answer" class="ai-presence-preview-result u-mt-6"></div>
             <ul id="ap-preview-sources" class="ai-presence-item-list u-mt-3"></ul>
@@ -799,7 +799,7 @@
     <div class="ap-ai-loading-panel card u-stack-4">
         <div class="spinner spinner-lg u-mx-auto" aria-hidden="true"></div>
         <p id="ap-ai-loading-msg" class="u-text-base u-m-0">{translate 'admin.ai_presence_ai_working'}</p>
-        <button type="button" class="btn btn-secondary btn-sm" id="ap-ai-loading-cancel">{translate 'admin.cancel'}</button>
+        <button type="button" class="button is-small" id="ap-ai-loading-cancel">{translate 'admin.cancel'}</button>
     </div>
 </div>
 
@@ -841,7 +841,7 @@
             <p class="form-help u-m-0">{translate 'admin.ai_presence_what_note'}</p>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-ap-modal-close="ap-about-modal">{translate 'admin.ai_presence_about_got_it'}</button>
+            <button type="button" class="button is-main" data-ap-modal-close="ap-about-modal">{translate 'admin.ai_presence_about_got_it'}</button>
         </div>
     </div>
 </div>
@@ -859,9 +859,9 @@
                 <dd><code id="ap-success-url"></code></dd>
             </dl>
             <div class="u-cluster u-justify-center">
-                <button type="button" class="btn btn-primary" id="ap-success-copy">{translate 'admin.ag_wizard_copy_url'}</button>
-                <a class="btn btn-secondary" id="ap-success-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
-                <button type="button" class="btn btn-secondary" id="ap-success-overview">{translate 'admin.ag_wizard_done'}</button>
+                <button type="button" class="button is-main" id="ap-success-copy">{translate 'admin.ag_wizard_copy_url'}</button>
+                <a class="button" id="ap-success-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
+                <button type="button" class="button" id="ap-success-overview">{translate 'admin.ag_wizard_done'}</button>
             </div>
         </div>
     </div>
@@ -942,8 +942,8 @@
                         <div class="field-label">{translate 'admin.ai_presence_product_media'}</div>
                         <p class="form-help u-m-0">{translate 'admin.ai_presence_product_media_help'}</p>
                         <div class="u-cluster">
-                            <button type="button" class="btn btn-sm btn-secondary" id="ap-product-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="ap-product-clear-media" hidden>{translate 'admin.clear'}</button>
+                            <button type="button" class="button is-small" id="ap-product-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
+                            <button type="button" class="button is-small" id="ap-product-clear-media" hidden>{translate 'admin.clear'}</button>
                         </div>
                         <div id="ap-product-media-preview" class="u-row-2" hidden>
                             <img id="ap-product-media-thumb" alt="" class="ap-media-thumb">
@@ -985,12 +985,12 @@
                         <select id="ap-product-source-collection" class="input"><option value="">{translate 'admin.collection'}</option></select>
                         <select id="ap-product-source-entry" class="input"><option value="">{translate 'admin.entry'}</option></select>
                     </div>
-                    <button type="button" class="btn btn-sm btn-secondary u-mt-3" id="ap-product-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
+                    <button type="button" class="button is-small u-mt-3" id="ap-product-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-product-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-product-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.save'}</button>
             </div>
         </form>
     </div>
@@ -1020,8 +1020,8 @@
                 <div class="form-group"><label for="ap-rel-url">{translate 'admin.ai_presence_website'}</label><input type="url" id="ap-rel-url" class="input"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-relationship-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-relationship-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.save'}</button>
             </div>
         </form>
     </div>
@@ -1061,12 +1061,12 @@
                         <input type="text" id="ap-claim-source-label" class="input" placeholder="{translate 'admin.title'}">
                         <input type="url" id="ap-claim-source-url" class="input" placeholder="https://…">
                     </div>
-                    <button type="button" class="btn btn-sm btn-secondary u-mt-3" id="ap-claim-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
+                    <button type="button" class="button is-small u-mt-3" id="ap-claim-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-claim-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-claim-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.save'}</button>
             </div>
         </form>
     </div>
@@ -1103,8 +1103,8 @@
                 <div class="form-group"><label for="ap-evidence-notes">{translate 'admin.notes'}</label><textarea id="ap-evidence-notes" class="input" rows="2"></textarea></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-evidence-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-evidence-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.save'}</button>
             </div>
         </form>
     </div>
@@ -1125,8 +1125,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-cms-evidence-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.add'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-cms-evidence-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.add'}</button>
             </div>
         </form>
     </div>
@@ -1159,8 +1159,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-media-modal">{translate 'admin.cancel'}</button>
-                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+                <button type="button" class="button" data-ap-modal-close="ap-media-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="button is-main">{translate 'admin.save'}</button>
             </div>
         </form>
     </div>

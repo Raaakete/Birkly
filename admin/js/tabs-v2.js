@@ -110,7 +110,7 @@
 
         var moreBtn = document.createElement('button');
         moreBtn.type = 'button';
-        moreBtn.className = 'tabs-v2-more btn btn-secondary btn-sm';
+        moreBtn.className = 'tabs-v2-more button is-small';
         moreBtn.textContent = (window.Birkly && window.Birkly.i18n && window.Birkly.i18n.t)
             ? window.Birkly.i18n.t('admin.more', 'More')
             : 'More';

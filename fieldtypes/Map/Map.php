@@ -79,11 +79,11 @@ class Map extends BaseField {
                 <label for="map_address_{$name}">Address</label>
                 <div class="map-address">
                     <input type="text" id="map_address_{$name}" class="input" value="{$address}" placeholder="Street, city">
-                    <button type="button" class="btn btn-secondary btn-sm" id="map_search_{$name}">{$searchIcon}Search</button>
+                    <button type="button" class="button is-small" id="map_search_{$name}">{$searchIcon}Search</button>
                 </div>
             </div>
             <div class="map-actions">
-                <button type="button" class="btn btn-ghost btn-sm" id="map_get_location_{$name}">{$pinIcon}Use my location</button>
+                <button type="button" class="button is-quiet is-small" id="map_get_location_{$name}">{$pinIcon}Use my location</button>
             </div>
             <input type="hidden" name="{$name}" id="field_{$name}_value" value="{$this->encodeValue($location)}">
         </div>
@@ -168,7 +168,7 @@ class Map extends BaseField {
             gap: var(--s-1);
         }
         .map-address .input { flex: 1 1 auto; min-width: 0; }
-        .map-address .btn { flex: none; height: var(--control); }
+        .map-address :is(.btn, .button) { flex: none; height: var(--control); }
         .map-actions { display: flex; }
         CSS;
     }

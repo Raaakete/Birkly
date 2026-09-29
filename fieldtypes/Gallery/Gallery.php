@@ -74,9 +74,9 @@ class Gallery extends BaseField {
                 {$previewHtml}
             </div>
             <div class="gallery-controls">
-                <button type="button" class="btn btn-secondary btn-sm add-gallery-images" data-field="{$this->name}">{$addIcon}Add images</button>
-                <button type="button" class="btn btn-ghost btn-sm upload-gallery-images" data-field="{$this->name}">{$uploadIcon}Upload</button>
-                <button type="button" class="btn btn-ghost btn-sm clear-gallery" data-field="{$this->name}"{$clearHidden}>Clear all</button>
+                <button type="button" class="button is-small add-gallery-images" data-field="{$this->name}">{$addIcon}Add images</button>
+                <button type="button" class="button is-quiet is-small upload-gallery-images" data-field="{$this->name}">{$uploadIcon}Upload</button>
+                <button type="button" class="button is-quiet is-small clear-gallery" data-field="{$this->name}"{$clearHidden}>Clear all</button>
             </div>
             <input type="file" id="gallery_input_{$this->name}" multiple accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.m4v,.webm,.mov,.ogv" hidden>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$this->encodeValue($value)}">

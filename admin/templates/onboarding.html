@@ -97,7 +97,7 @@ $localCatalog = birkly_demo_starter_catalog();
                     </div>
                     <div id="first-user-error" class="callout callout-danger" hidden aria-live="polite" role="alert"></div>
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary btn-lg"><?= __('admin.create_admin_account') ?></button>
+                        <button type="submit" class="button is-main"><?= __('admin.create_admin_account') ?></button>
                     </div>
                 </form>
             </div>
@@ -114,8 +114,8 @@ $localCatalog = birkly_demo_starter_catalog();
                     <p id="install-context-body">Loading…</p>
                 </div>
                 <div class="onboarding-actions onboarding-actions--split">
-                    <button type="button" class="btn btn-ghost" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
-                    <button type="button" class="btn btn-primary btn-lg" data-onboarding-action="next"><?= __('admin.get_started') ?></button>
+                    <button type="button" class="button is-quiet" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
+                    <button type="button" class="button is-main" data-onboarding-action="next"><?= __('admin.get_started') ?></button>
                 </div>
             </div>
         </div>
@@ -137,8 +137,8 @@ $localCatalog = birkly_demo_starter_catalog();
                         <textarea class="textarea" id="project-description" name="project_description" rows="3"></textarea>
                     </div>
                     <div class="onboarding-actions onboarding-actions--split">
-                        <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
-                        <button type="submit" class="btn btn-primary"><?= __('admin.continue') ?></button>
+                        <button type="button" class="button" data-onboarding-action="prev"><?= __('admin.back') ?></button>
+                        <button type="submit" class="button is-main"><?= __('admin.continue') ?></button>
                     </div>
                 </form>
             </div>
@@ -177,10 +177,10 @@ $localCatalog = birkly_demo_starter_catalog();
                 </div>
                 <div class="install-context-card" id="onboarding-return-reminder"></div>
                 <div class="onboarding-actions onboarding-actions--split">
-                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
+                    <button type="button" class="button" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                     <div class="onboarding-actions-right">
-                        <button type="button" class="btn btn-ghost" data-onboarding-action="skip-starter">Skip</button>
-                        <button type="button" class="btn btn-primary" data-onboarding-action="apply-starter" id="starter-continue" disabled><?= __('admin.continue') ?></button>
+                        <button type="button" class="button is-quiet" data-onboarding-action="skip-starter">Skip</button>
+                        <button type="button" class="button is-main" data-onboarding-action="apply-starter" id="starter-continue" disabled><?= __('admin.continue') ?></button>
                     </div>
                 </div>
             </div>

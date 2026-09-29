@@ -111,10 +111,10 @@ window.HaruFieldtypes['relation'] = {
     html += `<input type="hidden" name="${fieldName}" id="field_${fieldName}_value" value="">`;
     html += `<div class="relation-controls">`;
     const plusIcon = (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon('plus', { size: 13 }) : '';
-    html += `<button type="button" class="btn btn-secondary btn-sm select-relation-btn" data-field="${fieldName}" data-multiple="${isMulti}">`;
+    html += `<button type="button" class="button is-small select-relation-btn" data-field="${fieldName}" data-multiple="${isMulti}">`;
     html += `${plusIcon}${isMulti ? 'Add entries' : 'Choose entry'}`;
     html += `</button>`;
-    html += `<button type="button" class="btn btn-ghost btn-sm remove-all-relation-btn" data-field="${fieldName}" hidden>Remove all</button>`;
+    html += `<button type="button" class="button is-quiet is-small remove-all-relation-btn" data-field="${fieldName}" hidden>Remove all</button>`;
     html += `</div>`;
     html += `</div>`;
     

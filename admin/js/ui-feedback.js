@@ -221,8 +221,8 @@
             '<div id="birkly-feedback-confirm-details" class="birkly-feedback-confirm-details" hidden></div>' +
             '</div>' +
             '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" data-birkly-feedback-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
-            '<button type="button" class="btn btn-primary" data-birkly-feedback-action="confirm">' + escapeHtml(uiT('ui_feedback_confirm_label', 'Confirm')) + '</button>' +
+            '<button type="button" class="button" data-birkly-feedback-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
+            '<button type="button" class="button is-main" data-birkly-feedback-action="confirm">' + escapeHtml(uiT('ui_feedback_confirm_label', 'Confirm')) + '</button>' +
             '</div>' +
             '</div>';
 
@@ -281,8 +281,8 @@
             '<input type="text" id="birkly-feedback-prompt-input" class="input" autocomplete="off">' +
             '</div>' +
             '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" data-birkly-prompt-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
-            '<button type="button" class="btn btn-primary" data-birkly-prompt-action="confirm">' + escapeHtml(uiT('ui_feedback_ok_label', 'OK')) + '</button>' +
+            '<button type="button" class="button" data-birkly-prompt-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
+            '<button type="button" class="button is-main" data-birkly-prompt-action="confirm">' + escapeHtml(uiT('ui_feedback_ok_label', 'OK')) + '</button>' +
             '</div>' +
             '</div>';
 
@@ -337,7 +337,7 @@
             renderConfirmDetails(modal, options.details);
             if (confirmBtn) {
                 confirmBtn.textContent = options.confirmLabel || uiT('ui_feedback_confirm_label', 'Confirm');
-                confirmBtn.className = options.danger ? 'btn btn-danger' : 'btn btn-primary';
+                confirmBtn.className = options.danger ? 'button is-danger' : 'button is-main';
             }
             if (cancelBtn) cancelBtn.textContent = options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel');
 

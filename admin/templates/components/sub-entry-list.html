@@ -10,7 +10,7 @@
         <div class="sub-collection-header">
             <h3>{sub_collection.title}</h3>
             <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug'}" 
-               class="btn btn-primary btn-sm">
+               class="button is-main is-small">
                 {translate 'admin.add'} {sub_collection.singular_title}
             </a>
         </div>
@@ -39,11 +39,11 @@
                         
                         <div class="sub-entry-actions">
                             <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug' sub_entry='sub_entry.id'}" 
-                               class="btn btn-sm">
+                               class="button is-small">
                                 {translate 'admin.edit'}
                             </a>
                             <button type="button" 
-                                    class="btn btn-sm btn-danger delete-sub-entry-btn" 
+                                    class="button is-small is-danger delete-sub-entry-btn" 
                                     data-sub-entry-id="{sub_entry.id}"
                                     data-sub-collection="{sub_collection.slug}">
                                 {translate 'admin.delete'}
@@ -56,7 +56,7 @@
             <div class="empty-state">
                 <p>{translate 'admin.no_sub_entries'}</p>
                 <a href="{admin_url 'entry-editor' collection='collection_slug' entry='parent_entry_id' sub_collection='sub_collection.slug'}" 
-                   class="btn btn-primary">
+                   class="button is-main">
                     {translate 'admin.add_first'} {sub_collection.singular_title}
                 </a>
             </div>

@@ -49,8 +49,8 @@
 /* "+ Add Field" / "+ Add Sub-Collection" are actions, not full-width bars —
    the flex column above stretches block children by default (align-items:
    stretch), so these need to opt back out to their natural button width. */
-.fields-section > .btn,
-.sub-collection-fields-section > .btn {
+.fields-section > :is(.btn, .button),
+.sub-collection-fields-section > :is(.btn, .button) {
   align-self: flex-start;
 }
 

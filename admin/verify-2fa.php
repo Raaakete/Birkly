@@ -150,10 +150,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <p class="field-help"><?= htmlspecialchars(__('admin.auth_2fa_backup_help')) ?></p>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-full" id="verify-button" data-busy-label="<?= htmlspecialchars(__('admin.auth_2fa_verifying')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_verify')) ?></button>
+                    <button type="submit" class="button is-main btn-full" id="verify-button" data-busy-label="<?= htmlspecialchars(__('admin.auth_2fa_verifying')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_verify')) ?></button>
 
                     <p class="u-align-text-center u-m-0">
-                        <button type="button" class="btn btn-link" id="toggle-backup" data-label-backup="<?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?>" data-label-app="<?= htmlspecialchars(__('admin.auth_2fa_use_app')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?></button>
+                        <button type="button" class="button btn-link" id="toggle-backup" data-label-backup="<?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?>" data-label-app="<?= htmlspecialchars(__('admin.auth_2fa_use_app')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?></button>
                     </p>
                 </form>
 

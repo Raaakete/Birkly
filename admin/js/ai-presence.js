@@ -1257,7 +1257,7 @@
                     escapeHtml(st) + '</option>';
             });
             html += '</select></label>';
-            html += ' <button type="button" class="btn btn-sm btn-secondary ap-edit-claim-btn" data-idx="' +
+            html += ' <button type="button" class="button is-small ap-edit-claim-btn" data-idx="' +
                 (state.draft.claims || []).indexOf(claim) + '">Edit claim</button>';
         } else {
             html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
@@ -1350,8 +1350,8 @@
                 (ctx.description ? '<p>' + escapeHtml(ctx.description) + '</p>' : '') +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-2 u-mt-2">' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-edit-media" data-idx="' + idx + '">Edit</button> ' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-remove-media" data-idx="' + idx + '">Remove</button>' +
+                    '<button type="button" class="button is-small ap-edit-media" data-idx="' + idx + '">Edit</button> ' +
+                    '<button type="button" class="button is-small ap-remove-media" data-idx="' + idx + '">Remove</button>' +
                     '</div>' : '') +
                 '</div>';
             grid.appendChild(card);
@@ -1496,7 +1496,7 @@
                 escapeHtml(prof.platform || '') + '" data-idx="' + idx + '">' +
                 '<input type="url" class="input ap-social-url" placeholder="URL" value="' +
                 escapeHtml(prof.url || '') + '" data-idx="' + idx + '">' +
-                (state.canEdit ? '<button type="button" class="btn btn-sm btn-secondary ap-remove-social" data-idx="' +
+                (state.canEdit ? '<button type="button" class="button is-small ap-remove-social" data-idx="' +
                     idx + '">Remove</button>' : '');
             wrap.appendChild(row);
         });
@@ -1557,7 +1557,7 @@
                 (diff.field ? ' <code>' + escapeHtml(diff.field) + '</code>' : '') +
                 (diff.similarity !== undefined ? ' (' + diff.similarity + '% match)' : '');
             if (state.canEdit && diff.ref_index !== undefined) {
-                li.innerHTML += ' <button type="button" class="btn btn-sm btn-secondary ap-cms-refresh" data-ref-index="' +
+                li.innerHTML += ' <button type="button" class="button is-small ap-cms-refresh" data-ref-index="' +
                     diff.ref_index + '"' +
                     (diff.field ? ' data-field="' + escapeHtml(diff.field) + '"' : '') +
                     '>Refresh from CMS</button>';
@@ -1622,9 +1622,9 @@
                 (s.source ? '<div class="u-text-xs u-fg-tertiary">Source: ' + escapeHtml(s.source) + '</div>' : '') +
                 (state.canEdit ?
                     '<div class="u-cluster u-gap-2">' +
-                    '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' +
+                    '<button type="button" class="button is-small is-main ap-accept-suggestion" data-id="' +
                     escapeHtml(s.id) + '">Accept</button> ' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' +
+                    '<button type="button" class="button is-small ap-reject-suggestion" data-id="' +
                     escapeHtml(s.id) + '">Reject</button></div>' : '');
             list.appendChild(li);
         });

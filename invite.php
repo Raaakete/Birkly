@@ -142,7 +142,7 @@ $__birklyInviteNonceAttr = birkly_csp_nonce_attr();
                     </div>
 
                     <div class="auth-footer u-stack-3">
-                        <a class="btn btn-primary btn-lg btn-full" href="<?= htmlspecialchars($loginUrl) ?>">Go to sign in</a>
+                        <a class="button is-main btn-full" href="<?= htmlspecialchars($loginUrl) ?>">Go to sign in</a>
                     </div>
 
                 <?php elseif ($invitation): ?>
@@ -195,7 +195,7 @@ $__birklyInviteNonceAttr = birkly_csp_nonce_attr();
                             >
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-lg btn-full u-mt-2">
+                        <button type="submit" class="button is-main btn-full u-mt-2">
                             Create account
                         </button>
                     </form>

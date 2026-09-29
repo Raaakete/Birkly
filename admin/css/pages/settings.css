@@ -1020,9 +1020,9 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 
 .settings-shell .settings-search { width: 240px; }
 
-.settings-shell .main-actions-tools .btn .birkly-icon,
-.settings-shell .card-header .btn .birkly-icon,
-.settings-shell .section-header .btn .birkly-icon { margin-inline-end: 6px; }
+.settings-shell .main-actions-tools :is(.btn, .button) .birkly-icon,
+.settings-shell .card-header :is(.btn, .button) .birkly-icon,
+.settings-shell .section-header :is(.btn, .button) .birkly-icon { margin-inline-end: 6px; }
 
 .settings-shell .settings-tabs .tabs { margin-block-end: var(--s-6); }
 
@@ -1148,7 +1148,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 .settings-shell .settings-panels .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
 .settings-shell .settings-panels .card .input:disabled { color: var(--text-3); }
 
-.settings-shell .settings-panels .card-body > .u-cluster:has(> .btn) {
+.settings-shell .settings-panels .card-body > .u-cluster:has(> :is(.btn, .button)) {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1322,7 +1322,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 }
 
 .settings-shell .project-activity-filters { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-block-end: var(--s-2); }
-.settings-shell .project-activity-filters .btn.is-active { background: var(--surface-3); color: var(--text); }
+.settings-shell .project-activity-filters :is(.btn, .button).is-active { background: var(--surface-3); color: var(--text); }
 
 .settings-shell .project-activity-item {
   padding: var(--s-2) var(--s-4);
@@ -1341,10 +1341,16 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 
 /* One mint per view: the page bar's Save changes. Actions inside the panes
    (including the ones hosting-wizard.js and redirects.js render) are secondary. */
-.settings-shell .settings-panels .btn-primary {
+.settings-shell .settings-panels :is(.btn-primary, .button.is-main) {
   --btn-hover: var(--surface-2);
   --btn-hover-border: transparent;
   background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.settings-shell .settings-panels .button.is-main:hover {
+  background: var(--surface-2);
   border-color: var(--line-strong);
   color: var(--text);
 }
@@ -1382,7 +1388,7 @@ body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--line); 
 .settings-shell .settings-panels .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
 
 /* Danger: soft fill, sized to its label */
-.settings-shell .settings-panels .card-body > .btn-danger { align-self: flex-start; }
+.settings-shell .settings-panels .card-body > :is(.btn-danger, .button.is-danger) { align-self: flex-start; }
 
 /* Choice cards (analytics presets, email providers): blue ring when chosen */
 .settings-shell .analytics-preset-card { padding: var(--s-4); }

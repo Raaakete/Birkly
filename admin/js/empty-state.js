@@ -49,7 +49,7 @@
             const primary = options.primary.href
                 ? document.createElement('a')
                 : document.createElement('button');
-            primary.className = 'btn btn-primary';
+            primary.className = 'button is-main';
             if (options.primary.href) {
                 primary.href = options.primary.href;
             } else {
@@ -65,14 +65,14 @@
         if (options.secondary) {
             const secondary = document.createElement('button');
             secondary.type = 'button';
-            secondary.className = 'btn btn-ghost btn-sm';
+            secondary.className = 'button is-quiet is-small';
             secondary.textContent = options.secondary.label;
             if (options.secondary.guideAction && global.BirklyGuide && typeof global.BirklyGuide.open === 'function') {
                 secondary.addEventListener('click', function () {
                     global.BirklyGuide.open({ journeyId: options.secondary.guideAction, tab: 'journeys' });
                 });
             } else if (options.secondary.href) {
-                secondary.className = 'btn btn-secondary btn-sm';
+                secondary.className = 'button is-small';
                 const link = document.createElement('a');
                 link.href = options.secondary.href;
                 link.className = secondary.className;
@@ -85,7 +85,7 @@
 
         if (options.helpTopic) {
             const help = document.createElement('a');
-            help.className = 'btn btn-ghost btn-sm contextual-help-link';
+            help.className = 'button is-quiet is-small contextual-help-link';
             help.href = (global.Birkly && typeof global.Birkly.url === 'function')
                 ? global.Birkly.url('/admin/index.php?page=help&topic=' + encodeURIComponent(options.helpTopic))
                 : '#';

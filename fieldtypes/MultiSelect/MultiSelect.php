@@ -276,7 +276,7 @@ class MultiSelect extends BaseField {
                 <div class="add-option-controls">
                     <input type="text" class="input new-option-label" placeholder="Option label" id="new_option_label_{$fieldIndex}">
                     <input type="text" class="input new-option-value" placeholder="Option value (optional)" id="new_option_value_{$fieldIndex}">
-                    <button type="button" class="btn btn-secondary add-option-btn" data-field="{$fieldIndex}">Add Option</button>
+                    <button type="button" class="button add-option-btn" data-field="{$fieldIndex}">Add Option</button>
                 </div>
                 <small class="form-text">Default label is fallback. Add translated labels per language when multilanguage is enabled.</small>
             </div>

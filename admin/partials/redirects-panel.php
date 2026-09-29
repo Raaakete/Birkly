@@ -51,8 +51,8 @@
                         </div>
                     </div>
                     <div class="setting-actions">
-                        <button type="submit" class="btn btn-primary"><?= htmlspecialchars(__('admin.discovery_seo_redirect_save'), ENT_QUOTES, 'UTF-8') ?></button>
-                        <button type="button" class="btn btn-secondary" id="redirect-form-reset"><?= htmlspecialchars(__('admin.clear'), ENT_QUOTES, 'UTF-8') ?></button>
+                        <button type="submit" class="button is-main"><?= htmlspecialchars(__('admin.discovery_seo_redirect_save'), ENT_QUOTES, 'UTF-8') ?></button>
+                        <button type="button" class="button" id="redirect-form-reset"><?= htmlspecialchars(__('admin.clear'), ENT_QUOTES, 'UTF-8') ?></button>
                     </div>
                     <div id="redirect-feedback" class="u-text-sm" aria-live="polite" hidden></div>
                 </form>

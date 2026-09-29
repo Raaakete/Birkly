@@ -266,4 +266,4 @@
    above the page content, with its action inside as a secondary button. */
 .grace-banner { margin-block-end: var(--s-4); }
 .grace-banner .signal { align-items: center; }
-.grace-banner .signal > .btn { flex-shrink: 0; }
+.grace-banner .signal > :is(.btn, .button) { flex-shrink: 0; }

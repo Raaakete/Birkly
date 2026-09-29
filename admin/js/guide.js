@@ -170,15 +170,15 @@
                     '<span class="guide-journey-step__index">' + stepNum + '</span>' +
                     '<p class="guide-journey-teach">' + escapeHtml(step.teach || '') + '</p></div>' +
                     '<div class="guide-journey-step__actions">' +
-                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '"' +
+                    (step.href ? '<a class="button is-small" href="' + escapeHtml(step.href) + '"' +
                         (step.open_in_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
                         escapeHtml(t('guide_journey_go', 'Go there')) + '</a>' : '') +
-                    '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(step.help_topic || 'getting-started')) + '">' +
+                    '<a class="button is-quiet is-small" href="' + escapeHtml(helpUrl(step.help_topic || 'getting-started')) + '">' +
                         escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></div></li>';
             }).join('');
             const completeBtn = journey.completed ? '' :
                 '<div class="guide-journey-footer">' +
-                '<button type="button" class="btn btn-ghost btn-sm guide-journey-done" data-journey-id="' + escapeHtml(journey.id) + '">' +
+                '<button type="button" class="button is-quiet is-small guide-journey-done" data-journey-id="' + escapeHtml(journey.id) + '">' +
                 escapeHtml(t('guide_journey_mark_done', 'Mark journey done')) + '</button></div>';
             const status = journey.completed
                 ? '<span class="guide-journey-badge is-done">' + escapeHtml(t('guide_journey_done_badge', 'Done')) + '</span>'
@@ -361,7 +361,7 @@
             '<h2 class="guide-panel-title">' + escapeHtml(t('guide_panel_title', 'Guide')) + '</h2>' +
             '<p class="guide-panel-subtitle">' + escapeHtml(t('guide_panel_subtitle', 'Setup, journeys, and concepts')) + '</p>' +
             '</div></div>' +
-            '<button type="button" class="btn btn-icon guide-panel-close" id="guide-panel-close" aria-label="' +
+            '<button type="button" class="btn-icon guide-panel-close" id="guide-panel-close" aria-label="' +
             escapeHtml(t('close', 'Close')) + '">' + icon('x', 18) + '</button>' +
             '</div>' +
             '<div class="guide-panel-tabs" id="guide-panel-tabs" role="tablist">' +

@@ -48,8 +48,8 @@
             '</div>' +
             '<ul class="hosting-wizard-proposal-changes"></ul>' +
             '<div class="u-cluster">' +
-            '<button type="button" class="btn btn-primary btn-sm hosting-wizard-apply-proposal">' + escapeHtml(t('hosting_wizard_apply_proposal', 'Apply suggestion')) + '</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm hosting-wizard-dismiss-proposal">' + escapeHtml(t('hosting_wizard_dismiss_proposal', 'Dismiss')) + '</button>' +
+            '<button type="button" class="button is-main is-small hosting-wizard-apply-proposal">' + escapeHtml(t('hosting_wizard_apply_proposal', 'Apply suggestion')) + '</button>' +
+            '<button type="button" class="button is-small hosting-wizard-dismiss-proposal">' + escapeHtml(t('hosting_wizard_dismiss_proposal', 'Dismiss')) + '</button>' +
             '</div>' +
             '</div>' +
             '<p class="hosting-wizard-env-banner message message-info" hidden>Delivery URLs are managed by environment variables (read-only).</p>' +
@@ -68,7 +68,7 @@
             '<label for="' + id + '-cms-url">' + escapeHtml(t('hosting_wizard_cms_url', 'CMS URL')) + '</label>' +
             '<div class="input-with-action">' +
             '<input type="url" id="' + id + '-cms-url" class="input hosting-wizard-cms-url" placeholder="https://cms.example.com">' +
-            '<button type="button" class="btn btn-secondary btn-sm hosting-wizard-use-host">' + escapeHtml(t('hosting_wizard_use_current_host', 'Use current host')) + '</button>' +
+            '<button type="button" class="button is-small hosting-wizard-use-host">' + escapeHtml(t('hosting_wizard_use_current_host', 'Use current host')) + '</button>' +
             '</div>' +
             '</div>' +
             '<label class="checkbox-label hosting-wizard-docker-toggle">' +
@@ -145,14 +145,14 @@
             '<div class="hosting-wizard-snippet-block">' +
             '<label>' + escapeHtml(t('hosting_wizard_snippet_label', 'Integration snippet')) + '</label>' +
             '<pre class="domains-code-pre"><code class="hosting-wizard-snippet"></code></pre>' +
-            '<button type="button" class="btn btn-secondary btn-sm hosting-wizard-copy-snippet">' + escapeHtml(t('hosting_wizard_copy_snippet', 'Copy snippet')) + '</button>' +
+            '<button type="button" class="button is-small hosting-wizard-copy-snippet">' + escapeHtml(t('hosting_wizard_copy_snippet', 'Copy snippet')) + '</button>' +
             '</div>' +
             '</section>' +
             '</div>' +
             '<div class="hosting-wizard-actions">' +
-            '<button type="button" class="btn btn-secondary hosting-wizard-prev" hidden>' + escapeHtml(t('hosting_wizard_back', 'Back')) + '</button>' +
-            '<button type="button" class="btn btn-primary hosting-wizard-next">' + escapeHtml(t('hosting_wizard_continue', 'Continue')) + '</button>' +
-            '<button type="button" class="btn btn-primary hosting-wizard-save" hidden>' + escapeHtml(t('hosting_wizard_save', 'Save hosting settings')) + '</button>' +
+            '<button type="button" class="button hosting-wizard-prev" hidden>' + escapeHtml(t('hosting_wizard_back', 'Back')) + '</button>' +
+            '<button type="button" class="button is-main hosting-wizard-next">' + escapeHtml(t('hosting_wizard_continue', 'Continue')) + '</button>' +
+            '<button type="button" class="button is-main hosting-wizard-save" hidden>' + escapeHtml(t('hosting_wizard_save', 'Save hosting settings')) + '</button>' +
             '</div>' +
             '</div>';
     }

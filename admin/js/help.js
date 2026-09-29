@@ -495,7 +495,7 @@
             }
 
             const fullDocLink = (!isPluginTopic && fullDocUrl)
-                ? '<p class="u-mt-4"><a class="btn btn-secondary btn-sm" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Open on docs.birkly.com</a></p>'
+                ? '<p class="u-mt-4"><a class="button is-small" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Open on docs.birkly.com</a></p>'
                 : '';
             content.innerHTML = banner +
                 '<div class="u-mb-4"><span class="badge badge-accent">' + escapeHtml(sectionLabel) + '</span></div>' +

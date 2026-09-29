@@ -8,7 +8,7 @@ $stickySaveBarMessageId = $stickySaveBarMessageId ?? null;
 $stickySaveBarMessageClass = trim((string) ($stickySaveBarMessageClass ?? ''));
 $stickySaveBarStatusHtml = $stickySaveBarStatusHtml ?? '';
 $stickySaveBarSaveId = $stickySaveBarSaveId ?? null;
-$stickySaveBarSaveClass = trim((string) ($stickySaveBarSaveClass ?? 'btn btn-primary'));
+$stickySaveBarSaveClass = trim((string) ($stickySaveBarSaveClass ?? 'button is-main'));
 $stickySaveBarExtraActionHtml = $stickySaveBarExtraActionHtml ?? '';
 $stickySaveBarAfterSaveHtml = $stickySaveBarAfterSaveHtml ?? '';
 $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
@@ -30,7 +30,7 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
             <?= $stickySaveBarExtraActionHtml ?>
         <?php endif; ?>
         <?php if ($stickySaveBarCancelUrl): ?>
-            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="btn btn-ghost"<?php if ($stickySaveBarCancelId): ?> id="<?= htmlspecialchars($stickySaveBarCancelId) ?>"<?php endif; ?>>
+            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="button is-quiet"<?php if ($stickySaveBarCancelId): ?> id="<?= htmlspecialchars($stickySaveBarCancelId) ?>"<?php endif; ?>>
                 <?= htmlspecialchars($stickySaveBarCancelLabel) ?>
             </a>
         <?php endif; ?>

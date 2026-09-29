@@ -372,7 +372,7 @@
                         <li><kbd>Home</kbd> - Go to first item</li>
                         <li><kbd>End</kbd> - Go to last item</li>
                     </ul>
-                    <button type="button" class="btn btn-primary" data-modal-dismiss="self">Close</button>
+                    <button type="button" class="button is-main" data-modal-dismiss="self">Close</button>
                 </div>
             `;
             document.body.appendChild(help);

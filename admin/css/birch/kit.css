@@ -1551,7 +1551,7 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 }
 
 [data-birch] .setting-value.setting-inline > .input { flex: 1 1 auto; width: auto; min-width: 0; }
-[data-birch] .setting-value.setting-inline > .btn { flex-shrink: 0; }
+[data-birch] .setting-value.setting-inline > :is(.btn, .button) { flex-shrink: 0; }
 
 /* Grouped setting rows (notification preferences) */
 [data-birch] .setting-rows {

@@ -11,12 +11,12 @@ $stickySaveBarSaveId = 'global-save-settings-btn';
 $stickySaveBarSaveLabel = __('admin.save_changes');
 $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
-$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarSaveClass = 'button is-main';
 $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="badge badge-warning" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 $stickySaveBarRightHtml = ''
     . '<label class="u-hidden" for="settings-search-input">' . htmlspecialchars(__('admin.settings_search_settings')) . '</label>'
     . '<span class="search-field settings-search">' . birkly_icon('search') . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="' . htmlspecialchars(__('admin.settings_search_settings')) . '" autocomplete="off"></span>'
-    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="btn btn-ghost">' . birkly_icon('history') . htmlspecialchars(__('admin.settings_view_activity')) . '</a>';
+    . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="button is-quiet">' . birkly_icon('history') . htmlspecialchars(__('admin.settings_view_activity')) . '</a>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
 
@@ -243,7 +243,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h2 class="section-title"><?= __('admin.domain_management_and_analytics') ?></h2>
               <p class="settings-help"><?= __('admin.domain_management_description') ?></p>
             </div>
-            <button type="button" class="btn btn-primary" id="register-domain-btn">
+            <button type="button" class="button is-main" id="register-domain-btn">
               <?= birkly_icon('plus', ['size' => 16]) ?>
               <?= __('admin.register_domain') ?>
             </button>
@@ -287,7 +287,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             ?>
             <div class="domains-code-block">
               <pre class="domains-code-pre"><code id="domains-localhost-script"><?= htmlspecialchars($localhostScript, ENT_QUOTES, 'UTF-8') ?></code></pre>
-              <button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="domains-localhost-script" title="<?= htmlspecialchars(__('admin.copy_code')) ?>">
+              <button type="button" class="button is-small domains-copy-btn" data-copy-target="domains-localhost-script" title="<?= htmlspecialchars(__('admin.copy_code')) ?>">
                 <?= birkly_icon('copy', ['size' => 14]) ?>
                 <?= __('admin.copy_code') ?>
               </button>
@@ -327,7 +327,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h2 class="section-title"><?= __('admin.settings_project_overview_title') ?></h2>
               <p class="settings-help"><?= __('admin.settings_project_workspace_help') ?></p>
             </div>
-            <a href="#" id="project-visit-public-link" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden><?= __('admin.settings_project_visit_public_btn') ?></a>
+            <a href="#" id="project-visit-public-link" class="button" target="_blank" rel="noopener noreferrer" hidden><?= __('admin.settings_project_visit_public_btn') ?></a>
           </div>
           <div class="settings-stack">
           <section class="card">
@@ -361,9 +361,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="u-cluster">
-              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm"><?= __('admin.domains') ?></a>
-              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting') ?>" class="btn btn-secondary btn-sm"><?= __('admin.settings_project_hosting_urls_btn') ?></a>
-              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm"><?= __('admin.settings_project_ai_connections_btn') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="button is-small"><?= __('admin.domains') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting') ?>" class="button is-small"><?= __('admin.settings_project_hosting_urls_btn') ?></a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="button is-small"><?= __('admin.settings_project_ai_connections_btn') ?></a>
             </div>
             <p class="form-help"><?= __('admin.settings_project_ai_permission_help') ?></p>
             </div>
@@ -383,10 +383,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-header">
               <h3 class="card-title"><?= __('admin.settings_project_browse_files_title') ?></h3>
               <div class="card-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn"><?= __('admin.new_folder') ?></button>
-                <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn"><?= __('admin.upload') ?></button>
+                <button type="button" class="button is-small" id="project-new-folder-btn"><?= __('admin.new_folder') ?></button>
+                <button type="button" class="button is-small" id="project-upload-file-btn"><?= __('admin.upload') ?></button>
                 <input type="file" id="project-upload-input" multiple hidden>
-                <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn"><?= __('admin.settings_project_new_file_btn') ?></button>
+                <button type="button" class="button is-main is-small" id="project-add-file-btn"><?= __('admin.settings_project_new_file_btn') ?></button>
               </div>
             </div>
             <div class="card-body u-stack-4">
@@ -401,8 +401,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div class="u-split u-px-4 u-py-3 u-border-bottom">
                   <h3 id="project-preview-title"><?= __('admin.preview') ?></h3>
                   <div class="u-cluster">
-                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" hidden><?= __('admin.save') ?></button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" hidden><?= __('admin.delete') ?></button>
+                    <button type="button" class="button is-main is-small" id="project-save-file-btn" hidden><?= __('admin.save') ?></button>
+                    <button type="button" class="button is-small" id="project-delete-file-btn" hidden><?= __('admin.delete') ?></button>
                   </div>
                 </div>
                 <div id="project-file-preview-area">
@@ -414,7 +414,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="u-split">
-              <a href="<?= htmlspecialchars(birkly_url('/api/project_site.php?action=download')) ?>" class="btn btn-secondary btn-sm" id="project-download-btn"><?= __('admin.settings_project_download_btn') ?></a>
+              <a href="<?= htmlspecialchars(birkly_url('/api/project_site.php?action=download')) ?>" class="button is-small" id="project-download-btn"><?= __('admin.settings_project_download_btn') ?></a>
             </div>
             </div>
           </section>
@@ -476,7 +476,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <p class="form-help project-rendering-runtime-note" id="project-rendering-runtime-note" role="status" aria-live="polite" hidden></p>
             <p class="form-help"><?= __('admin.settings_rendering_autosave_help') ?></p>
             <div class="u-cluster">
-              <button type="button" class="btn btn-secondary btn-sm" id="project-invalidate-ssr-btn"><?= __('admin.settings_project_invalidate_ssr') ?></button>
+              <button type="button" class="button is-small" id="project-invalidate-ssr-btn"><?= __('admin.settings_project_invalidate_ssr') ?></button>
             </div>
             </div>
           </section>
@@ -495,7 +495,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-header">
               <h3 class="card-title"><?= __('admin.settings_repository_title') ?></h3>
               <div class="card-actions" id="project-git-status-actions" hidden>
-                <button type="button" class="btn btn-secondary btn-sm" id="project-git-refresh-btn"><?= __('admin.settings_project_git_refresh_btn') ?></button>
+                <button type="button" class="button is-small" id="project-git-refresh-btn"><?= __('admin.settings_project_git_refresh_btn') ?></button>
               </div>
             </div>
             <div class="card-body u-stack-4">
@@ -521,10 +521,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <div class="card-body u-stack-4">
             <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="<?= htmlspecialchars(__('admin.settings_project_activity_filter_aria')) ?>">
-              <button type="button" class="btn btn-secondary btn-sm is-active" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="settings"><?= __('admin.settings_project_activity_filter_settings') ?></button>
+              <button type="button" class="button is-small is-active" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
+              <button type="button" class="button is-small" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
+              <button type="button" class="button is-small" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
+              <button type="button" class="button is-small" data-project-activity-filter="settings"><?= __('admin.settings_project_activity_filter_settings') ?></button>
             </div>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
@@ -540,7 +540,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-header"><h3 class="card-title"><?= __('admin.settings_danger_zone_title') ?></h3></div>
             <div class="card-body u-stack-4">
               <p class="section-description"><?= __('admin.settings_danger_zone_desc_before') ?><code>project/</code><?= __('admin.settings_danger_zone_desc_after') ?></p>
-              <button type="button" class="btn btn-danger" id="project-delete-all-btn"><?= __('admin.settings_delete_project_btn') ?></button>
+              <button type="button" class="button is-danger" id="project-delete-all-btn"><?= __('admin.settings_delete_project_btn') ?></button>
             </div>
           </section>
           </div>
@@ -554,11 +554,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="card-header">
             <h2><?= __('admin.user_management') ?></h2>
             <div class="card-actions">
-              <button class="btn btn-secondary" data-admin-action="openInviteUserModal">
+              <button class="button" data-admin-action="openInviteUserModal">
                 <?= birkly_icon('envelope', ['size' => 16]) ?>
                 <?= __('admin.settings_invite_user_btn') ?>
               </button>
-              <button class="btn btn-primary" data-admin-action="openAddUserModal">
+              <button class="button is-main" data-admin-action="openAddUserModal">
                 <?= birkly_icon('plus', ['size' => 16]) ?>
                 <?= __('admin.settings_add_user_btn') ?>
               </button>
@@ -572,7 +572,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <?php if (empty($users)): ?>
               <div class="empty">
                 <p class="empty-text"><?= __('admin.no_users_found') ?></p>
-                <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
+                <button class="button is-main" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
               </div>
             <?php else: ?>
               <?php foreach ($users as $user):
@@ -630,7 +630,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                   <div class="row-actions">
                     <?php if (!empty($mcpSessions)): ?>
-                    <button type="button" class="btn btn-secondary btn-sm" data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'><?= __('admin.settings_revoke_mcp_access') ?></button>
+                    <button type="button" class="button is-small" data-admin-action="revokeUserMcpSessions" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]'><?= __('admin.settings_revoke_mcp_access') ?></button>
                     <?php endif; ?>
                     <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
                       <?= birkly_icon('pencil') ?>
@@ -663,7 +663,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div id="roles" class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
           <div class="card-header">
             <h2><?= __('admin.role_management') ?></h2>
-            <button class="btn btn-primary" data-admin-action="openAddRoleModal">
+            <button class="button is-main" data-admin-action="openAddRoleModal">
               <?= birkly_icon('plus', ['size' => 16]) ?>
               <?= __('admin.settings_add_role_btn') ?>
             </button>
@@ -826,7 +826,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div class="card-header">
                   <h2><?= __('admin.plugin_security_denylist') ?></h2>
                   <div class="card-actions">
-                    <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
+                    <button type="button" class="button" data-admin-action="addDenylistResource">
                       <?= birkly_icon('plus', ['size' => 16]) ?>
                       <?= __('admin.settings_security_denylist_add_custom_pattern') ?>
                     </button>
@@ -842,7 +842,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <select id="denylist-collection-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_collections')) ?></option>
                     </select>
-                    <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
+                    <button type="button" class="button" id="denylist-add-collection-btn" disabled>
                       <?= __('admin.settings_security_denylist_add_collection') ?>
                     </button>
                   </div>
@@ -856,7 +856,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <select id="denylist-plugin-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_plugins')) ?></option>
                     </select>
-                    <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
+                    <button type="button" class="button" id="denylist-add-plugin-btn" disabled>
                       <?= __('admin.settings_security_denylist_add_plugin') ?>
                     </button>
                   </div>
@@ -927,7 +927,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h2><?= __('admin.webhooks') ?></h2>
               <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
             </div>
-            <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
+            <button type="button" class="button is-main" id="create-webhook"><?= __('admin.create_webhook') ?></button>
           </div>
   <div class="card-body u-stack-4">
           <div class="table-container">
@@ -975,7 +975,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2 class="section-title"><?= __('admin.settings_analytics_section_title') ?></h2>
                   <p class="settings-help"><?= __('admin.settings_analytics_preset_help') ?></p>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" id="analytics-csv-export" hidden><?= __('admin.settings_analytics_export_csv') ?></button>
+                <button type="button" class="button is-small" id="analytics-csv-export" hidden><?= __('admin.settings_analytics_export_csv') ?></button>
               </div>
               <div class="card-body u-stack-4">
                 <div id="analytics-preset-cards" class="u-stack-3" aria-live="polite">
@@ -1071,8 +1071,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                 </div>
                 <div class="u-cluster">
-                  <button type="button" class="btn btn-primary" id="developer-export-btn"><?= __('admin.settings_developer_export_btn') ?></button>
-                  <button type="button" class="btn btn-secondary" id="developer-smoke-btn"><?= __('admin.settings_developer_smoke_btn') ?></button>
+                  <button type="button" class="button is-main" id="developer-export-btn"><?= __('admin.settings_developer_export_btn') ?></button>
+                  <button type="button" class="button" id="developer-smoke-btn"><?= __('admin.settings_developer_smoke_btn') ?></button>
                 </div>
                 <pre class="domains-code-pre" id="developer-smoke-result" hidden></pre>
               </div>
@@ -1142,11 +1142,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="card-body u-stack-3" id="update-details" hidden>
                     <div id="update-info"></div>
                     <div class="u-cluster" id="update-actions" hidden>
-                      <button type="button" class="btn btn-primary" id="download-update-btn">
+                      <button type="button" class="button is-main" id="download-update-btn">
                         <?= birkly_icon('import', ['size' => 16]) ?>
                         <?= __('admin.updates_js_download_update_btn') ?>
                       </button>
-                      <button type="button" class="btn btn-secondary" id="check-updates-btn">
+                      <button type="button" class="button" id="check-updates-btn">
                         <?= birkly_icon('arrows-clockwise', ['size' => 16]) ?>
                         <?= __('admin.check_again') ?>
                       </button>
@@ -1235,7 +1235,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       </div>
 
                     <div class="setting-actions">
-                      <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
+                      <button type="button" class="button" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
                       <small id="db-test-result" class="form-help" aria-live="polite"></small>
                     </div>
                   </div>
@@ -1253,7 +1253,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <div class="signal-body">
                       <p class="signal-text"><?= __('admin.backup_data_before_migrating') ?></p>
                     </div>
-                    <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
+                    <button type="button" class="button" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
                   </div>
                   <small id="migration-status" class="form-help" aria-live="polite"></small>
                   </div>
@@ -1303,7 +1303,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <li><?= __('admin.rebuild_system_removes_onboarding') ?></li>
                 <li><?= __('admin.rebuild_system_keeps_users') ?></li>
               </ul>
-              <button type="button" class="btn btn-danger" id="open-rebuild-system-btn">
+              <button type="button" class="button is-danger" id="open-rebuild-system-btn">
                 <?= __('admin.rebuild_system_button') ?>
               </button>
               </div>
@@ -1376,8 +1376,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeAddDomainModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-primary" data-admin-action="registerDomain"><?= __('admin.register_domain') ?></button>
+        <button type="button" class="button" data-admin-action="closeAddDomainModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-main" data-admin-action="registerDomain"><?= __('admin.register_domain') ?></button>
       </div>
     </div>
   </div>
@@ -1431,8 +1431,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeEditDomainModal"><?= __('admin.cancel') ?></button>
-                <button type="button" class="btn btn-primary" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
+        <button type="button" class="button" data-admin-action="closeEditDomainModal"><?= __('admin.cancel') ?></button>
+                <button type="button" class="button is-main" data-admin-action="updateDomain"><?= __('admin.update_domain') ?></button>
       </div>
     </div>
   </div>
@@ -1469,8 +1469,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeAddRoleModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-primary" data-admin-action="createRole"><?= __('admin.settings_create_role_btn') ?></button>
+        <button type="button" class="button" data-admin-action="closeAddRoleModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-main" data-admin-action="createRole"><?= __('admin.settings_create_role_btn') ?></button>
       </div>
     </div>
   </div>
@@ -1507,8 +1507,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeEditRoleModal"><?= __('admin.cancel') ?></button>
-                <button type="button" class="btn btn-primary" data-admin-action="updateRole"><?= __('admin.update_role') ?></button>
+        <button type="button" class="button" data-admin-action="closeEditRoleModal"><?= __('admin.cancel') ?></button>
+                <button type="button" class="button is-main" data-admin-action="updateRole"><?= __('admin.update_role') ?></button>
       </div>
     </div>
   </div>
@@ -1537,7 +1537,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <p class="u-text-sm u-fg-secondary"><?= __('admin.invite_link_share_help') ?></p>
             <div class="u-cluster">
               <input type="text" id="invite-link-copy-field" class="input" readonly>
-              <button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyInviteLink"><?= __('admin.copy_link') ?></button>
+              <button type="button" class="button is-small" data-admin-action="copyInviteLink"><?= __('admin.copy_link') ?></button>
             </div>
           </div>
         </div>
@@ -1565,9 +1565,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeInviteUserModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-ghost" id="invite-create-link-btn" data-admin-action="createInvitationLink"><?= __('admin.create_invite_link') ?></button>
-        <button type="button" class="btn btn-primary" id="invite-send-email-btn" data-admin-action="sendInvitation"><?= __('admin.send_invitation_email') ?></button>
+        <button type="button" class="button" data-admin-action="closeInviteUserModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-quiet" id="invite-create-link-btn" data-admin-action="createInvitationLink"><?= __('admin.create_invite_link') ?></button>
+        <button type="button" class="button is-main" id="invite-send-email-btn" data-admin-action="sendInvitation"><?= __('admin.send_invitation_email') ?></button>
       </div>
     </div>
   </div>
@@ -1600,8 +1600,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeAddUserModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-primary" data-admin-action="createUser"><?= __('admin.settings_create_user_btn') ?></button>
+        <button type="button" class="button" data-admin-action="closeAddUserModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-main" data-admin-action="createUser"><?= __('admin.settings_create_user_btn') ?></button>
       </div>
     </div>
   </div>
@@ -1621,8 +1621,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancel-rebuild-system-btn"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-danger" id="confirm-rebuild-system-btn" disabled><?= __('admin.rebuild_system_button') ?></button>
+        <button type="button" class="button" id="cancel-rebuild-system-btn"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-danger" id="confirm-rebuild-system-btn" disabled><?= __('admin.rebuild_system_button') ?></button>
       </div>
     </div>
   </div>
@@ -1656,9 +1656,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeEditUserModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-primary" data-admin-action="updateUser"><?= __('admin.settings_update_user_btn') ?></button>
-        <button type="button" class="btn btn-danger" data-admin-action="deleteUserFromModal"><?= __('admin.settings_delete_user_btn') ?></button>
+        <button type="button" class="button" data-admin-action="closeEditUserModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-main" data-admin-action="updateUser"><?= __('admin.settings_update_user_btn') ?></button>
+        <button type="button" class="button is-danger" data-admin-action="deleteUserFromModal"><?= __('admin.settings_delete_user_btn') ?></button>
       </div>
     </div>
   </div>
@@ -1707,9 +1707,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookModal"><?= __('admin.cancel') ?></button>
-        <button type="button" class="btn btn-primary" id="save-webhook"><?= __('admin.save') ?></button>
-        <button type="button" class="btn btn-sm btn-secondary" id="test-webhook"><?= __('admin.test_webhook') ?></button>
+        <button type="button" class="button" data-admin-action="closeWebhookModal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="button is-main" id="save-webhook"><?= __('admin.save') ?></button>
+        <button type="button" class="button is-small" id="test-webhook"><?= __('admin.test_webhook') ?></button>
       </div>
     </div>
   </div>
