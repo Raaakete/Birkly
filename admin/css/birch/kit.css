@@ -85,6 +85,7 @@
 [data-birch] .button.is-main.is-hover {
   border-color: var(--mint-hover);
   background: var(--mint-hover);
+  color: var(--on-mint);
 }
 
 [data-birch] .button.is-quiet {
@@ -589,6 +590,17 @@
   overflow-x: auto;
   scrollbar-width: none;
   border-block-end: 1px solid var(--line);
+  /* A fade sits on the edge that still has tabs out of view. When every tab
+     fits, the covers match the canvas and the fade disappears. */
+  background-image:
+    linear-gradient(to right, var(--bg), var(--bg)),
+    linear-gradient(to left, var(--bg), var(--bg)),
+    linear-gradient(to right, color-mix(in oklch, var(--text) 22%, transparent), transparent),
+    linear-gradient(to left, color-mix(in oklch, var(--text) 22%, transparent), transparent);
+  background-repeat: no-repeat;
+  background-size: 16px 100%, 16px 100%, 16px 100%, 16px 100%;
+  background-position: left center, right center, left center, right center;
+  background-attachment: local, local, scroll, scroll;
 }
 
 [data-birch] .tabs > * {
@@ -1918,15 +1930,13 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 
 /* ---------- Plugin pages on Birch (P96-M14) ----------
    Official plugins opt in with data-birch on their .plugin-page root and
-   still emit P56 cards, tables, stat tiles, empty states and field groups.
-   Inside that root they take the Birch roles: a top-level card is a frame,
-   anything nested (or in a stat grid) is a slab, table rows are slabs under
-   a canvas header, empty states are dashed. Plugins replace these classes
-   before M15 deletes the P56 aliases. */
+   use frame for a section and slab for a nested card. .card still matches
+   so older markup keeps the same roles. Table rows are slabs under a canvas
+   header. Empty states are dashed. */
 .plugin-page[data-birch] { display: flex; flex-direction: column; gap: var(--s-6); }
 .plugin-page[data-birch] .u-stack-6 { gap: var(--s-6); }
 
-.plugin-page[data-birch] .card {
+.plugin-page[data-birch] :is(.card, .frame) {
   margin: 0;
   padding: var(--s-5);
   border: 1px solid var(--line);
@@ -1935,8 +1945,8 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   box-shadow: none;
 }
 
-.plugin-page[data-birch] :is(.card .card, .card--sunken, .card--flush .card),
-.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > .card {
+.plugin-page[data-birch] :is(:is(.card, .frame) :is(.card, .frame), .card--sunken, .card--flush :is(.card, .frame)),
+.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > :is(.card, .frame) {
   padding: var(--s-4);
   border: 0;
   background: var(--surface);
@@ -1962,7 +1972,7 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
   text-transform: none;
 }
 
-.plugin-page[data-birch] :is(.card .card, .u-grid-auto-sm > .card, .u-grid-auto > .card) :is(.card-title, .card-header h3) {
+.plugin-page[data-birch] :is(:is(.card, .frame) :is(.card, .frame), .u-grid-auto-sm > :is(.card, .frame), .u-grid-auto > :is(.card, .frame)) :is(.card-title, .card-header h3) {
   font: var(--weight-semibold) var(--size-title) / var(--lh-title) var(--font-sans);
 }
 
@@ -1998,10 +2008,10 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 .plugin-page[data-birch] :is(.field, .form-group):not(.setting-row) { background: none; }
 
 /* Fields: white in a frame, grey inside a slab */
-.plugin-page[data-birch] .card .input { border-color: var(--line); background-color: var(--surface); }
-.plugin-page[data-birch] :is(.card .card, .card--sunken, .setting-row, .list-row) .input,
-.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > .card .input { border-color: transparent; background-color: var(--surface-2); }
-.plugin-page[data-birch] .card .input:focus { border-color: var(--accent); background-color: var(--surface); }
+.plugin-page[data-birch] :is(.card, .frame) .input { border-color: var(--line); background-color: var(--surface); }
+.plugin-page[data-birch] :is(:is(.card, .frame) :is(.card, .frame), .card--sunken, .setting-row, .list-row) .input,
+.plugin-page[data-birch] :is(.u-grid-auto-sm, .u-grid-auto, .u-grid-auto-lg, .u-grid-2, .u-grid-3, .u-grid-4, .stats-grid) > :is(.card, .frame) .input { border-color: transparent; background-color: var(--surface-2); }
+.plugin-page[data-birch] :is(.card, .frame) .input:focus { border-color: var(--accent); background-color: var(--surface); }
 
 /* Stat tiles: label, value in the number style */
 .plugin-page[data-birch] :is(.stat-label, .metric-label) {

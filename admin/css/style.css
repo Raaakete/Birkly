@@ -30,7 +30,7 @@
 /* ============================================
    Components
    ============================================ */
-/* components/buttons.css stays in the repo for the P56 names. Admin markup uses the kit. */
+/* Button styles live in birch/kit.css. */
 @import url('components/forms.css');
 @import url('components/tables.css');
 @import url('components/modals.css');
