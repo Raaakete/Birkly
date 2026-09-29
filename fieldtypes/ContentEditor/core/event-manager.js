@@ -407,13 +407,6 @@ window.ContentEditorEventManager = {
     if (!btn) return;
 
     if (btn.classList.contains('toolbar-btn-fullscreen')) {
-      e.preventDefault();
-      e.stopPropagation();
-      const fieldName = btn.dataset.fieldName;
-      const registry = window.ContentEditorFullscreenRegistry;
-      if (registry && fieldName && registry[fieldName] && typeof registry[fieldName].toggle === 'function') {
-        registry[fieldName].toggle();
-      }
       return;
     }
 
