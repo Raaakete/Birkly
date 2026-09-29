@@ -181,21 +181,19 @@ function birkly_merge_help_topics(array $localTopics, array $liveTopics): array
         $topic['docs_source'] = 'live';
         $topic['section'] = $topic['section'] ?? 'platform';
         $topic['source'] = $topic['source'] ?? 'core';
-        if (empty($topic['snapshot'])) {
-            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
-        }
+        unset($topic['snapshot']);
         $merged[] = $topic;
         $seen[$id] = true;
     }
 
-    // Ensure snapshot paths survive live-metadata merge (Birkly-Docs manifest has no snapshot URLs).
     foreach ($merged as &$topic) {
         if (!is_array($topic) || empty($topic['id'])) {
             continue;
         }
-        if (empty($topic['snapshot']) || !str_ends_with(strtolower((string) $topic['snapshot']), '.md')) {
-            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
+        if (birkly_help_topic_is_plugin($topic)) {
+            continue;
         }
+        unset($topic['snapshot']);
     }
     unset($topic);
 
@@ -203,25 +201,33 @@ function birkly_merge_help_topics(array $localTopics, array $liveTopics): array
 }
 
 /**
- * Default offline snapshot path for a Help topic id (P50 sync / live manifest have no snapshot URLs).
+ * Plugin Docs-tab topics are served by the plugin. Product topics are not.
  */
-function birkly_help_topic_snapshot_path(array $topic): string
+function birkly_help_topic_is_plugin(array $topic): bool
 {
-    $id = (string) ($topic['id'] ?? '');
-    if ($id === '') {
+    if (($topic['source'] ?? '') === 'plugin') {
+        return true;
+    }
+
+    return str_contains((string) ($topic['snapshot'] ?? ''), 'plugin_doc.php');
+}
+
+/**
+ * Public content-fragment URL for a product Help topic.
+ * Plugin topics return an empty string; their body stays on the plugin.
+ */
+function birkly_help_topic_content_url(array $topic, string $docsBase = 'https://docs.birkly.com'): string
+{
+    if (birkly_help_topic_is_plugin($topic)) {
         return '';
     }
 
-    /** @var array<string, string> */
-    static $legacyNames = [
-        'ai' => 'ai-overview.md',
-        'automation' => 'automation-overview.md',
-        'closed-alpha' => 'closed-alpha.md',
-    ];
+    $path = ltrim((string) ($topic['docs_path'] ?? ''), '/');
+    if ($path === '') {
+        return '';
+    }
 
-    $file = $legacyNames[$id] ?? ($id . '.md');
-
-    return '/admin/docs/snapshots/' . $file;
+    return rtrim($docsBase, '/') . '/content/' . $path;
 }
 
 /**
@@ -254,7 +260,7 @@ function birkly_help_nav_section_from_docs_path(string $docsPath): array
 }
 
 /**
- * Ensure every topic has a bundled markdown snapshot path for admin Help.
+ * Nav section for product topics. Article bodies are not stored on the install.
  *
  * @param list<array<string, mixed>> $topics
  * @return list<array<string, mixed>>
@@ -266,9 +272,8 @@ function birkly_normalize_help_topics(array $topics): array
         if (!is_array($topic) || empty($topic['id'])) {
             continue;
         }
-        $snapshot = (string) ($topic['snapshot'] ?? '');
-        if ($snapshot === '' || !str_ends_with(strtolower($snapshot), '.md')) {
-            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
+        if (!birkly_help_topic_is_plugin($topic)) {
+            unset($topic['snapshot']);
         }
         if (empty($topic['nav_section'])) {
             $docsPath = (string) ($topic['docs_path'] ?? '');
