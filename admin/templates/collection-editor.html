@@ -225,8 +225,10 @@ if (!$cancelUrl) {
                         </div>
                         
                         <!-- Sub-Collections Section (for nested sub-collections) -->
-                        <div class="fields-section u-mt-6">
-                            <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                        <div class="fields-section frame">
+                            <div class="fields-section-head">
+                                <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                            </div>
                             <p class="section-description"><?= __('admin.col_editor_section_desc_nested_sub_collections') ?></p>
                             
                             <div id="sub-collections-container">
@@ -394,8 +396,10 @@ if (!$cancelUrl) {
                     </div>
                     
                     <!-- Sub-Collections Section -->
-                    <div class="fields-section u-mt-6">
-                        <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                    <div class="fields-section frame">
+                        <div class="fields-section-head">
+                            <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                        </div>
                         <p class="section-description"><?= __('admin.col_editor_section_desc_sub_collections') ?></p>
                         
                         <div id="sub-collections-container">
@@ -1568,7 +1572,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 continueEditing: <?= json_encode(__('admin.col_save_continue_editing')) ?>,
                 errorPrefix: <?= json_encode(__('admin.feedback_error_prefix')) ?>,
                 unknownError: <?= json_encode(__('admin.error_unknown')) ?>,
-                errorSaving: <?= json_encode(__('admin.col_save_error_saving')) ?>
+                errorSaving: <?= json_encode(__('admin.col_save_error_saving')) ?>,
+                editTitle: <?= json_encode(__('admin.edit_collection')) ?>
             }
         })
         : null;
