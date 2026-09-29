@@ -114,7 +114,10 @@
       return '<p>' + inlineFormat(block).replace(/\n/g, '<br>') + '</p>';
     }).join('\n');
 
-    return html;
+    return html.replace(
+      /<h2>Advanced Users<\/h2>([\s\S]*?)(?=<h2>|$)/i,
+      '<details class="plugin-docs-advanced"><summary>Advanced Users</summary>$1</details>'
+    );
   }
 
   function loadManifest() {
