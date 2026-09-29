@@ -168,7 +168,7 @@ function birkly_safe_http_fetch(string $url, array $options = []): array
     }
 
     if ($httpCode >= 400) {
-        return ['ok' => false, 'error' => 'HTTP ' . $httpCode, 'http_code' => $httpCode];
+        return ['ok' => false, 'error' => 'HTTP ' . $httpCode, 'http_code' => $httpCode, 'body' => (string) $body];
     }
 
     if (strlen((string) $body) > $maxBytes) {
