@@ -4,6 +4,11 @@
  */
 
 $root = dirname(__DIR__);
+$engine = $root . '/plugins/studio/includes/StudioTemplateEngine.php';
+if (!is_file($engine)) {
+    echo "[studio-smoke] SKIP: Studio is not installed in plugins/studio\n";
+    exit(0);
+}
 require_once $root . '/tests/bootstrap.php';
 require_once $root . '/plugins/studio/init.php';
 require_once $root . '/plugins/studio/includes/StudioProjectRepository.php';
