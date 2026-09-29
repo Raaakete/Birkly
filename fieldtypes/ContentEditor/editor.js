@@ -700,15 +700,36 @@
     initContentEditors();
   }
 
+  function resolveInlineEditorWrapper(fromNode) {
+    const toolbar = fromNode && fromNode.closest ? fromNode.closest('.content-editor-toolbar') : null;
+    if (!toolbar) return null;
+    const wrapper = toolbar.closest('.content-editor-wrapper');
+    if (!wrapper || wrapper.classList.contains('content-editor-fullscreen-wrapper')) return null;
+    return wrapper;
+  }
+
+  function ensureFullscreenController(wrapper) {
+    if (!wrapper) return null;
+    if (wrapper._contentEditorFullscreenController) {
+      return wrapper._contentEditorFullscreenController;
+    }
+    const fieldName = wrapper.dataset.fieldName;
+    const editor = wrapper.querySelector('.content-editor-area[contenteditable="true"]');
+    const toolbar = wrapper.querySelector('.content-editor-toolbar');
+    const hiddenInput = resolveHiddenInput(wrapper, fieldName);
+    if (!fieldName || !editor || !toolbar || !hiddenInput) {
+      return null;
+    }
+    initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName);
+    return wrapper._contentEditorFullscreenController || null;
+  }
+
   // Initialize fullscreen functionality
   function initFullscreen(wrapper, editor, toolbar, hiddenInput, fieldName) {
     if (wrapper.classList.contains('content-editor-fullscreen-wrapper')) return;
+    if (wrapper._contentEditorFullscreenController) return;
 
-    window.ContentEditorFullscreenRegistry = window.ContentEditorFullscreenRegistry || {};
-    if (window.ContentEditorFullscreenRegistry[fieldName]) return;
-
-    const fullscreenBtn = wrapper.querySelector('.toolbar-btn-fullscreen[data-field-name="' + fieldName + '"]')
-      || wrapper.querySelector('.toolbar-btn-fullscreen');
+    const fullscreenBtn = wrapper.querySelector('.toolbar-btn-fullscreen');
     if (!fullscreenBtn) {
       console.warn('ContentEditor: fullscreen button not found for field:', fieldName);
     }
@@ -741,9 +762,9 @@
       `;
       
       fullscreenOverlay = overlay;
-      fullscreenEditor = overlay.querySelector('#editor_' + fieldName + '_fullscreen');
-      fullscreenToolbar = overlay.querySelector('#toolbar_' + fieldName + '_fullscreen');
       const fsWrapper = overlay.querySelector('.content-editor-fullscreen-wrapper');
+      fullscreenEditor = fsWrapper.querySelector('.content-editor-area[contenteditable="true"]');
+      fullscreenToolbar = fsWrapper.querySelector('.content-editor-toolbar');
 
       // Prevent MutationObserver from treating the shell as a new field instance
       fsWrapper.dataset.initialized = 'true';
@@ -795,6 +816,7 @@
     function openFullscreen() {
       if (isFullscreen) return;
 
+      try {
       if (window.ContentEditorSync) {
         window.ContentEditorSync.syncWrapperToHidden(wrapper, true);
         if (window.ContentEditorSync.getMode(wrapper) === 'html') {
@@ -851,6 +873,9 @@
         }
       };
       document.addEventListener('keydown', f11Handler, true);
+      } catch (err) {
+        console.error('ContentEditor: failed to open fullscreen for field', fieldName, err);
+      }
     }
     
     // Close fullscreen
@@ -898,7 +923,7 @@
       }, 200);
     }
     
-    window.ContentEditorFullscreenRegistry[fieldName] = {
+    const controller = {
       toggle() {
         if (isFullscreen) {
           closeFullscreen();
@@ -909,6 +934,10 @@
       open: openFullscreen,
       close: closeFullscreen,
     };
+
+    wrapper._contentEditorFullscreenController = controller;
+    window.ContentEditorFullscreenRegistry = window.ContentEditorFullscreenRegistry || {};
+    window.ContentEditorFullscreenRegistry[fieldName] = controller;
 
     // F11 key handler to open fullscreen from original editor
     editor.addEventListener('keydown', (e) => {
@@ -1139,9 +1168,31 @@
     layoutOverflow();
   }
 
-  function resolveFullscreenFieldName(btn) {
-    if (!btn) return '';
-    return btn.getAttribute('data-field-name') || btn.dataset.fieldName || '';
+  function activateFullscreenFromToolbarEvent(e) {
+    const btn = e.target.closest('.toolbar-btn-fullscreen');
+    if (!btn) return false;
+
+    const inlineWrapper = resolveInlineEditorWrapper(btn);
+    const fsWrapper = btn.closest('.content-editor-fullscreen-wrapper');
+    let controller = null;
+
+    if (inlineWrapper) {
+      controller = ensureFullscreenController(inlineWrapper);
+    } else if (fsWrapper) {
+      const fieldName = fsWrapper.dataset.fieldName || btn.getAttribute('data-field-name') || btn.dataset.fieldName;
+      controller = fieldName && window.ContentEditorFullscreenRegistry
+        ? window.ContentEditorFullscreenRegistry[fieldName]
+        : null;
+    }
+
+    if (!controller || typeof controller.toggle !== 'function') {
+      return false;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+    controller.toggle();
+    return true;
   }
 
   function attachFullscreenToolbarHandler() {
@@ -1149,16 +1200,7 @@
     window._contentEditorFullscreenClickAttached = true;
 
     document.addEventListener('click', (e) => {
-      const btn = e.target.closest('.toolbar-btn-fullscreen');
-      if (!btn) return;
-      const fieldName = resolveFullscreenFieldName(btn);
-      const registry = window.ContentEditorFullscreenRegistry;
-      if (!fieldName || !registry || !registry[fieldName] || typeof registry[fieldName].toggle !== 'function') {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      registry[fieldName].toggle();
+      activateFullscreenFromToolbarEvent(e);
     }, true);
   }
 
