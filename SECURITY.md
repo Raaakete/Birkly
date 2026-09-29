@@ -35,14 +35,14 @@ The following are intentional for self-hosted CMS operation and are not treated 
 
 | Item | Rationale |
 |------|-----------|
-| `scripts/reset-admin-password.php` | CLI emergency recovery; must be run on the server with shell access |
+| `scripts/reset-admin-password.php` | CLI emergency recovery. It refuses to run over HTTP. The web server also refuses `/scripts/` except the Commerce import cron. |
 | `eval()` in `fieldtypes/DynamicItems/fieldtype.js` | Loads trusted fieldtype JavaScript from admin-authored definitions; refactor planned |
 | `extract()` in admin template rendering | Used for view data binding; refactor planned |
 | Docker entrypoint runs as root | Required for nginx on port 80 and volume migration; worker processes run as `www-data` |
 
 ## Secure self-hosting
 
-- Change the default admin password immediately after install
-- Keep `users/`, `settings/`, and `data/` outside web roots or protected by server config
+- Create the first admin in the browser, or with `BIRKLY_ADMIN_PASSWORD` and `scripts/create-default-user.php`. The script does not invent a shared password, and it does not add an account when one already exists.
+- The shipped `.htaccess`, `nginx.conf.example`, and Docker nginx config refuse HTTP access to `core/`, `settings/`, `users/`, `content/`, `data/`, `cache/`, `logs/`, `scripts/` (except the token-gated Commerce import cron), and `tests/`. PHP can still write those directories.
 - Do not commit `config.php`, `.env`, or user account JSON to version control
 - Use HTTPS in production
