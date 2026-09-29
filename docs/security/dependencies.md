@@ -1,6 +1,8 @@
 # Dependency and supply-chain visibility (Birkly CMS)
 
-Birkly’s **runtime** is intentionally **dependency-free** in the Composer sense: the CMS ships as PHP, HTML, CSS, and JavaScript in this repository. There is no `vendor/` tree and no `composer.lock` on the release path.
+Birkly’s **runtime** does not use Composer or npm. There is no `vendor/` tree and no `composer.lock` on the release path. The CMS is PHP, HTML, CSS, and JavaScript in this repository.
+
+One third-party library is shipped in the tree: [Leaflet](https://leafletjs.com) 1.9.4, used only by the Map field (`fieldtypes/Map/leaflet/`). It is BSD 2-Clause. It is not installed by a package manager. The rest of the CMS is Birkly’s own code.
 
 ## What “dependencies” means for scanners (e.g. Aikido)
 
