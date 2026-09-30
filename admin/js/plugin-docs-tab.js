@@ -130,7 +130,14 @@
   function loadManifest() {
     if (manifestCache) return Promise.resolve(manifestCache);
     return fetch(apiUrl('/api/help_manifest.php'), { credentials: 'same-origin' })
-      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          if (!text || !String(text).trim()) {
+            throw new Error(docsT('docs_failed_to_load', 'Failed to load'));
+          }
+          return JSON.parse(text);
+        });
+      })
       .then(function (data) {
         manifestCache = data;
         return data;
