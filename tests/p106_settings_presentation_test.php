@@ -31,8 +31,10 @@ p106_assert('analytics preset radios stay in the form', str_contains($html, 'id=
 p106_assert('analytics sheet', str_contains($html, 'id="analytics-preset-sheet"') && str_contains($html, 'is-sheet'));
 p106_assert('consent and retention fields remain', str_contains($html, 'id="analytics-consent-text"') && str_contains($html, 'id="analytics-retention-days"'));
 p106_assert('csv export remains', str_contains($html, 'id="analytics-csv-export"'));
-p106_assert('domain list and report mount', str_contains($html, 'id="domains-list"') && str_contains($html, 'id="domains-report-mount"'));
-p106_assert('edit domain still saves role limits and analytics', str_contains($html, 'id="edit-domain-delivery-role"') && str_contains($html, 'id="edit-domain-read-limit"') && str_contains($html, 'id="edit-domain-enable-analytics"'));
+p106_assert('domain list stays on site delivery', str_contains($html, 'id="domains-list"'));
+p106_assert('analytics domains and snippet live on the analytics tab', str_contains($html, 'id="analytics-domains-list"') && str_contains($html, 'id="domains-localhost-script"'));
+p106_assert('edit domain still saves role and limits', str_contains($html, 'id="edit-domain-delivery-role"') && str_contains($html, 'id="edit-domain-read-limit"'));
+p106_assert('hosting summary opens the existing wizard', str_contains($html, 'id="hosting-open-setup"') && str_contains($html, 'id="hosting-wizard-mount"'));
 p106_assert('scheduled publish url remains', str_contains($html, 'birkly_scheduled_publish_admin_url'));
 p106_assert('rebuild control remains', str_contains($html, 'id="open-rebuild-system-btn"'));
 p106_assert('update controls remain', str_contains($html, 'id="update-status"') && str_contains($html, 'id="check-updates-btn"') && str_contains($html, 'id="download-update-btn"'));
@@ -65,6 +67,10 @@ foreach (['en', 'de', 'fr', 'ja', 'es'] as $locale) {
         'delivery_btn_show_checks',
         'delivery_btn_hide_checks',
         'delivery_checks_summary',
+        'settings_domains_delivery_help',
+        'settings_analytics_domains_title',
+        'settings_hosting_change_setup',
+        'settings_ai_beginner_title',
     ] as $key) {
         p106_assert($locale . ' has ' . $key, isset($admin[$key]) && is_string($admin[$key]) && $admin[$key] !== '');
     }

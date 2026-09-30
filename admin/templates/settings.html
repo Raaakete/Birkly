@@ -218,6 +218,38 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane" id="site-delivery">
         <div class="settings-stack">
           <div id="delivery-status-site-delivery" class="settings-pane-section" data-delivery-status-mount data-delivery-status-id="site-delivery"></div>
+          <div id="hosting" class="settings-pane-section" data-settings-search="site delivery hosting urls cms url public site preview">
+          <section class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="section-title"><?= __('admin.settings_hosting_summary_title') ?></h2>
+                <p class="settings-help"><?= __('admin.settings_hosting_where_served') ?></p>
+              </div>
+              <button type="button" class="button is-small" id="hosting-open-setup"><?= __('admin.settings_hosting_change_setup') ?></button>
+            </div>
+            <div class="card-body u-stack-3">
+              <div class="setting-rows" id="hosting-summary-rows">
+                <p class="form-help" id="hosting-summary-loading"><?= __('admin.settings_hosting_summary_loading') ?></p>
+              </div>
+              <p data-hosting-project-link class="form-help" hidden><?= __('admin.settings_project_manage_files_before') ?><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>"><?= __('admin.settings_project_manage_files_link') ?></a><?= __('admin.settings_project_manage_files_after') ?></p>
+            </div>
+          </section>
+          <div id="hosting-setup-sheet" class="modal-backdrop is-sheet is-wide">
+            <div class="modal-content">
+              <div class="modal-header">
+                <div>
+                  <h2><?= __('admin.settings_hosting_change_setup') ?></h2>
+                  <p class="settings-help"><?= __('admin.settings_hosting_where_served') ?></p>
+                </div>
+                <button type="button" class="modal-close-btn" id="hosting-setup-close" aria-label="<?= htmlspecialchars(__('admin.cancel')) ?>">&times;</button>
+              </div>
+              <div class="modal-body">
+                <div id="hosting-wizard-mount"></div>
+              </div>
+            </div>
+          </div>
+          </div>
+
           <div id="delivery-matrix" class="settings-pane-section" data-settings-search="site delivery domains routing matrix cors aliases">
           <section class="card">
             <div class="card-header">
@@ -242,87 +274,29 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </section>
           </div>
-          <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains dns analytics public site local development tracking">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title"><?= __('admin.domain_management_and_analytics') ?></h2>
-              <p class="settings-help"><?= __('admin.domain_management_description') ?></p>
-            </div>
-            <button type="button" class="button is-main" id="register-domain-btn">
-              <?= birkly_icon('plus', ['size' => 16]) ?>
-              <?= __('admin.register_domain') ?>
-            </button>
-          </div>
-          <div class="settings-stack">
+          <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains dns public site api cors role">
           <section class="card">
             <div class="card-header">
               <div>
-                <h3 class="card-title"><?= __('admin.registered_domains') ?></h3>
+                <h2 class="section-title"><?= __('admin.domains') ?></h2>
+                <p class="settings-help"><?= __('admin.settings_domains_delivery_help') ?></p>
                 <p class="form-help" id="domains-summary"></p>
               </div>
-            </div>
-            <div class="card-body u-stack-4">
-            <div id="domains-list" class="domains-list">
-              <div class="loading-state">
-                <p><?= __('admin.loading_domains') ?>...</p>
-              </div>
-            </div>
-            <div id="domains-report-mount" class="u-stack-3" hidden></div>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="card-header">
-              <div class="card-heading">
-                <h3 class="card-title"><?= __('admin.local_development') ?></h3>
-                <p class="section-description"><?= __('admin.local_development_script_help') ?></p>
-              </div>
-            </div>
-            <div class="card-body u-stack-4">
-            <?php
-            // Absolute CMS URL + data-cms-url (same shape as birkly_hosting_client_snippet).
-            $localhostCms = function_exists('birkly_cms_base_url') ? birkly_cms_base_url() : '';
-            if ($localhostCms === '' && function_exists('birkly_hosting_build_url_from_request')) {
-                $localhostCms = birkly_hosting_build_url_from_request();
-            }
-            if ($localhostCms === '') {
-                $localhostCms = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
-                    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
-            }
-            $localhostCms = rtrim($localhostCms, '/');
-            $localhostScript = '<script src="' . htmlspecialchars($localhostCms . birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8')
-                . '" data-cms-url="' . htmlspecialchars($localhostCms, ENT_QUOTES, 'UTF-8')
-                . '" data-tracking-id="localhost"></script>';
-            ?>
-            <div class="domains-code-block">
-              <pre class="domains-code-pre"><code id="domains-localhost-script"><?= htmlspecialchars($localhostScript, ENT_QUOTES, 'UTF-8') ?></code></pre>
-              <button type="button" class="button is-small domains-copy-btn" data-copy-target="domains-localhost-script" title="<?= htmlspecialchars(__('admin.copy_code')) ?>">
-                <?= birkly_icon('copy', ['size' => 14]) ?>
-                <?= __('admin.copy_code') ?>
+              <button type="button" class="button is-small" id="register-domain-btn">
+                <?= birkly_icon('plus', ['size' => 16]) ?>
+                <?= __('admin.register_domain') ?>
               </button>
             </div>
-            <p class="form-help"><?= __('admin.tracking_script_hint') ?></p>
-            </div>
-          </section>
-          </div>
-        </div>
-
-          <div id="hosting" class="settings-pane-section" data-settings-search="site delivery hosting urls cms url public site preview">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title"><?= __('admin.hosting_urls') ?></h2>
-              <p class="settings-help"><?= __('admin.settings_hosting_where_served') ?></p>
-            </div>
-          </div>
-          <div class="settings-stack">
-          <section class="card">
             <div class="card-body u-stack-4">
-            <div id="hosting-wizard-mount"></div>
-            <p data-hosting-project-link class="form-help" hidden><?= __('admin.settings_project_manage_files_before') ?><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>"><?= __('admin.settings_project_manage_files_link') ?></a><?= __('admin.settings_project_manage_files_after') ?></p>
+              <div id="domains-list" class="domains-list">
+                <div class="loading-state">
+                  <p><?= __('admin.loading_domains') ?>...</p>
+                </div>
+              </div>
+              <p class="form-help"><a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'analytics'])) ?>"><?= __('admin.settings_analytics_domains_title') ?></a></p>
             </div>
           </section>
           </div>
-        </div>
           <div id="redirects" class="settings-pane-section" data-settings-search="site delivery redirects routing url rewrite forwarding"><?php include __DIR__ . '/../partials/redirects-panel.php'; ?></div>
         </div>
       </div>
@@ -1008,6 +982,45 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <button type="button" class="button is-small" id="analytics-open-presets"><?= __('admin.analytics_change_collecting') ?></button>
           </div>
+          <section class="card" id="analytics-domains-card" data-settings-search="analytics domains tracking snippet localhost counted hosts">
+            <div class="card-header">
+              <div>
+                <h2 class="section-title"><?= __('admin.settings_analytics_domains_title') ?></h2>
+                <p class="settings-help"><?= __('admin.settings_analytics_domains_help') ?></p>
+              </div>
+            </div>
+            <div class="card-body u-stack-4">
+              <div id="analytics-domains-list">
+                <div class="loading-state"><p><?= __('admin.loading_domains') ?></p></div>
+              </div>
+              <div id="analytics-domains-report" class="u-stack-3" hidden></div>
+              <?php
+              $localhostCms = function_exists('birkly_cms_base_url') ? birkly_cms_base_url() : '';
+              if ($localhostCms === '' && function_exists('birkly_hosting_build_url_from_request')) {
+                  $localhostCms = birkly_hosting_build_url_from_request();
+              }
+              if ($localhostCms === '') {
+                  $localhostCms = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
+                      . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+              }
+              $localhostCms = rtrim($localhostCms, '/');
+              $localhostScript = '<script src="' . htmlspecialchars($localhostCms . birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8')
+                  . '" data-cms-url="' . htmlspecialchars($localhostCms, ENT_QUOTES, 'UTF-8')
+                  . '" data-tracking-id="localhost"></script>';
+              ?>
+              <div class="setting-row">
+                <div class="setting-label">
+                  <span><?= __('admin.local_development') ?></span>
+                  <small class="form-help"><?= __('admin.local_development_script_help') ?></small>
+                </div>
+                <div class="setting-value">
+                  <pre class="domains-code-pre"><code id="domains-localhost-script"><?= htmlspecialchars($localhostScript, ENT_QUOTES, 'UTF-8') ?></code></pre>
+                  <button type="button" class="button is-small domains-copy-btn" data-copy-target="domains-localhost-script"><?= birkly_icon('copy', ['size' => 14]) ?><?= __('admin.copy_code') ?></button>
+                  <p class="form-help"><?= __('admin.tracking_script_hint') ?></p>
+                </div>
+              </div>
+            </div>
+          </section>
           <form id="analytics-settings-form" class="settings-form" data-settings-search="analytics presets privacy consent">
             <div id="analytics-preset-sheet" class="modal-backdrop is-sheet is-wide">
               <div class="modal-content">
@@ -1414,20 +1427,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <input type="number" id="domain-write-limit" name="write_limit" value="10" min="1" class="input">
             </div>
           </div>
-          <div class="form-group">
-            <div class="setting-row domain-analytics-toggle-row">
-              <div class="setting-label">
-                <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
-                <small class="form-help"><?= __('admin.settings_domain_analytics_track_long') ?></small>
-              </div>
-              <div class="setting-value">
-              <label class="switch" for="domain-enable-analytics">
-                <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
-                <span class="switch__slider"></span>
-              </label>
-              </div>
-            </div>
-          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -1482,30 +1481,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <label><?= __('admin.write_rate_limit_per_hour') ?></label>
               <input type="number" id="edit-domain-write-limit" name="write_limit" min="1" class="input">
             </div>
-          </div>
-          <div class="form-group">
-            <div class="setting-row domain-analytics-toggle-row">
-              <div class="setting-label">
-                <span><?= __('admin.enable_analytics_tracking') ?></span>
-                <small class="form-help"><?= __('admin.settings_domain_analytics_track') ?></small>
-              </div>
-              <div class="setting-value">
-              <label class="switch" for="edit-domain-enable-analytics">
-                <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
-                <span class="switch__slider"></span>
-              </label>
-              </div>
-            </div>
-          </div>
-          <div id="edit-domain-snippet-wrap" class="u-stack-2" hidden>
-            <p class="u-label"><?= __('admin.copy_code') ?></p>
-            <pre class="domains-code-pre"><code id="edit-domain-snippet"></code></pre>
-            <div class="u-cluster">
-              <button type="button" class="button is-small domains-copy-btn" data-copy-target="edit-domain-snippet"><?= birkly_icon('copy', ['size' => 14]) ?><?= __('admin.copy_code') ?></button>
-              <button type="button" class="button is-small" id="edit-domain-report-btn"><?= __('admin.settings_analytics_report_title') ?></button>
-            </div>
-            <p class="form-help"><?= __('admin.settings_domain_snippet_help') ?></p>
-            <div id="edit-domain-report" hidden></div>
           </div>
         </form>
       </div>

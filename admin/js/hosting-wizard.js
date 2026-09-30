@@ -53,10 +53,10 @@
             '</div>' +
             '</div>' +
             '<p class="hosting-wizard-env-banner message message-info" hidden>Delivery URLs are managed by environment variables (read-only).</p>' +
-            '<div class="hosting-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('hosting_wizard_steps_label', 'Hosting setup steps')) + '">' +
-            '<button type="button" class="hosting-wizard-step-btn active" data-step="1" role="tab" aria-selected="true">' + escapeHtml(t('hosting_wizard_step_cms', '1. CMS URL')) + '</button>' +
-            '<button type="button" class="hosting-wizard-step-btn" data-step="2" role="tab" aria-selected="false">' + escapeHtml(t('hosting_wizard_step_public', '2. Public site')) + '</button>' +
-            '<button type="button" class="hosting-wizard-step-btn" data-step="3" role="tab" aria-selected="false">' + escapeHtml(t('hosting_wizard_step_preview', '3. Preview')) + '</button>' +
+            '<div class="segmented hosting-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('hosting_wizard_steps_label', 'Hosting setup steps')) + '">' +
+            '<button type="button" class="hosting-wizard-step-btn active" data-step="1" role="tab" aria-selected="true" aria-pressed="true">' + escapeHtml(t('hosting_wizard_step_cms', '1. CMS URL')) + '</button>' +
+            '<button type="button" class="hosting-wizard-step-btn" data-step="2" role="tab" aria-selected="false" aria-pressed="false">' + escapeHtml(t('hosting_wizard_step_public', '2. Public site')) + '</button>' +
+            '<button type="button" class="hosting-wizard-step-btn" data-step="3" role="tab" aria-selected="false" aria-pressed="false">' + escapeHtml(t('hosting_wizard_step_preview', '3. Preview')) + '</button>' +
             '</div>' +
             '<div class="hosting-wizard-panels">' +
             '<section class="hosting-wizard-panel active" data-step-panel="1">' +
@@ -375,6 +375,7 @@
             var active = n === this.step;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         }.bind(this));
         this.root.querySelectorAll('.hosting-wizard-panel').forEach(function (panel) {
             var n = parseInt(panel.getAttribute('data-step-panel'), 10);

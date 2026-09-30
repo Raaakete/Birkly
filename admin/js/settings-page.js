@@ -2212,9 +2212,10 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses, domainRoles);
             } else {
-                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
+                listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
+                renderAnalyticsDomains([]);
             }
-            attachDomainsCopyButtons(document.getElementById('domains'));
+            attachDomainsCopyButtons(document.getElementById('analytics-domains-card'));
         } catch (error) {
             console.error('Error loading domains:', error);
             listContainer.innerHTML = '<div class="message message-error" role="alert">Error loading domains: ' + escapeHtml(error.message) + '</div>';
@@ -2436,6 +2437,7 @@ async function deletePlugin(pluginId) {
 
         if (!domains.length) {
             listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
+            renderAnalyticsDomains([]);
             return;
         }
 
@@ -2445,7 +2447,6 @@ async function deletePlugin(pluginId) {
             var readCollections = permissions.read_collections || [];
             var writeCollections = permissions.write_collections || [];
             var rateLimits = permissions.rate_limits || {};
-            var analyticsEnabled = !!domain.analytics_enabled;
             var domainName = String(domain.domain || '');
             var domainEscaped = escapeHtml(domainName);
             var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
@@ -2470,11 +2471,7 @@ async function deletePlugin(pluginId) {
                 '<td><div class="row-title">' + domainEscaped + '</div><div class="row-meta">' + meta + '</div></td>' +
                 '<td><span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span></td>' +
                 '<td>' + apiBadge + '</td>' +
-                '<td><label class="switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
-                    '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
-                    '<span class="switch__slider"></span></label></td>' +
                 '<td class="cell-actions">' +
-                    (analyticsEnabled ? '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">' + escapeHtml(stT('settings_analytics_report_title', 'Report')) + '</button> ' : '') +
                     '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">' + escapeHtml(stT('edit', 'Edit')) + '</button> ' +
                     '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">' + escapeHtml(stT('delete', 'Delete')) + '</button>' +
                 '</td></tr>';
@@ -2482,7 +2479,7 @@ async function deletePlugin(pluginId) {
 
         listContainer.innerHTML =
             '<div class="table-container"><table class="table table--hover domains-table">' +
-            '<thead><tr><th>' + escapeHtml(stT('domain_name', 'Domain name')) + '</th><th>' + escapeHtml(stT('settings_domain_delivery_role_label', 'Delivery role')) + '</th><th>' + escapeHtml(stT('permission_level', 'Permission level')) + '</th><th>' + escapeHtml(stT('settings_tab_analytics', 'Analytics')) + '</th><th></th></tr></thead>' +
+            '<thead><tr><th>' + escapeHtml(stT('domain_name', 'Domain name')) + '</th><th>' + escapeHtml(stT('settings_domain_delivery_role_label', 'Delivery role')) + '</th><th>' + escapeHtml(stT('permission_level', 'Permission level')) + '</th><th></th></tr></thead>' +
             '<tbody>' + rows + '</tbody></table></div>';
 
         var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
@@ -2501,32 +2498,60 @@ async function deletePlugin(pluginId) {
             })(domainActions[i]);
         }
 
-        var analyticsToggles = listContainer.querySelectorAll('.domain-analytics-toggle');
-        for (var j = 0; j < analyticsToggles.length; j++) {
-            (function(toggle) {
-                toggle.addEventListener('change', function() {
-                    toggleDomainAnalytics(toggle.getAttribute('data-domain'), toggle.checked, toggle);
-                });
-            })(analyticsToggles[j]);
-        }
+        renderAnalyticsDomains(domains);
+    }
 
-        var reportButtons = listContainer.querySelectorAll('.domain-analytics-report-btn');
-        for (var k = 0; k < reportButtons.length; k++) {
-            (function(btn) {
-                btn.addEventListener('click', async function () {
-                    var domain = btn.getAttribute('data-domain');
-                    var reportContainer = document.getElementById('domains-report-mount');
-                    if (!reportContainer) return;
-                    if (reportContainer.dataset.domain === domain && reportContainer.dataset.loaded === '1') {
-                        reportContainer.hidden = !reportContainer.hidden;
-                        return;
-                    }
-                    reportContainer.dataset.domain = domain;
-                    reportContainer.dataset.loaded = '1';
-                    loadDomainAnalyticsReport(domain, reportContainer);
-                });
-            })(reportButtons[k]);
+    function renderAnalyticsDomains(domains) {
+        var list = document.getElementById('analytics-domains-list');
+        if (!list) return;
+        domains = domains || [];
+        if (!domains.length) {
+            list.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
+            return;
         }
+        list.innerHTML = '<div class="list-rows">' + domains.map(function (domain) {
+            var domainName = String(domain.domain || '');
+            var domainEscaped = escapeHtml(domainName);
+            var analyticsEnabled = !!domain.analytics_enabled;
+            var codeId = 'analytics-script-' + domainName.replace(/[^a-zA-Z0-9_-]/g, '-');
+            var snippet = analyticsEnabled && typeof buildDomainTrackingScript === 'function'
+                ? '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(buildDomainTrackingScript(domainName)) + '</code></pre>' +
+                    '<button type="button" class="button is-small domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '">' + escapeHtml(stT('copy_code', 'Copy code')) + '</button>'
+                : '';
+            return '<div class="list-row">' +
+                '<div class="row-body">' +
+                '<div class="row-title"><span class="u-truncate">' + domainEscaped + '</span></div>' +
+                '<div class="row-meta">' + escapeHtml(domain.customer_email || '') + '</div>' +
+                snippet +
+                '</div>' +
+                '<div class="row-actions">' +
+                (analyticsEnabled ? '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">' + escapeHtml(stT('settings_analytics_report_title', 'Report')) + '</button>' : '') +
+                '<label class="switch" aria-label="' + escapeHtml(stT('enable_analytics_tracking', 'Count visits')) + ' ' + domainEscaped + '">' +
+                '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
+                '<span class="switch__slider"></span></label>' +
+                '</div></div>';
+        }).join('') + '</div>';
+
+        attachDomainsCopyButtons(list);
+        list.querySelectorAll('.domain-analytics-toggle').forEach(function (toggle) {
+            toggle.addEventListener('change', function () {
+                toggleDomainAnalytics(toggle.getAttribute('data-domain'), toggle.checked, toggle);
+            });
+        });
+        list.querySelectorAll('.domain-analytics-report-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var domain = btn.getAttribute('data-domain');
+                var reportContainer = document.getElementById('analytics-domains-report');
+                if (!reportContainer) return;
+                if (reportContainer.dataset.domain === domain && reportContainer.dataset.loaded === '1') {
+                    reportContainer.hidden = !reportContainer.hidden;
+                    return;
+                }
+                reportContainer.dataset.domain = domain;
+                reportContainer.dataset.loaded = '1';
+                loadDomainAnalyticsReport(domain, reportContainer);
+            });
+        });
     }
 
     // Expose functions globally
@@ -2717,7 +2742,8 @@ window.editDomain = async function(domainName) {
                 document.getElementById('edit-domain-status').value = domain.status || 'active';
                 document.getElementById('edit-domain-read-limit').value = rateLimits.read?.limit || 100;
                 document.getElementById('edit-domain-write-limit').value = rateLimits.write?.limit || 10;
-                document.getElementById('edit-domain-enable-analytics').checked = domain.analytics_enabled || false;
+                var analyticsToggle = document.getElementById('edit-domain-enable-analytics');
+                if (analyticsToggle) analyticsToggle.checked = domain.analytics_enabled || false;
                 var hostLabel = document.getElementById('edit-domain-host');
                 if (hostLabel) hostLabel.textContent = domainName;
                 fillEditDomainExtras(domainName, !!domain.analytics_enabled);
@@ -2742,25 +2768,8 @@ window.editDomain = async function(domainName) {
     }
 };
 
-function fillEditDomainExtras(domainName, analyticsEnabled) {
+function fillEditDomainExtras(domainName) {
     var roleSelect = document.getElementById('edit-domain-delivery-role');
-    var wrap = document.getElementById('edit-domain-snippet-wrap');
-    var code = document.getElementById('edit-domain-snippet');
-    if (code && typeof window.buildDomainTrackingScript === 'function') {
-        code.textContent = window.buildDomainTrackingScript(domainName);
-    }
-    if (wrap) wrap.hidden = !analyticsEnabled;
-    var analyticsBox = document.getElementById('edit-domain-enable-analytics');
-    if (analyticsBox && analyticsBox.dataset.snippetBound !== '1') {
-        analyticsBox.dataset.snippetBound = '1';
-        analyticsBox.addEventListener('change', function () {
-            var host = document.getElementById('edit-domain-original').value;
-            if (code && typeof window.buildDomainTrackingScript === 'function') {
-                code.textContent = window.buildDomainTrackingScript(host);
-            }
-            if (wrap) wrap.hidden = !analyticsBox.checked;
-        });
-    }
     var deleteBtn = document.getElementById('edit-domain-delete-btn');
     if (deleteBtn && deleteBtn.dataset.bound !== '1') {
         deleteBtn.dataset.bound = '1';
@@ -2842,9 +2851,12 @@ async function updateDomain() {
             }
         },
         status: formData.get('status'),
-        analytics_enabled: formData.get('enable_analytics') === '1',
         _csrf: getCsrfToken()
     };
+    var analyticsToggle = document.getElementById('edit-domain-enable-analytics');
+    if (analyticsToggle) {
+        updateData.analytics_enabled = formData.get('enable_analytics') === '1';
+    }
     
     try {
         const response = await fetch(apiUrl('/api/domain_management.php'), {

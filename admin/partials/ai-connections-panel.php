@@ -15,15 +15,13 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
 ?>
         <div class="settings-stack ai-settings">
           <div id="ai-integrations" class="settings-pane-section" data-settings-search="<?= htmlspecialchars($aiConnSettingsSearch) ?>"><div class="u-stack-6">
-          <div class="section-header">
-            <div class="u-stack-1">
-              <h2 class="section-title"><?= htmlspecialchars(__('admin.ai_integrations')) ?></h2>
-              <p class="settings-help"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
+          <div class="signal is-info">
+            <div class="signal-body">
+              <p class="signal-title"><?= htmlspecialchars(__('admin.settings_ai_beginner_title')) ?></p>
+              <p class="signal-text"><?= htmlspecialchars(__('admin.settings_ai_beginner_body')) ?></p>
+              <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
             </div>
-            <p class="u-cluster-3 u-text-sm">
-              <a href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
-              <a href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.documentation')) ?></a>
-            </p>
+            <a class="button is-small" href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
           </div>
 
           <div class="signal is-info" id="ai-local-address-callout" role="status" hidden>
@@ -55,7 +53,23 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
             </div>
           </div>
 
-          <div class="ai-connection-kinds-grid u-grid-auto-lg">
+          <div class="settings-stack" id="ai-connection-kinds">
+            <div class="card" id="ai-kind-assistant">
+              <div class="card-header">
+                <div class="u-stack-1">
+                  <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_title')) ?></h3>
+                  <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_assistant_card_desc')) ?></p>
+                </div>
+                <button class="button is-main" id="add-connection-btn" type="button">
+                  <?= birkly_icon('plus', ['size' => 16]) ?>
+                  <?= htmlspecialchars(__('admin.ai_conn_quick_connect')) ?>
+                </button>
+              </div>
+              <div class="connections-list card-body" id="connections-list">
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_list')) ?></p></div>
+              </div>
+            </div>
+
             <div class="card" id="ai-kind-personal">
               <div class="card-header">
                 <div class="card-heading">
@@ -84,21 +98,6 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
             </div>
 
-            <div class="card" id="ai-kind-assistant">
-              <div class="card-header">
-                <div class="u-stack-1">
-                  <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_title')) ?></h3>
-                  <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_assistant_card_desc')) ?></p>
-                </div>
-                <button class="button is-main" id="add-connection-btn" type="button">
-                  <?= birkly_icon('plus', ['size' => 16]) ?>
-                  <?= htmlspecialchars(__('admin.ai_conn_quick_connect')) ?>
-                </button>
-              </div>
-              <div class="connections-list card-body" id="connections-list">
-                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_list')) ?></p></div>
-              </div>
-            </div>
           </div>
 
           <details class="card u-p-4">
@@ -111,7 +110,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
         </div>
 
         <!-- Built-in assistant quick connect modal -->
-        <div class="modal" id="add-connection-modal">
+        <div class="modal is-sheet is-wide" id="add-connection-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="connection-modal-title"><?= htmlspecialchars(__('admin.ai_conn_modal_quick_connect')) ?></h2>
@@ -152,10 +151,10 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
 
               <div class="form-group" id="ollama-hint" hidden>
-                <div class="callout callout-info">
-                  <div class="callout-body u-stack-1">
-                    <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_ollama_title')) ?></p>
-                    <p><?= htmlspecialchars(__('admin.ai_conn_ollama_body')) ?></p>
+                <div class="signal is-info">
+                  <div class="signal-body">
+                    <p class="signal-title"><?= htmlspecialchars(__('admin.ai_conn_ollama_title')) ?></p>
+                    <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_ollama_body')) ?></p>
                   </div>
                 </div>
               </div>
@@ -206,7 +205,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
         </div>
 
         <!-- Add agent modal -->
-        <div class="modal" id="add-mcp-modal">
+        <div class="modal is-sheet is-wide" id="add-mcp-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="mcp-modal-title"><?= htmlspecialchars(__('admin.ai_mcp_modal_title')) ?></h2>

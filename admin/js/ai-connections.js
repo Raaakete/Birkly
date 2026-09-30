@@ -179,7 +179,7 @@
         if (unique.length === 0) {
             const emptyTitle = escapeHtml(aiT('ai_conn_empty_assistant_title', 'No assistant connected'));
             const emptyBody = escapeHtml(aiT('ai_conn_empty_assistant_body', 'Click Quick connect to add your AI provider and API key for in-admin chat.'));
-            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>' + emptyTitle + '</strong></p><p>' + emptyBody + '</p></div>';
+            list.innerHTML = '<div class="empty"><p class="empty-title">' + emptyTitle + '</p><p class="empty-text">' + emptyBody + '</p></div>';
             return;
         }
 
@@ -188,23 +188,22 @@
         const editLabel = escapeHtml(aiT('edit', 'Edit'));
         const deleteLabel = escapeHtml(aiT('delete', 'Delete'));
 
-        list.innerHTML = unique.map(conn => `
-            <div class="ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
-                <div class="ai-connection-entry-header">
-                    <strong>${escapeHtml(conn.name || conn.provider)}</strong>
-                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? activeLabel : inactiveLabel}</span>
+        list.innerHTML = '<div class="list-rows">' + unique.map(conn => `
+            <div class="list-row ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
+                <div class="row-body">
+                    <div class="row-title"><span class="u-truncate">${escapeHtml(conn.name || conn.provider)}</span> <span class="badge ${conn.status === 'active' ? 'badge-success' : 'badge-neutral'}">${conn.status === 'active' ? activeLabel : inactiveLabel}</span></div>
+                    <div class="row-meta">
+                        <span class="connection-provider">${escapeHtml(conn.provider)}</span>
+                        <span class="connection-role">${escapeHtml(conn.role || 'viewer')}</span>
+                        ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
+                    </div>
                 </div>
-                <div class="ai-connection-entry-meta">
-                    <span class="connection-provider">${escapeHtml(conn.provider)}</span>
-                    <span class="connection-role">${escapeHtml(conn.role || 'viewer')}</span>
-                    ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
-                </div>
-                <div class="ai-connection-entry-actions">
+                <div class="row-actions ai-connection-entry-actions">
                     <button type="button" class="button is-small" data-edit-connection="${escapeHtml(conn.id)}">${editLabel}</button>
                     <button type="button" class="button is-small is-danger" data-delete-connection="${escapeHtml(conn.id)}">${deleteLabel}</button>
                 </div>
             </div>
-        `).join('');
+        `).join('') + '</div>';
     }
 
     function showAddConnectionModal() {
