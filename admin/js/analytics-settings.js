@@ -159,6 +159,36 @@
         return found;
     }
 
+    function analyticsDraftDiffers() {
+        var settings = state.settings || {};
+        var savedPreset = settings.preset || 'off';
+        if (selectedPreset() !== savedPreset) return true;
+        var consent = document.getElementById('analytics-consent-text');
+        var retention = document.getElementById('analytics-retention-days');
+        var savedConsent = settings.consent_text || '';
+        var savedRetention = settings.retention_days != null ? String(settings.retention_days) : '';
+        if (consent && consent.value !== savedConsent) return true;
+        if (retention && String(retention.value || '') !== savedRetention) return true;
+        return false;
+    }
+
+    function restoreSavedAnalytics() {
+        var settings = state.settings || {};
+        var savedPreset = settings.preset || 'off';
+        document.querySelectorAll('input[name="analytics-preset"]').forEach(function (input) {
+            input.checked = input.value === savedPreset;
+        });
+        var consent = document.getElementById('analytics-consent-text');
+        var retention = document.getElementById('analytics-retention-days');
+        if (consent) consent.value = settings.consent_text || '';
+        if (retention) retention.value = settings.retention_days != null ? String(settings.retention_days) : '';
+        renderPresets();
+        if (typeof window.markSettingsClean === 'function') {
+            window.markSettingsClean('analytics');
+        }
+        loadReport();
+    }
+
     function setPresetSheetOpen(open) {
         var sheet = document.getElementById('analytics-preset-sheet');
         if (!sheet) return;
@@ -166,6 +196,7 @@
             sheet.style.display = 'flex';
             sheet.classList.add('active');
         } else {
+            if (analyticsDraftDiffers()) restoreSavedAnalytics();
             sheet.classList.remove('active');
             sheet.style.display = 'none';
         }

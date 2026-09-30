@@ -1388,10 +1388,10 @@ function renderInviteMailNotice() {
     if (!notice) return;
 
     notice.hidden = false;
-    notice.classList.remove('callout-info', 'callout-warning');
+    notice.classList.remove('is-info');
 
     if (inviteMailStatus?.has_connection) {
-        notice.classList.add('callout-info');
+        notice.classList.add('is-info');
         const name = inviteMailStatus.connection_name || inviteMailStatus.provider || 'Email connection';
         const from = inviteMailStatus.from_email ? ` (${inviteMailStatus.from_email})` : '';
         if (copy) {
@@ -1399,7 +1399,6 @@ function renderInviteMailNotice() {
         }
         if (sendBtn) sendBtn.disabled = false;
     } else {
-        notice.classList.add('callout-warning');
         if (copy) {
             copy.textContent = stT('settings_js_invite_email_connection_hint', 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.');
         }
@@ -2452,7 +2451,9 @@ async function deletePlugin(pluginId) {
             var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
             var host = domainName.toLowerCase();
             var role = (domainRoles && domainRoles[host]) ? domainRoles[host] : 'unassigned';
-            var permText = permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only';
+            var permText = permissionLevel === 'read_write'
+                ? stT('settings_domain_read_write', 'Read and write')
+                : stT('settings_storage_read_only', 'Read only');
             var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
             var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
             var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
@@ -2473,7 +2474,7 @@ async function deletePlugin(pluginId) {
                     '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
                     '<span class="switch__slider"></span></label></td>' +
                 '<td class="cell-actions">' +
-                    (analyticsEnabled ? '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button> ' : '') +
+                    (analyticsEnabled ? '<button type="button" class="button is-small domain-analytics-report-btn" data-domain="' + domainEscaped + '">' + escapeHtml(stT('settings_analytics_report_title', 'Report')) + '</button> ' : '') +
                     '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">' + escapeHtml(stT('edit', 'Edit')) + '</button> ' +
                     '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">' + escapeHtml(stT('delete', 'Delete')) + '</button>' +
                 '</td></tr>';
@@ -2791,7 +2792,7 @@ function fillEditDomainExtras(domainName, analyticsEnabled) {
             if (role === 'unassigned' && !Array.from(roleSelect.options).some(function (option) { return option.value === 'unassigned'; })) {
                 var unassigned = document.createElement('option');
                 unassigned.value = 'unassigned';
-                unassigned.textContent = 'Unassigned';
+                unassigned.textContent = stT('unassigned', 'Unassigned');
                 roleSelect.insertBefore(unassigned, roleSelect.firstChild);
             }
             if (!aliasable && !Array.from(roleSelect.options).some(function (option) { return option.value === role; })) {
