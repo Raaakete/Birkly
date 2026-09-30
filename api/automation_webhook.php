@@ -18,4 +18,5 @@ if (!birkly_bootstrap_active_plugin('automation') || !function_exists('automatio
     exit;
 }
 
-automation_handle_inbound_webhook();
+$rawInput = file_get_contents('php://input');
+automation_handle_inbound_webhook(is_string($rawInput) ? $rawInput : '');
