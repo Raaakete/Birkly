@@ -236,6 +236,10 @@
     var content = panelEl.querySelector('.plugin-docs-content');
 
     return topicsForPlugin(pluginId).then(function (topics) {
+      topics = topics.map(function (topic) {
+        if (topic && topic.snapshot) topic.snapshot = apiUrl(topic.snapshot);
+        return topic;
+      });
       navHost.innerHTML = buildNavHtml(topics);
 
       function showTopic(btn) {
@@ -262,6 +266,9 @@
 
       var first = navHost.querySelector('.plugin-docs-nav-item');
       if (first) showTopic(first);
+    }).catch(function (err) {
+      delete loadedPanels[pluginId];
+      content.innerHTML = '<p class="error">' + escapeHtml((err && err.message) || docsT('docs_failed_to_load', 'Failed to load')) + '</p>';
     });
   }
 
