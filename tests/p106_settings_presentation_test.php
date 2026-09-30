@@ -32,9 +32,10 @@ p106_assert('analytics sheet', str_contains($html, 'id="analytics-preset-sheet"'
 p106_assert('consent and retention fields remain', str_contains($html, 'id="analytics-consent-text"') && str_contains($html, 'id="analytics-retention-days"'));
 p106_assert('csv export remains', str_contains($html, 'id="analytics-csv-export"'));
 p106_assert('domain list stays on site delivery', str_contains($html, 'id="domains-list"'));
-p106_assert('analytics domains and snippet live on the analytics tab', str_contains($html, 'id="analytics-domains-list"') && str_contains($html, 'id="domains-localhost-script"'));
+p106_assert('routing and api registration share one host table', str_contains($html, 'id="delivery-alias-redirect"') && str_contains($settingsJs, 'host-register-btn') && str_contains($settingsJs, 'delivery-make-primary') && str_contains($settingsJs, 'data-action="edit"'));
+p106_assert('analytics domains and snippet live on the analytics tab', str_contains($html, 'id="analytics-domains-list"') && str_contains($html, 'id="domains-localhost-script"') && str_contains($html, 'settings_localhost_summary'));
 p106_assert('edit domain still saves role and limits', str_contains($html, 'id="edit-domain-delivery-role"') && str_contains($html, 'id="edit-domain-read-limit"'));
-p106_assert('hosting summary opens the existing wizard', str_contains($html, 'id="hosting-open-setup"') && str_contains($html, 'id="hosting-wizard-mount"'));
+p106_assert('hosting form is on the page', str_contains($html, 'id="hosting-wizard-mount"') && !str_contains($html, 'id="hosting-setup-sheet"'));
 p106_assert('scheduled publish url remains', str_contains($html, 'birkly_scheduled_publish_admin_url'));
 p106_assert('rebuild control remains', str_contains($html, 'id="open-rebuild-system-btn"'));
 p106_assert('update controls remain', str_contains($html, 'id="update-status"') && str_contains($html, 'id="check-updates-btn"') && str_contains($html, 'id="download-update-btn"'));
@@ -50,6 +51,13 @@ $hostingJs = (string) file_get_contents($root . '/admin/js/hosting-wizard.js');
 $connJs = (string) file_get_contents($root . '/admin/js/connections-settings.js');
 p106_assert('git form keeps connect and auth fields', str_contains($gitJs, 'id="project-git-form"') && str_contains($gitJs, 'id="project-git-token"') && str_contains($gitJs, 'id="project-git-connect-btn"') && str_contains($gitJs, 'id="project-git-push-btn"'));
 p106_assert('hosting modes stay radios inside choice cards', str_contains($hostingJs, 'choice-card') && str_contains($hostingJs, '-public-mode" value="project"'));
+p106_assert('hosting save stays on one page', str_contains($hostingJs, 'hosting-wizard--page') && str_contains($hostingJs, 'hosting-wizard-save'));
+$aiPartial = (string) file_get_contents($root . '/admin/partials/ai-connections-panel.php');
+$aiJs = (string) file_get_contents($root . '/admin/js/ai-connections.js');
+$settingsCss = (string) file_get_contents($root . '/admin/css/pages/settings.css');
+p106_assert('ai paths keep every connection surface', str_contains($aiPartial, 'name="ai-settings-path"') && str_contains($aiPartial, 'id="add-connection-btn"') && str_contains($aiPartial, 'id="ai-personal-agent-card"') && str_contains($aiPartial, 'id="add-mcp-endpoint-btn"') && str_contains($aiPartial, 'id="ai-desktop-connector-card"'));
+p106_assert('ai path switch keeps the cards', str_contains($aiJs, 'function showAiPath'));
+p106_assert('file editor fills the files pane', str_contains($settingsCss, 'textarea#project-file-editor'));
 p106_assert('connection rows keep actions', str_contains($connJs, 'list-row sys-conn-card') && str_contains($connJs, 'data-action="set-default"') && str_contains($connJs, 'data-action="test"'));
 p106_assert('closing the analytics sheet restores the saved preset', str_contains($analyticsJs, 'function restoreSavedAnalytics'));
 
@@ -71,6 +79,15 @@ foreach (['en', 'de', 'fr', 'ja', 'es'] as $locale) {
         'settings_analytics_domains_title',
         'settings_hosting_change_setup',
         'settings_ai_beginner_title',
+        'settings_hosts_combined_help',
+        'settings_hosts_not_registered',
+        'settings_localhost_summary',
+        'settings_hosting_more',
+        'settings_ai_path_legend',
+        'settings_ai_path_chat_title',
+        'settings_ai_path_app_title',
+        'settings_ai_path_team_title',
+        'settings_ai_how_to_connect',
     ] as $key) {
         p106_assert($locale . ' has ' . $key, isset($admin[$key]) && is_string($admin[$key]) && $admin[$key] !== '');
     }

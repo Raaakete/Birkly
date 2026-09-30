@@ -879,16 +879,20 @@
         // change often, so the canonical steps live in the linked guide
         // instead of going stale here (P56-R2 #7).
         return `
-        <ol class="endpoint-setup-steps">
-            <li>${escapeHtml(mcpT('ai_mcp_setup_step1', 'Copy the Connector URL below and add it as a remote MCP server in your AI app — leave Client ID/Secret empty (OAuth is automatic).'))}</li>
-            <li>${escapeHtml(personalNote)}</li>
-            <li><a href="${escapeHtml(DOCS_HELP_URL)}">${escapeHtml(mcpT('ai_mcp_setup_guide', 'Full setup guide'))}</a></li>
-        </ol>
         ${httpWarning}
         <div class="mcp-snippet-block">
             <span class="u-label u-text-sm">${escapeHtml(mcpT('ai_mcp_connector_url_label', 'Connector URL'))}</span>
             ${renderConnectorUrlRow(endpointId, url)}
-        </div>`;
+            <p class="form-help">${escapeHtml(personalNote)}</p>
+        </div>
+        <details class="u-mt-2">
+            <summary>${escapeHtml(mcpT('settings_ai_how_to_connect', 'How to add this in your AI app'))}</summary>
+            <ol class="endpoint-setup-steps">
+                <li>${escapeHtml(mcpT('ai_mcp_setup_step1', 'Copy the Connector URL below and add it as a remote MCP server in your AI app — leave Client ID/Secret empty (OAuth is automatic).'))}</li>
+                <li>${escapeHtml(personalNote)}</li>
+                <li><a href="${escapeHtml(DOCS_HELP_URL)}">${escapeHtml(mcpT('ai_mcp_setup_guide', 'Full setup guide'))}</a></li>
+            </ol>
+        </details>`;
     }
 
     function getSelectedAgentType() {
@@ -924,15 +928,12 @@
     }
 
     function focusPersonalConnector() {
-        const card = document.getElementById('ai-personal-agent-card');
-        const agentId = 'ai_agent_personal';
-        const panel = document.getElementById('mcp-setup-panel-' + agentId);
-        const toggle = document.querySelector(`.mcp-toggle-setup[data-endpoint-id="${agentId}"]`);
-        if (panel && toggle) {
-            panel.removeAttribute('hidden');
-            toggle.setAttribute('aria-expanded', 'true');
-            toggle.textContent = mcpT('ai_mcp_hide_connector_url', 'Hide Connector URL');
+        const radio = document.querySelector('input[name="ai-settings-path"][value="personal"]');
+        if (radio) {
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
         }
+        const card = document.getElementById('ai-kind-personal') || document.getElementById('ai-personal-agent-card');
         card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 

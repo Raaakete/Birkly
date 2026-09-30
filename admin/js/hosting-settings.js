@@ -95,7 +95,6 @@
                         updateProjectLink(wizard.getPublicMode());
                         renderHostingSummary();
                     }
-                    setHostingSheet(false);
                     if (typeof window.initDeliveryStatus === 'function') {
                         window.initDeliveryStatus('#delivery-status-site-delivery');
                     }

@@ -64,7 +64,28 @@
         }
     }
 
+    function showAiPath(path) {
+        ['assistant', 'personal', 'service'].forEach(function (name) {
+            var card = document.getElementById('ai-kind-' + name);
+            if (card) card.hidden = name !== path;
+        });
+    }
+
+    function bindAiPaths() {
+        var radios = document.querySelectorAll('input[name="ai-settings-path"]');
+        if (!radios.length || document.documentElement.dataset.aiPathsBound === '1') return;
+        document.documentElement.dataset.aiPathsBound = '1';
+        radios.forEach(function (input) {
+            input.addEventListener('change', function () {
+                if (input.checked) showAiPath(input.value);
+            });
+        });
+        var selected = document.querySelector('input[name="ai-settings-path"]:checked');
+        showAiPath(selected ? selected.value : 'assistant');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        bindAiPaths();
         maybeInitAiConnections();
         window.addEventListener('hashchange', maybeInitAiConnections);
         window.addEventListener('birkly:ai-integrations-tab', maybeInitAiConnections);

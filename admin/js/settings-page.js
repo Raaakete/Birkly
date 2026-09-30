@@ -2087,139 +2087,71 @@ async function deletePlugin(pluginId) {
         }
     }
 
-    function renderDeliveryMatrixRow(row) {
-        var host = String(row.host || '');
-        var role = row.role || 'unassigned';
-        var rolesMap = {};
-        rolesMap[host] = role;
-        var roleCell = renderDomainDeliveryRole(host, rolesMap);
-        if (row.is_primary) {
-            roleCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
-        }
-        var corsBadge = row.cors_registered
-            ? '<span class="badge badge-success">Registered</span>'
-            : '<span class="badge badge-neutral">Not registered</span>';
-        var suggestHint = '';
-        if (!row.is_primary && row.suggested_role && row.settable_role !== row.suggested_role && role === 'api_only') {
-            suggestHint = '<div class="form-help">Suggested: ' + escapeHtml(row.suggested_role) + ' — ' + escapeHtml(row.suggest_reason || '') + '</div>';
-        }
-        var routingCell = '—';
-        if (row.is_primary) {
-            routingCell = '<span class="badge badge-accent">Primary URL</span>';
-        } else if (row.redirects_to_primary && row.redirect_target_host) {
-            routingCell = '<span class="badge badge-info">301 → ' + escapeHtml(row.redirect_target_host) + '</span>';
-        } else if (row.is_alias) {
-            routingCell = '<span class="badge badge-success">Serves directly</span>';
-        }
-        var actions = '';
-        if (row.can_make_public_primary) {
-            actions = ' <button type="button" class="button is-small delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
-        }
-        return '<tr>' +
-            '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
-            '<td>' + corsBadge + '</td>' +
-            '<td>' + roleCell + actions + '</td>' +
-            '<td>' + routingCell + '</td>' +
-            '</tr>';
-    }
+    var siteHosts = { matrix: null, meta: null, licenses: null, roles: {} };
+    var siteHostsFlight = null;
 
     function renderDeliveryMatrix(rows, meta) {
-        var container = document.getElementById('delivery-matrix-content');
-        if (!container) return;
-
-        rows = rows || [];
-        meta = meta || {};
-        renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
-
-        if (!rows.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_delivery_hostnames', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
-            return;
-        }
-
-        var body = rows.map(renderDeliveryMatrixRow).join('');
-        container.innerHTML =
-            '<div class="table-container">' +
-            '<table class="table table--hover">' +
-            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
-            '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.</p>';
-
-        var roleSelects = container.querySelectorAll('.domain-delivery-role');
-        for (var r = 0; r < roleSelects.length; r++) {
-            (function(select) {
-                select.addEventListener('change', function () {
-                    setDomainDeliveryRole(select.getAttribute('data-domain'), select.value, select);
-                });
-            })(roleSelects[r]);
-        }
-
-        container.querySelectorAll('.delivery-make-primary').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                setPublicPrimary(btn.getAttribute('data-host'), btn);
-            });
-        });
+        siteHosts.matrix = rows || [];
+        siteHosts.meta = meta || {};
+        renderDeliveryRoutingOptions((meta && meta.hosting) || {}, (meta && meta.detect) || {});
+        renderCombinedHosts();
     }
 
-    async function loadDeliveryMatrix() {
-        var container = document.getElementById('delivery-matrix-content');
-        if (!container) return;
-
-        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_delivery_matrix', 'Loading delivery matrix...')) + '</p></div>';
-        try {
-            var response = await fetch(apiUrl('/api/hosting.php?action=get'), {
+    function loadSiteHosts() {
+        if (siteHostsFlight) return siteHostsFlight;
+        var listContainer = document.getElementById('domains-list');
+        if (!listContainer && !document.getElementById('delivery-matrix-content')) {
+            return Promise.resolve();
+        }
+        if (listContainer && siteHosts.matrix === null && siteHosts.licenses === null) {
+            listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_domains', 'Loading domains')) + '</p></div>';
+        }
+        siteHostsFlight = Promise.all([
+            fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' }
+            }),
+            fetch(apiUrl('/api/hosting.php?action=get'), {
                 method: 'GET',
                 credentials: 'same-origin'
+            })
+        ]).then(function (responses) {
+            return Promise.all([responses[0].json(), responses[1].json()]);
+        }).then(function (payloads) {
+            var data = payloads[0] || {};
+            var hostingPayload = payloads[1] || {};
+            var hostingData = (hostingPayload.status === 'ok' && hostingPayload.data) ? hostingPayload.data : {};
+            var licenses = (data.status === 'ok' && data.data && data.data.licenses) ? data.data.licenses : [];
+            var domainRoles = hostingData.domain_roles || {};
+            renderDeliveryMatrix(hostingData.delivery_matrix || [], {
+                hosting: hostingData.hosting || {},
+                detect: hostingData.detect || {}
             });
-            var payload = await response.json();
-            var data = (payload.status === 'ok' && payload.data) ? payload.data : {};
-            var rows = data.delivery_matrix || [];
-            renderDeliveryMatrix(rows, {
-                hosting: data.hosting || {},
-                detect: data.detect || {}
-            });
-        } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(stT('settings_js_err_loading_delivery_matrix', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
-        }
+            renderDomains(licenses, domainRoles);
+            attachDomainsCopyButtons(document.getElementById('analytics-domains-card'));
+        }).catch(function (error) {
+            console.error('Error loading domains:', error);
+            if (listContainer) {
+                listContainer.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(stT('settings_js_err_loading_delivery_matrix', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
+            }
+        }).finally(function () {
+            siteHostsFlight = null;
+        });
+        return siteHostsFlight;
     }
 
-    async function loadDomains() {
+    function loadDeliveryMatrix() {
+        return loadSiteHosts();
+    }
+
+    function loadDomains() {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found');
-            return;
+            return Promise.resolve();
         }
-        
-        listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_domains', 'Loading domains')) + '</p></div>';
-        
-        try {
-            var responses = await Promise.all([
-                fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' }
-                }),
-                fetch(apiUrl('/api/hosting.php?action=get'), {
-                    method: 'GET',
-                    credentials: 'same-origin'
-                })
-            ]);
-            var data = await responses[0].json();
-            var hostingPayload = await responses[1].json();
-            var domainRoles = (hostingPayload.status === 'ok' && hostingPayload.data && hostingPayload.data.domain_roles)
-                ? hostingPayload.data.domain_roles
-                : {};
-            
-            if (data.status === 'ok' && data.data && data.data.licenses) {
-                renderDomains(data.data.licenses, domainRoles);
-            } else {
-                listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
-                renderAnalyticsDomains([]);
-            }
-            attachDomainsCopyButtons(document.getElementById('analytics-domains-card'));
-        } catch (error) {
-            console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="message message-error" role="alert">Error loading domains: ' + escapeHtml(error.message) + '</div>';
-        }
+        return loadSiteHosts();
     }
     
     function buildDomainTrackingScript(domainName) {
@@ -2414,6 +2346,173 @@ async function deletePlugin(pluginId) {
             optionHtml + '</select>';
     }
 
+    function licenseMeta(domain) {
+        if (!domain) return '';
+        var permissions = domain.permissions || {};
+        var readCollections = permissions.read_collections || [];
+        var writeCollections = permissions.write_collections || [];
+        var rateLimits = permissions.rate_limits || {};
+        var email = domain.customer_email || '';
+        var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : '';
+        var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
+        var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
+        var bits = [];
+        if (email) bits.push(email);
+        if (registeredDate) bits.push(registeredDate);
+        bits.push('Read ' + readLimit + '/min');
+        bits.push('Write ' + writeLimit + '/hour');
+        if (readCollections.length) bits.push('Read ' + readCollections.join(', '));
+        if (writeCollections.length) bits.push('Write ' + writeCollections.join(', '));
+        return bits.join(' · ');
+    }
+
+    function renderHostRow(matrixRow, license) {
+        var host = String((matrixRow && matrixRow.host) || (license && license.domain) || '').toLowerCase();
+        var role = (matrixRow && matrixRow.role) || (siteHosts.roles && siteHosts.roles[host]) || 'unassigned';
+        var rolesMap = {};
+        rolesMap[host] = role;
+        var isPrimary = !!(matrixRow && matrixRow.is_primary) || role === 'cms_primary' || role === 'public_primary';
+        var roleCell = isPrimary
+            ? '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>'
+            : renderDomainDeliveryRole(host, rolesMap);
+        var suggestHint = '';
+        if (matrixRow && !isPrimary && matrixRow.suggested_role && matrixRow.settable_role !== matrixRow.suggested_role && role === 'api_only') {
+            suggestHint = '<div class="form-help">' + escapeHtml(stT('settings_js_domain_suggested_role', 'Suggested: {role} — {reason}', {
+                role: matrixRow.suggested_role,
+                reason: matrixRow.suggest_reason || ''
+            })) + '</div>';
+        }
+        var routing = '—';
+        if (isPrimary) {
+            routing = '<span class="badge badge-accent">' + escapeHtml(stT('settings_hosts_primary', 'Primary URL')) + '</span>';
+        } else if (matrixRow && matrixRow.redirects_to_primary && matrixRow.redirect_target_host) {
+            routing = '<span class="badge badge-info">301 → ' + escapeHtml(matrixRow.redirect_target_host) + '</span>';
+        } else if (matrixRow && matrixRow.is_alias) {
+            routing = '<span class="badge badge-success">' + escapeHtml(stT('settings_hosts_serves', 'Serves directly')) + '</span>';
+        }
+        var makePrimary = (matrixRow && matrixRow.can_make_public_primary)
+            ? ' <button type="button" class="button is-small delivery-make-primary" data-host="' + escapeHtml(host) + '">' + escapeHtml(stT('settings_hosts_make_primary', 'Make primary')) + '</button>'
+            : '';
+        var apiCell = '';
+        var actions = '';
+        if (license) {
+            var permissions = license.permissions || {};
+            var permissionLevel = permissions.permission_level || 'read_write';
+            var permText = permissionLevel === 'read_write'
+                ? stT('settings_domain_read_write', 'Read and write')
+                : stT('settings_storage_read_only', 'Read only');
+            apiCell = license.status === 'active'
+                ? '<span class="badge badge-success">' + escapeHtml(permText) + '</span>'
+                : '<span class="badge badge-neutral">' + escapeHtml(license.status || 'inactive') + '</span>';
+            actions =
+                '<button type="button" class="button is-small" data-domain="' + escapeHtml(host) + '" data-action="edit">' + escapeHtml(stT('edit', 'Edit')) + '</button> ' +
+                '<button type="button" class="button is-small is-danger" data-domain="' + escapeHtml(host) + '" data-action="delete">' + escapeHtml(stT('delete', 'Delete')) + '</button>';
+        } else if (siteHosts.licenses === null) {
+            apiCell = '<span class="form-help">' + escapeHtml(stT('loading_domains', 'Loading domains')) + '</span>';
+        } else {
+            apiCell = '<span class="badge badge-neutral">' + escapeHtml(stT('settings_hosts_not_registered', 'Not registered for API')) + '</span>';
+            actions = '<button type="button" class="button is-small host-register-btn" data-domain="' + escapeHtml(host) + '" data-action="register">' + escapeHtml(stT('settings_hosts_register', 'Register')) + '</button>';
+        }
+        var meta = licenseMeta(license);
+        return '<tr>' +
+            '<td><div class="row-title"><code>' + escapeHtml(host) + '</code></div>' +
+            (meta ? '<div class="row-meta">' + escapeHtml(meta) + '</div>' : '') +
+            suggestHint + '</td>' +
+            '<td>' + routing + '<div class="u-cluster u-mt-2">' + roleCell + makePrimary + '</div></td>' +
+            '<td>' + apiCell + '</td>' +
+            '<td class="cell-actions">' + actions + '</td></tr>';
+    }
+
+    function renderCombinedHosts() {
+        var listContainer = document.getElementById('domains-list');
+        if (!listContainer) return;
+        if (siteHosts.matrix === null && siteHosts.licenses === null) return;
+
+        var licenses = siteHosts.licenses || [];
+        var byHost = {};
+        licenses.forEach(function (domain) {
+            var host = String(domain.domain || '').toLowerCase();
+            if (host) byHost[host] = domain;
+        });
+
+        var rows = [];
+        var seen = {};
+        (siteHosts.matrix || []).forEach(function (row) {
+            var host = String(row.host || '').toLowerCase();
+            if (!host || seen[host]) return;
+            seen[host] = true;
+            rows.push(renderHostRow(row, byHost[host] || null));
+        });
+        if (siteHosts.licenses !== null) {
+            licenses.forEach(function (domain) {
+                var host = String(domain.domain || '').toLowerCase();
+                if (!host || seen[host]) return;
+                seen[host] = true;
+                var role = (siteHosts.roles && siteHosts.roles[host]) ? siteHosts.roles[host] : 'unassigned';
+                rows.push(renderHostRow({
+                    host: host,
+                    role: role,
+                    is_primary: role === 'cms_primary' || role === 'public_primary',
+                    is_alias: role === 'cms' || role === 'public',
+                    cors_registered: true
+                }, domain));
+            });
+        }
+
+        var analyticsCount = licenses.filter(function (domain) { return !!domain.analytics_enabled; }).length;
+        var summary = document.getElementById('domains-summary');
+        if (summary) {
+            var domainCount = Object.keys(seen).length;
+            summary.textContent = domainCount
+                ? stT('settings_domains_summary', '{domains} domains · {api} registered for API · {analytics} counted in Analytics', {
+                    domains: domainCount,
+                    api: licenses.length,
+                    analytics: analyticsCount
+                })
+                : '';
+        }
+
+        if (!rows.length) {
+            listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_hosts_empty', 'No hostnames yet. Set the CMS URL above, or register a domain.')) + '</p></div>';
+            return;
+        }
+
+        listContainer.innerHTML =
+            '<div class="table-container"><table class="table table--hover domains-table">' +
+            '<thead><tr><th>' + escapeHtml(stT('settings_delivery_matrix_hostname', 'Hostname')) + '</th><th>' + escapeHtml(stT('settings_delivery_matrix_routing', 'Visitor routing')) + '</th><th>' + escapeHtml(stT('permission_level', 'Permission level')) + '</th><th></th></tr></thead>' +
+            '<tbody>' + rows.join('') + '</tbody></table></div>';
+
+        listContainer.querySelectorAll('.domain-delivery-role').forEach(function (select) {
+            select.addEventListener('change', function () {
+                setDomainDeliveryRole(select.getAttribute('data-domain'), select.value, select);
+            });
+        });
+        listContainer.querySelectorAll('.delivery-make-primary').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setPublicPrimary(btn.getAttribute('data-host'), btn);
+            });
+        });
+        listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"], [data-action="register"]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var domain = btn.getAttribute('data-domain');
+                var action = btn.getAttribute('data-action');
+                if (action === 'edit' && window.editDomain) {
+                    window.editDomain(domain);
+                } else if (action === 'delete' && window.deleteDomain) {
+                    window.deleteDomain(domain);
+                } else if (action === 'register' && typeof openAddDomainModal === 'function') {
+                    openAddDomainModal();
+                    var input = document.getElementById('domain-name');
+                    if (input && domain) {
+                        input.value = domain;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                }
+            });
+        });
+    }
+
     function renderDomains(domains, domainRoles) {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
@@ -2422,83 +2521,10 @@ async function deletePlugin(pluginId) {
         }
 
         attachDomainsCopyButtons(document.getElementById('domains'));
-        domainRoles = domainRoles || {};
-        var summary = document.getElementById('domains-summary');
-        var analyticsCount = domains.filter(function (domain) { return !!domain.analytics_enabled; }).length;
-        if (summary) {
-            summary.textContent = domains.length
-                ? stT('settings_domains_summary', '{domains} domains · {api} registered for API · {analytics} counted in Analytics', {
-                    domains: domains.length,
-                    api: domains.length,
-                    analytics: analyticsCount
-                })
-                : '';
-        }
-
-        if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty"><p class="empty-text">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
-            renderAnalyticsDomains([]);
-            return;
-        }
-
-        var rows = domains.map(function(domain) {
-            var permissions = domain.permissions || {};
-            var permissionLevel = permissions.permission_level || 'read_write';
-            var readCollections = permissions.read_collections || [];
-            var writeCollections = permissions.write_collections || [];
-            var rateLimits = permissions.rate_limits || {};
-            var domainName = String(domain.domain || '');
-            var domainEscaped = escapeHtml(domainName);
-            var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
-            var host = domainName.toLowerCase();
-            var role = (domainRoles && domainRoles[host]) ? domainRoles[host] : 'unassigned';
-            var permText = permissionLevel === 'read_write'
-                ? stT('settings_domain_read_write', 'Read and write')
-                : stT('settings_storage_read_only', 'Read only');
-            var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
-            var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
-            var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
-            var collectionBits = [];
-            if (readCollections.length) collectionBits.push('Read ' + readCollections.join(', '));
-            if (writeCollections.length) collectionBits.push('Write ' + writeCollections.join(', '));
-            var meta = emailEscaped + ' · ' + escapeHtml(registeredDate) + ' · Read ' + readLimit + '/min · Write ' + writeLimit + '/hour';
-            if (collectionBits.length) meta += ' · ' + escapeHtml(collectionBits.join(' · '));
-            var apiBadge = domain.status === 'active'
-                ? '<span class="badge badge-success">' + escapeHtml(permText) + '</span>'
-                : '<span class="badge badge-neutral">' + escapeHtml(domain.status || 'inactive') + '</span>';
-
-            return '<tr>' +
-                '<td><div class="row-title">' + domainEscaped + '</div><div class="row-meta">' + meta + '</div></td>' +
-                '<td><span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span></td>' +
-                '<td>' + apiBadge + '</td>' +
-                '<td class="cell-actions">' +
-                    '<button type="button" class="button is-small" data-domain="' + domainEscaped + '" data-action="edit">' + escapeHtml(stT('edit', 'Edit')) + '</button> ' +
-                    '<button type="button" class="button is-small is-danger" data-domain="' + domainEscaped + '" data-action="delete">' + escapeHtml(stT('delete', 'Delete')) + '</button>' +
-                '</td></tr>';
-        }).join('');
-
-        listContainer.innerHTML =
-            '<div class="table-container"><table class="table table--hover domains-table">' +
-            '<thead><tr><th>' + escapeHtml(stT('domain_name', 'Domain name')) + '</th><th>' + escapeHtml(stT('settings_domain_delivery_role_label', 'Delivery role')) + '</th><th>' + escapeHtml(stT('permission_level', 'Permission level')) + '</th><th></th></tr></thead>' +
-            '<tbody>' + rows + '</tbody></table></div>';
-
-        var domainActions = listContainer.querySelectorAll('[data-action="edit"], [data-action="delete"]');
-        for (var i = 0; i < domainActions.length; i++) {
-            (function(btn) {
-                btn.addEventListener('click', async function (e) {
-                    e.preventDefault();
-                    var domain = btn.getAttribute('data-domain');
-                    var action = btn.getAttribute('data-action');
-                    if (action === 'edit' && window.editDomain) {
-                        window.editDomain(domain);
-                    } else if (action === 'delete' && window.deleteDomain) {
-                        window.deleteDomain(domain);
-                    }
-                });
-            })(domainActions[i]);
-        }
-
-        renderAnalyticsDomains(domains);
+        siteHosts.licenses = domains || [];
+        siteHosts.roles = domainRoles || {};
+        renderAnalyticsDomains(siteHosts.licenses);
+        renderCombinedHosts();
     }
 
     function renderAnalyticsDomains(domains) {

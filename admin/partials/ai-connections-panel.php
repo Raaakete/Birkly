@@ -15,14 +15,34 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
 ?>
         <div class="settings-stack ai-settings">
           <div id="ai-integrations" class="settings-pane-section" data-settings-search="<?= htmlspecialchars($aiConnSettingsSearch) ?>"><div class="u-stack-6">
-          <div class="signal is-info">
-            <div class="signal-body">
-              <p class="signal-title"><?= htmlspecialchars(__('admin.settings_ai_beginner_title')) ?></p>
-              <p class="signal-text"><?= htmlspecialchars(__('admin.settings_ai_beginner_body')) ?></p>
-              <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
+          <section class="card" id="ai-path-picker">
+            <div class="card-header">
+              <div>
+                <h2 class="section-title"><?= htmlspecialchars(__('admin.settings_ai_path_legend')) ?></h2>
+                <p class="settings-help"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
+              </div>
+              <a class="button is-small" href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
             </div>
-            <a class="button is-small" href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
-          </div>
+            <div class="card-body">
+              <div class="choice-grid ai-path-grid" role="radiogroup" aria-label="<?= htmlspecialchars(__('admin.settings_ai_path_legend')) ?>">
+                <label class="choice-card">
+                  <input type="radio" name="ai-settings-path" value="assistant" checked>
+                  <span class="choice-title"><?= htmlspecialchars(__('admin.settings_ai_path_chat_title')) ?> <span class="badge badge-accent"><?= htmlspecialchars(__('admin.settings_ai_path_recommended')) ?></span></span>
+                  <span class="choice-text"><?= htmlspecialchars(__('admin.settings_ai_path_chat_body')) ?></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="ai-settings-path" value="personal">
+                  <span class="choice-title"><?= htmlspecialchars(__('admin.settings_ai_path_app_title')) ?></span>
+                  <span class="choice-text"><?= htmlspecialchars(__('admin.settings_ai_path_app_body')) ?></span>
+                </label>
+                <label class="choice-card">
+                  <input type="radio" name="ai-settings-path" value="service">
+                  <span class="choice-title"><?= htmlspecialchars(__('admin.settings_ai_path_team_title')) ?></span>
+                  <span class="choice-text"><?= htmlspecialchars(__('admin.settings_ai_path_team_body')) ?></span>
+                </label>
+              </div>
+            </div>
+          </section>
 
           <div class="signal is-info" id="ai-local-address-callout" role="status" hidden>
             <div class="signal-body">
@@ -31,25 +51,6 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               <p class="u-text-sm">
                 <a href="<?= htmlspecialchars($helpAiLocalUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_local_address_help_link')) ?></a>
               </p>
-            </div>
-          </div>
-
-          <div class="card desktop-mcp-card" id="ai-desktop-connector-card" hidden>
-            <div class="card-header">
-              <div class="u-stack-1">
-                <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_desktop_title')) ?></h3>
-                <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_desktop_desc')) ?></p>
-              </div>
-            </div>
-            <div class="card-body u-stack-4" id="ai-desktop-connector-body">
-              <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_desktop_loading')) ?></p></div>
-            </div>
-          </div>
-
-          <div class="signal is-info" id="ai-agents-migration-banner" role="status" hidden>
-            <div class="signal-body">
-              <p class="signal-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>
-              <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_migration_body')) ?></p>
             </div>
           </div>
 
@@ -70,11 +71,22 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
             </div>
 
-            <div class="card" id="ai-kind-personal">
+            <div class="card" id="ai-kind-personal" hidden>
               <div class="card-header">
                 <div class="card-heading">
                   <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_title')) ?></h3>
                   <p class="card-description"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_body')) ?></p>
+                </div>
+              </div>
+              <div class="card desktop-mcp-card" id="ai-desktop-connector-card" hidden>
+                <div class="card-header">
+                  <div class="u-stack-1">
+                    <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_desktop_title')) ?></h3>
+                    <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_desktop_desc')) ?></p>
+                  </div>
+                </div>
+                <div class="card-body u-stack-4" id="ai-desktop-connector-body">
+                  <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_desktop_loading')) ?></p></div>
                 </div>
               </div>
               <div id="ai-personal-agent-card" class="card-body">
@@ -82,7 +94,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
               </div>
             </div>
 
-            <div class="card" id="ai-kind-service">
+            <div class="card" id="ai-kind-service" hidden>
               <div class="card-header">
                 <div class="u-stack-1">
                   <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_service_title')) ?></h3>
@@ -92,6 +104,12 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   <?= htmlspecialchars(__('admin.ai_conn_add_agent')) ?>
                 </button>
+              </div>
+              <div class="signal is-info" id="ai-agents-migration-banner" role="status" hidden>
+                <div class="signal-body">
+                  <p class="signal-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>
+                  <p class="signal-text"><?= htmlspecialchars(__('admin.ai_conn_migration_body')) ?></p>
+                </div>
               </div>
               <div class="connections-list card-body" id="ai-service-agents-list">
                 <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_list')) ?></p></div>

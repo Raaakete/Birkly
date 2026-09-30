@@ -40,7 +40,7 @@
 
     function renderWizardHtml(id) {
         return '' +
-            '<div class="hosting-wizard" data-wizard-id="' + escapeHtml(id) + '">' +
+            '<div class="hosting-wizard hosting-wizard--page" data-wizard-id="' + escapeHtml(id) + '">' +
             '<div class="hosting-wizard-proposal card card--padded" hidden>' +
             '<div class="hosting-wizard-proposal-head u-stack-1">' +
             '<h4 class="hosting-wizard-proposal-title">' + escapeHtml(t('hosting_wizard_proposal_title', 'Suggested delivery setup')) + '</h4>' +
@@ -53,7 +53,18 @@
             '</div>' +
             '</div>' +
             '<p class="hosting-wizard-env-banner message message-info" hidden>Delivery URLs are managed by environment variables (read-only).</p>' +
-            '<div class="segmented hosting-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('hosting_wizard_steps_label', 'Hosting setup steps')) + '">' +
+            '<div class="setting-rows hosting-wizard-preview">' +
+            '<div class="setting-row">' +
+            '<div class="setting-label"><span>' + escapeHtml(t('hosting_wizard_preview_manage', 'You manage content at')) + '</span></div>' +
+            '<div class="setting-value"><strong class="hosting-wizard-preview-cms">—</strong></div>' +
+            '</div>' +
+            '<div class="setting-row hosting-wizard-preview-public-wrap" hidden>' +
+            '<div class="setting-label"><span>' + escapeHtml(t('hosting_wizard_preview_visitors', 'Visitors see')) + '</span></div>' +
+            '<div class="setting-value"><strong class="hosting-wizard-preview-public">—</strong></div>' +
+            '</div>' +
+            '<p class="form-help hosting-wizard-preview-none">' + escapeHtml(t('hosting_wizard_preview_none', 'No public site configured on this install.')) + '</p>' +
+            '</div>' +
+            '<div class="segmented hosting-wizard-steps" hidden role="tablist" aria-label="' + escapeHtml(t('hosting_wizard_steps_label', 'Hosting setup steps')) + '">' +
             '<button type="button" class="hosting-wizard-step-btn active" data-step="1" role="tab" aria-selected="true" aria-pressed="true">' + escapeHtml(t('hosting_wizard_step_cms', '1. CMS URL')) + '</button>' +
             '<button type="button" class="hosting-wizard-step-btn" data-step="2" role="tab" aria-selected="false" aria-pressed="false">' + escapeHtml(t('hosting_wizard_step_public', '2. Public site')) + '</button>' +
             '<button type="button" class="hosting-wizard-step-btn" data-step="3" role="tab" aria-selected="false" aria-pressed="false">' + escapeHtml(t('hosting_wizard_step_preview', '3. Preview')) + '</button>' +
@@ -64,41 +75,30 @@
             '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_cms_title', 'Where do you log in?')) + '</h3>' +
             '<p class="hosting-wizard-panel-desc">' + escapeHtml(t('hosting_wizard_cms_desc', 'Admin panel, API, and birkly-client.js base URL.')) + '</p>' +
             '</div>' +
-            '<div class="form-group">' +
-            '<label for="' + id + '-cms-url">' + escapeHtml(t('hosting_wizard_cms_url', 'CMS URL')) + '</label>' +
+            '<div class="form-group setting-row">' +
+            '<div class="setting-label"><label for="' + id + '-cms-url">' + escapeHtml(t('hosting_wizard_cms_url', 'CMS URL')) + '</label></div>' +
+            '<div class="setting-value">' +
             '<div class="input-with-action">' +
             '<input type="url" id="' + id + '-cms-url" class="input hosting-wizard-cms-url" placeholder="https://cms.example.com">' +
             '<button type="button" class="button is-small hosting-wizard-use-host">' + escapeHtml(t('hosting_wizard_use_current_host', 'Use current host')) + '</button>' +
             '</div>' +
             '</div>' +
-            '<label class="checkbox-label hosting-wizard-docker-toggle">' +
-            '<input type="checkbox" class="hosting-wizard-self-hosted">' +
-            '<span>' + escapeHtml(t('hosting_wizard_self_hosted', 'Self-hosted / Docker (Dokploy)')) + '</span>' +
-            '</label>' +
-            '<div class="hosting-wizard-dokploy" hidden>' +
-            '<h4 class="hosting-wizard-dokploy-title">' + escapeHtml(t('hosting_wizard_dokploy_title', 'Dokploy checklist')) + '</h4>' +
-            '<ul class="hosting-wizard-checklist">' +
-            '<li>' + escapeHtml(t('hosting_wizard_dokploy_1', 'Add each domain (CMS + public) pointing to the same app')) + '</li>' +
-            '<li>' + escapeHtml(t('hosting_wizard_dokploy_2', 'Path / · Internal Path / · port 80')) + '</li>' +
-            '<li>' + escapeHtml(t('hosting_wizard_dokploy_3', 'Mount persistent volume at /app/data (see docker-compose.yml)')) + '</li>' +
-            '<li>' + escapeHtml(t('hosting_wizard_dokploy_4', 'Test: CMS root → admin · public root → site (no /project/ in URL)')) + '</li>' +
-            '</ul>' +
             '</div>' +
             '</section>' +
-            '<section class="hosting-wizard-panel" data-step-panel="2" hidden>' +
+            '<section class="hosting-wizard-panel active" data-step-panel="2">' +
             '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_public_title', 'Where is your public website?')) + '</h3>' +
             '<fieldset class="form-group">' +
             '<legend class="sr-only">' + escapeHtml(t('hosting_wizard_public_mode_legend', 'Public website mode')) + '</legend>' +
             '<div class="choice-grid">' +
             '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="none" checked><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_none', 'None — CMS only (no public site on this install)')) + '</span></label>' +
-            '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="external"><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_external', 'Hosted elsewhere (Netlify, separate server, etc.)')) + '</span></label>' +
             '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="project"><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_project', 'In Birkly (project/ folder)')) + '</span></label>' +
+            '<label class="choice-card"><input type="radio" name="' + id + '-public-mode" value="external"><span class="choice-title">' + escapeHtml(t('hosting_wizard_public_external', 'Hosted elsewhere (Netlify, separate server, etc.)')) + '</span></label>' +
             '</div>' +
             '</fieldset>' +
-            '<div class="form-group hosting-wizard-public-field" hidden>' +
-            '<label for="' + id + '-public-url">' + escapeHtml(t('hosting_wizard_public_url', 'Public site URL')) + '</label>' +
-            '<input type="url" id="' + id + '-public-url" class="input hosting-wizard-public-url" placeholder="https://www.example.com">' +
-            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + ' ' + escapeHtml(t('hosting_wizard_public_url_help_extra', 'Do not include /project — use the hostname only (e.g. https://example.com).')) + '</small>' +
+            '<div class="form-group setting-row hosting-wizard-public-field" hidden>' +
+            '<div class="setting-label"><label for="' + id + '-public-url">' + escapeHtml(t('hosting_wizard_public_url', 'Public site URL')) + '</label>' +
+            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + ' ' + escapeHtml(t('hosting_wizard_public_url_help_extra', 'Do not include /project — use the hostname only (e.g. https://example.com).')) + '</small></div>' +
+            '<div class="setting-value"><input type="url" id="' + id + '-public-url" class="input hosting-wizard-public-url" placeholder="https://www.example.com"></div>' +
             '</div>' +
             '<fieldset class="form-group hosting-wizard-same-host-field" hidden>' +
             '<legend>' + escapeHtml(t('hosting_wizard_same_host_legend', 'When CMS and public use the same domain')) + '</legend>' +
@@ -107,32 +107,8 @@
             '<label class="choice-card"><input type="radio" name="' + id + '-same-host" value="public"><span class="choice-title">' + escapeHtml(t('hosting_wizard_same_host_public', 'Root / opens public site')) + '</span></label>' +
             '</div>' +
             '</fieldset>' +
-            '<label class="checkbox-label">' +
-            '<input type="checkbox" class="hosting-wizard-strict-admin" checked>' +
-            ' ' + escapeHtml(t('hosting_wizard_strict_admin', 'Redirect /admin on public host to CMS URL')) +
-            '</label>' +
-            '<label class="checkbox-label hosting-wizard-alias-redirect-field" hidden>' +
-            '<input type="checkbox" class="hosting-wizard-alias-redirect" checked>' +
-            '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
-            '</label>' +
-            '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, birkly.io and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
             '<div class="hosting-wizard-validation" hidden role="status"></div>' +
-            '<div class="form-group hosting-wizard-aliases-field" hidden>' +
-            '<label for="' + id + '-cms-aliases">' + escapeHtml(t('hosting_wizard_cms_aliases', 'CMS host aliases')) + '</label>' +
-            '<input type="text" id="' + id + '-cms-aliases" class="input hosting-wizard-cms-aliases" placeholder="cms-alt.example.com, staging-cms.example.com">' +
-            '<small class="form-help">' + escapeHtml(t('hosting_wizard_aliases_help', 'Comma-separated extra hostnames that serve admin/API (optional).')) + '</small>' +
-            '<label for="' + id + '-public-aliases">' + escapeHtml(t('hosting_wizard_public_aliases', 'Public site aliases')) + '</label>' +
-            '<input type="text" id="' + id + '-public-aliases" class="input hosting-wizard-public-aliases" placeholder="example.com">' +
-            '</div>' +
-            '</section>' +
-            '<section class="hosting-wizard-panel" data-step-panel="3" hidden>' +
-            '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_preview_title', 'Preview')) + '</h3>' +
-            '<div class="hosting-wizard-preview card card--padded">' +
-            '<p class="hosting-wizard-preview-line">' + escapeHtml(t('hosting_wizard_preview_manage', 'You manage content at')) + ' <strong class="hosting-wizard-preview-cms">—</strong></p>' +
-            '<p class="hosting-wizard-preview-line hosting-wizard-preview-public-wrap" hidden>' + escapeHtml(t('hosting_wizard_preview_visitors', 'Visitors see')) + ' <strong class="hosting-wizard-preview-public">—</strong></p>' +
-            '<p class="hosting-wizard-preview-line hosting-wizard-preview-none">' + escapeHtml(t('hosting_wizard_preview_none', 'No public site configured on this install.')) + '</p>' +
-            '</div>' +
-            '<div class="hosting-wizard-external-checklist card card--padded" hidden>' +
+            '<div class="hosting-wizard-external-checklist" hidden>' +
             '<h4 class="hosting-wizard-checklist-title">' + escapeHtml(t('hosting_wizard_external_checklist_title', 'External site checklist')) + '</h4>' +
             '<ul class="hosting-wizard-checklist hosting-wizard-external-list">' +
             '<li data-check="cms">' + escapeHtml(t('hosting_wizard_check_cms', 'CMS URL set')) + '</li>' +
@@ -146,17 +122,52 @@
             ' <a href="' + escapeHtml(apiUrl('/admin/index.php?page=settings&tab=site-delivery') + '#domains') + '">' +
             escapeHtml(t('hosting_wizard_open_domains', 'Open Domains')) + '</a></p>' +
             '</div>' +
+            '<details class="hosting-wizard-advanced">' +
+            '<summary>' + escapeHtml(t('settings_hosting_more', 'Extra hostnames and redirects')) + '</summary>' +
+            '<div class="u-stack-3 u-pt-3">' +
+            '<label class="checkbox-label hosting-wizard-docker-toggle">' +
+            '<input type="checkbox" class="hosting-wizard-self-hosted">' +
+            '<span>' + escapeHtml(t('hosting_wizard_self_hosted', 'Self-hosted / Docker (Dokploy)')) + '</span>' +
+            '</label>' +
+            '<div class="hosting-wizard-dokploy" hidden>' +
+            '<h4 class="hosting-wizard-dokploy-title">' + escapeHtml(t('hosting_wizard_dokploy_title', 'Dokploy checklist')) + '</h4>' +
+            '<ul class="hosting-wizard-checklist">' +
+            '<li>' + escapeHtml(t('hosting_wizard_dokploy_1', 'Add each domain (CMS + public) pointing to the same app')) + '</li>' +
+            '<li>' + escapeHtml(t('hosting_wizard_dokploy_2', 'Path / · Internal Path / · port 80')) + '</li>' +
+            '<li>' + escapeHtml(t('hosting_wizard_dokploy_3', 'Mount persistent volume at /app/data (see docker-compose.yml)')) + '</li>' +
+            '<li>' + escapeHtml(t('hosting_wizard_dokploy_4', 'Test: CMS root → admin · public root → site (no /project/ in URL)')) + '</li>' +
+            '</ul>' +
+            '</div>' +
+            '<label class="checkbox-label">' +
+            '<input type="checkbox" class="hosting-wizard-strict-admin" checked>' +
+            ' ' + escapeHtml(t('hosting_wizard_strict_admin', 'Redirect /admin on public host to CMS URL')) +
+            '</label>' +
+            '<label class="checkbox-label hosting-wizard-alias-redirect-field" hidden>' +
+            '<input type="checkbox" class="hosting-wizard-alias-redirect" checked>' +
+            '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
+            '</label>' +
+            '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, birkly.io and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
+            '<div class="form-group hosting-wizard-aliases-field" hidden>' +
+            '<label for="' + id + '-cms-aliases">' + escapeHtml(t('hosting_wizard_cms_aliases', 'CMS host aliases')) + '</label>' +
+            '<input type="text" id="' + id + '-cms-aliases" class="input hosting-wizard-cms-aliases" placeholder="cms-alt.example.com, staging-cms.example.com">' +
+            '<small class="form-help">' + escapeHtml(t('hosting_wizard_aliases_help', 'Comma-separated extra hostnames that serve admin/API (optional).')) + '</small>' +
+            '<label for="' + id + '-public-aliases">' + escapeHtml(t('hosting_wizard_public_aliases', 'Public site aliases')) + '</label>' +
+            '<input type="text" id="' + id + '-public-aliases" class="input hosting-wizard-public-aliases" placeholder="example.com">' +
+            '</div>' +
+            '</div>' +
+            '</details>' +
             '<div class="hosting-wizard-snippet-block">' +
             '<label>' + escapeHtml(t('hosting_wizard_snippet_label', 'Integration snippet')) + '</label>' +
             '<pre class="domains-code-pre"><code class="hosting-wizard-snippet"></code></pre>' +
             '<button type="button" class="button is-small hosting-wizard-copy-snippet">' + escapeHtml(t('hosting_wizard_copy_snippet', 'Copy snippet')) + '</button>' +
             '</div>' +
             '</section>' +
+            '<section class="hosting-wizard-panel active" data-step-panel="3" hidden></section>' +
             '</div>' +
             '<div class="hosting-wizard-actions">' +
             '<button type="button" class="button hosting-wizard-prev" hidden>' + escapeHtml(t('hosting_wizard_back', 'Back')) + '</button>' +
-            '<button type="button" class="button is-main hosting-wizard-next">' + escapeHtml(t('hosting_wizard_continue', 'Continue')) + '</button>' +
-            '<button type="button" class="button is-main hosting-wizard-save" hidden>' + escapeHtml(t('hosting_wizard_save', 'Save hosting settings')) + '</button>' +
+            '<button type="button" class="button is-main hosting-wizard-next" hidden>' + escapeHtml(t('hosting_wizard_continue', 'Continue')) + '</button>' +
+            '<button type="button" class="button is-main hosting-wizard-save">' + escapeHtml(t('hosting_wizard_save', 'Save hosting settings')) + '</button>' +
             '</div>' +
             '</div>';
     }
@@ -369,6 +380,22 @@
     };
 
     HostingWizard.prototype.goToStep = function (step) {
+        if (this.root && this.root.classList.contains('hosting-wizard--page')) {
+            this.step = this.maxStep;
+            this.root.querySelectorAll('.hosting-wizard-panel').forEach(function (panel) {
+                var n = parseInt(panel.getAttribute('data-step-panel'), 10);
+                panel.hidden = n === 3 && !panel.textContent.trim();
+                panel.classList.add('active');
+            });
+            var prevBtn = this.$('.hosting-wizard-prev');
+            var nextBtn = this.$('.hosting-wizard-next');
+            var saveBtn = this.$('.hosting-wizard-save');
+            if (prevBtn) prevBtn.hidden = true;
+            if (nextBtn) nextBtn.hidden = true;
+            if (saveBtn) saveBtn.hidden = false;
+            this.updatePreview();
+            return;
+        }
         this.step = Math.max(1, Math.min(this.maxStep, step));
         this.root.querySelectorAll('.hosting-wizard-step-btn').forEach(function (btn) {
             var n = parseInt(btn.getAttribute('data-step'), 10);
