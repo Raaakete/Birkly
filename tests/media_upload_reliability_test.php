@@ -49,7 +49,12 @@ $assert(strpos($prodIni, 'post_max_size = 128M') !== false, 'production ini rais
 $userIni = (string) file_get_contents($root . '/.user.ini');
 $assert(strpos($userIni, 'post_max_size = 128M') !== false, 'per-directory ini raises post_max_size');
 $startSh = (string) file_get_contents($root . '/start-server.sh');
-$assert(strpos($startSh, 'upload_max_filesize=128M') !== false && strpos($startSh, 'post_max_size=128M') !== false, 'built-in server raises PHP upload limits');
+$assert(
+    strpos($startSh, 'upload_max_filesize=128M') !== false
+    && strpos($startSh, 'post_max_size=128M') !== false
+    && strpos($startSh, 'max_input_time=600') !== false,
+    'built-in server raises PHP upload limits'
+);
 
 $tmp = tempnam(sys_get_temp_dir(), 'birkly-mp4-');
 if ($tmp === false) {
@@ -68,6 +73,13 @@ $assert(!in_array($exe, admin_media_allowed_mime_types(), true), '.exe is not ac
 $mov = detectUploadMimeType($tmp, 'clip.mov');
 $assert($mov === 'video/quicktime', '.mov resolves to video/quicktime when finfo is generic');
 $assert(in_array('video/quicktime', admin_media_allowed_mime_types(), true), 'quicktime is on the allow list');
+
+$mp4Fast = detectUploadMimeType($tmp, 'large-clip.mp4');
+$assert($mp4Fast === 'video/mp4', 'video extension map is used without relying on finfo');
+
+$uploadFn = (string) file_get_contents($root . '/api/admin_media.php');
+$assert(strpos($uploadFn, "set_time_limit(0)") !== false, 'uploadMedia raises execution time limit for large files');
+$assert(strpos($uploadFn, 'admin_media_metadata_folder_counts') !== false, 'folder list uses metadata counts');
 
 unlink($tmp);
 

@@ -166,9 +166,35 @@ function listFolders() {
     return ['status' => 'ok', 'data' => $folders];
 }
 
+function admin_media_metadata_folder_counts(): array
+{
+    static $counts = null;
+    if ($counts !== null) {
+        return $counts;
+    }
+    $counts = [];
+    $metadataPath = __DIR__ . '/../media/.metadata.json';
+    if (!is_file($metadataPath)) {
+        return $counts;
+    }
+    $metadata = json_decode((string) file_get_contents($metadataPath), true);
+    if (!is_array($metadata)) {
+        return $counts;
+    }
+    foreach ($metadata as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $folder = (string) ($item['folder'] ?? '');
+        $counts[$folder] = ($counts[$folder] ?? 0) + 1;
+    }
+    return $counts;
+}
+
 function scanFoldersRecursively($baseDir, $relativePath) {
     $folders = [];
     $fullPath = $relativePath ? $baseDir . '/' . $relativePath : $baseDir;
+    $metadataCounts = admin_media_metadata_folder_counts();
     
     if (is_dir($fullPath)) {
         $items = scandir($fullPath);
@@ -177,12 +203,14 @@ function scanFoldersRecursively($baseDir, $relativePath) {
                 $folderPath = $relativePath ? $relativePath . '/' . $item : $item;
                 $folderFullPath = $fullPath . '/' . $item;
                 
-                // Count actual files in this folder (not metadata-based)
-                $count = 0;
-                $files = glob($folderFullPath . '/*');
-                foreach ($files as $file) {
-                    if (is_file($file) && !str_ends_with($file, '.metadata.json')) {
-                        $count++;
+                $count = $metadataCounts[$folderPath] ?? null;
+                if ($count === null) {
+                    $count = 0;
+                    $files = glob($folderFullPath . '/*');
+                    foreach ($files as $file) {
+                        if (is_file($file) && !str_ends_with($file, '.metadata.json')) {
+                            $count++;
+                        }
                     }
                 }
                 
@@ -350,14 +378,19 @@ function admin_media_allowed_mime_types(): array
  */
 function detectUploadMimeType(string $tmpPath, string $originalName): string
 {
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $mappedEarly = admin_media_extension_mime_map()[$ext] ?? '';
+    // Windows finfo can be slow or unhelpful on large video/audio files; trust the allowlisted extension map.
+    if ($mappedEarly !== '' && (str_starts_with($mappedEarly, 'video/') || str_starts_with($mappedEarly, 'audio/'))) {
+        return $mappedEarly;
+    }
+
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $detected = $finfo ? (finfo_file($finfo, $tmpPath) ?: '') : '';
     if ($finfo) {
         finfo_close($finfo);
     }
     $detected = strtolower(trim((string) $detected));
-
-    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
     if ($ext === 'svg') {
         $head = @file_get_contents($tmpPath, false, null, 0, 8192);
         if ($head !== false && stripos($head, '<svg') !== false) {
@@ -374,6 +407,11 @@ function detectUploadMimeType(string $tmpPath, string $originalName): string
         return $mapped;
     }
 
+    if ($mapped !== '' && !in_array($detected, admin_media_allowed_mime_types(), true)
+        && in_array($mapped, admin_media_allowed_mime_types(), true)) {
+        return $mapped;
+    }
+
     return $detected;
 }
 
@@ -383,6 +421,9 @@ function isRasterImageMime(string $mimeType): bool
 }
 
 function uploadMedia() {
+    @set_time_limit(0);
+    @ini_set('max_input_time', '600');
+
     if (admin_media_request_exceeds_post_limit() || admin_media_upload_rejected_by_ini()) {
         return [
             'status'  => 'error',
