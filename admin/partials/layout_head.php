@@ -7,6 +7,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
 <html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
+    <?php require __DIR__ . '/theme_early_init.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
     <?php
@@ -66,7 +67,7 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <meta name="birkly-build" content="<?= htmlspecialchars((string) (birkly_release_identifier() ?? birkly_admin_asset_version('admin/js/settings-page.js'))) ?>">
     <title><?= htmlspecialchars(__('admin.admin_document_title'), ENT_QUOTES, 'UTF-8') ?></title>
     <!-- Main Stylesheet - Imports all CSS modules -->
-    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_asset_url('/admin/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_main_stylesheet_url()) ?>">
     <?php if (isset($page) && $page === 'entry-editor'): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/fieldtypes/ContentEditor/editor.css')) ?>">
     <?php endif; ?>

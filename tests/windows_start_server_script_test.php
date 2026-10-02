@@ -1,6 +1,6 @@
 <?php
 /**
- * Windows start-server.ps1 and portable php.ini tuning (stderr / OPcache regressions).
+ * Windows start-server.ps1 and portable php.ini tuning (stderr / OPcache).
  */
 declare(strict_types=1);
 
@@ -27,8 +27,12 @@ $assert(
     'start-server.ps1 merges PHP stdout/stderr into server.log like start-server.sh'
 );
 $assert(
-    str_contains($startPs1, 'opcache.enable_cli=0'),
-    'start-server.ps1 disables OPcache for CLI built-in server'
+    str_contains($startPs1, 'opcache.enable_cli=1'),
+    'start-server.ps1 enables OPcache for CLI with safe revalidate'
+);
+$assert(
+    str_contains($startPs1, 'opcache.revalidate_freq=2'),
+    'start-server.ps1 sets opcache.revalidate_freq=2'
 );
 $assert(
     str_contains($startPs1, 'Repair-BirklyPhpIni'),
@@ -44,12 +48,12 @@ $assert(
     'windows-php-common.ps1 does not force opcache revalidate_freq 0'
 );
 $assert(
-    !preg_match('/zend_extension\s*=\s*php_opcache\.dll/', $commonPs1),
-    'windows-php-common.ps1 does not auto-enable OPcache zend_extension'
+    str_contains($commonPs1, 'opcache.revalidate_freq = 2'),
+    'windows-php-common.ps1 uses safe opcache revalidate interval'
 );
 $assert(
-    str_contains($commonPs1, 'opcache.enable_cli = 0'),
-    'windows-php-common.ps1 keeps OPcache off for local CLI server'
+    str_contains($commonPs1, 'opcache.enable_cli = 1'),
+    'windows-php-common.ps1 enables OPcache on CLI for built-in server'
 );
 
 exit($failures === 0 ? 0 : 1);

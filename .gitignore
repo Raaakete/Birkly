@@ -103,6 +103,9 @@ demo-*.html
 sess_*
 dist/
 
+# Generated on built-in server from admin/css/style.css @imports
+admin/css/style.bundled.css
+
 # Test-generated project fixtures (P38 AI Project Gateway test runs)
 project/pages/
 project/.well-known/agent-guide.json
