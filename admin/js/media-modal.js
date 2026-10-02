@@ -351,13 +351,30 @@ window.Birkly.MediaModal = {
         if (csrf) formData.append('_csrf', csrf);
 
         try {
+            if (file.size > 8 * 1024 * 1024 && window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+                window.BirklyFeedback.toast(
+                    birklyMediaModalT(
+                        'media_js_large_upload_hint',
+                        'Large upload in progress — on the local PHP server other admin actions may pause until this finishes.'
+                    ),
+                    'info'
+                );
+            }
             const response = await fetch(Birkly.url('/api/admin_media.php?action=upload'), {
                 method: 'POST',
                 credentials: 'same-origin',
                 body: formData
             });
-            
-            const result = await response.json();
+            const body = await response.text();
+            if (!body || !body.trim()) {
+                throw new Error(birklyMediaModalT('media_js_empty_response', 'Upload failed (empty server response). Check logs/server.log.'));
+            }
+            let result;
+            try {
+                result = JSON.parse(body);
+            } catch (parseErr) {
+                throw new Error(birklyMediaModalT('media_js_invalid_response', 'Upload failed (invalid server response). Check logs/server.log.'));
+            }
             
             if (result.status === 'ok' && result.data) {
                 if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
