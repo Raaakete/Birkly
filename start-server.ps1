@@ -71,6 +71,8 @@ $phpArgs = @(
     '-d', 'upload_max_filesize=128M',
     '-d', 'post_max_size=128M',
     '-d', 'memory_limit=256M',
+    '-d', 'max_input_time=600',
+    '-d', 'max_execution_time=300',
     '-d', 'opcache.enable_cli=0',
     '-S', "localhost:$Port",
     '-t', $Root,

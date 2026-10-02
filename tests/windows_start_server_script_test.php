@@ -31,6 +31,10 @@ $assert(
     'start-server.ps1 disables OPcache for CLI built-in server'
 );
 $assert(
+    str_contains($startPs1, 'max_input_time=600'),
+    'start-server.ps1 raises max_input_time for large uploads'
+);
+$assert(
     str_contains($startPs1, 'Repair-BirklyPhpIni'),
     'start-server.ps1 repairs portable php.ini before launch'
 );
