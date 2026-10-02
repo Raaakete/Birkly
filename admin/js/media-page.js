@@ -21,6 +21,9 @@ function resolveMediaItemUrl(url) {
   'use strict';
 
   const viewStorageKey = 'birkly-admin-media-view';
+  const foldersCacheMs = 30000;
+  let foldersCacheLoadedAt = 0;
+  let uploadInProgress = false;
   const state = {
     currentMedia: [],
     currentMediaItem: null,
@@ -102,6 +105,82 @@ function resolveMediaItemUrl(url) {
 
   function showError(message) {
     notify(message, 'error');
+  }
+
+  function getConfirmUploadButton() {
+    return document.querySelector('[data-media-action="confirm-upload"]');
+  }
+
+  function setUploadBusy(busy, statusText) {
+    uploadInProgress = busy;
+    const confirmBtn = getConfirmUploadButton();
+    const statusEl = document.getElementById('upload-status-text');
+    if (confirmBtn) {
+      confirmBtn.disabled = busy;
+      if (busy) {
+        if (!confirmBtn.dataset.defaultLabel) {
+          confirmBtn.dataset.defaultLabel = confirmBtn.textContent || '';
+        }
+        confirmBtn.textContent = statusText || mdT('media_js_uploading', 'Uploading…');
+      } else if (confirmBtn.dataset.defaultLabel) {
+        confirmBtn.textContent = confirmBtn.dataset.defaultLabel;
+      }
+    }
+    if (statusEl) {
+      statusEl.textContent = busy ? (statusText || '') : '';
+      statusEl.hidden = !busy;
+    }
+  }
+
+  async function parseMediaApiResponse(response) {
+    const body = await response.text();
+    if (!body || !body.trim()) {
+      throw new Error(mdT('media_js_empty_response', 'Upload failed (empty server response). Check logs/server.log and try again.'));
+    }
+    try {
+      return JSON.parse(body);
+    } catch (parseError) {
+      throw new Error(mdT('media_js_invalid_response', 'Upload failed (invalid server response). Check logs/server.log and try again.'));
+    }
+  }
+
+  function uploadResponseToListItem(data) {
+    if (!data || !data.id) {
+      return null;
+    }
+    return normalizeMediaItem({
+      id: data.id,
+      name: data.name,
+      title: data.title,
+      url: data.url,
+      type: data.type,
+      category: data.category,
+      size: data.size,
+      size_formatted: data.size_formatted,
+      uploaded_at: data.uploaded_at,
+      uploaded_by: data.uploaded_by,
+      folder: data.folder,
+      alt_text: data.alt_text || '',
+      focal_point: data.focal_point,
+      dimensions: data.dimensions,
+    });
+  }
+
+  function mergeUploadedItems(items) {
+    items.forEach(function (item) {
+      if (!item || !item.id) {
+        return;
+      }
+      state.currentMedia = [item].concat(state.currentMedia.filter(function (row) {
+        return row.id !== item.id;
+      }));
+    });
+    const total = document.getElementById('media-total-count');
+    if (total && state.currentFolder === 'all') {
+      total.textContent = String(state.currentMedia.length);
+    }
+    pruneSelection();
+    renderMediaCollection(getFilteredMedia());
   }
 
   function initMediaPage() {
@@ -261,6 +340,8 @@ function resolveMediaItemUrl(url) {
         await uploadFiles(files);
       } catch (error) {
         showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
+      } finally {
+        setUploadBusy(false);
       }
     });
   }
@@ -317,16 +398,20 @@ function resolveMediaItemUrl(url) {
     });
   }
 
-  async function loadFolders() {
+  async function loadFolders(forceRefresh) {
+    if (!forceRefresh && foldersCacheLoadedAt && (Date.now() - foldersCacheLoadedAt) < foldersCacheMs) {
+      return;
+    }
     try {
       const response = await fetch(ADMIN_MEDIA_API() + '?action=folders', { credentials: 'same-origin' });
-      const result = await response.json();
+      const result = await parseMediaApiResponse(response);
       if (result.status === 'ok' && Array.isArray(result.data)) {
         state.folderData = result.data.slice().sort(function (a, b) {
           return String(a.path || '').localeCompare(String(b.path || ''));
         });
         renderFolderTree();
         renderMoveFolderTree();
+        foldersCacheLoadedAt = Date.now();
       }
     } catch (error) {
       console.error('Error loading folders:', error);
@@ -659,6 +744,9 @@ function resolveMediaItemUrl(url) {
   }
 
   async function handleUpload() {
+    if (uploadInProgress) {
+      return;
+    }
     const input = document.getElementById('file-input');
     const files = Array.from(input?.files || []);
     if (!files.length) {
@@ -671,6 +759,8 @@ function resolveMediaItemUrl(url) {
       closeUploadModal();
     } catch (error) {
       showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
+    } finally {
+      setUploadBusy(false);
     }
   }
 
@@ -678,9 +768,31 @@ function resolveMediaItemUrl(url) {
     const uploadTitle = (document.getElementById('upload-title')?.value || '').trim();
     const uploadFolder = state.currentFolder === 'all' ? '' : state.currentFolder;
     const failures = [];
+    const uploadedItems = [];
+    const totalBytes = files.reduce(function (sum, file) {
+      return sum + (file.size || 0);
+    }, 0);
+
+    if (totalBytes > 8 * 1024 * 1024) {
+      notify(
+        mdT(
+          'media_js_large_upload_hint',
+          'Large upload in progress — on the local PHP server other admin actions may pause until this finishes.'
+        ),
+        'info'
+      );
+    }
+
+    setUploadBusy(true, mdT('media_js_uploading', 'Uploading…'));
 
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
+      if (files.length > 1) {
+        setUploadBusy(true, mdT('media_js_uploading_file', 'Uploading {current} of {total}…', {
+          current: String(index + 1),
+          total: String(files.length),
+        }));
+      }
       const formData = new FormData();
       formData.append('file', file);
       formData.append('folder', uploadFolder);
@@ -695,13 +807,23 @@ function resolveMediaItemUrl(url) {
         credentials: 'same-origin',
       });
 
-      const result = await response.json();
+      const result = await parseMediaApiResponse(response);
       if (result.status !== 'ok') {
         failures.push(file.name + ': ' + getResultMessage(result, 'Upload failed'));
+        continue;
+      }
+      const listItem = uploadResponseToListItem(result.data);
+      if (listItem) {
+        uploadedItems.push(listItem);
       }
     }
 
-    await Promise.all([loadFolders(), loadMedia()]);
+    if (uploadedItems.length) {
+      mergeUploadedItems(uploadedItems);
+      foldersCacheLoadedAt = 0;
+      void loadFolders(true);
+      void loadMedia();
+    }
 
     if (failures.length) {
       throw new Error(failures.join('\n'));
