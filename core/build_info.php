@@ -216,6 +216,15 @@ function birkly_admin_asset_url(string $relativePath): string
 }
 
 /**
+ * Hub stylesheet for admin pages (bundled on built-in server to avoid @import waterfalls).
+ */
+function birkly_admin_main_stylesheet_url(): string
+{
+    require_once __DIR__ . '/admin_css_bundle.php';
+    return birkly_admin_asset_url(birkly_admin_main_stylesheet_relative());
+}
+
+/**
  * Plugin admin/static asset URL with cache bust (Hub version + file mtime).
  */
 function birkly_plugin_asset_url(string $pluginId, string $relativePath): string
