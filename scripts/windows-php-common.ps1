@@ -154,6 +154,8 @@ curl.cainfo = "extras/ssl/cacert.pem"
 upload_max_filesize = 128M
 post_max_size = 128M
 memory_limit = 256M
+max_input_time = 600
+max_execution_time = 300
 realpath_cache_size = 4096K
 realpath_cache_ttl = 600
 ; OPcache on CLI (built-in server): fast repeats; revalidate_freq 2 avoids per-request stat storms.
@@ -211,6 +213,8 @@ function Repair-BirklyPhpIni {
     $performanceLines = @(
         'upload_max_filesize = 128M',
         'post_max_size = 128M',
+        'max_input_time = 600',
+        'max_execution_time = 300',
         'realpath_cache_size = 4096K',
         'realpath_cache_ttl = 600',
         'opcache.enable = 1',

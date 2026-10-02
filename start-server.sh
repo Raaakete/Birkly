@@ -221,4 +221,4 @@ print_status "To start again later, run ./start-server.sh from this folder, then
 print_status "Request log: logs/server.log"
 print_status "Press Ctrl+C to stop the server"
 
-php -d upload_max_filesize=128M -d post_max_size=128M -d memory_limit=256M -d max_input_time=600 -d max_execution_time=300 -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=2 -S localhost:$PORT -t . server-router.php >> logs/server.log 2>&1 
+php -d upload_max_filesize=128M -d post_max_size=128M -d memory_limit=256M -d max_input_time=600 -d max_execution_time=300 -d opcache.enable_cli=1 -d opcache.validate_timestamps=1 -d opcache.revalidate_freq=2 -S localhost:$PORT -t . server-router.php >> logs/server.log 2>&1
