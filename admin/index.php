@@ -358,6 +358,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
 <html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
+    <?php $__birklyScriptNonceAttr = $__birklyOnboardingNonceAttr; require __DIR__ . '/partials/theme_early_init.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token()); ?>">
     <title><?= htmlspecialchars(__('admin.onboarding_setup_title'), ENT_QUOTES, 'UTF-8') ?> - Birkly</title>
@@ -374,7 +375,8 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
       ?>
       window.BirklyAdminI18n = <?= json_encode($adminI18nData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     </script>
-    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
+    <?php require_once __DIR__ . '/../core/build_info.php'; ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_main_stylesheet_url()) ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/onboarding.css')) ?>">
     <?php
     // Load settings to get logo for favicon
