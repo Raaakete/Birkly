@@ -90,10 +90,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
+    <?php $__birklyScriptNonceAttr = ''; require __DIR__ . '/partials/theme_early_init.php'; ?>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
     <title><?= htmlspecialchars(__('admin.auth_2fa_title')) ?> - Birkly</title>
-    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
+    <?php require_once __DIR__ . '/../core/build_info.php'; ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_admin_main_stylesheet_url()) ?>">
     <link rel="shortcut icon" href="assets/birkly_favicon.svg">
 </head>
 <body class="auth-page" data-birch>

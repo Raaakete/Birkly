@@ -73,7 +73,9 @@ $phpArgs = @(
     '-d', 'memory_limit=256M',
     '-d', 'max_input_time=600',
     '-d', 'max_execution_time=300',
-    '-d', 'opcache.enable_cli=0',
+    '-d', 'opcache.enable_cli=1',
+    '-d', 'opcache.validate_timestamps=1',
+    '-d', 'opcache.revalidate_freq=2',
     '-S', "localhost:$Port",
     '-t', $Root,
     $router
