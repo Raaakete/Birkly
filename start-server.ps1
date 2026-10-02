@@ -57,7 +57,31 @@ Write-Host '[Birkly] Request log: logs\server.log'
 Write-Host '[Birkly] Press Ctrl+C to stop.'
 Write-Host ''
 
+$portablePhpDir = Join-Path $Root 'runtime\php'
+$portablePhpExe = Join-Path $portablePhpDir 'php.exe'
+if ((Test-Path -LiteralPath $portablePhpExe) -and ($phpExe -ieq (Resolve-Path -LiteralPath $portablePhpExe).Path)) {
+    Repair-BirklyPhpIni -RuntimePhpDir $portablePhpDir
+}
+
 $router = Join-Path $Root 'server-router.php'
 $log = Join-Path $Root 'logs\server.log'
-& $phpExe -d upload_max_filesize=128M -d post_max_size=128M -d memory_limit=256M -S "localhost:$Port" -t $Root $router *>> $log
-exit $LASTEXITCODE
+# PHP writes its "Development Server started" line to stderr. With $ErrorActionPreference = 'Stop',
+# PowerShell treats that as a NativeCommandError and exits — killing the server on Windows.
+$phpArgs = @(
+    '-d', 'upload_max_filesize=128M',
+    '-d', 'post_max_size=128M',
+    '-d', 'memory_limit=256M',
+    '-d', 'opcache.enable_cli=0',
+    '-S', "localhost:$Port",
+    '-t', $Root,
+    $router
+)
+$previousErrorAction = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & $phpExe @phpArgs >> $log 2>&1
+    $exitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorAction
+}
+exit $exitCode

@@ -156,11 +156,9 @@ post_max_size = 128M
 memory_limit = 256M
 realpath_cache_size = 4096K
 realpath_cache_ttl = 600
-zend_extension = php_opcache.dll
-opcache.enable = 1
-opcache.enable_cli = 1
-opcache.validate_timestamps = 1
-opcache.revalidate_freq = 0
+; Built-in server uses CLI SAPI — leave OPcache off (enable_cli caused slow stat-on-every-request on Windows).
+opcache.enable = 0
+opcache.enable_cli = 0
 "@
 }
 
@@ -211,18 +209,14 @@ function Repair-BirklyPhpIni {
         'post_max_size = 128M',
         'realpath_cache_size = 4096K',
         'realpath_cache_ttl = 600',
-        'opcache.enable = 1',
-        'opcache.enable_cli = 1',
-        'opcache.validate_timestamps = 1'
+        'opcache.enable = 0',
+        'opcache.enable_cli = 0'
     )
     foreach ($line in $performanceLines) {
         $escaped = [regex]::Escape($line)
         if ($content -notmatch "(?m)^\s*$escaped\s*$") {
             $toAdd += $line
         }
-    }
-    if ($content -notmatch '(?m)^\s*zend_extension\s*=.*opcache') {
-        $toAdd += 'zend_extension = php_opcache.dll'
     }
     if ($toAdd.Count -gt 0) {
         Add-Content -LiteralPath $ini -Value ("`r`n" + ($toAdd -join "`r`n")) -Encoding UTF8
