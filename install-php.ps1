@@ -38,7 +38,7 @@ try {
 }
 
 if (-not $ZipName) {
-    $Version = '8.3.33'
+    $Version = '8.3.36'
     $ZipName = "php-$Version-Win32-vs16-x64.zip"
 }
 
