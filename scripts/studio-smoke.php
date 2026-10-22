@@ -9,7 +9,15 @@ if (!is_file($engine)) {
     echo "[studio-smoke] SKIP: Studio is not installed in plugins/studio\n";
     exit(0);
 }
-require_once $root . '/tests/bootstrap.php';
+$bootstrap = $root . '/plugins/studio/tests/bootstrap.php';
+if (!is_file($bootstrap)) {
+    $bootstrap = $root . '/tests/bootstrap.php';
+}
+if (!is_file($bootstrap)) {
+    fwrite(STDERR, "[studio-smoke] FAIL: test bootstrap not found\n");
+    exit(1);
+}
+require_once $bootstrap;
 require_once $root . '/plugins/studio/init.php';
 require_once $root . '/plugins/studio/includes/StudioProjectRepository.php';
 require_once $root . '/plugins/studio/includes/StudioCompiler.php';
