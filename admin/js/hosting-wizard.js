@@ -111,7 +111,7 @@
             '<input type="checkbox" class="hosting-wizard-alias-redirect" checked>' +
             '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
             '</label>' +
-            '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, birkly.io and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
+            '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, www.example.com and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
             '<div class="hosting-wizard-validation" hidden role="status"></div>' +
             '<div class="form-group hosting-wizard-aliases-field" hidden>' +
             '<label for="' + id + '-cms-aliases">' + escapeHtml(t('hosting_wizard_cms_aliases', 'CMS host aliases')) + '</label>' +

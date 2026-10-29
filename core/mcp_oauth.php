@@ -69,7 +69,47 @@ function birkly_mcp_oauth_host(): string
 
 function birkly_mcp_oauth_absolute_url(string $path): string
 {
-    return birkly_mcp_oauth_scheme() . '://' . birkly_mcp_oauth_host() . birkly_url($path);
+    return birkly_mcp_oauth_origin() . birkly_url($path);
+}
+
+/**
+ * OAuth metadata origin. Public hostnames advertise the CMS origin so Cursor
+ * can open the authorization URL after the public and CMS hosts are split.
+ * CMS hosts, including aliases, keep the request origin so discovery matches
+ * the connector URL the client called.
+ */
+function birkly_mcp_oauth_origin(): string
+{
+    $requestOrigin = birkly_mcp_oauth_scheme() . '://' . birkly_mcp_oauth_host();
+    if (!function_exists('birkly_hosting_settings_path')) {
+        require_once __DIR__ . '/hosting_urls.php';
+    }
+    $settingsPath = birkly_hosting_settings_path();
+    if (!is_readable($settingsPath)) {
+        return $requestOrigin;
+    }
+
+    $config = birkly_hosting_load();
+    $cms = rtrim((string) ($config['cms_base_url'] ?? ''), '/');
+    if ($cms === '') {
+        return $requestOrigin;
+    }
+
+    $requestHost = birkly_cms_request_host();
+    if ($requestHost === '' || birkly_hosting_host_matches_cms($requestHost) || !birkly_hosting_host_matches_public($requestHost)) {
+        return $requestOrigin;
+    }
+
+    $parts = parse_url($cms);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return $requestOrigin;
+    }
+    $origin = (string) ($parts['scheme'] ?? 'https') . '://' . (string) $parts['host'];
+    if (!empty($parts['port'])) {
+        $origin .= ':' . (int) $parts['port'];
+    }
+
+    return $origin;
 }
 
 function birkly_mcp_oauth_resource_url(?string $agentId = null): string
