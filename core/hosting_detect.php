@@ -162,14 +162,19 @@ function birkly_hosting_domain_delivery_role(string $host): string
     $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
     $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
 
+    // Primaries come from the saved URLs. Alias lists must not hide either URL:
+    // a public primary that was also copied into CMS aliases is still the public URL.
+    if ($cmsPrimary !== '' && $host === $cmsPrimary && $host !== $publicPrimary) {
+        return 'cms_primary';
+    }
+    if ($publicPrimary !== '' && $host === $publicPrimary && $host !== $cmsPrimary) {
+        return 'public_primary';
+    }
     if ($cmsPrimary !== '' && $host === $cmsPrimary) {
         return 'cms_primary';
     }
     if (in_array($host, birkly_hosting_cms_alias_hosts($config), true)) {
         return 'cms';
-    }
-    if ($publicPrimary !== '' && $host === $publicPrimary) {
-        return 'public_primary';
     }
     if (in_array($host, birkly_hosting_public_alias_hosts($config), true)) {
         return 'public';
@@ -183,43 +188,114 @@ function birkly_hosting_domain_delivery_role(string $host): string
 }
 
 /**
+ * @param list<string> $aliases
+ * @return list<string>
+ */
+function birkly_hosting_alias_list_without(array $aliases, string ...$hosts): array
+{
+    $drop = [];
+    foreach ($hosts as $host) {
+        $host = birkly_normalize_host($host);
+        if ($host !== '') {
+            $drop[$host] = true;
+        }
+    }
+
+    $kept = [];
+    foreach ($aliases as $alias) {
+        $alias = birkly_normalize_host((string) $alias);
+        if ($alias === '' || isset($drop[$alias])) {
+            continue;
+        }
+        $kept[$alias] = $alias;
+    }
+
+    return array_values($kept);
+}
+
+function birkly_hosting_url_scheme(string $url, string $fallback = 'https'): string
+{
+    $scheme = parse_url($url, PHP_URL_SCHEME);
+    if (!is_string($scheme) || $scheme === '') {
+        return $fallback;
+    }
+
+    return strtolower($scheme);
+}
+
+/**
+ * @param list<string> $aliases
+ * @return list<string>
+ */
+function birkly_hosting_claim_alias_hosts(string $host, string $cmsPrimary, string $publicPrimary, array $aliases): array
+{
+    $claimed = [$host];
+    foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
+        if ($pairHost === '' || $pairHost === $cmsPrimary || $pairHost === $publicPrimary) {
+            continue;
+        }
+        $claimed[] = $pairHost;
+    }
+
+    return array_values(array_unique(array_merge($aliases, $claimed)));
+}
+
+/**
  * @return array{status: string, message: string, config?: array<string, mixed>}
  */
 function birkly_hosting_set_domain_delivery_role(string $host, string $role): array
 {
     $host = birkly_normalize_host($host);
+    if ($role === 'cms_primary') {
+        return birkly_hosting_set_cms_primary($host);
+    }
+    if ($role === 'public_primary') {
+        return birkly_hosting_set_public_primary($host);
+    }
+
     $allowed = ['cms', 'public', 'api_only'];
     if ($host === '' || !in_array($role, $allowed, true)) {
         return ['status' => 'error', 'message' => 'Invalid host or role'];
     }
 
+    if (birkly_hosting_env_overrides() !== []) {
+        return ['status' => 'error', 'message' => 'Cannot change delivery roles while environment overrides are active'];
+    }
+
     $config = birkly_hosting_normalize_config(birkly_hosting_load());
     $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
     $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
-    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
-    $publicAliases = birkly_hosting_public_alias_hosts($config);
 
-    $cmsAliases = array_values(array_filter($cmsAliases, static fn (string $h): bool => $h !== $host));
-    $publicAliases = array_values(array_filter($publicAliases, static fn (string $h): bool => $h !== $host));
+    if ($role === 'public' && $host === $cmsPrimary) {
+        return ['status' => 'error', 'message' => 'Choose Public (primary) to move the CMS hostname onto the public URL'];
+    }
+    if ($role === 'cms' && $host === $publicPrimary) {
+        return ['status' => 'error', 'message' => 'Choose CMS (primary) to move the public hostname onto the CMS URL'];
+    }
+    if ($role === 'api_only' && ($host === $cmsPrimary || ($publicPrimary !== '' && $host === $publicPrimary))) {
+        return ['status' => 'error', 'message' => 'Promote another hostname before removing this primary URL'];
+    }
+    if ($role === 'cms' && $host === $cmsPrimary) {
+        return ['status' => 'error', 'message' => 'Choose another hostname as CMS (primary) before demoting this one'];
+    }
+    if ($role === 'public' && $host === $publicPrimary) {
+        return ['status' => 'error', 'message' => 'Choose another hostname as Public (primary) before demoting this one'];
+    }
 
-    if ($role === 'cms' && $host !== $cmsPrimary) {
-        foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
-            if ($pairHost !== $cmsPrimary) {
-                $cmsAliases[] = $pairHost;
-            }
-        }
-        $cmsAliases[] = $host;
-    } elseif ($role === 'public' && $host !== $publicPrimary) {
-        foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
-            if ($pairHost !== $publicPrimary) {
-                $publicAliases[] = $pairHost;
-            }
-        }
-        $publicAliases[] = $host;
+    $cmsAliases = birkly_hosting_alias_list_without(birkly_hosting_cms_alias_hosts($config), $host);
+    $publicAliases = birkly_hosting_alias_list_without(birkly_hosting_public_alias_hosts($config), $host);
+
+    if ($role === 'cms') {
+        $cmsAliases = birkly_hosting_claim_alias_hosts($host, $cmsPrimary, $publicPrimary, $cmsAliases);
+        $publicAliases = birkly_hosting_alias_list_without($publicAliases, ...$cmsAliases);
+    } elseif ($role === 'public') {
+        $publicAliases = birkly_hosting_claim_alias_hosts($host, $cmsPrimary, $publicPrimary, $publicAliases);
+        $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, ...$publicAliases);
     }
 
     $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts($cmsAliases, $cmsPrimary);
     $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($publicAliases, $publicPrimary);
+    $config = birkly_hosting_detach_primaries_from_aliases($config);
 
     birkly_hosting_backup_config();
     if (!birkly_hosting_persist($config, true)) {
@@ -292,15 +368,12 @@ function birkly_hosting_domain_roles_map(): array
 /**
  * Map a full delivery role to the value accepted by set_domain_delivery_role().
  *
- * @return 'cms'|'public'|'api_only'|null null when the host is a primary URL
+ * @return 'cms_primary'|'cms'|'public_primary'|'public'|'api_only'|null
  */
 function birkly_hosting_settable_delivery_role(string $fullRole): ?string
 {
     return match ($fullRole) {
-        'cms' => 'cms',
-        'public' => 'public',
-        'api_only' => 'api_only',
-        'cms_primary', 'public_primary' => null,
+        'cms_primary', 'cms', 'public_primary', 'public', 'api_only' => $fullRole,
         default => 'api_only',
     };
 }
@@ -397,6 +470,7 @@ function birkly_hosting_delivery_matrix(): array
     }
 
     $rows = [];
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
     $aliasRedirect = !empty($config['alias_redirect_to_primary']);
     foreach (array_keys($hosts) as $host) {
         if ($host === '') {
@@ -419,11 +493,12 @@ function birkly_hosting_delivery_matrix(): array
             'suggested_role' => $suggest['role'],
             'suggest_reason' => $suggest['reason'],
             'is_primary' => $isPrimary,
-            'settable_role' => $isPrimary ? null : birkly_hosting_settable_delivery_role($role),
+            'settable_role' => birkly_hosting_settable_delivery_role($role),
             'is_alias' => $isAlias,
             'redirects_to_primary' => $isAlias && $aliasRedirect && $redirectTarget !== '',
             'redirect_target_host' => $redirectTarget,
-            'can_make_public_primary' => $role === 'public' && $publicPrimary !== '' && $host !== $publicPrimary,
+            'can_make_public_primary' => $mode !== 'none' && $publicPrimary !== '' && $host !== $publicPrimary,
+            'can_make_cms_primary' => $cmsPrimary !== '' && $host !== $cmsPrimary,
         ];
     }
 
@@ -475,7 +550,128 @@ function birkly_hosting_set_alias_redirect(bool $enabled): array
 }
 
 /**
- * Promote a public alias (or unassigned registered host) to the primary public URL.
+ * Drop either primary hostname out of the opposite alias list.
+ *
+ * @param array<string, mixed> $config
+ * @return array<string, mixed>
+ */
+function birkly_hosting_detach_primaries_from_aliases(array $config): array
+{
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+        birkly_hosting_alias_list_without(
+            birkly_hosting_cms_alias_hosts($config),
+            $cmsPrimary,
+            $publicPrimary
+        ),
+        $cmsPrimary
+    );
+    $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+        birkly_hosting_alias_list_without(
+            birkly_hosting_public_alias_hosts($config),
+            $publicPrimary,
+            $cmsPrimary
+        ),
+        $publicPrimary
+    );
+
+    return $config;
+}
+
+/**
+ * Promote a registered host to the primary CMS URL.
+ * The previous CMS host stays on the domain list as a CMS alias, unless it is
+ * still the public URL. Promoting the public URL swaps the two primaries.
+ *
+ * @return array{status: string, message: string, config?: array<string, mixed>}
+ */
+function birkly_hosting_set_cms_primary(string $host): array
+{
+    if (birkly_hosting_env_overrides() !== []) {
+        return ['status' => 'error', 'message' => 'Cannot change primary URL while environment overrides are active'];
+    }
+
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return ['status' => 'error', 'message' => 'Invalid host'];
+    }
+
+    $config = birkly_hosting_normalize_config(birkly_hosting_load());
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
+    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
+    $publicAliases = birkly_hosting_public_alias_hosts($config);
+
+    if ($cmsPrimary === $host) {
+        $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+            birkly_hosting_alias_list_without($cmsAliases, $host),
+            $cmsPrimary
+        );
+        $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+            birkly_hosting_alias_list_without($publicAliases, $host),
+            $publicPrimary
+        );
+        $config = birkly_hosting_detach_primaries_from_aliases($config);
+        if ($config['cms_host_aliases'] !== $cmsAliases || $config['public_host_aliases'] !== $publicAliases) {
+            birkly_hosting_backup_config();
+            if (!birkly_hosting_persist($config, true)) {
+                return ['status' => 'error', 'message' => 'Failed to set primary CMS URL'];
+            }
+            $config = birkly_hosting_load();
+        }
+
+        return [
+            'status' => 'ok',
+            'message' => 'Host is already the primary CMS URL',
+            'config' => $config,
+        ];
+    }
+
+    $cmsScheme = birkly_hosting_url_scheme((string) ($config['cms_base_url'] ?? ''));
+    $publicScheme = birkly_hosting_url_scheme((string) ($config['public_site_url'] ?? ''), $cmsScheme);
+    $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $host);
+    $publicAliases = birkly_hosting_alias_list_without($publicAliases, $host);
+    $newPublicPrimary = $publicPrimary;
+
+    if ($host === $publicPrimary && $cmsPrimary !== '' && $cmsPrimary !== $host && $mode !== 'none') {
+        $config['cms_base_url'] = birkly_hosting_normalize_url($cmsScheme . '://' . $host, false);
+        $config['public_site_url'] = birkly_hosting_normalize_url($publicScheme . '://' . $cmsPrimary, true);
+        $newPublicPrimary = $cmsPrimary;
+        $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $cmsPrimary, $host);
+        $publicAliases = birkly_hosting_alias_list_without($publicAliases, $cmsPrimary, $host);
+    } else {
+        $config['cms_base_url'] = birkly_hosting_normalize_url($cmsScheme . '://' . $host, false);
+        if ($cmsPrimary !== '' && $cmsPrimary !== $host && $cmsPrimary !== $publicPrimary) {
+            $cmsAliases[] = $cmsPrimary;
+            $publicAliases = birkly_hosting_alias_list_without($publicAliases, $cmsPrimary);
+        }
+        $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $host, $publicPrimary);
+    }
+
+    $publicAliases = birkly_hosting_alias_list_without($publicAliases, $host, ...$cmsAliases);
+    $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts($cmsAliases, $host);
+    $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($publicAliases, $newPublicPrimary);
+    $config = birkly_hosting_detach_primaries_from_aliases($config);
+
+    birkly_hosting_backup_config();
+    if (!birkly_hosting_persist($config, true)) {
+        return ['status' => 'error', 'message' => 'Failed to set primary CMS URL'];
+    }
+
+    return [
+        'status' => 'ok',
+        'message' => 'Primary CMS URL updated to ' . $host,
+        'config' => birkly_hosting_load(),
+    ];
+}
+
+/**
+ * Promote a host to the primary public URL.
+ * The previous public host stays on the domain list as a public alias.
+ * Promoting the CMS URL swaps the two primaries so neither host is dropped
+ * and neither stays listed on both roles.
  *
  * @return array{status: string, message: string, config?: array<string, mixed>}
  */
@@ -497,25 +693,63 @@ function birkly_hosting_set_public_primary(string $host): array
     }
 
     $currentPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
+    $aliases = birkly_hosting_public_alias_hosts($config);
+
     if ($currentPrimary === $host) {
+        $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+            birkly_hosting_alias_list_without($cmsAliases, $host),
+            $cmsPrimary
+        );
+        $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+            birkly_hosting_alias_list_without($aliases, $host),
+            $currentPrimary
+        );
+        $config = birkly_hosting_detach_primaries_from_aliases($config);
+        if ($config['cms_host_aliases'] !== $cmsAliases || $config['public_host_aliases'] !== $aliases) {
+            birkly_hosting_backup_config();
+            if (!birkly_hosting_persist($config, true)) {
+                return ['status' => 'error', 'message' => 'Failed to set primary public URL'];
+            }
+            $config = birkly_hosting_load();
+        }
+
         return ['status' => 'ok', 'message' => 'Host is already the primary public URL', 'config' => $config];
     }
 
-    $scheme = parse_url((string) $config['public_site_url'], PHP_URL_SCHEME) ?: 'https';
-    $aliases = birkly_hosting_public_alias_hosts($config);
-    $aliases = array_values(array_filter($aliases, static fn (string $h): bool => $h !== $host));
+    $publicScheme = birkly_hosting_url_scheme((string) ($config['public_site_url'] ?? ''));
+    $cmsScheme = birkly_hosting_url_scheme((string) ($config['cms_base_url'] ?? ''), $publicScheme);
+    $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $host);
+    $aliases = birkly_hosting_alias_list_without($aliases, $host);
+    $newCmsPrimary = $cmsPrimary;
 
-    if ($currentPrimary !== '') {
-        $aliases[] = $currentPrimary;
-    }
-    foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
-        if ($pairHost !== $host) {
-            $aliases[] = $pairHost;
+    if ($cmsPrimary === $host && $currentPrimary !== '' && $currentPrimary !== $host) {
+        $config['public_site_url'] = birkly_hosting_normalize_url($publicScheme . '://' . $host, true);
+        $config['cms_base_url'] = birkly_hosting_normalize_url($cmsScheme . '://' . $currentPrimary, false);
+        $newCmsPrimary = $currentPrimary;
+        $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $host, $currentPrimary);
+        $aliases = birkly_hosting_alias_list_without($aliases, $host, $currentPrimary);
+    } else {
+        if ($currentPrimary !== '' && $currentPrimary !== $cmsPrimary && $currentPrimary !== $host) {
+            $aliases[] = $currentPrimary;
         }
+        $config['public_site_url'] = birkly_hosting_normalize_url($publicScheme . '://' . $host, true);
     }
 
-    $config['public_site_url'] = birkly_hosting_normalize_url($scheme . '://' . $host, true);
+    foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
+        if ($pairHost === '' || $pairHost === $host || $pairHost === $newCmsPrimary) {
+            continue;
+        }
+        $aliases[] = $pairHost;
+        $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $pairHost);
+    }
+
+    $cmsAliases = birkly_hosting_alias_list_without($cmsAliases, $host, $newCmsPrimary);
+    $aliases = birkly_hosting_alias_list_without($aliases, $host, $newCmsPrimary, ...$cmsAliases);
+    $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts($cmsAliases, $newCmsPrimary);
     $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($aliases, $host);
+    $config = birkly_hosting_detach_primaries_from_aliases($config);
 
     birkly_hosting_backup_config();
     if (!birkly_hosting_persist($config, true)) {

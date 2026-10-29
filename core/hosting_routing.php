@@ -100,6 +100,10 @@ function birkly_hosting_dispatch(string $uri): bool
         exit;
     }
 
+    if (birkly_hosting_is_platform_endpoint_path($uri)) {
+        return false;
+    }
+
     birkly_hosting_maybe_redirect_alias_to_primary($uri);
     birkly_hosting_apply_redirect($uri);
 

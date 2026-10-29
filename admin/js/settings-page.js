@@ -1919,8 +1919,40 @@ async function deletePlugin(pluginId) {
         return 'neutral';
     }
 
+    function deliveryRoleOptions(selected) {
+        var options = [
+            { value: 'cms_primary', label: 'CMS (primary)' },
+            { value: 'cms', label: 'CMS alias' },
+            { value: 'public_primary', label: 'Public (primary)' },
+            { value: 'public', label: 'Public alias' },
+            { value: 'api_only', label: 'API only (CORS)' }
+        ];
+        var current = (selected === 'cms_primary' || selected === 'cms' || selected === 'public_primary' || selected === 'public' || selected === 'api_only')
+            ? selected
+            : 'api_only';
+        return options.map(function (opt) {
+            return '<option value="' + escapeHtml(opt.value) + '"' + (opt.value === current ? ' selected' : '') + '>' +
+                escapeHtml(opt.label) + '</option>';
+        }).join('');
+    }
+
+    function deliveryRoleSelect(host, role, disabled) {
+        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="Delivery role for ' + escapeHtml(host) + '"' + (disabled ? ' disabled' : '') + '>' +
+            deliveryRoleOptions(role) + '</select>';
+    }
+
     async function setDomainDeliveryRole(host, role, selectEl) {
         if (!host || !role) return;
+        if (role === 'cms_primary' || role === 'public_primary') {
+            var prompt = role === 'cms_primary'
+                ? stT('settings_js_confirm_cms_primary', 'Make {host} the primary CMS URL? The previous CMS hostname stays in the list.', { host: host })
+                : stT('settings_js_confirm_primary_url', 'Make {host} the primary public URL? The current primary will become an alias.', { host: host });
+            if (!(await BirklyFeedback.confirm(prompt))) {
+                loadDomains();
+                loadDeliveryMatrix();
+                return;
+            }
+        }
         if (selectEl) selectEl.disabled = true;
         try {
             var response = await fetch(apiUrl('/api/hosting.php?action=set_domain_role'), {
@@ -1945,6 +1977,8 @@ async function deletePlugin(pluginId) {
         } catch (error) {
             showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (selectEl) selectEl.disabled = false;
+            loadDeliveryMatrix();
+            loadDomains();
         }
     }
 
@@ -2029,15 +2063,10 @@ async function deletePlugin(pluginId) {
         }
     }
 
-    function renderDeliveryMatrixRow(row) {
+    function renderDeliveryMatrixRow(row, envManaged) {
         var host = String(row.host || '');
         var role = row.role || 'unassigned';
-        var rolesMap = {};
-        rolesMap[host] = role;
-        var roleCell = renderDomainDeliveryRole(host, rolesMap);
-        if (row.is_primary) {
-            roleCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
-        }
+        var roleCell = deliveryRoleSelect(host, role, !!envManaged);
         var corsBadge = row.cors_registered
             ? '<span class="badge badge-success">Registered</span>'
             : '<span class="badge badge-neutral">Not registered</span>';
@@ -2047,20 +2076,16 @@ async function deletePlugin(pluginId) {
         }
         var routingCell = '—';
         if (row.is_primary) {
-            routingCell = '<span class="badge badge-accent">Primary URL</span>';
+            routingCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
         } else if (row.redirects_to_primary && row.redirect_target_host) {
             routingCell = '<span class="badge badge-info">301 → ' + escapeHtml(row.redirect_target_host) + '</span>';
         } else if (row.is_alias) {
             routingCell = '<span class="badge badge-success">Serves directly</span>';
         }
-        var actions = '';
-        if (row.can_make_public_primary) {
-            actions = ' <button type="button" class="button is-small delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
-        }
         return '<tr>' +
             '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
             '<td>' + corsBadge + '</td>' +
-            '<td>' + roleCell + actions + '</td>' +
+            '<td>' + roleCell + '</td>' +
             '<td>' + routingCell + '</td>' +
             '</tr>';
     }
@@ -2072,19 +2097,22 @@ async function deletePlugin(pluginId) {
         rows = rows || [];
         meta = meta || {};
         renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
+        var envManaged = !!(meta.detect && meta.detect.env_managed);
 
         if (!rows.length) {
             container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_delivery_hostnames', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
             return;
         }
 
-        var body = rows.map(renderDeliveryMatrixRow).join('');
+        var body = rows.map(function (row) {
+            return renderDeliveryMatrixRow(row, envManaged);
+        }).join('');
         container.innerHTML =
             '<div class="table-container">' +
             '<table class="table table--hover">' +
             '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
             '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.</p>';
+            '<p class="form-help">' + escapeHtml(stT('settings_js_delivery_matrix_help', 'Choose CMS (primary) or Public (primary) to move that hostname. The previous primary stays in the list. A hostname is only on one role. Apex and www pairs are linked when you assign an alias.')) + '</p>';
 
         var roleSelects = container.querySelectorAll('.domain-delivery-role');
         for (var r = 0; r < roleSelects.length; r++) {
@@ -2094,12 +2122,6 @@ async function deletePlugin(pluginId) {
                 });
             })(roleSelects[r]);
         }
-
-        container.querySelectorAll('.delivery-make-primary').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                setPublicPrimary(btn.getAttribute('data-host'), btn);
-            });
-        });
     }
 
     async function loadDeliveryMatrix() {
@@ -2152,7 +2174,8 @@ async function deletePlugin(pluginId) {
                 : {};
             
             if (data.status === 'ok' && data.data && data.data.licenses) {
-                renderDomains(data.data.licenses, domainRoles);
+                var envManaged = !!(hostingPayload.status === 'ok' && hostingPayload.data && hostingPayload.data.detect && hostingPayload.data.detect.env_managed);
+                renderDomains(data.data.licenses, domainRoles, envManaged);
             } else {
                 listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
             }
@@ -2334,28 +2357,13 @@ async function deletePlugin(pluginId) {
         }
     }
 
-    function renderDomainDeliveryRole(domainName, domainRoles) {
+    function renderDomainDeliveryRole(domainName, domainRoles, envManaged) {
         var host = String(domainName || '').toLowerCase();
         var role = (domainRoles && domainRoles[host]) ? domainRoles[host] : 'unassigned';
-        var isPrimary = role === 'cms_primary' || role === 'public_primary';
-        if (isPrimary) {
-            return '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
-        }
-        var options = [
-            { value: 'api_only', label: 'API only (CORS)' },
-            { value: 'cms', label: 'CMS alias' },
-            { value: 'public', label: 'Public alias' }
-        ];
-        var selected = (role === 'cms' || role === 'public' || role === 'api_only') ? role : 'api_only';
-        var optionHtml = options.map(function (opt) {
-            return '<option value="' + escapeHtml(opt.value) + '"' + (opt.value === selected ? ' selected' : '') + '>' +
-                escapeHtml(opt.label) + '</option>';
-        }).join('');
-        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="Delivery role for ' + escapeHtml(host) + '">' +
-            optionHtml + '</select>';
+        return deliveryRoleSelect(host, role, !!envManaged);
     }
 
-    function renderDomains(domains, domainRoles) {
+    function renderDomains(domains, domainRoles, envManaged) {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found in renderDomains');
@@ -2390,7 +2398,7 @@ async function deletePlugin(pluginId) {
             var readColsHtml = readCollections.length > 0 ? '<span class="kv-key">Read collections</span><span class="kv-value">' + escapeHtml(readCollections.join(', ')) + '</span>' : '';
             var writeColsHtml = writeCollections.length > 0 ? '<span class="kv-key">Write collections</span><span class="kv-value">' + escapeHtml(writeCollections.join(', ')) + '</span>' : '';
             var trackingScriptHtml = renderDomainTrackingScript(domainName, analyticsEnabled);
-            var deliveryRoleHtml = renderDomainDeliveryRole(domainName, domainRoles);
+            var deliveryRoleHtml = renderDomainDeliveryRole(domainName, domainRoles, envManaged);
 
             return '' +
                 '<article class="domain-card card">' +
