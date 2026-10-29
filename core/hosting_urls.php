@@ -703,10 +703,34 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
 }
 
 /**
+ * MCP and OAuth discovery must answer on the host the client called.
+ * Alias redirects and public-file routing would replace that response with a 301 or HTML.
+ */
+function birkly_hosting_is_platform_endpoint_path(string $uri): bool
+{
+    $path = '/' . ltrim($uri, '/');
+    if ($path === '/') {
+        return false;
+    }
+
+    return $path === '/mcp'
+        || $path === '/oauth'
+        || $path === '/authorize'
+        || str_starts_with($path, '/mcp/')
+        || str_starts_with($path, '/oauth/')
+        || str_starts_with($path, '/.well-known/oauth-authorization-server')
+        || str_starts_with($path, '/.well-known/oauth-protected-resource');
+}
+
+/**
  * Redirect alias hostnames to primary when enabled.
  */
 function birkly_hosting_maybe_redirect_alias_to_primary(string $uri): bool
 {
+    if (birkly_hosting_is_platform_endpoint_path($uri)) {
+        return false;
+    }
+
     $config = birkly_hosting_load();
     if (empty($config['alias_redirect_to_primary'])) {
         return false;
