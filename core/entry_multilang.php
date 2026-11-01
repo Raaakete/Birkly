@@ -368,7 +368,8 @@ function birkly_entry_apply_multilang_fields(
             $entryOutput,
             $fields,
             $multilanguageLanguages,
-            $fieldModes
+            $fieldModes,
+            $existingEntry
         );
     }
 

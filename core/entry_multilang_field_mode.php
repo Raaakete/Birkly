@@ -389,6 +389,231 @@ function birkly_multilang_public_apply_shared_fields(
         }
     }
 
+    $transformed = birkly_multilang_public_apply_shared_dynamic_blocks(
+        $transformed,
+        $entry,
+        $schemaFields,
+        $languages,
+        $multilanguageEnabled
+    );
+
+    return $transformed;
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function birkly_multilang_decode_dynamic_blocks(mixed $raw): array
+{
+    if (is_string($raw)) {
+        $decoded = json_decode($raw, true);
+        $raw = is_array($decoded) ? $decoded : null;
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $blocks = [];
+    foreach ($raw as $block) {
+        if (is_array($block)) {
+            $blocks[] = $block;
+        }
+    }
+
+    return $blocks;
+}
+
+/**
+ * Canonical value for one shared Dynamic Items block (owner language first, then other tabs).
+ *
+ * @param array<string, mixed> $entry
+ * @param list<string> $languages
+ */
+function birkly_multilang_stored_shared_dynamic_block_value(
+    array $entry,
+    string $fieldName,
+    string $blockName,
+    array $languages
+): mixed
+{
+    if ($fieldName === '' || $blockName === '') {
+        return null;
+    }
+
+    $valuesByLang = [];
+    foreach ($languages as $langCode) {
+        if (!is_string($langCode) || $langCode === '') {
+            continue;
+        }
+        if (!isset($entry[$langCode]) || !is_array($entry[$langCode])) {
+            continue;
+        }
+        foreach (birkly_multilang_decode_dynamic_blocks($entry[$langCode][$fieldName] ?? null) as $block) {
+            if ((string) ($block['name'] ?? '') !== $blockName) {
+                continue;
+            }
+            $valuesByLang[$langCode] = $block['value'] ?? null;
+            break;
+        }
+    }
+
+    if ($valuesByLang === []) {
+        return null;
+    }
+
+    $unique = array_values(array_unique($valuesByLang, SORT_REGULAR));
+    if (count($unique) === 1) {
+        return $unique[0];
+    }
+
+    foreach (array_reverse($languages) as $langCode) {
+        if (array_key_exists($langCode, $valuesByLang)) {
+            return $valuesByLang[$langCode];
+        }
+    }
+
+    return reset($valuesByLang);
+}
+
+/**
+ * @param array<string, mixed> $entry
+ * @param array<string, mixed>|null $existingEntry
+ * @param list<string> $languages
+ */
+function birkly_multilang_resolve_shared_dynamic_block_value(
+    array $entry,
+    ?array $existingEntry,
+    string $fieldName,
+    string $blockName,
+    array $languages
+): mixed {
+    $hasExistingSnapshot = is_array($existingEntry) && $existingEntry !== [];
+    $existingEntry = $hasExistingSnapshot ? $existingEntry : [];
+    $changedValues = [];
+
+    if ($hasExistingSnapshot) {
+        foreach ($languages as $langCode) {
+            if (!is_string($langCode) || $langCode === '') {
+                continue;
+            }
+
+            $newBlocks = birkly_multilang_decode_dynamic_blocks($entry[$langCode][$fieldName] ?? null);
+            $oldBlocks = birkly_multilang_decode_dynamic_blocks($existingEntry[$langCode][$fieldName] ?? null);
+
+            $newValue = null;
+            foreach ($newBlocks as $block) {
+                if ((string) ($block['name'] ?? '') === $blockName) {
+                    $newValue = $block['value'] ?? null;
+                    break;
+                }
+            }
+
+            $oldValue = null;
+            foreach ($oldBlocks as $block) {
+                if ((string) ($block['name'] ?? '') === $blockName) {
+                    $oldValue = $block['value'] ?? null;
+                    break;
+                }
+            }
+
+            if ($newValue !== $oldValue) {
+                $changedValues[] = $newValue;
+            }
+        }
+    }
+
+    if ($changedValues !== []) {
+        return $changedValues[count($changedValues) - 1];
+    }
+
+    if (!$hasExistingSnapshot) {
+        foreach ($languages as $langCode) {
+            if (!is_string($langCode) || $langCode === '') {
+                continue;
+            }
+            foreach (birkly_multilang_decode_dynamic_blocks($entry[$langCode][$fieldName] ?? null) as $block) {
+                if ((string) ($block['name'] ?? '') === $blockName) {
+                    return $block['value'] ?? null;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    return birkly_multilang_stored_shared_dynamic_block_value($entry, $fieldName, $blockName, $languages);
+}
+
+/**
+ * After language merge on public read, align shared Dynamic Items blocks to canonical storage.
+ *
+ * @param array<string, mixed> $transformed
+ * @param array<string, mixed> $entry
+ * @param list<array<string, mixed>> $schemaFields
+ * @param list<string> $languages
+ * @return array<string, mixed>
+ */
+function birkly_multilang_public_apply_shared_dynamic_blocks(
+    array $transformed,
+    array $entry,
+    array $schemaFields,
+    array $languages,
+    bool $multilanguageEnabled
+): array {
+    if (!$multilanguageEnabled || $schemaFields === [] || $languages === []) {
+        return $transformed;
+    }
+
+    require_once __DIR__ . '/fieldtype_catalog.php';
+
+    $entryContext = $entry;
+    if (!isset($entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY])) {
+        $entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = birkly_multilang_entry_field_modes($entry);
+    }
+
+    foreach ($schemaFields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $fieldName = (string) ($field['name'] ?? '');
+        if ($fieldName === '' || birkly_fieldtype_normalize_type_slug((string) ($field['type'] ?? '')) !== 'dynamicitems') {
+            continue;
+        }
+        if (!array_key_exists($fieldName, $transformed)) {
+            continue;
+        }
+
+        $blocks = birkly_multilang_decode_dynamic_blocks($transformed[$fieldName]);
+        if ($blocks === []) {
+            continue;
+        }
+
+        $changed = false;
+        foreach ($blocks as $idx => $block) {
+            if (!is_array($block)) {
+                continue;
+            }
+            $blockName = (string) ($block['name'] ?? '');
+            if ($blockName === '') {
+                continue;
+            }
+            $blockType = (string) ($block['type'] ?? 'text');
+            if (!birkly_multilang_block_is_shared_for_entry($entryContext, $fieldName, $blockName, $blockType)) {
+                continue;
+            }
+
+            $canonical = birkly_multilang_stored_shared_dynamic_block_value($entry, $fieldName, $blockName, $languages);
+            if ($canonical !== null || array_key_exists('value', $block)) {
+                $blocks[$idx]['value'] = $canonical;
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            $transformed[$fieldName] = $blocks;
+        }
+    }
+
     return $transformed;
 }
 
@@ -399,13 +624,15 @@ function birkly_multilang_public_apply_shared_fields(
  * @param list<array<string, mixed>> $fields
  * @param list<string> $languages
  * @param array<string, string> $fieldModes
+ * @param array<string, mixed>|null $existingEntry
  * @return array<string, mixed>
  */
 function birkly_multilang_entry_apply_shared_dynamic_block_values(
     array $entryOutput,
     array $fields,
     array $languages,
-    array $fieldModes
+    array $fieldModes,
+    ?array $existingEntry = null
 ): array {
     require_once __DIR__ . '/fieldtype_catalog.php';
 
@@ -424,40 +651,40 @@ function birkly_multilang_entry_apply_shared_dynamic_block_values(
             continue;
         }
 
-        $referenceBlocks = null;
+        $blockCatalog = [];
         foreach ($languages as $langCode) {
             if (!is_string($langCode) || $langCode === '') {
                 continue;
             }
-            $raw = $entryOutput[$langCode][$fieldName] ?? null;
-            if (is_string($raw)) {
-                $decoded = json_decode($raw, true);
-                $raw = is_array($decoded) ? $decoded : null;
+            if (!isset($entryOutput[$langCode]) || !is_array($entryOutput[$langCode])) {
+                continue;
             }
-            if (is_array($raw) && $raw !== []) {
-                $referenceBlocks = $raw;
-                break;
+            foreach (birkly_multilang_decode_dynamic_blocks($entryOutput[$langCode][$fieldName] ?? null) as $block) {
+                $blockName = (string) ($block['name'] ?? '');
+                if ($blockName === '' || isset($blockCatalog[$blockName])) {
+                    continue;
+                }
+                $blockCatalog[$blockName] = (string) ($block['type'] ?? 'text');
             }
         }
 
-        if (!is_array($referenceBlocks)) {
+        if ($blockCatalog === []) {
             continue;
         }
 
-        foreach ($referenceBlocks as $block) {
-            if (!is_array($block)) {
-                continue;
-            }
-            $blockName = (string) ($block['name'] ?? '');
-            if ($blockName === '') {
-                continue;
-            }
-            $blockType = (string) ($block['type'] ?? 'text');
+        foreach ($blockCatalog as $blockName => $blockType) {
             if (!birkly_multilang_block_is_shared_for_entry($entryContext, $fieldName, $blockName, $blockType)) {
                 continue;
             }
 
-            $sharedValue = $block['value'] ?? null;
+            $sharedValue = birkly_multilang_resolve_shared_dynamic_block_value(
+                $entryOutput,
+                $existingEntry,
+                $fieldName,
+                $blockName,
+                $languages
+            );
+
             foreach ($languages as $langCode) {
                 if (!is_string($langCode) || $langCode === '') {
                     continue;
@@ -466,12 +693,8 @@ function birkly_multilang_entry_apply_shared_dynamic_block_values(
                     continue;
                 }
 
-                $langBlocks = $entryOutput[$langCode][$fieldName] ?? null;
-                if (is_string($langBlocks)) {
-                    $decoded = json_decode($langBlocks, true);
-                    $langBlocks = is_array($decoded) ? $decoded : [];
-                }
-                if (!is_array($langBlocks)) {
+                $langBlocks = birkly_multilang_decode_dynamic_blocks($entryOutput[$langCode][$fieldName] ?? null);
+                if ($langBlocks === []) {
                     continue;
                 }
 
