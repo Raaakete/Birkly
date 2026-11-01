@@ -256,6 +256,90 @@ function birkly_project_ssr_collect_requests(string $html): array
         }
     }
 
+    // {for each entry in 'sub' of 'parent'.'parent-slug' ...} — parent list + get_entry cover SSR prefetch.
+    if (preg_match_all(
+        '/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*\'([^\']+)\'/i',
+        $text,
+        $m,
+        PREG_SET_ORDER
+    )) {
+        foreach ($m as $match) {
+            $parentSlug = trim($match[3]);
+            if ($parentSlug === '' || in_array(strtolower($parentSlug), ['current', 'newest', 'last-updated'], true)) {
+                continue;
+            }
+            $parentCollection = $match[2];
+            $add(['type' => 'list_entries', 'into' => $parentCollection, 'collection' => $parentCollection]);
+            $add([
+                'type' => 'get_entry',
+                'into' => '__entry__:' . $parentCollection . ':' . $parentSlug,
+                'collection' => $parentCollection,
+                'slug' => $parentSlug,
+            ]);
+        }
+    }
+
+    return $requests;
+}
+
+/**
+ * Sub-entry bundle requests for {for … in 'sub' of 'parent'.'slug'} on list/project pages.
+ *
+ * @param array<string,mixed> $data Render data after the first page_bundle pass (needs __entry__:* keys).
+ * @return list<array<string,mixed>>
+ */
+function birkly_project_ssr_build_slug_sub_entry_requests(string $html, array $data): array
+{
+    require_once __DIR__ . '/birkly_template_engine.php';
+    require_once __DIR__ . '/public_read.php';
+
+    $requests = [];
+    $seen = [];
+    $add = static function (array $req) use (&$requests, &$seen): void {
+        $key = json_encode($req);
+        if ($key === false || isset($seen[$key])) {
+            return;
+        }
+        $seen[$key] = true;
+        $requests[] = $req;
+    };
+
+    if (!preg_match_all(
+        '/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*\'([^\']+)\'/i',
+        $html,
+        $m,
+        PREG_SET_ORDER
+    )) {
+        return [];
+    }
+
+    foreach ($m as $match) {
+        $subCollection = $match[1];
+        $parentCollection = $match[2];
+        $parentSlug = trim($match[3]);
+        if ($parentSlug === '' || in_array(strtolower($parentSlug), ['current', 'newest', 'last-updated'], true)) {
+            continue;
+        }
+
+        $parent = birkly_template_engine_resolve_entry($parentCollection, $parentSlug, $data);
+        if (!is_array($parent)) {
+            continue;
+        }
+        $parentEntryId = trim((string) ($parent['id'] ?? $parent['slug'] ?? ''));
+        if ($parentEntryId === '') {
+            continue;
+        }
+
+        $into = birkly_public_sub_entries_bundle_key($parentCollection, $parentEntryId, $subCollection);
+        $add([
+            'type' => 'sub_entries',
+            'into' => $into,
+            'parent_collection' => $parentCollection,
+            'parent_entry_id' => $parentEntryId,
+            'sub_collection' => $subCollection,
+        ]);
+    }
+
     return $requests;
 }
 
@@ -508,6 +592,17 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $data[$into] = $value;
     }
     $data['site_elements'] = birkly_project_ssr_site_elements_map($siteElementsList);
+
+    $slugSubRequests = birkly_project_ssr_build_slug_sub_entry_requests($html, $data);
+    if ($slugSubRequests !== []) {
+        $slugSubBundle = birkly_run_page_bundle_requests($storage, $slugSubRequests, $language, [
+            'lean' => true,
+            'trusted_ssr' => true,
+        ]);
+        foreach (($slugSubBundle['data'] ?? []) as $into => $value) {
+            $data[$into] = $value;
+        }
+    }
 
     // Detail templates often use top-level field tags without a collection loop.
     // Ensure the detail collection's editor fields are trusted even if bundle
