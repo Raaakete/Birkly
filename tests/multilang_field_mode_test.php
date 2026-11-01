@@ -1,6 +1,6 @@
 <?php
 /**
- * Per-field multilanguage shared/localize mode (platform layer).
+ * Per-field multilanguage shared/localize mode (entry-level storage).
  */
 
 declare(strict_types=1);
@@ -31,45 +31,45 @@ assert_true(
     birkly_multilang_field_mode_default('text') === BIRKLY_MULTILANG_MODE_LOCALIZE
 );
 
-$schemaField = ['name' => 'hero', 'type' => 'text', 'multilanguage_mode' => 'shared'];
-assert_true(
-    'honours stored shared mode when multilang on',
-    birkly_multilang_field_is_shared($schemaField, true)
-);
-assert_true(
-    'multilang off ignores shared flag',
-    !birkly_multilang_field_is_shared($schemaField, false)
-);
-
-$entry = [
+$entryWithMode = [
     'id' => 'e1',
-    'en' => ['cover' => 'media-en'],
-    'de' => ['cover' => 'media-de'],
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => ['hero' => 'shared'],
 ];
+$textField = ['name' => 'hero', 'type' => 'text'];
 assert_true(
-    'stored shared reads first language block',
-    birkly_multilang_stored_shared_field_value($entry, 'cover', ['en', 'de']) === 'media-en'
+    'entry mode overrides type default',
+    birkly_multilang_field_is_shared_for_entry($textField, true, $entryWithMode)
 );
 
-$post = ['cover' => 'media-top'];
-assert_true(
-    'shared POST reads top-level field name',
-    birkly_multilang_shared_field_raw_from_post($post, 'cover', ['en', 'de']) === 'media-top'
-);
-
-$fields = [
-    ['name' => 'cover', 'type' => 'text', 'multilanguage_mode' => 'shared'],
-    ['name' => 'teaser', 'type' => 'text', 'multilanguage_mode' => 'localize'],
-];
-$entryOutput = ['id' => 'e1', 'en' => [], 'de' => []];
-$entryData = [
-    'cover' => 'one-image',
+$post = [
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => ['cover' => 'shared'],
+    'cover' => 'media-top',
     'en' => ['teaser' => 'Hello'],
     'de' => ['teaser' => 'Hallo'],
 ];
+$fields = [
+    ['name' => 'cover', 'type' => 'file'],
+    ['name' => 'teaser', 'type' => 'text'],
+];
+$modes = birkly_multilang_entry_field_modes_from_post($post, $fields, null, true);
+assert_true(
+    'POST stores shared mode on entry',
+    ($modes['cover'] ?? '') === 'shared'
+);
+assert_true(
+    'POST omits unchecked fields from explicit shared list',
+    !isset($modes['teaser']) || $modes['teaser'] === BIRKLY_MULTILANG_MODE_LOCALIZE
+);
+
+$entryOutput = [
+    'id' => 'e1',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => $modes,
+    'en' => [],
+    'de' => [],
+];
 $out = birkly_entry_apply_multilang_fields(
     $entryOutput,
-    $entryData,
+    $post,
     $fields,
     ['en', 'de'],
     null,
@@ -77,11 +77,11 @@ $out = birkly_entry_apply_multilang_fields(
 );
 assert_true(
     'shared field fan-out to en',
-    ($out['en']['cover'] ?? null) === 'one-image'
+    ($out['en']['cover'] ?? null) === 'media-top'
 );
 assert_true(
     'shared field fan-out to de',
-    ($out['de']['cover'] ?? null) === 'one-image'
+    ($out['de']['cover'] ?? null) === 'media-top'
 );
 assert_true(
     'localize field stays per language',
@@ -92,6 +92,7 @@ require_once dirname(__DIR__) . '/core/public_read.php';
 $publicEntry = [
     'id' => 'e1',
     'slug' => 'e1',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => ['cover' => 'shared'],
     'en' => ['cover' => 'canonical', 'teaser' => 'EN'],
     'de' => ['cover' => 'stale', 'teaser' => 'DE'],
 ];

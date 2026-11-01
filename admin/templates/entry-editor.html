@@ -190,14 +190,19 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                         </div>
                         <?php
                     };
-                    $renderFieldSlab = function (array $field, ?string $langCode = null, int $langIdx = 0) use ($entry) {
+                    $renderFieldSlab = function (array $field, ?string $langCode = null, int $langIdx = 0) use ($entry, $entryEditorHasLanguages) {
                         $fieldName = $field['name'] ?? '';
                         $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
                         $fieldLabelFor = $langCode !== null
                             ? 'field_' . $langCode . '_' . $fieldName
                             : ($field['label_for_id'] ?? ('field_' . $fieldName));
                         $fieldType = (string) ($field['type'] ?? '');
-                        $isSharedAcrossLangs = !empty($field['is_multilang_shared']);
+                        $isSharedAcrossLangs = !empty($field['is_multilang_shared'])
+                            || (($field['multilang_mode'] ?? '') === 'shared');
+                        $showMultilangModeToggle = $entryEditorHasLanguages
+                            && $fieldName !== ''
+                            && $fieldName !== 'title'
+                            && ($langCode === null || $langIdx === 0);
                         ?>
                         <div class="field-block entry-field<?= $isSharedAcrossLangs ? ' is-shared' : '' ?>" data-field-name="<?= htmlspecialchars($fieldName) ?>"<?= $fieldType !== '' ? ' data-fieldtype="' . htmlspecialchars($fieldType) . '"' : '' ?><?= $langCode !== null ? ' data-lang="' . htmlspecialchars($langCode) . '"' : '' ?>>
                             <div class="field-header">
@@ -207,6 +212,17 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <span class="required" aria-label="<?= htmlspecialchars(__('admin.required')) ?>">*</span>
                                     <?php endif; ?>
                                 </label>
+                                <?php if ($showMultilangModeToggle): ?>
+                                    <label class="entry-field-multilang-mode switch" title="<?= htmlspecialchars(__('admin.entry_editor_same_for_all_languages')) ?>">
+                                        <input type="checkbox"
+                                               name="multilang_field_modes[<?= htmlspecialchars($fieldName) ?>]"
+                                               value="shared"
+                                               class="entry-multilang-shared-toggle"
+                                               <?= $isSharedAcrossLangs ? 'checked' : '' ?>>
+                                        <span class="switch__slider"></span>
+                                        <span class="entry-field-multilang-mode__label"><?= htmlspecialchars(__('admin.entry_editor_same_for_all_languages')) ?></span>
+                                    </label>
+                                <?php endif; ?>
                             </div>
                             <div class="field-control">
                                 <?php if (!empty($field['html'])): ?>
@@ -227,7 +243,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <?php if ($fieldHelpText !== ''): ?>
                                 <p class="field-help field-subtitle"><?= htmlspecialchars($fieldHelpText) ?></p>
                             <?php endif; ?>
-                            <?php if ($isSharedAcrossLangs): ?>
+                            <?php if ($isSharedAcrossLangs && !$showMultilangModeToggle): ?>
                                 <p class="field-help"><?= htmlspecialchars(__('admin.entry_editor_field_shared_all_languages')) ?></p>
                             <?php endif; ?>
                             <div class="field-feedback error" role="alert" aria-live="polite"></div>

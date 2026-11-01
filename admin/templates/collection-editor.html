@@ -294,12 +294,6 @@ if (!$cancelUrl) {
                     <?php else: ?>
                     
                     <!-- Custom Fieldtypes -->
-                    <?php
-                    require_once dirname(__DIR__, 2) . '/core/entry_multilang_field_mode.php';
-                    $collectionMultilangEnabled = !empty($isSubCollection)
-                        ? !empty($subCollectionData['multilanguage']['enabled'])
-                        : !empty($collection['multilanguage']['enabled']);
-                    ?>
                     <div class="fields-section frame">
                         <div class="fields-section-head">
                             <h2 class="section-title"><?= __('admin.col_editor_collection_fields_title') ?> <span class="count" id="fields-count"><?= count($fields ?? []) ?></span></h2>
@@ -373,16 +367,6 @@ if (!$cancelUrl) {
                                                         <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
                                                         <span class="switch__slider"></span>
                                                     </label>
-                                                </div>
-                                            </div>
-                                            <div class="fieldtype-row field-multilang-mode-row"<?= !$collectionMultilangEnabled ? ' hidden' : '' ?>>
-                                                <div class="fieldtype-field">
-                                                    <label><?= __('admin.col_editor_multilang_field_mode') ?></label>
-                                                    <label class="switch">
-                                                        <input type="checkbox" name="fields[<?= $index ?>][multilanguage_shared]" value="1" <?= birkly_multilang_field_is_shared($field, true) ? 'checked' : '' ?>>
-                                                        <span class="switch__slider"></span>
-                                                    </label>
-                                                    <p class="field-help"><?= __('admin.col_editor_multilang_field_shared_help') ?></p>
                                                 </div>
                                             </div>
                                             <div class="fieldtype-config" data-field-index="<?= $index ?>"<?php if (($field['type'] ?? '') !== 'select' || empty($field['options'])): ?> hidden<?php endif; ?>>
@@ -1368,16 +1352,6 @@ echo htmlspecialchars($formCode);
                     </label>
                 </div>
             </div>
-            <div class="fieldtype-row field-multilang-mode-row" hidden>
-                <div class="fieldtype-field">
-                    <label><?= __('admin.col_editor_multilang_field_mode') ?></label>
-                    <label class="switch">
-                        <input type="checkbox" name="fields[__INDEX__][multilanguage_shared]" value="1">
-                        <span class="switch__slider"></span>
-                    </label>
-                    <p class="field-help"><?= __('admin.col_editor_multilang_field_shared_help') ?></p>
-                </div>
-            </div>
             <div class="fieldtype-config" data-field-index="__INDEX__" hidden>
                 <!-- Fieldtype-specific configuration will be loaded here -->
             </div>
@@ -1906,12 +1880,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         initFieldApiNameGeneration(fieldElement, { auto: true });
-
-        const multilangRow = fieldElement.querySelector('.field-multilang-mode-row');
-        const mlToggle = document.getElementById('multilanguage_enabled') || document.getElementById('sub-collection-multilanguage_enabled');
-        if (multilangRow && mlToggle) {
-            multilangRow.hidden = !mlToggle.checked;
-        }
         
         return fieldElement;
     }
@@ -2194,20 +2162,12 @@ document.addEventListener('DOMContentLoaded', function() {
         : 'multilanguage_languages[]';
     
     if (multilanguageEnabled && multilanguageSettings) {
-        const syncFieldMultilangModeRows = function () {
-            const visible = multilanguageEnabled.checked;
-            document.querySelectorAll('.field-multilang-mode-row').forEach(function (row) {
-                row.hidden = !visible;
-            });
-        };
         multilanguageEnabled.addEventListener('change', function() {
             multilanguageSettings.hidden = !this.checked;
-            syncFieldMultilangModeRows();
             if (this.checked) {
                 setTimeout(initLanguageInput, 100);
             }
         });
-        syncFieldMultilangModeRows();
     }
     
     // Language tags functionality with autocomplete

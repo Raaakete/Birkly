@@ -70,6 +70,17 @@ function birkly_sub_entry_prepare_save_data(
     $entryOutput = $existingEntry;
 
     if ($multilanguageLanguages !== []) {
+        require_once __DIR__ . '/entry_multilang_field_mode.php';
+        $fieldModes = birkly_multilang_entry_field_modes_from_post(
+            $entryData,
+            $fields,
+            $existingEntry,
+            true
+        );
+        if ($fieldModes !== []) {
+            $entryOutput[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $fieldModes;
+        }
+
         $entryOutput = birkly_entry_apply_multilang_fields(
             $entryOutput,
             $entryData,
