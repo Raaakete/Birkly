@@ -512,11 +512,15 @@ function createSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
     
     // Generate sub-entry ID
     $sub_entry_id = $data['id'] ?? uniqid('sub_', true);
-    
-    // Auto-fill title with sub-entry ID if not provided
-    if (empty(trim($data['title'] ?? ''))) {
-        $data['title'] = $sub_entry_id;
-    }
+
+    require_once __DIR__ . '/sub_entry_save.php';
+    $data = birkly_sub_entry_prepare_save_data(
+        $parent_collection,
+        $sub_collection,
+        $sub_entry_id,
+        $data,
+        null
+    );
     
     // Auto-populate parent reference
     $data['parent_collection'] = $parent_collection;
@@ -641,14 +645,19 @@ function updateSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
     if (!$existing) {
         return false; // Entry doesn't exist
     }
-    
-    // Auto-fill title with sub-entry ID if not provided
-    if (empty(trim($data['title'] ?? ''))) {
-        $data['title'] = $sub_entry_id;
-    }
+
+    require_once __DIR__ . '/sub_entry_save.php';
+    $data = birkly_sub_entry_prepare_save_data(
+        $parent_collection,
+        $sub_collection,
+        $sub_entry_id,
+        $data,
+        $existing
+    );
     
     // Merge data (preserve system fields)
     $updated = array_merge($existing, $data);
+    $updated = birkly_entry_strip_flat_lang_bracket_keys($updated);
     $updated['updated_at'] = date('c');
     
     // Preserve parent references and ancestry
