@@ -107,7 +107,7 @@ function birkly_fieldtype_mcp_hint_for_type(string $type): string
         'radio' => 'Single radio value.',
         'relation' => 'Relation objects; {relation_titles(\'field\')} or relation_links.',
         'oembed' => 'Embed URL; {oembed_html(\'field\')}.',
-        'dynamicitems' => 'Block list; {dynamicitems_html(\'field\')} or loop blocks.',
+        'dynamicitems' => 'Block list; {dynamicitems_html(\'field\')}, {dynamicitem(\'field\', \'blockName\')}, {\'field\'.\'blockName\'} (nested: {\'field\'.\'group\'.\'block\'}), or loop blocks.',
         'password' => 'Hashed; never returned on read ([redacted]); not for templates.',
     ];
 
