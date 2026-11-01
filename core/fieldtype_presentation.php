@@ -116,6 +116,30 @@ function birkly_page_bundle_field_type_map($storage, array $collectionSlugs): ar
     return $map;
 }
 
+/**
+ * Field type map from sub-collection schemas on page_bundle sub_entries requests.
+ *
+ * @param list<array<string,mixed>> $requests
+ * @return array<string,string>
+ */
+function birkly_page_bundle_sub_collection_field_type_map($storage, array $requests): array
+{
+    require_once __DIR__ . '/page_bundle_helpers.php';
+
+    $map = [];
+    foreach (birkly_page_bundle_collect_sub_collections($requests) as $pair) {
+        $config = birkly_sub_collection_config_from_storage($storage, $pair['parent'], $pair['sub']);
+        if (!is_array($config)) {
+            continue;
+        }
+        foreach (birkly_collection_field_type_map_from_meta(birkly_sub_collection_schema_meta($config)) as $name => $type) {
+            $map[$name] = $type;
+        }
+    }
+
+    return $map;
+}
+
 function birkly_fieldtype_outputs_html_for_type(string $type): bool
 {
     $type = strtolower(trim($type));

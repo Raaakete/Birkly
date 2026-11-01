@@ -109,6 +109,30 @@ function birkly_page_bundle_html_field_names($storage, array $collectionSlugs): 
 }
 
 /**
+ * HTML field names from sub-collection schemas referenced in page_bundle requests.
+ *
+ * @param list<array<string,mixed>> $requests
+ * @return list<string>
+ */
+function birkly_page_bundle_sub_collection_html_field_names($storage, array $requests): array
+{
+    require_once __DIR__ . '/page_bundle_helpers.php';
+
+    $all = [];
+    foreach (birkly_page_bundle_collect_sub_collections($requests) as $pair) {
+        $config = birkly_sub_collection_config_from_storage($storage, $pair['parent'], $pair['sub']);
+        if (!is_array($config)) {
+            continue;
+        }
+        foreach (birkly_collection_html_field_names_from_meta(birkly_sub_collection_schema_meta($config)) as $name) {
+            $all[$name] = true;
+        }
+    }
+
+    return array_keys($all);
+}
+
+/**
  * Extract the leaf field name from a template path (e.g. 'body', 'content'.0.'value').
  */
 function birkly_template_engine_field_name_for_escape(string $pathOrName): string

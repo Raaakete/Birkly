@@ -599,9 +599,7 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
             'lean' => true,
             'trusted_ssr' => true,
         ]);
-        foreach (($slugSubBundle['data'] ?? []) as $into => $value) {
-            $data[$into] = $value;
-        }
+        birkly_page_bundle_merge_into_data($data, $slugSubBundle['data'] ?? []);
     }
 
     // Detail templates often use top-level field tags without a collection loop.
@@ -665,9 +663,7 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
                         'lean' => true,
                         'trusted_ssr' => true,
                     ]);
-                    foreach (($subBundle['data'] ?? []) as $into => $value) {
-                        $data[$into] = $value;
-                    }
+                    birkly_page_bundle_merge_into_data($data, $subBundle['data'] ?? []);
 
                     $nestedRequests = birkly_project_ssr_build_nested_sub_entry_requests($html, $query, $data);
                     if ($nestedRequests !== []) {
@@ -675,9 +671,7 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
                             'lean' => true,
                             'trusted_ssr' => true,
                         ]);
-                        foreach (($nestedBundle['data'] ?? []) as $into => $value) {
-                            $data[$into] = $value;
-                        }
+                        birkly_page_bundle_merge_into_data($data, $nestedBundle['data'] ?? []);
                     }
                 }
             }

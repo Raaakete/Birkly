@@ -129,7 +129,8 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                     $subCollection,
                     is_string($parentSubCollection) ? $parentSubCollection : null,
                     is_string($parentSubEntryId) ? $parentSubEntryId : null,
-                    $storage
+                    $storage,
+                    $language
                 );
                 $entries = $result['data']['entries'] ?? [];
                 $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
@@ -170,6 +171,10 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
             $storage,
             birkly_page_bundle_collect_collections($requests)
         );
+        $subHtmlFieldNames = birkly_page_bundle_sub_collection_html_field_names($storage, $requests);
+        if ($subHtmlFieldNames !== []) {
+            $htmlFieldNames = array_values(array_unique(array_merge($htmlFieldNames, $subHtmlFieldNames)));
+        }
     } catch (Throwable $e) {
         error_log('page_bundle finalize error: ' . $e->getMessage());
         if ($revision === '') {
@@ -185,6 +190,10 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
         $storage,
         birkly_page_bundle_collect_collections($requests)
     );
+    $subFieldTypeMap = birkly_page_bundle_sub_collection_field_type_map($storage, $requests);
+    if ($subFieldTypeMap !== []) {
+        $fieldTypeMap = array_merge($fieldTypeMap, $subFieldTypeMap);
+    }
     if ($fieldTypeMap !== []) {
         $out['_field_types'] = $fieldTypeMap;
     }
