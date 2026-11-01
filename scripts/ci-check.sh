@@ -43,6 +43,7 @@ php tests/ai_presence_test.php
 
 echo "==> DynamicItems multilang tests"
 php tests/dynamicitems_multilang_test.php
+php tests/dynamicitems_template_engine_test.php
 
 echo "==> Multilanguage entry save tests"
 php tests/multilang_entry_save_test.php
