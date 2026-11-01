@@ -485,48 +485,20 @@ class BirklyVersion {
      */
     private static function checkUpdateInstallFilesystem(string $cmsRoot): ?string
     {
-        require_once __DIR__ . '/birkly_paths.php';
-        $root = rtrim($cmsRoot, '/\\');
+        require_once __DIR__ . '/hub_update_filesystem.php';
 
-        foreach (['core', 'admin', 'api', 'fieldtypes', 'backups'] as $dir) {
-            $path = $root . '/' . $dir;
-            if (!is_dir($path)) {
-                continue;
-            }
-
-            $writable = function_exists('birkly_path_is_writable')
-                ? birkly_path_is_writable($path)
-                : is_writable($path);
-
-            if (!$writable) {
-                return 'Cannot update Birkly: the server cannot write to ' . $dir . '/. '
-                    . 'Hub updates need PHP to update program folders (core/, admin/, api/), not only content/ and media/. '
-                    . 'Ask your hosting provider to fix permissions on the CMS installation.';
-            }
-        }
-
-        $dataPath = $root . '/data';
-        if (!is_dir($dataPath)) {
-            @mkdir($dataPath, 0755, true);
-        }
-        require_once __DIR__ . '/update_staging.php';
-        $stagingRoot = birkly_update_offload_staging_root($root);
-        if (!is_dir($stagingRoot) && !@mkdir($stagingRoot, 0755, true)) {
-            return 'Cannot update Birkly: the server cannot write to data/cms_update_staging/. '
-                . 'Ask your hosting provider to allow PHP to write under data/.';
-        }
-
-        return null;
+        return birkly_hub_update_preflight_error($cmsRoot);
     }
 
     private static function updateInstallFailureMessage(string $cmsRoot, ?string $relativePath): string
     {
-        $detail = $relativePath !== null && $relativePath !== '' ? ' (' . $relativePath . ')' : '';
-        $permHint = self::checkUpdateInstallFilesystem($cmsRoot);
-        if ($permHint !== null) {
-            return $permHint;
+        require_once __DIR__ . '/hub_update_filesystem.php';
+        $preflight = birkly_hub_update_preflight_error($cmsRoot);
+        if ($preflight !== null && !birkly_hub_update_program_dirs_writable($cmsRoot)) {
+            return $preflight;
         }
 
+        $detail = $relativePath !== null && $relativePath !== '' ? ' (' . $relativePath . ')' : '';
         $hint = PHP_OS_FAMILY === 'Windows'
             ? ' On Windows, fully stop the Birkly server, then try Install again.'
             : ' Reload the admin page and try Install again. If it keeps failing, ask your host to allow PHP to replace files under core/, admin/, and api/.';
@@ -1279,6 +1251,9 @@ class BirklyVersion {
         $currentVersion = self::getCurrentVersion();
         $updateInfo = self::checkForUpdates();
 
+        require_once __DIR__ . '/hub_update_filesystem.php';
+        $installMode = birkly_hub_update_install_mode();
+
         if (isset($updateInfo['error'])) {
             return [
                 'status' => 'ok',
@@ -1289,6 +1264,10 @@ class BirklyVersion {
                 'published_at' => '',
                 'prerelease' => false,
                 'update_check_error' => self::sanitizeUpdateText((string) $updateInfo['error']),
+                'install_mode' => $installMode,
+                'install_notice' => $installMode === 'docker_redeploy'
+                    ? birkly_hub_update_docker_redeploy_message()
+                    : '',
             ];
         }
 
@@ -1301,6 +1280,10 @@ class BirklyVersion {
             'published_at' => (string) ($updateInfo['published_at'] ?? ''),
             'prerelease' => !empty($updateInfo['prerelease']),
             'source' => $updateInfo['source'] ?? null,
+            'install_mode' => $installMode,
+            'install_notice' => $installMode === 'docker_redeploy'
+                ? birkly_hub_update_docker_redeploy_message()
+                : '',
         ];
     }
 }

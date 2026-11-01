@@ -111,14 +111,28 @@ chmod -R 777 $chmod_dirs 2>/dev/null || true
 
 # In-app Hub updates copy files under core/, admin/, api/, and fieldtypes/.
 # The image ships those trees as root; PHP-FPM runs as www-data.
-for dir in /app/core /app/admin /app/api /app/fieldtypes; do
-  if [ -d "$dir" ]; then
-    chown -R www-data:www-data "$dir" 2>/dev/null || true
+ensure_hub_program_tree_writable() {
+  dir="$1"
+  if [ ! -d "$dir" ]; then
+    return 0
   fi
+  chown -R www-data:www-data "$dir" 2>/dev/null || true
+  find "$dir" -type d -exec chmod 775 {} \; 2>/dev/null || true
+  find "$dir" -type f -exec chmod 664 {} \; 2>/dev/null || true
+  if ! su -s /bin/sh www-data -c "touch \"$dir/.birkly-write-test\"" 2>/dev/null; then
+    echo "[entrypoint] WARN: $dir not writable by www-data — applying permissive mode for Hub updates"
+    chmod -R a+rwx "$dir" 2>/dev/null || true
+  fi
+  rm -f "$dir/.birkly-write-test" 2>/dev/null || true
+}
+
+for dir in /app/core /app/admin /app/api /app/fieldtypes; do
+  ensure_hub_program_tree_writable "$dir"
 done
 for f in /app/index.php /app/VERSION /app/server-router.php /app/invite.php; do
   if [ -f "$f" ]; then
     chown www-data:www-data "$f" 2>/dev/null || true
+    chmod 664 "$f" 2>/dev/null || true
   fi
 done
 mkdir -p /app/backups 2>/dev/null || true
