@@ -215,6 +215,7 @@ class DynamicItems extends BaseField {
             align-items: center;
             gap: var(--s-2);
             margin-block-end: var(--s-2);
+            flex-wrap: wrap;
         }
         .block-item-info {
             display: flex;

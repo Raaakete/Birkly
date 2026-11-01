@@ -112,4 +112,50 @@ assert_true(
     ($merged['teaser'] ?? null) === 'DE'
 );
 
+assert_true(
+    'dynamicitems wrapper is never shared',
+    !birkly_multilang_field_is_shared_for_entry(['name' => 'content', 'type' => 'dynamicitems'], true, [])
+);
+
+$nestedPost = [
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => [
+        'content' => ['before_text' => 'shared'],
+    ],
+    'en' => ['content' => json_encode([['name' => 'before_text', 'type' => 'text', 'value' => 'Hello']])],
+    'de' => ['content' => json_encode([['name' => 'before_text', 'type' => 'text', 'value' => 'Alt']])],
+];
+$dynamicFields = [
+    ['name' => 'content', 'type' => 'dynamicitems'],
+];
+$nestedModes = birkly_multilang_entry_field_modes_from_post($nestedPost, $dynamicFields, null, true);
+assert_true(
+    'nested POST stores block mode key',
+    ($nestedModes['content.before_text'] ?? '') === 'shared'
+);
+
+$dynamicOut = [
+    'id' => 'e2',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => $nestedModes,
+    'en' => [
+        'content' => [
+            ['name' => 'before_text', 'type' => 'text', 'value' => 'Hello'],
+        ],
+    ],
+    'de' => [
+        'content' => [
+            ['name' => 'before_text', 'type' => 'text', 'value' => 'Alt'],
+        ],
+    ],
+];
+$dynamicOut = birkly_multilang_entry_apply_shared_dynamic_block_values(
+    $dynamicOut,
+    $dynamicFields,
+    ['en', 'de'],
+    $nestedModes
+);
+assert_true(
+    'shared dynamic block fan-out to de',
+    ($dynamicOut['de']['content'][0]['value'] ?? null) === 'Hello'
+);
+
 exit($failures > 0 ? 1 : 0);
