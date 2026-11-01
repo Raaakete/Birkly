@@ -950,11 +950,17 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
         return [];
     }
 
+    require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+
     $languageFields = [];
     foreach ($languages as $langCode) {
         $langFields = [];
         foreach ($fields as $f) {
             $name = $f['name'] ?? '';
+            if ($name !== '' && $name !== 'title' && birkly_multilang_field_is_shared($f, $multilanguageEnabled)) {
+                continue;
+            }
             $langField = $f;
             $langValue = $entry[$langCode][$name] ?? '';
             if ($name === 'title' && birkly_entry_title_is_placeholder((string) $langValue, $entry)) {
@@ -994,6 +1000,47 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
     }
 
     return $languageFields;
+}
+
+/**
+ * Fields stored once for all languages (rendered outside language tabs).
+ *
+ * @param list<array<string, mixed>> $fields
+ * @return list<array<string, mixed>>
+ */
+function birkly_admin_build_shared_multilang_fields(
+    array $fields,
+    array $entry,
+    array $collectionData,
+    bool $includeFieldHtml
+): array {
+    $languages = $collectionData['multilanguage']['languages'] ?? [];
+    if (empty($languages) || empty($collectionData['multilanguage']['enabled'])) {
+        return [];
+    }
+
+    require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+
+    $shared = [];
+    foreach ($fields as $f) {
+        $name = (string) ($f['name'] ?? '');
+        if ($name === '' || $name === 'title') {
+            continue;
+        }
+        if (!birkly_multilang_field_is_shared($f, true)) {
+            continue;
+        }
+
+        $field = $f;
+        $field['is_multilang_shared'] = true;
+        $field['lang_value'] = birkly_multilang_stored_shared_field_value($entry, $name, $languages);
+        if ($includeFieldHtml && !empty($f['html'])) {
+            $field['html'] = $f['html'];
+        }
+        $shared[] = $field;
+    }
+
+    return $shared;
 }
 
 function getEntryEditorData($includeFieldHtml = false) {
@@ -1457,8 +1504,14 @@ function getEntryEditorData($includeFieldHtml = false) {
             $defaultLang = !empty($multilanguageLanguages) ? $multilanguageLanguages[0] : 'en';
             
             $rawValue = ($payload['entry'][$name] ?? null);
-            // If multi-language is enabled and value is not at top level, try default language
-            if ($rawValue === null && $multilanguageEnabled && !empty($multilanguageLanguages) && isset($payload['entry'][$defaultLang][$name])) {
+            require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+            if ($multilanguageEnabled && birkly_multilang_field_is_shared($f, true)) {
+                $rawValue = birkly_multilang_stored_shared_field_value(
+                    $payload['entry'] ?? [],
+                    $name,
+                    $multilanguageLanguages
+                );
+            } elseif ($rawValue === null && $multilanguageEnabled && !empty($multilanguageLanguages) && isset($payload['entry'][$defaultLang][$name])) {
                 $rawValue = $payload['entry'][$defaultLang][$name];
             }
 
@@ -1506,7 +1559,9 @@ function getEntryEditorData($includeFieldHtml = false) {
                     $fieldConfig = birkly_admin_prepare_fieldtype_config(
                         $f,
                         $value,
-                        $multilanguageEnabled ? $defaultLang : null,
+                        ($multilanguageEnabled && birkly_multilang_field_is_shared($f, true))
+                            ? null
+                            : ($multilanguageEnabled ? $defaultLang : null),
                         $payload['entry'] ?? []
                     );
                     
@@ -1631,6 +1686,12 @@ function getEntryEditorData($includeFieldHtml = false) {
     $payload['multilanguage_languages'] = $collectionData['multilanguage']['languages'] ?? [];
     if ($payload['multilanguage_enabled'] && !empty($payload['multilanguage_languages'])) {
         $payload['language_fields'] = birkly_admin_build_language_fields(
+            $payload['fields'] ?? [],
+            $payload['entry'] ?? [],
+            $collectionData,
+            $includeFieldHtml
+        );
+        $payload['shared_fields'] = birkly_admin_build_shared_multilang_fields(
             $payload['fields'] ?? [],
             $payload['entry'] ?? [],
             $collectionData,
