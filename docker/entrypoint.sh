@@ -108,6 +108,23 @@ else
 fi
 
 chmod -R 777 $chmod_dirs 2>/dev/null || true
+
+# In-app Hub updates copy files under core/, admin/, api/, and fieldtypes/.
+# The image ships those trees as root; PHP-FPM runs as www-data.
+for dir in /app/core /app/admin /app/api /app/fieldtypes; do
+  if [ -d "$dir" ]; then
+    chown -R www-data:www-data "$dir" 2>/dev/null || true
+  fi
+done
+for f in /app/index.php /app/VERSION /app/server-router.php /app/invite.php; do
+  if [ -f "$f" ]; then
+    chown www-data:www-data "$f" 2>/dev/null || true
+  fi
+done
+mkdir -p /app/backups 2>/dev/null || true
+chown -R www-data:www-data /app/backups 2>/dev/null || true
+chmod 775 /app/backups 2>/dev/null || true
+
 rm -f /var/run/nginx.pid /var/run/nginx.pid.lock 2>/dev/null || true
 
 if [ -f /app/scripts/repair-starter-content.php ]; then
