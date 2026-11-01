@@ -30,22 +30,35 @@
         alert(message);
     }
 
-    function initFileField(fieldNameOrEl) {
+    function resolveFileFieldContainer(fieldNameOrEl) {
+        if (fieldNameOrEl && fieldNameOrEl.nodeType === 1) {
+            if (fieldNameOrEl.classList && fieldNameOrEl.classList.contains('file-field')) {
+                return fieldNameOrEl;
+            }
+            if (fieldNameOrEl.closest) {
+                const root = fieldNameOrEl.closest('.file-field');
+                if (root) return root;
+            }
+        }
         const fieldName = resolveFileFieldName(fieldNameOrEl);
-        const container = document.getElementById('field_' + fieldName);
+        return fieldName ? document.getElementById('field_' + fieldName) : null;
+    }
+
+    function initFileField(fieldNameOrEl) {
+        const container = resolveFileFieldContainer(fieldNameOrEl);
         if (!container || container.dataset.fileFieldReady === '1') return;
-        
+
         const selectBtn = container.querySelector('.select-file-btn');
         const uploadBtn = container.querySelector('.upload-file-btn');
         const removeBtn = container.querySelector('.remove-file-btn');
-        const fileInput = container.querySelector('#file_input_' + fieldName);
-        const hiddenInput = container.querySelector('#field_' + fieldName + '_value');
+        const fileInput = container.querySelector('input[type="file"]');
+        const hiddenInput = container.querySelector('input[type="hidden"]');
         const previewContainer = container.querySelector('.file-preview-container');
         const metaEl = container.querySelector('.file-meta');
         const selectLabel = container.querySelector('.file-select-label');
         const uploadLabel = container.querySelector('.file-upload-label');
-        
-        if (!selectBtn || !fileInput || !hiddenInput) return;
+
+        if (!selectBtn || !hiddenInput) return;
         container.dataset.fileFieldReady = '1';
         
         // Select file from media library
@@ -59,10 +72,9 @@
                             setFileValue(media);
                         },
                         allowMultiple: false,
-                        accept: fileInput.getAttribute('accept') || ''
+                        accept: (fileInput && fileInput.getAttribute('accept')) || ''
                     });
-                } else {
-                    // Fallback: trigger file input
+                } else if (fileInput) {
                     fileInput.click();
                 }
             });
@@ -209,10 +221,7 @@
     // Initialize all file fields
     function initAllFileFields() {
         document.querySelectorAll('.file-field').forEach(function(container) {
-            const fieldName = container.id.replace('field_', '');
-            if (fieldName) {
-                initFileField(fieldName);
-            }
+            initFileField(container);
         });
     }
     
