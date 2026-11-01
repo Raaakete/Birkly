@@ -158,4 +158,18 @@ assert_true(
     ($dynamicOut['de']['content'][0]['value'] ?? null) === 'Hello'
 );
 
+$flatModesPost = [
+    'multilang_field_modes[cover]' => 'shared',
+    'multilang_field_modes[content][before_text]' => 'shared',
+    'en' => ['teaser' => 'Hi'],
+];
+$normalizedFlat = birkly_entry_data_normalize_multilang_post_keys($flatModesPost);
+assert_true(
+    'flat bracket keys normalize to multilang_field_modes tree',
+    is_array($normalizedFlat['multilang_field_modes'] ?? null)
+        && ($normalizedFlat['multilang_field_modes']['cover'] ?? '') === 'shared'
+        && ($normalizedFlat['multilang_field_modes']['content']['before_text'] ?? '') === 'shared'
+        && !isset($normalizedFlat['multilang_field_modes[cover]'])
+);
+
 exit($failures > 0 ? 1 : 0);

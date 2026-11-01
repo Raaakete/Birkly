@@ -266,6 +266,54 @@
         }
     }
 
+    function collectMultilangFieldModesFromForm(form) {
+        const modes = {};
+        if (!form) {
+            return modes;
+        }
+        form.querySelectorAll('.entry-multilang-shared-toggle').forEach(function (toggle) {
+            const name = toggle.getAttribute('name') || '';
+            const match = name.match(/^multilang_field_modes\[([^\]]+)\](?:\[([^\]]+)\])?$/);
+            if (!match) {
+                return;
+            }
+            const mode = toggle.checked ? 'shared' : 'localize';
+            if (match[2]) {
+                if (!modes[match[1]] || typeof modes[match[1]] !== 'object') {
+                    modes[match[1]] = {};
+                }
+                modes[match[1]][match[2]] = mode;
+            } else {
+                modes[match[1]] = mode;
+            }
+        });
+        return modes;
+    }
+
+    function appendMultilangFieldModesToFormData(formData, modes) {
+        Object.keys(modes).forEach(function (fieldName) {
+            const value = modes[fieldName];
+            if (value && typeof value === 'object') {
+                Object.keys(value).forEach(function (blockName) {
+                    formData.append(
+                        'multilang_field_modes[' + fieldName + '][' + blockName + ']',
+                        value[blockName]
+                    );
+                });
+            } else {
+                formData.append('multilang_field_modes[' + fieldName + ']', value);
+            }
+        });
+    }
+
+    function stripFlatMultilangModeKeys(data) {
+        Object.keys(data).forEach(function (key) {
+            if (key.indexOf('multilang_field_modes[') === 0) {
+                delete data[key];
+            }
+        });
+    }
+
     function showEntrySavedToast(message, type) {
         if (typeof BirklyFeedback !== 'undefined' && BirklyFeedback.toast) {
             BirklyFeedback.toast(message, type || 'success');
@@ -1427,6 +1475,12 @@
                     data['parent_sub_collection'] = finalParentSubCollection;
                     data['parent_sub_entry_id'] = finalParentSubEntryId;
                 }
+
+                const multilangModes = collectMultilangFieldModesFromForm(form);
+                stripFlatMultilangModeKeys(data);
+                if (Object.keys(multilangModes).length > 0) {
+                    data.multilang_field_modes = multilangModes;
+                }
                 
                 const requestBody = {
                     action: action,
@@ -1539,6 +1593,14 @@
                     }
                 });
                 
+                for (const key of Array.from(fieldMap.keys())) {
+                    if (key.indexOf('multilang_field_modes[') === 0) {
+                        fieldMap.delete(key);
+                    }
+                }
+
+                const multilangModes = collectMultilangFieldModesFromForm(form);
+                
                 // Now build FormData from the map
                 for (const [name, value] of fieldMap.entries()) {
                     if (value && value.files) {
@@ -1550,6 +1612,8 @@
                         finalFormData.append(name, value);
                     }
                 }
+                
+                appendMultilangFieldModesToFormData(finalFormData, multilangModes);
                 
                 // Add collection and entry_id if they exist
                 const collection = formData.get('collection');
@@ -1643,22 +1707,29 @@
                     }
 
                     if (isSubEntry) {
-                        // For sub-entries, redirect back to parent entry detail page
                         const parentCollection = formData.get('parent_collection') || formData.get('collection');
                         const parentEntryId = formData.get('parent_entry_id');
+                        const subCollection = formData.get('sub_collection');
+                        const savedSubEntryId = (data.data && data.data.entry && data.data.entry.id)
+                            || formData.get('sub_entry_id')
+                            || '';
                         const parentSubCollection = formData.get('parent_sub_collection');
                         const parentSubEntryId = formData.get('parent_sub_entry_id');
-                        
-                        // Build redirect URL - if nested sub-entry, include parent sub-entry info
-                        const detailParams = {
+
+                        const editorParams = {
                             collection: parentCollection,
                             entry: parentEntryId,
+                            sub_collection: subCollection,
                         };
-                        if (parentSubCollection && parentSubEntryId) {
-                            detailParams.sub_collection = parentSubCollection;
-                            detailParams.sub_entry = parentSubEntryId;
+                        if (savedSubEntryId) {
+                            editorParams.sub_entry = savedSubEntryId;
                         }
-                        let redirectUrl = Birkly.adminUrl('entry-detail', detailParams);
+                        if (parentSubCollection && parentSubEntryId) {
+                            editorParams.parent_sub_collection = parentSubCollection;
+                            editorParams.parent_sub_entry = parentSubEntryId;
+                        }
+
+                        let redirectUrl = Birkly.adminUrl('entry-editor', editorParams);
                         redirectUrl += `&_t=${Date.now()}`;
                         if (isSafeAdminRedirectUrl(redirectUrl)) {
                             window.location.href = redirectUrl;
