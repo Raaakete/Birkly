@@ -1045,6 +1045,7 @@
         "col_editor_multilang_field_mode": "Igual para todos los idiomas",
         "col_editor_multilang_field_shared_help": "Activado: un valor para todas las pestañas de idioma. Desactivado: cada idioma tiene su propio valor.",
         "entry_editor_field_shared_all_languages": "Compartido por todos los idiomas — edítelo una sola vez aquí.",
+        "entry_editor_same_for_all_languages": "Igual para todos los idiomas",
         "col_editor_name_ph_blog": "p. ej., Entradas del blog",
         "col_editor_name_ph_comments": "e.g., Comentarios",
         "col_editor_name_ph_replies": "p. ej., Respuestas",

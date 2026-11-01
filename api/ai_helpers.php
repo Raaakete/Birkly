@@ -193,8 +193,13 @@ function birkly_ai_apply_entry_field_updates(
     $entryOutput = $entry;
 
     if ($multilanguageLanguages !== []) {
+        require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
         $schema = birkly_entry_read_schema($collectionSlug);
         $fields = is_array($schema['fields'] ?? null) ? $schema['fields'] : [];
+        $fieldModes = birkly_multilang_entry_field_modes_from_post($updateData, $fields, $entry, true);
+        if ($fieldModes !== []) {
+            $entryOutput[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $fieldModes;
+        }
         $entryOutput = birkly_entry_apply_multilang_fields(
             $entryOutput,
             $updateData,

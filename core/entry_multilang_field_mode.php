@@ -1,6 +1,9 @@
 <?php
 /**
  * Per-field multilanguage mode (shared vs localize) — platform layer, not fieldtypes.
+ *
+ * Mode is stored per entry in `multilang_field_modes` (author choice at edit time).
+ * Type defaults apply when a field has no stored mode yet.
  */
 
 declare(strict_types=1);
@@ -8,8 +11,10 @@ declare(strict_types=1);
 const BIRKLY_MULTILANG_MODE_LOCALIZE = 'localize';
 const BIRKLY_MULTILANG_MODE_SHARED = 'shared';
 
+const BIRKLY_MULTILANG_ENTRY_MODES_KEY = 'multilang_field_modes';
+
 /**
- * Default mode for a field type when multilanguage is enabled and the editor did not choose.
+ * Default mode for a field type when multilanguage is enabled and the entry has no choice yet.
  */
 function birkly_multilang_field_mode_default(string $fieldType): string
 {
@@ -34,25 +39,79 @@ function birkly_multilang_field_mode_default(string $fieldType): string
 }
 
 /**
- * Effective mode for a schema field (always localize when collection multilanguage is off).
+ * @return array<string, string>
+ */
+function birkly_multilang_entry_field_modes(array $entry): array
+{
+    $modes = $entry[BIRKLY_MULTILANG_ENTRY_MODES_KEY] ?? [];
+    if (!is_array($modes)) {
+        return [];
+    }
+
+    $normalized = [];
+    foreach ($modes as $fieldName => $mode) {
+        if (!is_string($fieldName) || $fieldName === '') {
+            continue;
+        }
+        if ($mode === BIRKLY_MULTILANG_MODE_SHARED || $mode === BIRKLY_MULTILANG_MODE_LOCALIZE) {
+            $normalized[$fieldName] = $mode;
+        }
+    }
+
+    return $normalized;
+}
+
+/**
+ * Effective mode for one schema field on an entry (always localize when collection multilanguage is off).
  *
  * @param array<string, mixed> $field
+ * @param array<string, mixed> $entry
  */
-function birkly_multilang_field_mode(array $field, bool $multilanguageEnabled): string
+function birkly_multilang_field_mode_for_entry(array $field, bool $multilanguageEnabled, array $entry): string
 {
     if (!$multilanguageEnabled) {
         return BIRKLY_MULTILANG_MODE_LOCALIZE;
     }
 
-    $stored = $field['multilanguage_mode'] ?? '';
-    if ($stored === BIRKLY_MULTILANG_MODE_SHARED || $stored === BIRKLY_MULTILANG_MODE_LOCALIZE) {
-        return $stored;
+    $fieldName = (string) ($field['name'] ?? '');
+    if ($fieldName !== '') {
+        $entryModes = birkly_multilang_entry_field_modes($entry);
+        if (isset($entryModes[$fieldName])) {
+            return $entryModes[$fieldName];
+        }
+    }
+
+    // Legacy: collection schema mode (read-only fallback for older collections).
+    $schemaMode = $field['multilanguage_mode'] ?? '';
+    if ($schemaMode === BIRKLY_MULTILANG_MODE_SHARED || $schemaMode === BIRKLY_MULTILANG_MODE_LOCALIZE) {
+        return $schemaMode;
     }
 
     return birkly_multilang_field_mode_default((string) ($field['type'] ?? ''));
 }
 
 /**
+ * @param array<string, mixed> $field
+ * @param array<string, mixed> $entry
+ */
+function birkly_multilang_field_is_shared_for_entry(array $field, bool $multilanguageEnabled, array $entry): bool
+{
+    return birkly_multilang_field_mode_for_entry($field, $multilanguageEnabled, $entry) === BIRKLY_MULTILANG_MODE_SHARED;
+}
+
+/**
+ * @deprecated Use birkly_multilang_field_mode_for_entry()
+ *
+ * @param array<string, mixed> $field
+ */
+function birkly_multilang_field_mode(array $field, bool $multilanguageEnabled): string
+{
+    return birkly_multilang_field_mode_for_entry($field, $multilanguageEnabled, []);
+}
+
+/**
+ * @deprecated Use birkly_multilang_field_is_shared_for_entry()
+ *
  * @param array<string, mixed> $field
  */
 function birkly_multilang_field_is_shared(array $field, bool $multilanguageEnabled): bool
@@ -61,30 +120,57 @@ function birkly_multilang_field_is_shared(array $field, bool $multilanguageEnabl
 }
 
 /**
- * Persist multilanguage_mode on a schema field row from collection editor POST.
+ * Merge POST toggles with existing entry modes and type defaults for every schema field.
  *
- * @param array<string, mixed> $field
- * @param array<string, mixed> $fieldData
- * @return array<string, mixed>
+ * @param array<string, mixed> $entryData
+ * @param list<array<string, mixed>> $fields
+ * @param array<string, mixed>|null $existingEntry
+ * @return array<string, string>
  */
-function birkly_multilang_schema_field_apply_mode(array $field, array $fieldData, bool $multilanguageEnabled): array
-{
+function birkly_multilang_entry_field_modes_from_post(
+    array $entryData,
+    array $fields,
+    ?array $existingEntry,
+    bool $multilanguageEnabled
+): array {
     if (!$multilanguageEnabled) {
-        unset($field['multilanguage_mode']);
-
-        return $field;
+        return [];
     }
 
-    $type = (string) ($field['type'] ?? '');
-    if (!empty($fieldData['multilanguage_shared']) || ($fieldData['multilanguage_mode'] ?? '') === BIRKLY_MULTILANG_MODE_SHARED) {
-        $field['multilanguage_mode'] = BIRKLY_MULTILANG_MODE_SHARED;
-    } elseif (($fieldData['multilanguage_mode'] ?? '') === BIRKLY_MULTILANG_MODE_LOCALIZE) {
-        $field['multilanguage_mode'] = BIRKLY_MULTILANG_MODE_LOCALIZE;
-    } else {
-        $field['multilanguage_mode'] = birkly_multilang_field_mode_default($type);
+    $posted = $entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY] ?? [];
+    if (!is_array($posted)) {
+        $posted = [];
     }
 
-    return $field;
+    $existing = is_array($existingEntry) ? birkly_multilang_entry_field_modes($existingEntry) : [];
+    $resolved = [];
+
+    foreach ($fields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $fieldName = (string) ($field['name'] ?? '');
+        if ($fieldName === '' || $fieldName === 'title') {
+            continue;
+        }
+
+        if (array_key_exists($fieldName, $posted)) {
+            $raw = $posted[$fieldName];
+            $resolved[$fieldName] = ($raw === BIRKLY_MULTILANG_MODE_SHARED || $raw === '1' || $raw === 1 || $raw === true)
+                ? BIRKLY_MULTILANG_MODE_SHARED
+                : BIRKLY_MULTILANG_MODE_LOCALIZE;
+            continue;
+        }
+
+        if (isset($existing[$fieldName])) {
+            $resolved[$fieldName] = $existing[$fieldName];
+            continue;
+        }
+
+        $resolved[$fieldName] = birkly_multilang_field_mode_for_entry($field, true, []);
+    }
+
+    return $resolved;
 }
 
 /**
@@ -177,7 +263,7 @@ function birkly_multilang_public_apply_shared_fields(
         if ($fieldName === '' || $fieldName === 'title') {
             continue;
         }
-        if (!birkly_multilang_field_is_shared($field, true)) {
+        if (!birkly_multilang_field_is_shared_for_entry($field, true, $entry)) {
             continue;
         }
         if (!function_exists('birkly_fieldtype_persists_in_entry')) {

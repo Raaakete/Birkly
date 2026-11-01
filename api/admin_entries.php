@@ -651,76 +651,26 @@ function saveEntry() {
     
     // Handle multi-language content structure
     if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
-        foreach ($multilanguageLanguages as $langCode) {
-            if (!isset($entryOutput[$langCode]) || !is_array($entryOutput[$langCode])) {
-                $entryOutput[$langCode] = is_array($entry[$langCode] ?? null) ? $entry[$langCode] : [];
-            }
+        require_once __DIR__ . '/../core/entry_multilang.php';
+        require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
 
-            foreach ($fields as $field) {
-                $fieldName = $field['name'] ?? '';
-                if ($fieldName === '') {
-                    continue;
-                }
-
-                $rawValue = birkly_entry_lang_field_raw($entryData, $langCode, $fieldName);
-                if ($rawValue === null) {
-                    continue;
-                }
-
-                if (!birkly_fieldtype_persists_in_entry($field)) {
-                    continue;
-                }
-
-                $fieldType = $field['type'] ?? '';
-                if ($fieldType === 'password' && trim((string) $rawValue) === '') {
-                    if (isset($entry[$langCode][$fieldName])) {
-                        $entryOutput[$langCode][$fieldName] = $entry[$langCode][$fieldName];
-                    } elseif (isset($entry[$fieldName])) {
-                        $entryOutput[$langCode][$fieldName] = $entry[$fieldName];
-                    }
-                    continue;
-                }
-                $value = $rawValue;
-
-                if ($fieldType !== '') {
-                    $className = getFieldtypeClass($fieldType);
-                    if ($className && class_exists($className)) {
-                        try {
-                            $tempErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED & ~E_WARNING);
-                            $ft = new $className([
-                                'name' => $fieldName,
-                                'label' => $field['label'] ?? $fieldName,
-                                'value' => $rawValue,
-                                'required' => $field['required'] ?? false,
-                                'options' => $field['options'] ?? [],
-                            ]);
-                            error_reporting($tempErrorReporting);
-
-                            if (method_exists($ft, 'processValue')) {
-                                $value = $ft->processValue($rawValue);
-                            }
-                        } catch (Exception $e) {
-                            error_log("Error processing fieldtype {$fieldType} for field {$fieldName}: " . $e->getMessage());
-                        }
-                    }
-                }
-
-                $entryOutput[$langCode][$fieldName] = $value;
-            }
-
-            // Title is always in the editor but may be absent from collection schema.
-            $rawTitle = birkly_entry_lang_field_raw($entryData, $langCode, 'title');
-            if ($rawTitle !== null) {
-                $entryOutput[$langCode]['title'] = trim((string) $rawTitle);
-            }
+        $fieldModes = birkly_multilang_entry_field_modes_from_post(
+            $entryData,
+            $fields,
+            is_array($entry) ? $entry : null,
+            true
+        );
+        if ($fieldModes !== []) {
+            $entryOutput[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $fieldModes;
         }
 
-        $entryOutput['title'] = birkly_entry_resolve_top_level_title(
+        $entryOutput = birkly_entry_apply_multilang_fields(
             $entryOutput,
             $entryData,
+            $fields,
             $multilanguageLanguages,
-            $entryId,
-            is_array($entry) ? $entry : null
+            is_array($entry) ? $entry : null,
+            $entryId
         );
     } else {
         // Single language - process fields normally
