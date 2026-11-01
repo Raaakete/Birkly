@@ -112,6 +112,38 @@ function birkly_public_transform_entry_for_language($entry, $language, $multilan
     return $transformed;
 }
 
+/**
+ * @param list<array<string, mixed>>|null $schemaFields
+ */
+function birkly_public_transform_entry_for_language_with_schema(
+    $entry,
+    $language,
+    $multilanguageEnabled,
+    $multilanguageLanguages,
+    ?array $schemaFields = null
+) {
+    $transformed = birkly_public_transform_entry_for_language(
+        $entry,
+        $language,
+        $multilanguageEnabled,
+        $multilanguageLanguages
+    );
+
+    if (!$multilanguageEnabled || !is_array($schemaFields) || $schemaFields === []) {
+        return $transformed;
+    }
+
+    require_once __DIR__ . '/entry_multilang_field_mode.php';
+
+    return birkly_multilang_public_apply_shared_fields(
+        $transformed,
+        is_array($entry) ? $entry : [],
+        $schemaFields,
+        is_array($multilanguageLanguages) ? $multilanguageLanguages : [],
+        true
+    );
+}
+
 /** @return list<string> */
 function birkly_public_system_read_fields(): array
 {
