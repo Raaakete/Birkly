@@ -488,7 +488,7 @@ class BirklyVersion {
         require_once __DIR__ . '/birkly_paths.php';
         $root = rtrim($cmsRoot, '/\\');
 
-        foreach (['core', 'admin', 'api', 'fieldtypes'] as $dir) {
+        foreach (['core', 'admin', 'api', 'fieldtypes', 'backups'] as $dir) {
             $path = $root . '/' . $dir;
             if (!is_dir($path)) {
                 continue;
