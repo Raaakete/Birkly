@@ -312,6 +312,11 @@ class BirklyVersion {
             'project/',
             'data/',
             'runtime/',
+            // Marketplace-owned; release zip only ships README/.gitkeep (P10 grandfather policy).
+            'plugins/',
+            'themes/',
+            'cache/',
+            'temp/',
             '.env',
             'config.php',
         ];
@@ -446,11 +451,11 @@ class BirklyVersion {
         }
 
         if (@copy($source, $stagingPath)) {
-            return is_file($stagingPath) && filesize($stagingPath) > 0;
+            return is_file($stagingPath);
         }
 
         $data = @file_get_contents($source);
-        if ($data === false || $data === '') {
+        if ($data === false) {
             return false;
         }
 
@@ -467,7 +472,7 @@ class BirklyVersion {
             return true;
         }
 
-        if (is_file($stagingPath) && filesize($stagingPath) > 0) {
+        if (is_file($stagingPath)) {
             if ($relativePath !== '') {
                 self::$stagedUpdateRelativePaths[] = $relativePath;
             }

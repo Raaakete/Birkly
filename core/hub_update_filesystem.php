@@ -81,11 +81,10 @@ function birkly_hub_update_install_mode(?string $projectRoot = null): string
 
 function birkly_hub_update_docker_redeploy_message(): string
 {
-    return 'This Birkly site runs in Docker. Core files are updated when you redeploy the container from git '
-        . '(for example Dokploy autodeploy on Raaakete/Birkly main), not with Hub Install. '
-        . 'Redeploy the CMS app, wait for the build to finish, then reload the admin. '
-        . 'Your content and media on the data volume are not replaced by a redeploy. '
-        . 'Hub Install remains for traditional PHP/zip hosting where the web server owns the whole CMS folder.';
+    return 'Hub could not write to core/, admin/, or api/ in this container. '
+        . 'The CMS entrypoint should fix permissions on startup; redeploy the Docker app once so the latest image runs, then try Hub Install again. '
+        . 'If Install still fails, ask your host to run the container with a user that can chown program folders, or mount program trees writable by PHP. '
+        . 'Content, media, settings, and installed plugins on the data volume are not replaced by a CMS update.';
 }
 
 function birkly_hub_update_host_permission_message(string $dir): string
