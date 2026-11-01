@@ -10,7 +10,14 @@ require_once __DIR__ . '/../core/birkly_paths.php';
 $updateStagingBootstrap = __DIR__ . '/../core/update_staging.php';
 if (is_file($updateStagingBootstrap)) {
     require_once $updateStagingBootstrap;
-    birkly_apply_staged_update_files();
+    try {
+        birkly_apply_staged_update_files();
+    } catch (Throwable $e) {
+        error_log('birkly_apply_staged_update_files: ' . $e->getMessage());
+        if (function_exists('birkly_purge_update_staging')) {
+            birkly_purge_update_staging();
+        }
+    }
 }
 
 /** CMS admin/API session cookie name (avoids PHPSESSID collisions with host sites). */
