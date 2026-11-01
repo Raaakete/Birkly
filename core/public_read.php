@@ -64,9 +64,10 @@ function birkly_public_resolve_collection_dir($storage, $collectionSlug, $collec
 }
 
 function birkly_public_transform_entry_for_language($entry, $language, $multilanguageEnabled, $multilanguageLanguages) {
-    if (!$language || !$multilanguageEnabled) {
+    if (!$language || !$multilanguageEnabled || !is_array($entry)) {
         return $entry;
     }
+
     $hasMultilang = false;
     foreach ($multilanguageLanguages as $lang) {
         if (isset($entry[$lang]) && is_array($entry[$lang])) {
@@ -74,17 +75,41 @@ function birkly_public_transform_entry_for_language($entry, $language, $multilan
             break;
         }
     }
-    if ($hasMultilang && isset($entry[$language])) {
-        $transformed = array_merge($entry, $entry[$language]);
-        $transformed['id'] = $entry['id'] ?? '';
-        $transformed['slug'] = $entry['slug'] ?? '';
-        $transformed['status'] = $entry['status'] ?? 'draft';
-        $transformed['created_at'] = $entry['created_at'] ?? '';
-        $transformed['updated_at'] = $entry['updated_at'] ?? '';
-        $transformed['published_at'] = $entry['published_at'] ?? '';
-        return $transformed;
+    if (!$hasMultilang) {
+        return $entry;
     }
-    return $entry;
+
+    $localized = null;
+    if (isset($entry[$language]) && is_array($entry[$language])) {
+        $localized = $entry[$language];
+    } else {
+        foreach ($multilanguageLanguages as $langCode) {
+            if (!is_string($langCode) || $langCode === '') {
+                continue;
+            }
+            if (isset($entry[$langCode]) && is_array($entry[$langCode])) {
+                $localized = $entry[$langCode];
+                break;
+            }
+        }
+        if ($localized === null && isset($entry['en']) && is_array($entry['en'])) {
+            $localized = $entry['en'];
+        }
+    }
+
+    if ($localized === null) {
+        return $entry;
+    }
+
+    $transformed = array_merge($entry, $localized);
+    $transformed['id'] = $entry['id'] ?? '';
+    $transformed['slug'] = $entry['slug'] ?? '';
+    $transformed['status'] = $entry['status'] ?? 'draft';
+    $transformed['created_at'] = $entry['created_at'] ?? '';
+    $transformed['updated_at'] = $entry['updated_at'] ?? '';
+    $transformed['published_at'] = $entry['published_at'] ?? '';
+
+    return $transformed;
 }
 
 /** @return list<string> */
@@ -571,7 +596,8 @@ function birkly_public_list_sub_entries(
     $subCollection,
     ?string $parentSubCollection = null,
     ?string $parentSubEntryId = null,
-    $storage = null
+    $storage = null,
+    ?string $language = null
 ) {
     if ($storage === null) {
         require_once __DIR__ . '/sub_entries.php';
@@ -619,6 +645,37 @@ function birkly_public_list_sub_entries(
     $entries = array_values(array_filter($filtered, static function ($entry) {
         return is_array($entry);
     }));
+
+    if ($language !== null && $language !== '' && $storage !== null) {
+        $dir = birkly_public_resolve_collection_dir($storage, $parentCollection);
+        if ($dir) {
+            $collectionMeta = $storage->read("collections/$dir/collection.json");
+            $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
+            $multilanguageLanguages = is_array($collectionMeta['multilanguage']['languages'] ?? null)
+                ? $collectionMeta['multilanguage']['languages']
+                : [];
+            if ($multilanguageEnabled && $multilanguageLanguages !== []) {
+                if (!in_array($language, $multilanguageLanguages, true)) {
+                    $language = $multilanguageLanguages[0] ?? 'en';
+                }
+                $entries = array_map(
+                    static function ($entry) use ($language, $multilanguageEnabled, $multilanguageLanguages) {
+                        if (!is_array($entry)) {
+                            return $entry;
+                        }
+
+                        return birkly_public_transform_entry_for_language(
+                            $entry,
+                            $language,
+                            $multilanguageEnabled,
+                            $multilanguageLanguages
+                        );
+                    },
+                    $entries
+                );
+            }
+        }
+    }
 
     return ['status' => 'ok', 'data' => ['entries' => $entries]];
 }

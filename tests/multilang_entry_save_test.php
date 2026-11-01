@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/core/entry_multilang.php';
+require_once dirname(__DIR__) . '/core/public_read.php';
 
 $failures = 0;
 
@@ -43,6 +44,12 @@ assert_true(
 assert_true(
     'flat bracket fallback',
     birkly_entry_lang_field_raw(['en[title]' => 'Flat title'], 'en', 'title') === 'Flat title'
+);
+
+$missingLang = ['en' => ['title' => 'English only'], 'de' => ['title' => 'Deutsch']];
+assert_true(
+    'transform falls back to first configured language block',
+    (birkly_public_transform_entry_for_language($missingLang, 'da', true, ['en', 'de'])['title'] ?? '') === 'English only'
 );
 
 $entryOutput = [

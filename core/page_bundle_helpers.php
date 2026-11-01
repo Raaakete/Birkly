@@ -36,6 +36,128 @@ function birkly_page_bundle_collect_collections(array $requests): array {
 }
 
 /**
+ * Parent + sub-collection pairs referenced by page_bundle sub_entries requests.
+ *
+ * @return list<array{parent:string,sub:string}>
+ */
+function birkly_page_bundle_collect_sub_collections(array $requests): array
+{
+    $pairs = [];
+    foreach ($requests as $req) {
+        if (!is_array($req)) {
+            continue;
+        }
+        if (($req['type'] ?? '') !== 'sub_entries') {
+            continue;
+        }
+        $parent = trim((string) ($req['parent_collection'] ?? ''));
+        $sub = trim((string) ($req['sub_collection'] ?? ''));
+        if ($parent === '' || $sub === '') {
+            continue;
+        }
+        $pairs[$parent . "\0" . $sub] = ['parent' => $parent, 'sub' => $sub];
+    }
+
+    return array_values($pairs);
+}
+
+/**
+ * @param array<string,mixed> $subConfig
+ * @return array<string,mixed>
+ */
+function birkly_sub_collection_schema_meta(array $subConfig): array
+{
+    $fields = $subConfig['schema']['fields'] ?? $subConfig['fields'] ?? [];
+    if (!is_array($fields)) {
+        $fields = [];
+    }
+
+    return [
+        'schema' => ['fields' => $fields],
+        'fields' => $fields,
+    ];
+}
+
+/**
+ * Load a sub-collection config using an explicit storage instance (SSR / page_bundle).
+ *
+ * @return array<string,mixed>|null
+ */
+function birkly_sub_collection_config_from_storage($storage, string $parentCollection, string $subCollectionSlug): ?array
+{
+    if (!function_exists('birkly_public_resolve_collection_dir')) {
+        require_once __DIR__ . '/public_read.php';
+    }
+
+    $dir = birkly_public_resolve_collection_dir($storage, $parentCollection);
+    if ($dir === null) {
+        return null;
+    }
+
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    if (!is_array($collectionMeta)) {
+        return null;
+    }
+
+    $subCollections = $collectionMeta['sub_collections'] ?? [];
+    if (!is_array($subCollections)) {
+        return null;
+    }
+
+    foreach ($subCollections as $subCollection) {
+        if (!is_array($subCollection)) {
+            continue;
+        }
+        if (($subCollection['slug'] ?? '') === $subCollectionSlug) {
+            return $subCollection;
+        }
+
+        $nested = $subCollection['sub_collections'] ?? [];
+        if (!is_array($nested)) {
+            continue;
+        }
+        foreach ($nested as $nestedSubCollection) {
+            if (!is_array($nestedSubCollection)) {
+                continue;
+            }
+            if (($nestedSubCollection['slug'] ?? '') === $subCollectionSlug) {
+                return $nestedSubCollection;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Merge page_bundle payload keys and template metadata (_html_fields, _field_types).
+ *
+ * @param array<string,mixed> $data
+ * @param array<string,mixed> $bundleData
+ */
+function birkly_page_bundle_merge_into_data(array &$data, array $bundleData): void
+{
+    foreach ($bundleData as $into => $value) {
+        if ($into === '_html_fields' || $into === '_field_types') {
+            continue;
+        }
+        $data[$into] = $value;
+    }
+
+    foreach (['_html_fields', '_field_types'] as $metaKey) {
+        if (!isset($bundleData[$metaKey]) || !is_array($bundleData[$metaKey])) {
+            continue;
+        }
+        $existing = isset($data[$metaKey]) && is_array($data[$metaKey]) ? $data[$metaKey] : [];
+        if ($metaKey === '_field_types') {
+            $data[$metaKey] = array_merge($existing, $bundleData[$metaKey]);
+        } else {
+            $data[$metaKey] = array_values(array_unique(array_merge($existing, $bundleData[$metaKey])));
+        }
+    }
+}
+
+/**
  * Persisted monotonic revision bumped on content writes / SSR invalidation.
  */
 function birkly_public_content_revision_path(): string
