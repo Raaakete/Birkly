@@ -219,6 +219,47 @@ try {
     assert_true('collect finds header get_entry', $hasHeaderEntry);
     assert_true('collect finds sub-collection parent (comments)', $hasComments);
 
+    echo "\n[V-SSR-11] slug-parent sub-entry prefetch (pages.sections migration)\n";
+    $tplSlugParent = "{for each entry in 'sections' of 'pages'.'home' with 'section_key' = 'hero'}{title}{endfor}";
+    $reqsSlugParent = birkly_project_ssr_collect_requests($tplSlugParent);
+    $hasPagesList = false;
+    $hasHomeGetEntry = false;
+    foreach ($reqsSlugParent as $r) {
+        if (($r['type'] ?? '') === 'list_entries' && ($r['collection'] ?? '') === 'pages') {
+            $hasPagesList = true;
+        }
+        if (($r['type'] ?? '') === 'get_entry' && ($r['collection'] ?? '') === 'pages' && ($r['slug'] ?? '') === 'home') {
+            $hasHomeGetEntry = true;
+        }
+    }
+    assert_true('collect prefetches pages list for sections of pages.home', $hasPagesList);
+    assert_true('collect prefetches get_entry pages/home', $hasHomeGetEntry);
+
+    require_once dirname(__DIR__) . '/core/public_read.php';
+    $prefetchData = [
+        '__entry__:pages:home' => ['id' => 'home-entry-1', 'slug' => 'home', 'title' => 'Home'],
+    ];
+    $slugSubReqs = birkly_project_ssr_build_slug_sub_entry_requests($tplSlugParent, $prefetchData);
+    $expectedSubInto = birkly_public_sub_entries_bundle_key('pages', 'home-entry-1', 'sections');
+    $hasSectionsSubBundle = false;
+    foreach ($slugSubReqs as $r) {
+        if (($r['type'] ?? '') === 'sub_entries'
+            && ($r['sub_collection'] ?? '') === 'sections'
+            && ($r['into'] ?? '') === $expectedSubInto) {
+            $hasSectionsSubBundle = true;
+        }
+    }
+    assert_true('slug sub pass requests sections sub_entries bundle', $hasSectionsSubBundle);
+    assert_true(
+        'slug sub pass skips when parent entry missing from data',
+        birkly_project_ssr_build_slug_sub_entry_requests($tplSlugParent, []) === []
+    );
+    $tplCurrentParent = "{for each entry in 'sections' of 'pages'.current}{title}{endfor}";
+    assert_true(
+        'slug sub pass ignores .current parent loops',
+        birkly_project_ssr_build_slug_sub_entry_requests($tplCurrentParent, $prefetchData) === []
+    );
+
     echo "\n[V-SSR-06/07] cache put/get/ttl/invalidate\n";
     birkly_project_ssr_invalidate_all();
     $key = birkly_project_ssr_cache_key('/index.html', ['slug' => 'demo'], 'en', 'rev123');
