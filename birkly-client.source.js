@@ -2849,13 +2849,104 @@
             return [];
         }
 
-        const field = (clause.split(/\s+/)[0] || '').replace(/[^a-zA-Z0-9_]/g, '');
+        const fieldPath = (clause.split(/\s+/)[0] || '').trim();
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$/.test(fieldPath)) {
+            const resolved = resolveDataPath(fieldPath, data);
+            if (Array.isArray(resolved)) return resolved.slice();
+        }
+        const field = fieldPath.replace(/[^a-zA-Z0-9_]/g, '');
         if (!field) return [];
         if (Array.isArray(data[field])) return data[field].slice();
         const entry = data.entry;
         if (!entry || typeof entry !== 'object') return [];
         const value = entry[field] ?? entry[field + 's'];
         return Array.isArray(value) ? value.slice() : [];
+    }
+
+    function isDynamicBlockList(value) {
+        if (!Array.isArray(value) || value.length === 0) return false;
+        return value.every((item) => item && typeof item === 'object' && item.type != null);
+    }
+
+    function findDynamicBlockByName(blocks, name) {
+        for (const block of blocks) {
+            if (block && String(block.name || '') === name) return block;
+        }
+        return null;
+    }
+
+    function dynamicBlockOutputsTrustedHtml(type) {
+        const t = String(type || '').toLowerCase();
+        return ['contenteditor', 'content-editor', 'editor', 'wysiwyg', 'markdown', 'file', 'image', 'media', 'gallery', 'map', 'oembed', 'range', 'checkbox', 'toggle', 'dynamicitems'].includes(t);
+    }
+
+    function formatDynamicBlockValue(block, data) {
+        const type = String(block.type || 'text').toLowerCase();
+        const name = String(block.name || type);
+        let value = block.value;
+        if (type === 'markdown') {
+            return renderMarkdownSubset(String(value ?? ''));
+        }
+        if (['contenteditor', 'content-editor', 'editor', 'wysiwyg'].includes(type)) {
+            return String(value ?? '');
+        }
+        if (typeof value === 'object' && value != null) {
+            return '';
+        }
+        return String(value ?? '');
+    }
+
+    function resolveDynamicFieldPath(parts, data) {
+        if (!parts || parts.length < 2) return null;
+        const entry = data.entry && typeof data.entry === 'object' ? data.entry : data;
+        const firstKey = parts[0][1] !== '' && parts[0][1] != null ? parts[0][1] : parts[0][2];
+        if (!entry || !Object.prototype.hasOwnProperty.call(entry, firstKey)) return null;
+        let blocks = entry[firstKey];
+        if (!isDynamicBlockList(blocks)) return null;
+        const lastIndex = parts.length - 1;
+        for (let i = 1; i <= lastIndex; i++) {
+            const key = parts[i][1] !== '' && parts[i][1] != null ? parts[i][1] : parts[i][2];
+            const block = findDynamicBlockByName(blocks, key);
+            if (!block) return null;
+            if (i === lastIndex) {
+                return formatDynamicBlockValue(block, data);
+            }
+            if (String(block.type || '').toLowerCase() !== 'dynamicitems') return null;
+            blocks = block.value;
+            if (!isDynamicBlockList(blocks)) return null;
+        }
+        return null;
+    }
+
+    function dynamicPathExists(ref, data) {
+        const m = [...String(ref || '').matchAll(/'([^']+)'/g)].map((x) => x[1]);
+        if (m.length < 2) return false;
+        const parts = m.map((seg) => ['', seg, '']);
+        return resolveDynamicFieldPath(parts, data) != null;
+    }
+
+    function resolveDataPath(expr, data) {
+        const trimmed = String(expr || '').trim();
+        const m = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)((?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)$/);
+        if (!m) return null;
+        if (!Object.prototype.hasOwnProperty.call(data, m[1])) return null;
+        let cur = data[m[1]];
+        const segs = [...m[2].matchAll(/\.([a-zA-Z_][a-zA-Z0-9_]*)/g)];
+        for (const s of segs) {
+            if (!cur || typeof cur !== 'object' || !Object.prototype.hasOwnProperty.call(cur, s[1])) return null;
+            cur = cur[s[1]];
+        }
+        return cur;
+    }
+
+    function inferDynamicBlockTypeForPath(pathOrName, data) {
+        const p = String(pathOrName || '').trim();
+        if (p === 'value' && data.type) return String(data.type).toLowerCase();
+        const m = p.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\.value$/);
+        if (!m) return null;
+        const block = data[m[1]];
+        if (!block || typeof block !== 'object' || block.type == null) return null;
+        return String(block.type).toLowerCase();
     }
 
     function parseLoopModifiers(inClause) {
@@ -3082,6 +3173,7 @@
     }
 
     function evaluateExistence(ref, data) {
+        if (dynamicPathExists(ref, data)) return true;
         const value = resolveCollectionEntryRef(ref, data);
         if (value === null || value === undefined) return false;
         if (Array.isArray(value)) return value.length > 0;
@@ -3188,6 +3280,15 @@
     }
 
     function escapeOutput(pathOrName, value, options) {
+        const dataCtx = options && options.data ? options.data : {};
+        const blockType = inferDynamicBlockTypeForPath(pathOrName, dataCtx);
+        if (blockType) {
+            const formatted = formatDynamicBlockValue({ type: blockType, name: pathOrName, value: value }, { entry: options.entry || dataCtx.entry });
+            if (dynamicBlockOutputsTrustedHtml(blockType)) {
+                return formatted;
+            }
+            return escapeHtml(formatted);
+        }
         const str = value == null ? '' : String(value);
         if (!str) return '';
         if (shouldOutputRawHtml(pathOrName, options)) {
@@ -3261,23 +3362,8 @@
     function formatFieldLeafForTemplate(fieldName, current, data) {
         const types = data._field_types || {};
         const type = types[fieldName] || '';
-        if (type === 'password') {
-            return current == null || current === '' ? '' : '••••••';
-        }
         if (type === 'markdown') {
             return renderMarkdownSubset(String(current));
-        }
-        if (type === 'checkbox') {
-            const on = current === true || current === '1' || current === 1 || current === 'true' || current === 'yes';
-            return on
-                ? '<span class="birkly-bool birkly-bool--on">Yes</span>'
-                : '<span class="birkly-bool birkly-bool--off">No</span>';
-        }
-        if (type === 'toggle') {
-            const on = current === true || current === '1' || current === 1 || current === 'true' || current === 'yes';
-            return on
-                ? '<span class="birkly-bool birkly-bool--on">On</span>'
-                : '<span class="birkly-bool birkly-bool--off">Off</span>';
         }
         if (Array.isArray(current)) {
             return current
@@ -3286,10 +3372,10 @@
                 .filter((s) => s !== '')
                 .join(', ');
         }
-        if (types[fieldName]) {
-            return current == null ? '' : String(current);
+        if (current == null) {
+            return '';
         }
-        return '';
+        return String(current);
     }
 
     function resolveFieldPathFromParts(parts, data) {
@@ -3571,6 +3657,10 @@
             if (trimmed.includes("'")) {
                 const parts = [...trimmed.matchAll(/'([^']+)'|(\d+)/g)];
                 if (parts.length) {
+                    const dynamic = resolveDynamicFieldPath(parts, data);
+                    if (dynamic != null) {
+                        return dynamic;
+                    }
                     const value = resolveFieldPathFromParts(parts, data);
                     return escapeOutput(trimmed, value, options);
                 }
@@ -3638,6 +3728,8 @@
         } else if (opts.htmlFields && Array.isArray(opts.htmlFields)) {
             ctxOptions.htmlFields = opts.htmlFields;
         }
+        ctxOptions.entry = data.entry && typeof data.entry === 'object' ? data.entry : data;
+        ctxOptions.data = data;
         // Nested render() calls (loops/from/if) must not re-extract already-tokenized
         // protected blocks from the parent pass — only the outermost call protects.
         const protect = opts._skipProtect !== true;

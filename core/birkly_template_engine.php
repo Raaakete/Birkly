@@ -529,6 +529,14 @@ function birkly_template_engine_resolve_loop_items(string $inClause, array $data
     }
 
     $firstWord = preg_split('/\s+/', $clause)[0] ?? '';
+    $fieldPath = trim($firstWord);
+    if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)$/', $fieldPath)) {
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $resolved = birkly_dynamicitems_resolve_data_path($fieldPath, $data);
+        if (is_array($resolved) && birkly_template_engine_is_list($resolved)) {
+            return $resolved;
+        }
+    }
     $field = preg_replace('/[^a-zA-Z0-9_]/', '', $firstWord);
     if ($field === '' || $field === null) {
         return [];
@@ -921,6 +929,11 @@ function birkly_template_engine_resolve_context_path(string $expr, array $data):
 
 function birkly_template_engine_evaluate_existence(string $ref, array $data): bool
 {
+    require_once __DIR__ . '/dynamicitems_template.php';
+    if (birkly_dynamicitems_path_exists($ref, $data)) {
+        return true;
+    }
+
     $value = birkly_template_engine_resolve_collection_entry_ref($ref, $data);
     if ($value === null) {
         return false;
@@ -1068,6 +1081,23 @@ function birkly_template_engine_evaluate_condition(string $condition, array $dat
 /** @param array<string,mixed> $options */
 function birkly_template_engine_escape_output(string $pathOrName, $value, array $options): string
 {
+    require_once __DIR__ . '/dynamicitems_template.php';
+    $blockType = birkly_dynamicitems_infer_block_type_for_path($pathOrName, is_array($options['data'] ?? null) ? $options['data'] : []);
+    if ($blockType !== null) {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        $formatted = birkly_fieldtype_format_leaf_for_template(
+            $pathOrName,
+            $value,
+            $blockType,
+            ['entry' => $options['entry'] ?? []]
+        );
+        if (birkly_dynamicitems_block_outputs_trusted_html($blockType)) {
+            return $formatted;
+        }
+
+        return birkly_template_engine_escape_html($formatted);
+    }
+
     if (!function_exists('birkly_template_engine_field_name_for_escape')) {
         require_once __DIR__ . '/fieldtype_html.php';
     }
@@ -1589,6 +1619,13 @@ function birkly_template_engine_resolve_template_function_arg(string $raw, array
         }
         return $key;
     }
+    if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)$/', $trimmed)) {
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $resolved = birkly_dynamicitems_resolve_data_path($trimmed, $data);
+        if ($resolved !== null) {
+            return $resolved;
+        }
+    }
     if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $trimmed)) {
         if (array_key_exists($trimmed, $data)) {
             $val = $data[$trimmed];
@@ -1690,6 +1727,20 @@ function birkly_template_engine_parse_template_function_args(string $rawArgs, ar
 function birkly_template_engine_evaluate_template_function(string $funcName, string $rawArgs, array $data): string
 {
     $args = birkly_template_engine_parse_template_function_args($rawArgs, $data);
+    if ($funcName === 'dynamicitem') {
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $field = '';
+        $block = '';
+        if (preg_match_all("/'([^']+)'/", $rawArgs, $qm) && count($qm[1]) >= 2) {
+            $field = trim($qm[1][0]);
+            $block = trim($qm[1][1]);
+        } else {
+            $field = isset($args[0]) && is_string($args[0]) ? trim($args[0]) : '';
+            $block = isset($args[1]) && is_string($args[1]) ? trim($args[1]) : '';
+        }
+
+        return birkly_dynamicitems_resolve_named_item($field, $block, $data);
+    }
     $result = birkly_template_engine_call_registered_function($funcName, $args);
     if ($result === null) {
         return '';
@@ -1810,6 +1861,11 @@ function birkly_template_engine_process_variables(string $html, array $data, arr
 
         if (strpos($trimmed, "'") !== false) {
             if (preg_match_all("/'([^']+)'|(\\d+)/", $trimmed, $parts, PREG_SET_ORDER) && count($parts) > 0) {
+                require_once __DIR__ . '/dynamicitems_template.php';
+                $dynamic = birkly_dynamicitems_resolve_field_path($parts, $data);
+                if ($dynamic !== null) {
+                    return $dynamic;
+                }
                 $value = birkly_template_engine_resolve_field_path_from_parts($parts, $data);
                 return birkly_template_engine_escape_output($trimmed, $value, $options);
             }
@@ -1915,7 +1971,8 @@ function birkly_template_engine_render(string $html, $data, array $options = [])
     } elseif (isset($options['fieldTypes']) && is_array($options['fieldTypes'])) {
         $ctxOptions['fieldTypes'] = $options['fieldTypes'];
     }
-    // Nested render() calls (loops/from/if) must not re-extract already-tokenized
+    $ctxOptions['entry'] = is_array($data['entry'] ?? null) ? $data['entry'] : $data;
+    $ctxOptions['data'] = $data;
     // protected blocks from the parent pass — only the outermost call protects.
     $protect = ($options['_skipProtect'] ?? null) !== true;
     $renderFn = static function (string $tpl, array $ctx) use ($ctxOptions): string {

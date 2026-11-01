@@ -83,6 +83,10 @@ function birkly_dynamicitems_render_block_inner(string $type, $blockValue, strin
         }
     }
 
+    if ($type === 'dynamicitems') {
+        return birkly_dynamicitems_render_html($blockValue);
+    }
+
     return birkly_fieldtype_format_leaf_for_template($name, $blockValue, $type, []);
 }
 
@@ -105,5 +109,6 @@ function birkly_dynamicitems_block_outputs_trusted_html(string $type): bool
         'range',
         'checkbox',
         'toggle',
+        'dynamicitems',
     ], true);
 }
