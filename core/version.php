@@ -741,13 +741,17 @@ class BirklyVersion {
         self::$lastMoveError = null;
         self::$stagedUpdateRelativePaths = [];
 
-        $backupDir = __DIR__ . '/../backups/pre-update-' . date('Y-m-d-H-i-s');
         $cmsRoot = dirname(__DIR__);
+        $backupDir = self::allocatePreUpdateBackupDir($cmsRoot);
         
         try {
+            if ($backupDir === null) {
+                return ['error' => self::preUpdateBackupFailedMessage()];
+            }
+
             // Create backup
             if (!self::createBackup($cmsRoot, $backupDir)) {
-                return ['error' => 'Failed to create backup. Ensure the backups/ folder is writable.'];
+                return ['error' => self::preUpdateBackupFailedMessage()];
             }
             
             // Extract update
@@ -812,6 +816,85 @@ class BirklyVersion {
     }
     
     /**
+     * User-facing message when no writable pre-update backup location is available.
+     */
+    private static function preUpdateBackupFailedMessage(): string
+    {
+        return 'Could not create a pre-update safety backup. Check that the server has free disk space. '
+            . 'If this keeps happening, ask your hosting provider to allow PHP to write to the CMS folder '
+            . '(for example backups/ or data/).';
+    }
+
+    /**
+     * Candidate base directories for pre-update core backups (first writable wins).
+     *
+     * @return list<string>
+     */
+    private static function preUpdateBackupBaseCandidates(string $cmsRoot): array
+    {
+        $cmsRoot = rtrim($cmsRoot, '/\\');
+        $hash = substr(hash('sha256', $cmsRoot), 0, 12);
+
+        return [
+            $cmsRoot . '/backups',
+            $cmsRoot . '/data/pre_update_backups',
+            rtrim(sys_get_temp_dir(), '/\\') . '/birkly-pre-update-' . $hash,
+        ];
+    }
+
+    private static function ensureBackupBaseDir(string $base): bool
+    {
+        if (!is_dir($base)) {
+            if (!@mkdir($base, 0755, true) && !is_dir($base)) {
+                return false;
+            }
+        }
+
+        if (is_dir($base) && !is_writable($base)) {
+            @chmod($base, 0755);
+        }
+
+        if (function_exists('birkly_path_is_writable')) {
+            return birkly_path_is_writable($base);
+        }
+
+        return is_dir($base) && is_writable($base);
+    }
+
+    /**
+     * Pick a writable directory for this install's pre-update backup (creates the timestamp folder).
+     */
+    private static function allocatePreUpdateBackupDir(string $cmsRoot): ?string
+    {
+        require_once __DIR__ . '/birkly_paths.php';
+        birkly_ensure_runtime_dirs($cmsRoot);
+
+        $stamp = 'pre-update-' . date('Y-m-d-H-i-s');
+
+        foreach (self::preUpdateBackupBaseCandidates($cmsRoot) as $base) {
+            if (!self::ensureBackupBaseDir($base)) {
+                continue;
+            }
+
+            $backupDir = $base . '/' . $stamp;
+            if (is_dir($backupDir)) {
+                return $backupDir;
+            }
+
+            if (@mkdir($backupDir, 0755, true) || is_dir($backupDir)) {
+                $writable = function_exists('birkly_path_is_writable')
+                    ? birkly_path_is_writable($backupDir)
+                    : is_writable($backupDir);
+                if ($writable) {
+                    return $backupDir;
+                }
+            }
+        }
+
+        return null;
+    }
+    
+    /**
      * Create backup before update
      */
     private static function createBackup(string $sourceDir, string $backupDir): bool {
@@ -820,7 +903,7 @@ class BirklyVersion {
         }
         
         // Create backup directory
-        if (!mkdir($backupDir, 0755, true)) {
+        if (!is_dir($backupDir) && !@mkdir($backupDir, 0755, true)) {
             return false;
         }
         
