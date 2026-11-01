@@ -432,6 +432,9 @@ function saveEntry() {
         $entryData = $_POST;
         unset($entryData['collection'], $entryData['entry_id'], $entryData['action'], $entryData['_csrf']);
     }
+
+    require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+    $entryData = birkly_entry_data_normalize_multilang_post_keys($entryData);
     
     if (empty($collectionSlug)) {
         return ['status' => 'error', 'message' => 'Collection slug is required'];

@@ -200,7 +200,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                         </div>
                         <?php
                     };
-                    $renderFieldSlab = function (array $field, ?string $langCode = null, int $langIdx = 0) use ($entry, $entryEditorHasLanguages) {
+                    $renderFieldSlab = function (array $field, ?string $langCode = null, int $langIdx = 0) use ($entry, $entryEditorHasLanguages, $entryEditorSameForAllLabel) {
                         require_once dirname(__DIR__, 2) . '/core/fieldtype_catalog.php';
                         $fieldName = $field['name'] ?? '';
                         $fieldHelpText = trim((string) ($field['help_text'] ?? $field['help'] ?? ''));
