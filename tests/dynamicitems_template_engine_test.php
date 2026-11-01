@@ -72,6 +72,27 @@ $tplText = "{for each b in 'content'}{if b.name = 'plain'}{b.value}{endif}{endfo
 $outText = birkly_template_engine_render($tplText, $ctx);
 assert_true('angle brackets escaped', str_contains($outText, '&lt;b&gt;') && !str_contains($outText, '<b>not bold</b>'), 'got: ' . $outText);
 
+$unsafeBlocks = [
+    ['type' => 'text', 'name' => 'unsafe', 'value' => 'EN <b>not bold</b>'],
+    ['type' => 'text', 'name' => 'xss', 'value' => '<script>alert(1)</script>'],
+];
+$unsafeCtx = ['entry' => ['content' => $unsafeBlocks]];
+$outDirect = birkly_template_engine_render("{'content'.'unsafe'}", $unsafeCtx);
+assert_true('direct text path escaped', str_contains($outDirect, '&lt;b&gt;') && !str_contains($outDirect, '<b>'), 'got: ' . $outDirect);
+$outScript = birkly_template_engine_render("{'content'.'xss'}", $unsafeCtx);
+assert_true('script in text item escaped', str_contains($outScript, '&lt;script&gt;') && !str_contains($outScript, '<script>'), 'got: ' . $outScript);
+$nestedTextCtx = [
+    'entry' => [
+        'content' => [[
+            'type' => 'dynamicitems',
+            'name' => 'group',
+            'value' => [['type' => 'text', 'name' => 'label', 'value' => '<i>x</i>']],
+        ]],
+    ],
+];
+$outNestedText = birkly_template_engine_render("{'content'.'group'.'label'}", $nestedTextCtx);
+assert_true('nested text path escaped', str_contains($outNestedText, '&lt;i&gt;') && !str_contains($outNestedText, '<i>x</i>'), 'got: ' . $outNestedText);
+
 echo "\n[DI-03] nested dynamicitems loop\n";
 $tplF = "{for each b in 'content'}{if b.type = 'dynamicitems'}{for each c in b.value}{c.name}={c.value};{endfor}{endif}{endfor}";
 $outF = birkly_template_engine_render($tplF, $ctx);
@@ -113,6 +134,14 @@ assert_true('media_url registered and returns string', $mediaFn !== null && is_s
 $tplE = "{for each b in 'content'}{if b.name = 'photo'}{media_url(b.value)}{endif}{endfor}";
 $outE = birkly_template_engine_render($tplE, $ctx);
 assert_true('media_url in loop uses id', $outE === '' || str_contains($outE, '/media/6ae3af8581f3c'), 'got: ' . $outE);
+
+$tplMediaPath = "{media_url('content'.'photo')}";
+$outMediaPath = birkly_template_engine_render($tplMediaPath, $ctx);
+assert_true(
+    'media_url accepts dynamic-item path',
+    $outMediaPath === '' || str_contains($outMediaPath, '/media/6ae3af8581f3c'),
+    'got: ' . $outMediaPath
+);
 
 echo "\nSummary: {$total} checks, {$failures} failures\n";
 exit($failures > 0 ? 1 : 0);
