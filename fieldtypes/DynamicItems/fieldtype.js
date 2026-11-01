@@ -333,6 +333,13 @@ window.HaruFieldtypes['dynamicitems'] = {
     blockElement.setAttribute('data-block-idx', idx);
     blockElement.setAttribute('data-block-name', block.name);
     blockElement.setAttribute('data-block-config', JSON.stringify(block));
+
+    const baseName = this.resolveBaseFieldName(fieldName);
+    const isFollower = this.isDynamicItemsFollowerField(fieldName);
+    let modeToggleHtml = '';
+    if (!isFollower && this.getMultilangCodes().length > 1) {
+      modeToggleHtml = this.buildBlockModeToggleHtml(baseName, block.name, block.type);
+    }
     
     // Block header
     const headerHtml = `
@@ -342,6 +349,7 @@ window.HaruFieldtypes['dynamicitems'] = {
           <span class="block-item-type">${this.escapeHtml(block.type)}</span>
           <span class="block-item-name">${this.escapeHtml(block.name)}</span>
         </div>
+        ${modeToggleHtml}
         <div class="block-item-actions">
           <button type="button" class="button is-small" data-dynamicitems-action="edit-block" data-block-idx="${idx}">Edit</button>
           <button type="button" class="button is-small" data-dynamicitems-action="remove-block" data-block-idx="${idx}">Remove</button>
@@ -627,6 +635,15 @@ window.HaruFieldtypes['dynamicitems'] = {
       });
 
       hiddenInput.value = JSON.stringify(blocksWithValues);
+
+      if (this.isMultilangOwnerField(fieldName)) {
+        const baseName = this.resolveBaseFieldName(fieldName);
+        blocksWithValues.forEach(function(block) {
+          if (block && block.name && this.isBlockShared(baseName, block.name, block.type)) {
+            this.syncSharedBlockValue(fieldName, block.name);
+          }
+        }.bind(this));
+      }
     }
   },
 
@@ -634,6 +651,116 @@ window.HaruFieldtypes['dynamicitems'] = {
     return Array.from(document.querySelectorAll('.entry-language-tabs .language-tab-btn'))
       .map(function(btn) { return btn.dataset.lang || ''; })
       .filter(Boolean);
+  },
+
+  getSameForAllLabel: function() {
+    var form = document.getElementById('entry-form');
+    return (form && form.getAttribute('data-multilang-same-label')) || 'Same for all languages';
+  },
+
+  getEntryMultilangModes: function() {
+    var form = document.getElementById('entry-form');
+    if (!form) {
+      return {};
+    }
+    var raw = form.getAttribute('data-multilang-field-modes');
+    if (!raw) {
+      return {};
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return {};
+    }
+  },
+
+  setEntryMultilangMode: function(key, mode) {
+    var form = document.getElementById('entry-form');
+    if (!form) {
+      return;
+    }
+    var modes = this.getEntryMultilangModes();
+    modes[key] = mode;
+    form.setAttribute('data-multilang-field-modes', JSON.stringify(modes));
+  },
+
+  blockModeKey: function(baseName, blockName) {
+    return baseName + '.' + blockName;
+  },
+
+  resolveBaseFieldName: function(fieldName) {
+    var parsed = this.parseMultilangFieldName(fieldName);
+    return parsed ? parsed.baseName : fieldName;
+  },
+
+  isBlockShared: function(baseName, blockName, blockType) {
+    var modes = this.getEntryMultilangModes();
+    var key = this.blockModeKey(baseName, blockName);
+    if (modes[key] === 'shared') {
+      return true;
+    }
+    if (modes[key] === 'localize') {
+      return false;
+    }
+    var sharedTypes = ['file', 'gallery', 'map', 'oembed', 'relation', 'checkbox', 'toggle'];
+    return sharedTypes.indexOf(String(blockType || '').toLowerCase()) !== -1;
+  },
+
+  buildBlockModeToggleHtml: function(baseName, blockName, blockType) {
+    var checked = this.isBlockShared(baseName, blockName, blockType) ? ' checked' : '';
+    var label = this.escapeHtml(this.getSameForAllLabel());
+    var safeBase = this.escapeHtml(baseName);
+    var safeBlock = this.escapeHtml(blockName);
+    return '<div class="field-header__aside block-item-multilang-mode">' +
+      '<span class="entry-field-multilang-mode__text">' + label + '</span>' +
+      '<label class="switch switch--compact entry-field-multilang-mode">' +
+      '<input type="checkbox" name="multilang_field_modes[' + safeBase + '][' + safeBlock + ']" value="shared"' +
+      ' class="entry-multilang-shared-toggle entry-multilang-block-toggle"' +
+      ' data-dynamic-field="' + safeBase + '" data-block-name="' + safeBlock + '"' + checked + '>' +
+      '<span class="switch__slider"></span></label></div>';
+  },
+
+  isDynamicItemsFollowerField: function(fieldName) {
+    var container = document.getElementById('field_' + fieldName);
+    return !!(container && container.getAttribute('data-dynamicitems-follower') === '1');
+  },
+
+  syncSharedBlockValue: function(sourceFieldName, blockName) {
+    var parsed = this.parseMultilangFieldName(sourceFieldName);
+    if (!parsed) {
+      return;
+    }
+    var baseName = parsed.baseName;
+    var sourceBlocks = this.readHiddenBlocksValue(sourceFieldName);
+    var sourceBlock = sourceBlocks.find(function(b) { return b && b.name === blockName; });
+    if (!sourceBlock || !this.isBlockShared(baseName, blockName, sourceBlock.type)) {
+      return;
+    }
+
+    var langs = this.getMultilangCodes();
+    langs.forEach(function(lang) {
+      if (lang === parsed.lang) {
+        return;
+      }
+      var targetFieldName = lang + '_' + baseName;
+      var targetBlocks = this.readHiddenBlocksValue(targetFieldName);
+      var changed = false;
+      targetBlocks = targetBlocks.map(function(b) {
+        if (b && b.name === blockName) {
+          changed = true;
+          return Object.assign({}, b, { value: sourceBlock.value });
+        }
+        return b;
+      });
+      if (!changed) {
+        return;
+      }
+      this.renderBlocks(targetFieldName, targetBlocks);
+      var hiddenInput = document.getElementById('field_' + targetFieldName + '_value');
+      if (hiddenInput) {
+        hiddenInput.value = JSON.stringify(targetBlocks);
+      }
+    }.bind(this));
   },
 
   parseMultilangFieldName: function(fieldName) {
@@ -708,9 +835,13 @@ window.HaruFieldtypes['dynamicitems'] = {
         }
       });
 
+      const sourceFull = this.readHiddenBlocksValue(sourceFieldName);
       const synced = sourceBlocks.map(function(block) {
         const next = this.cloneBlockStructure(block);
-        if (Object.prototype.hasOwnProperty.call(existingValues, block.name)) {
+        const sourceBlock = sourceFull.find(function(b) { return b && b.name === block.name; });
+        if (this.isBlockShared(parsed.baseName, block.name, block.type) && sourceBlock) {
+          next.value = sourceBlock.value;
+        } else if (Object.prototype.hasOwnProperty.call(existingValues, block.name)) {
           next.value = existingValues[block.name];
         } else {
           next.value = null;
@@ -822,6 +953,31 @@ function bindDynamicItemsDelegatedEvents() {
     }
   });
 }
+
+document.addEventListener('change', function(e) {
+  const toggle = e.target.closest('.entry-multilang-block-toggle');
+  if (!toggle) {
+    return;
+  }
+  const api = window.HaruFieldtypes && window.HaruFieldtypes['dynamicitems'];
+  if (!api) {
+    return;
+  }
+  const baseName = toggle.getAttribute('data-dynamic-field') || '';
+  const blockName = toggle.getAttribute('data-block-name') || '';
+  if (!baseName || !blockName) {
+    return;
+  }
+  const mode = toggle.checked ? 'shared' : 'localize';
+  api.setEntryMultilangMode(api.blockModeKey(baseName, blockName), mode);
+  if (toggle.checked) {
+    const fieldContainer = toggle.closest('.block-field');
+    if (fieldContainer && fieldContainer.id) {
+      const fieldName = fieldContainer.id.replace(/^field_/, '');
+      api.syncSharedBlockValue(fieldName, blockName);
+    }
+  }
+});
 
 bindDynamicItemsDelegatedEvents();
 
