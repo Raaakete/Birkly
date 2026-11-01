@@ -258,9 +258,8 @@
         return ['contenteditor', 'content-editor', 'editor', 'wysiwyg', 'markdown', 'file', 'image', 'media', 'gallery', 'map', 'oembed', 'range', 'checkbox', 'toggle', 'dynamicitems'].includes(t);
     }
 
-    function formatDynamicBlockValue(block, data) {
+    function formatDynamicBlockValueRaw(block, data) {
         const type = String(block.type || 'text').toLowerCase();
-        const name = String(block.name || type);
         let value = block.value;
         if (type === 'markdown') {
             return renderMarkdownSubset(String(value ?? ''));
@@ -274,7 +273,16 @@
         return String(value ?? '');
     }
 
-    function resolveDynamicFieldPath(parts, data) {
+    function formatDynamicBlockValue(block, data) {
+        const type = String(block.type || 'text').toLowerCase();
+        const formatted = formatDynamicBlockValueRaw(block, data);
+        if (dynamicBlockOutputsTrustedHtml(type)) {
+            return formatted;
+        }
+        return escapeHtml(formatted);
+    }
+
+    function resolveBlockAtPath(parts, data) {
         if (!parts || parts.length < 2) return null;
         const entry = data.entry && typeof data.entry === 'object' ? data.entry : data;
         const firstKey = parts[0][1] !== '' && parts[0][1] != null ? parts[0][1] : parts[0][2];
@@ -287,13 +295,30 @@
             const block = findDynamicBlockByName(blocks, key);
             if (!block) return null;
             if (i === lastIndex) {
-                return formatDynamicBlockValue(block, data);
+                return block;
             }
             if (String(block.type || '').toLowerCase() !== 'dynamicitems') return null;
             blocks = block.value;
             if (!isDynamicBlockList(blocks)) return null;
         }
         return null;
+    }
+
+    function resolveQuotedPathArg(raw, data) {
+        const segments = [...String(raw || '').matchAll(/'([^']+)'/g)].map((x) => x[1]);
+        if (segments.length < 2) return null;
+        const parts = segments.map((seg) => ['', seg, '']);
+        const block = resolveBlockAtPath(parts, data);
+        if (block) {
+            return block;
+        }
+        return resolveDynamicFieldPath(parts, data);
+    }
+
+    function resolveDynamicFieldPath(parts, data) {
+        const block = resolveBlockAtPath(parts, data);
+        if (!block) return null;
+        return formatDynamicBlockValue(block, data);
     }
 
     function dynamicPathExists(ref, data) {
@@ -661,7 +686,7 @@
         const dataCtx = options && options.data ? options.data : {};
         const blockType = inferDynamicBlockTypeForPath(pathOrName, dataCtx);
         if (blockType) {
-            const formatted = formatDynamicBlockValue({ type: blockType, name: pathOrName, value: value }, { entry: options.entry || dataCtx.entry });
+            const formatted = formatDynamicBlockValueRaw({ type: blockType, name: pathOrName, value: value }, { entry: options.entry || dataCtx.entry });
             if (dynamicBlockOutputsTrustedHtml(blockType)) {
                 return formatted;
             }
@@ -1363,6 +1388,7 @@
         getRegionDefaultTemplate,
         buildRegionTemplate,
         resolveLoopItems,
+        resolveQuotedPathArg,
         evaluateCondition,
         formatDate,
         getNestedValue,

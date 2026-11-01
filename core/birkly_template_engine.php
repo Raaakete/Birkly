@@ -1619,6 +1619,13 @@ function birkly_template_engine_resolve_template_function_arg(string $raw, array
         }
         return $key;
     }
+    if (preg_match_all("/'([^']+)'/", $trimmed, $qm) && count($qm[1]) >= 2) {
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $resolved = birkly_dynamicitems_resolve_quoted_path_arg($trimmed, $data);
+        if ($resolved !== null) {
+            return $resolved;
+        }
+    }
     if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)$/', $trimmed)) {
         require_once __DIR__ . '/dynamicitems_template.php';
         $resolved = birkly_dynamicitems_resolve_data_path($trimmed, $data);

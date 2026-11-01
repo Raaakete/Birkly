@@ -50,12 +50,108 @@ function birkly_dynamicitems_find_block_by_name(array $blocks, string $name): ?a
 }
 
 /**
- * Resolve a block item's value for template output (type-aware).
+ * Resolve the block array at a DynamicItems field path (without formatting).
+ *
+ * @param list<array<int,string>> $parts
+ * @param array<string,mixed> $data
+ * @return array<string,mixed>|null
+ */
+function birkly_dynamicitems_resolve_block_at_path(array $parts, array $data): ?array
+{
+    if ($parts === []) {
+        return null;
+    }
+
+    $entry = (array_key_exists('entry', $data) && is_array($data['entry']))
+        ? $data['entry']
+        : $data;
+    if (!is_array($entry)) {
+        return null;
+    }
+
+    $firstKey = (isset($parts[0][1]) && $parts[0][1] !== '') ? $parts[0][1] : ($parts[0][2] ?? '');
+    if ($firstKey === '' || !array_key_exists($firstKey, $entry)) {
+        return null;
+    }
+    $current = $entry[$firstKey];
+    if (!birkly_dynamicitems_is_block_list($current)) {
+        return null;
+    }
+
+    $blocks = $current;
+    $lastIndex = count($parts) - 1;
+    for ($i = 1; $i <= $lastIndex; $i++) {
+        $key = (isset($parts[$i][1]) && $parts[$i][1] !== '') ? $parts[$i][1] : ($parts[$i][2] ?? '');
+        if ($key === '') {
+            return null;
+        }
+        $block = birkly_dynamicitems_find_block_by_name($blocks, $key);
+        if ($block === null) {
+            return null;
+        }
+        if ($i === $lastIndex) {
+            return $block;
+        }
+        $type = birkly_fieldtype_normalize_type_slug((string) ($block['type'] ?? ''));
+        if ($type !== 'dynamicitems') {
+            return null;
+        }
+        $nested = $block['value'] ?? null;
+        if (!birkly_dynamicitems_is_block_list($nested)) {
+            return null;
+        }
+        $blocks = $nested;
+    }
+
+    return null;
+}
+
+/**
+ * @param list<string> $segments
+ * @return list<array<int,string>>|null
+ */
+function birkly_dynamicitems_quoted_segments_to_parts(array $segments): ?array
+{
+    if (count($segments) < 2) {
+        return null;
+    }
+    $parts = [];
+    foreach ($segments as $segment) {
+        $parts[] = [0 => '', 1 => (string) $segment, 2 => ''];
+    }
+
+    return $parts;
+}
+
+/**
+ * Parse {'field'.'block'…} references from a template arg fragment.
+ *
+ * @param array<string,mixed> $data
+ */
+function birkly_dynamicitems_resolve_quoted_path_arg(string $raw, array $data): mixed
+{
+    if (!preg_match_all("/'([^']+)'/", $raw, $m) || count($m[1]) < 2) {
+        return null;
+    }
+    $parts = birkly_dynamicitems_quoted_segments_to_parts($m[1]);
+    if ($parts === null) {
+        return null;
+    }
+    $block = birkly_dynamicitems_resolve_block_at_path($parts, $data);
+    if ($block !== null) {
+        return $block;
+    }
+
+    return birkly_dynamicitems_resolve_field_path($parts, $data);
+}
+
+/**
+ * Resolve a block item's raw formatted value (no output escaping).
  *
  * @param array<string,mixed> $block
  * @param array<string,mixed> $context
  */
-function birkly_dynamicitems_format_block_value(array $block, array $context = []): string
+function birkly_dynamicitems_format_block_value_raw(array $block, array $context = []): string
 {
     $type = birkly_fieldtype_normalize_type_slug((string) ($block['type'] ?? 'text'));
     $name = (string) ($block['name'] ?? $type);
@@ -79,6 +175,26 @@ function birkly_dynamicitems_format_block_value(array $block, array $context = [
         $type,
         ['entry' => $context['entry'] ?? []]
     );
+}
+
+/**
+ * Resolve a block item's value for template output (type-aware, escaped when required).
+ *
+ * @param array<string,mixed> $block
+ * @param array<string,mixed> $context
+ */
+function birkly_dynamicitems_format_block_value(array $block, array $context = []): string
+{
+    $type = birkly_fieldtype_normalize_type_slug((string) ($block['type'] ?? 'text'));
+    $formatted = birkly_dynamicitems_format_block_value_raw($block, $context);
+    if (birkly_dynamicitems_block_outputs_trusted_html($type)) {
+        return $formatted;
+    }
+    if (!function_exists('birkly_template_engine_escape_html')) {
+        require_once __DIR__ . '/birkly_template_engine.php';
+    }
+
+    return birkly_template_engine_escape_html($formatted);
 }
 
 /**
@@ -115,52 +231,12 @@ function birkly_dynamicitems_infer_block_type_for_path(string $pathOrName, array
  */
 function birkly_dynamicitems_resolve_field_path(array $parts, array $data): ?string
 {
-    if ($parts === []) {
+    $block = birkly_dynamicitems_resolve_block_at_path($parts, $data);
+    if ($block === null) {
         return null;
     }
 
-    $entry = (array_key_exists('entry', $data) && is_array($data['entry']))
-        ? $data['entry']
-        : $data;
-    if (!is_array($entry)) {
-        return null;
-    }
-
-    $firstKey = (isset($parts[0][1]) && $parts[0][1] !== '') ? $parts[0][1] : ($parts[0][2] ?? '');
-    if ($firstKey === '' || !array_key_exists($firstKey, $entry)) {
-        return null;
-    }
-    $current = $entry[$firstKey];
-    if (!birkly_dynamicitems_is_block_list($current)) {
-        return null;
-    }
-
-    $blocks = $current;
-    $lastIndex = count($parts) - 1;
-    for ($i = 1; $i <= $lastIndex; $i++) {
-        $key = (isset($parts[$i][1]) && $parts[$i][1] !== '') ? $parts[$i][1] : ($parts[$i][2] ?? '');
-        if ($key === '') {
-            return null;
-        }
-        $block = birkly_dynamicitems_find_block_by_name($blocks, $key);
-        if ($block === null) {
-            return null;
-        }
-        if ($i === $lastIndex) {
-            return birkly_dynamicitems_format_block_value($block, $data);
-        }
-        $type = birkly_fieldtype_normalize_type_slug((string) ($block['type'] ?? ''));
-        if ($type !== 'dynamicitems') {
-            return null;
-        }
-        $nested = $block['value'] ?? null;
-        if (!birkly_dynamicitems_is_block_list($nested)) {
-            return null;
-        }
-        $blocks = $nested;
-    }
-
-    return null;
+    return birkly_dynamicitems_format_block_value($block, $data);
 }
 
 /**
