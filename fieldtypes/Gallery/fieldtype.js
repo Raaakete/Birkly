@@ -5,18 +5,33 @@
 (function() {
     'use strict';
     
-    function initGalleryField(fieldName) {
-        const container = document.getElementById('field_' + fieldName);
-        if (!container) return;
-        
+    function resolveGalleryFieldContainer(fieldNameOrEl) {
+        if (fieldNameOrEl && fieldNameOrEl.nodeType === 1) {
+            if (fieldNameOrEl.classList && fieldNameOrEl.classList.contains('gallery-field')) {
+                return fieldNameOrEl;
+            }
+            if (fieldNameOrEl.closest) {
+                const root = fieldNameOrEl.closest('.gallery-field');
+                if (root) return root;
+            }
+        }
+        const fieldName = String(fieldNameOrEl || '');
+        return fieldName ? document.getElementById('field_' + fieldName) : null;
+    }
+
+    function initGalleryField(fieldNameOrEl) {
+        const container = resolveGalleryFieldContainer(fieldNameOrEl);
+        if (!container || container.dataset.galleryFieldReady === '1') return;
+
         const addBtn = container.querySelector('.add-gallery-images');
         const uploadBtn = container.querySelector('.upload-gallery-images');
         const clearBtn = container.querySelector('.clear-gallery');
-        const fileInput = container.querySelector('#gallery_input_' + fieldName);
-        const hiddenInput = container.querySelector('#field_' + fieldName + '_value');
+        const fileInput = container.querySelector('input[type="file"]');
+        const hiddenInput = container.querySelector('input[type="hidden"]');
         const previewContainer = container.querySelector('.gallery-preview');
-        
+
         if (!hiddenInput || !previewContainer) return;
+        container.dataset.galleryFieldReady = '1';
         
         let currentImages = [];
         
@@ -43,8 +58,7 @@
                         },
                         allowMultiple: true
                     });
-                } else {
-                    // Fallback: trigger file input
+                } else if (fileInput) {
                     fileInput.click();
                 }
             });
@@ -226,10 +240,7 @@
     // Initialize all gallery fields
     function initAllGalleryFields() {
         document.querySelectorAll('.gallery-field').forEach(function(container) {
-            const fieldName = container.id.replace('field_', '');
-            if (fieldName) {
-                initGalleryField(fieldName);
-            }
+            initGalleryField(container);
         });
     }
     
@@ -243,10 +254,7 @@
     // Also initialize on custom event for dynamic fields
     document.addEventListener('fieldtype:init', function(e) {
         if (e.detail && e.detail.fieldtype === 'gallery') {
-            const fieldName = e.detail.fieldName || e.detail.element?.id?.replace('field_', '');
-            if (fieldName) {
-                initGalleryField(fieldName);
-            }
+            initGalleryField(e.detail.element || e.detail.fieldName);
         }
     });
     
