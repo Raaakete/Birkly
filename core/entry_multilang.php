@@ -362,6 +362,16 @@ function birkly_entry_apply_multilang_fields(
         $existingEntry
     );
 
+    $fieldModes = birkly_multilang_entry_field_modes($entryOutput);
+    if ($fieldModes !== []) {
+        $entryOutput = birkly_multilang_entry_apply_shared_dynamic_block_values(
+            $entryOutput,
+            $fields,
+            $multilanguageLanguages,
+            $fieldModes
+        );
+    }
+
     return $entryOutput;
 }
 

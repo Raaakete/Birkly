@@ -428,6 +428,32 @@
 
 .entry-editor-page[data-birch] .entry-field .field-header { gap: 0; }
 
+.entry-editor-page[data-birch] .entry-field .field-header.field-header--split {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.entry-editor-page[data-birch] .field-header__aside {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: none;
+  max-width: min(100%, 320px);
+}
+
+.entry-editor-page[data-birch] .entry-field-multilang-mode__text {
+  color: var(--text-2);
+  font: var(--weight-regular) var(--size-small) / var(--lh-small) var(--font-sans);
+  white-space: nowrap;
+}
+
+.entry-editor-page[data-birch] .block-item-header .field-header__aside {
+  margin-inline-start: auto;
+  margin-inline-end: var(--s-1);
+}
+
 .entry-editor-page[data-birch] .entry-field .field-title {
   color: var(--text);
   font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
