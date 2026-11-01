@@ -870,45 +870,22 @@ class BirklyVersion {
             }
 
             require_once __DIR__ . '/update_staging.php';
-            for ($applyPass = 0; $applyPass < 3; $applyPass++) {
-                birkly_apply_staged_update_files($cmsRoot);
-                if (birkly_count_blocking_pending_staged_update_files($cmsRoot) === 0) {
-                    break;
-                }
-                clearstatcache();
-            }
 
-            if (birkly_count_blocking_pending_staged_update_files($cmsRoot) > 0) {
-                self::restoreBackup($backupDir, $cmsRoot);
-                birkly_purge_update_staging($cmsRoot);
-                $pendingPaths = birkly_list_pending_staged_relative_paths($cmsRoot);
-                self::$lastMoveError = $pendingPaths !== [] ? implode(', ', array_slice($pendingPaths, 0, 8)) : null;
-
-                return ['error' => self::updateInstallFailureMessage($cmsRoot, self::$lastMoveError)];
-            }
-
+            // Do not promote staged files in this request (updates.php / version.php are running).
+            // The next admin request applies staging via api/session.php — same as a manual reload.
             file_put_contents(self::$versionFile, $version);
 
-            $deferredPending = birkly_list_pending_staged_relative_paths($cmsRoot);
-            $deferredPending = array_values(array_filter(
-                $deferredPending,
-                static fn (string $path): bool => in_array($path, birkly_update_deferred_self_replace_paths(), true),
-            ));
-            
-            // Clean up
             self::cleanupTempFiles($tempFile, $tempExtractDir);
 
-            $staged = array_values(array_unique(array_merge(
-                self::$stagedUpdateRelativePaths,
-                $deferredPending,
-            )));
-            
+            $staged = array_values(array_unique(self::$stagedUpdateRelativePaths));
+
             return [
                 'success' => true,
                 'version' => $version,
                 'backup_location' => $backupDir,
                 'staged_files' => $staged,
-                'restart_recommended' => birkly_count_pending_staged_update_files($cmsRoot) > 0,
+                'restart_recommended' => true,
+                'finish_on_reload' => birkly_count_pending_staged_update_files($cmsRoot) > 0,
             ];
             
         } catch (Exception $e) {

@@ -175,7 +175,9 @@ function installUpdate($data) {
         ]);
         
         $message = 'Update installed successfully';
-        if (!empty($result['restart_recommended'])) {
+        if (!empty($result['finish_on_reload'])) {
+            $message = 'Update installed. The page will reload to apply the remaining files.';
+        } elseif (!empty($result['restart_recommended']) && PHP_OS_FAMILY === 'Windows') {
             $message = 'Update installed. Close the Birkly server window completely, start it again, then reload this page.';
         }
 
