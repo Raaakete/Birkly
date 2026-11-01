@@ -958,7 +958,7 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
         $langFields = [];
         foreach ($fields as $f) {
             $name = $f['name'] ?? '';
-            if ($name !== '' && $name !== 'title' && birkly_multilang_field_is_shared($f, $multilanguageEnabled)) {
+            if ($name !== '' && $name !== 'title' && birkly_multilang_field_is_shared_for_entry($f, $multilanguageEnabled, $entry)) {
                 continue;
             }
             $langField = $f;
@@ -967,6 +967,8 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
                 $langValue = '';
             }
             $langField['lang_value'] = $langValue;
+            $langField['multilang_mode'] = birkly_multilang_field_mode_for_entry($f, $multilanguageEnabled, $entry);
+            $langField['is_multilang_shared'] = false;
             if (!empty($langField['label_for_id'])) {
                 $langField['label_for_id'] = birkly_admin_multilang_label_for_id(
                     (string) $langField['label_for_id'],
@@ -1027,12 +1029,13 @@ function birkly_admin_build_shared_multilang_fields(
         if ($name === '' || $name === 'title') {
             continue;
         }
-        if (!birkly_multilang_field_is_shared($f, true)) {
+        if (!birkly_multilang_field_is_shared_for_entry($f, true, $entry)) {
             continue;
         }
 
         $field = $f;
         $field['is_multilang_shared'] = true;
+        $field['multilang_mode'] = BIRKLY_MULTILANG_MODE_SHARED;
         $field['lang_value'] = birkly_multilang_stored_shared_field_value($entry, $name, $languages);
         if ($includeFieldHtml && !empty($f['html'])) {
             $field['html'] = $f['html'];
@@ -1505,7 +1508,7 @@ function getEntryEditorData($includeFieldHtml = false) {
             
             $rawValue = ($payload['entry'][$name] ?? null);
             require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
-            if ($multilanguageEnabled && birkly_multilang_field_is_shared($f, true)) {
+            if ($multilanguageEnabled && birkly_multilang_field_is_shared_for_entry($f, true, $payload['entry'] ?? [])) {
                 $rawValue = birkly_multilang_stored_shared_field_value(
                     $payload['entry'] ?? [],
                     $name,
@@ -1559,7 +1562,7 @@ function getEntryEditorData($includeFieldHtml = false) {
                     $fieldConfig = birkly_admin_prepare_fieldtype_config(
                         $f,
                         $value,
-                        ($multilanguageEnabled && birkly_multilang_field_is_shared($f, true))
+                        ($multilanguageEnabled && birkly_multilang_field_is_shared_for_entry($f, true, $payload['entry'] ?? []))
                             ? null
                             : ($multilanguageEnabled ? $defaultLang : null),
                         $payload['entry'] ?? []

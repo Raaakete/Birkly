@@ -1045,6 +1045,7 @@
         "col_editor_multilang_field_mode": "すべての言語で同じ",
         "col_editor_multilang_field_shared_help": "オン：すべての言語タブで同じ値。オフ：言語ごとに別の値。",
         "entry_editor_field_shared_all_languages": "すべての言語で共有 — ここで一度だけ編集します。",
+        "entry_editor_same_for_all_languages": "すべての言語で同じ",
         "col_editor_name_ph_blog": "例: ブログ投稿",
         "col_editor_name_ph_comments": "例: コメント",
         "col_editor_name_ph_replies": "例：返信",

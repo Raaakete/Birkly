@@ -256,6 +256,17 @@ function birkly_entry_apply_multilang_fields(
 ): array {
     require_once __DIR__ . '/entry_multilang_field_mode.php';
 
+    $entryContext = $entryOutput;
+    if (!isset($entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY]) && is_array($existingEntry)) {
+        $modes = birkly_multilang_entry_field_modes($existingEntry);
+        if ($modes !== []) {
+            $entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $modes;
+        }
+    }
+    if (isset($entryOutput[BIRKLY_MULTILANG_ENTRY_MODES_KEY])) {
+        $entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $entryOutput[BIRKLY_MULTILANG_ENTRY_MODES_KEY];
+    }
+
     $sharedProcessed = [];
     foreach ($fields as $field) {
         if (!is_array($field)) {
@@ -265,7 +276,7 @@ function birkly_entry_apply_multilang_fields(
         if ($fieldName === '' || $fieldName === 'title') {
             continue;
         }
-        if (!birkly_multilang_field_is_shared($field, true)) {
+        if (!birkly_multilang_field_is_shared_for_entry($field, true, $entryContext)) {
             continue;
         }
         if (!function_exists('birkly_fieldtype_persists_in_entry')) {
@@ -316,7 +327,7 @@ function birkly_entry_apply_multilang_fields(
                 continue;
             }
 
-            if (birkly_multilang_field_is_shared($field, true)) {
+            if (birkly_multilang_field_is_shared_for_entry($field, true, $entryContext)) {
                 if (array_key_exists($fieldName, $sharedProcessed)) {
                     $entryOutput[$langCode][$fieldName] = $sharedProcessed[$fieldName];
                 }

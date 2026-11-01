@@ -1045,6 +1045,7 @@
         "col_editor_multilang_field_mode": "Identique pour toutes les langues",
         "col_editor_multilang_field_shared_help": "Activé : une seule valeur pour tous les onglets de langue. Désactivé : chaque langue a sa propre valeur.",
         "entry_editor_field_shared_all_languages": "Commun à toutes les langues — modifiez une seule fois ici.",
+        "entry_editor_same_for_all_languages": "Identique pour toutes les langues",
         "col_editor_name_ph_blog": "par exemple, les articles de blog",
         "col_editor_name_ph_comments": "par exemple, les commentaires",
         "col_editor_name_ph_replies": "par exemple, les réponses",

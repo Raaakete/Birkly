@@ -1074,6 +1074,7 @@
         "col_editor_multilang_field_mode": "Für alle Sprachen gleich",
         "col_editor_multilang_field_shared_help": "Wenn aktiv, gilt ein Wert für alle Sprach-Tabs. Wenn aus, hat jede Sprache einen eigenen Wert.",
         "entry_editor_field_shared_all_languages": "Für alle Sprachen gemeinsam — hier einmal bearbeiten.",
+        "entry_editor_same_for_all_languages": "Für alle Sprachen gleich",
         "col_editor_name_ph_blog": "z. B. Blogbeiträge",
         "col_editor_name_ph_comments": "z. B. Kommentare",
         "col_editor_name_ph_replies": "z. B. Antworten",
