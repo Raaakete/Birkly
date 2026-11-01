@@ -690,10 +690,27 @@ function birkly_public_list_sub_entries(
                 if (!in_array($language, $multilanguageLanguages, true)) {
                     $language = $multilanguageLanguages[0] ?? 'en';
                 }
+                require_once __DIR__ . '/sub_entry_save.php';
+                $subFields = birkly_sub_entry_schema_fields($parentCollection, $subCollection);
                 $entries = array_map(
-                    static function ($entry) use ($language, $multilanguageEnabled, $multilanguageLanguages) {
+                    static function ($entry) use (
+                        $language,
+                        $multilanguageEnabled,
+                        $multilanguageLanguages,
+                        $subFields
+                    ) {
                         if (!is_array($entry)) {
                             return $entry;
+                        }
+
+                        if ($subFields !== []) {
+                            return birkly_public_transform_entry_for_language_with_schema(
+                                $entry,
+                                $language,
+                                $multilanguageEnabled,
+                                $multilanguageLanguages,
+                                $subFields
+                            );
                         }
 
                         return birkly_public_transform_entry_for_language(

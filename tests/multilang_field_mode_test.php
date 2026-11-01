@@ -158,6 +158,66 @@ assert_true(
     ($dynamicOut['de']['content'][0]['value'] ?? null) === 'Hello'
 );
 
+$daEnModes = ['content.background' => 'shared'];
+$existingLocalized = [
+    'id' => 'e3',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => $daEnModes,
+    'da' => [
+        'content' => [
+            ['name' => 'background', 'type' => 'file', 'value' => 'media-old-da'],
+            ['name' => 'title', 'type' => 'text', 'value' => 'DA title'],
+        ],
+    ],
+    'en' => [
+        'content' => [
+            ['name' => 'background', 'type' => 'file', 'value' => 'media-new-en'],
+            ['name' => 'title', 'type' => 'text', 'value' => 'EN title'],
+        ],
+    ],
+];
+$savedOutput = [
+    'id' => 'e3',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => $daEnModes,
+    'da' => $existingLocalized['da'],
+    'en' => $existingLocalized['en'],
+];
+$savedOutput = birkly_multilang_entry_apply_shared_dynamic_block_values(
+    $savedOutput,
+    [['name' => 'content', 'type' => 'dynamicitems']],
+    ['da', 'en'],
+    $daEnModes,
+    $existingLocalized
+);
+assert_true(
+    'shared file block save prefers edited language over first tab',
+    ($savedOutput['da']['content'][0]['value'] ?? null) === 'media-new-en'
+        && ($savedOutput['en']['content'][0]['value'] ?? null) === 'media-new-en'
+);
+assert_true(
+    'shared save leaves localized text blocks untouched',
+    ($savedOutput['da']['content'][1]['value'] ?? null) === 'DA title'
+        && ($savedOutput['en']['content'][1]['value'] ?? null) === 'EN title'
+);
+
+$publicDynamicFields = [['name' => 'content', 'type' => 'dynamicitems']];
+$publicEntry = [
+    'id' => 'e3',
+    BIRKLY_MULTILANG_ENTRY_MODES_KEY => $daEnModes,
+    'da' => $existingLocalized['da'],
+    'en' => $existingLocalized['en'],
+];
+$publicDa = birkly_public_transform_entry_for_language_with_schema(
+    $publicEntry,
+    'da',
+    true,
+    ['da', 'en'],
+    $publicDynamicFields
+);
+assert_true(
+    'public read canonicalizes shared dynamic file block',
+    ($publicDa['content'][0]['value'] ?? null) === 'media-new-en'
+);
+
 $flatModesPost = [
     'multilang_field_modes[cover]' => 'shared',
     'multilang_field_modes[content][before_text]' => 'shared',
