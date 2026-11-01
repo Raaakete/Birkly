@@ -406,17 +406,17 @@ class BirklyVersion {
         clearstatcache(true, $target);
 
         if (!is_file($target)) {
-            if (@rename($stagingPath, $target)) {
-                return true;
-            }
-            if (@copy($stagingPath, $target)) {
-                @unlink($stagingPath);
-                return true;
-            }
-            @unlink($stagingPath);
-            return false;
+            return self::finalizeStagedUpdateFile($stagingPath, $target, $normalizedRelative);
         }
 
+        return self::finalizeStagedUpdateFile($stagingPath, $target, $normalizedRelative);
+    }
+
+    /**
+     * Replace a live file with staged content, deferring the swap when overwrite is blocked.
+     */
+    private static function finalizeStagedUpdateFile(string $stagingPath, string $target, string $relativePath): bool
+    {
         if (@rename($stagingPath, $target)) {
             return true;
         }
@@ -426,7 +426,20 @@ class BirklyVersion {
             return true;
         }
 
-        if (PHP_OS_FAMILY === 'Windows' && is_file($stagingPath) && filesize($stagingPath) > 0) {
+        if (is_file($target)) {
+            @chmod($target, 0644);
+            if (@unlink($target)) {
+                if (@rename($stagingPath, $target)) {
+                    return true;
+                }
+                if (@copy($stagingPath, $target)) {
+                    @unlink($stagingPath);
+                    return true;
+                }
+            }
+        }
+
+        if (is_file($stagingPath) && filesize($stagingPath) > 0) {
             if ($relativePath !== '') {
                 self::$stagedUpdateRelativePaths[] = $relativePath;
             }
@@ -435,7 +448,51 @@ class BirklyVersion {
         }
 
         @unlink($stagingPath);
+
         return false;
+    }
+
+    /**
+     * Verify Hub can overwrite CMS program directories before applying an update package.
+     */
+    private static function checkUpdateInstallFilesystem(string $cmsRoot): ?string
+    {
+        require_once __DIR__ . '/birkly_paths.php';
+        $root = rtrim($cmsRoot, '/\\');
+
+        foreach (['core', 'admin', 'api', 'fieldtypes'] as $dir) {
+            $path = $root . '/' . $dir;
+            if (!is_dir($path)) {
+                continue;
+            }
+
+            $writable = function_exists('birkly_path_is_writable')
+                ? birkly_path_is_writable($path)
+                : is_writable($path);
+
+            if (!$writable) {
+                return 'Cannot update Birkly: the server cannot write to ' . $dir . '/. '
+                    . 'Hub updates need PHP to update program folders (core/, admin/, api/), not only content/ and media/. '
+                    . 'Ask your hosting provider to fix permissions on the CMS installation.';
+            }
+        }
+
+        return null;
+    }
+
+    private static function updateInstallFailureMessage(string $cmsRoot, ?string $relativePath): string
+    {
+        $detail = $relativePath !== null && $relativePath !== '' ? ' (' . $relativePath . ')' : '';
+        $permHint = self::checkUpdateInstallFilesystem($cmsRoot);
+        if ($permHint !== null) {
+            return $permHint;
+        }
+
+        $hint = PHP_OS_FAMILY === 'Windows'
+            ? ' On Windows, fully stop the Birkly server, then try Install again.'
+            : ' Reload the admin page and try Install again. If it keeps failing, ask your host to allow PHP to replace files under core/, admin/, and api/.';
+
+        return 'Failed to install update files' . $detail . '.' . $hint;
     }
 
     /**
@@ -780,14 +837,16 @@ class BirklyVersion {
             }
             
             $excludeFiles = self::updateInstallExcludePrefixes();
+
+            $filesystemError = self::checkUpdateInstallFilesystem($cmsRoot);
+            if ($filesystemError !== null) {
+                self::restoreBackup($backupDir, $cmsRoot);
+                return ['error' => $filesystemError];
+            }
             
             if (!self::moveUpdateFiles($actualCmsRoot, $cmsRoot, $excludeFiles)) {
                 self::restoreBackup($backupDir, $cmsRoot);
-                $detail = self::$lastMoveError !== null ? ' (' . self::$lastMoveError . ')' : '';
-                $hint = PHP_OS_FAMILY === 'Windows'
-                    ? ' On Windows, fully stop the Birkly server (close the server window), then try Install again.'
-                    : '';
-                return ['error' => 'Failed to install update files' . $detail . '.' . $hint];
+                return ['error' => self::updateInstallFailureMessage($cmsRoot, self::$lastMoveError)];
             }
             
             // Update version file
