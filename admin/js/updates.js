@@ -342,9 +342,7 @@
                         ? updT('updates_js_install_restart_server', 'Update installed. Close the Birkly server window completely, start it again, then reload this page.')
                         : updT('updates_js_install_success_reload', 'Update installed successfully. The page will reload.'));
                 BirklyFeedback.toast(installMsg, 'success');
-                if (!result.data || !result.data.restart_recommended) {
-                    window.location.reload();
-                }
+                window.location.reload();
             } else {
                 BirklyFeedback.toast(result.message || updT('updates_js_install_failed', 'Installation failed'), 'error')
             }
