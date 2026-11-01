@@ -62,6 +62,7 @@ function birkly_sub_entry_prepare_save_data(
 ): array {
     require_once __DIR__ . '/entry_multilang.php';
     require_once __DIR__ . '/fieldtype_virtual.php';
+    require_once __DIR__ . '/entry_multilang_field_mode.php';
 
     $existingEntry = is_array($existingEntry) ? $existingEntry : [];
     $fields = birkly_sub_entry_schema_fields($parentCollection, $subCollectionSlug);
@@ -72,7 +73,6 @@ function birkly_sub_entry_prepare_save_data(
     $entryOutput = $existingEntry;
 
     if ($multilanguageLanguages !== []) {
-        require_once __DIR__ . '/entry_multilang_field_mode.php';
         $fieldModes = birkly_multilang_entry_field_modes_from_post(
             $entryData,
             $fields,
