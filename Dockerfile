@@ -27,6 +27,7 @@ RUN chmod +x /entrypoint.sh \
     && bash /app/scripts/sync-template-engine-inline.sh \
     && bash /app/scripts/build-client-assets.sh \
     && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
+    && touch /app/.birkly-docker \
     && mkdir -p content media settings users data cache logs temp plugins themes backups \
     && chown -R www-data:www-data /app/admin /app/api /app/core /app/fieldtypes /app/index.php /app/VERSION /app/server-router.php /app/invite.php /app/backups \
     && chown -R www-data:www-data content media settings users data cache logs temp plugins themes
