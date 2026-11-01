@@ -47,6 +47,27 @@ function recover_hub_backup_bases(string $cmsRoot): array
 }
 
 /** @return list<string> */
+function recover_hub_backup_required_components(): array
+{
+    return ['admin', 'api', 'core', 'fieldtypes', 'index.php', 'VERSION'];
+}
+
+function recover_hub_backup_is_complete(string $backupDir): bool
+{
+    if (!is_dir($backupDir)) {
+        return false;
+    }
+    foreach (recover_hub_backup_required_components() as $component) {
+        $path = $backupDir . '/' . $component;
+        if (!is_file($path) && !is_dir($path)) {
+            return false;
+        }
+    }
+
+    return is_file($backupDir . '/core/version.php');
+}
+
+/** @return list<string> */
 function recover_hub_find_backups(string $cmsRoot): array
 {
     $found = [];
@@ -62,7 +83,7 @@ function recover_hub_find_backups(string $cmsRoot): array
                 continue;
             }
             $path = $base . '/' . $entry;
-            if (is_dir($path)) {
+            if (is_dir($path) && recover_hub_backup_is_complete($path)) {
                 $found[] = $path;
             }
         }
@@ -179,10 +200,19 @@ function recover_hub_merge_tree(string $sourceDir, string $targetDir, bool $dryR
 
 function recover_hub_restore(string $backupDir, string $cmsRoot, bool $dryRun): bool
 {
+    if (!recover_hub_backup_is_complete($backupDir)) {
+        fwrite(STDERR, "Backup is incomplete (missing admin/, api/, or core/): $backupDir\n");
+        fwrite(STDERR, "Do not partial-restore — rebuild the CMS Docker image or pick another backup.\n");
+        return false;
+    }
+
     $components = ['admin', 'api', 'core', 'fieldtypes', 'plugins', 'index.php', 'VERSION'];
     foreach ($components as $component) {
         $source = $backupDir . '/' . $component;
         if (!is_dir($source) && !is_file($source)) {
+            if ($component === 'plugins') {
+                continue;
+            }
             fwrite(STDERR, "Backup missing component: $component\n");
             return false;
         }
@@ -210,7 +240,8 @@ function recover_hub_restore(string $backupDir, string $cmsRoot, bool $dryRun): 
 if ($list) {
     $backups = recover_hub_find_backups($root);
     if ($backups === []) {
-        fwrite(STDOUT, "No pre-update-* backups found under backups/ or data/pre_update_backups/\n");
+        fwrite(STDOUT, "No complete pre-update-* backups found (need admin/, api/, core/, fieldtypes/, index.php, VERSION).\n");
+        fwrite(STDOUT, "If Hub backups are incomplete, rebuild the CMS Docker image in Dokploy to restore /app code; content/settings stay on the volume.\n");
         exit(0);
     }
     foreach ($backups as $path) {
@@ -227,7 +258,7 @@ if ($restoreLatest || $restorePath !== null) {
     if ($restorePath === null) {
         $backups = recover_hub_find_backups($root);
         if ($backups === []) {
-            fwrite(STDERR, "No backup to restore. Check backups/pre-update-* on the server.\n");
+            fwrite(STDERR, "No complete backup to restore. Run --list-backups or rebuild the CMS container image in Dokploy.\n");
             exit(1);
         }
         $restorePath = $backups[0];

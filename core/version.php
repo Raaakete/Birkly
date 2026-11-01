@@ -997,6 +997,8 @@ class BirklyVersion {
             'index.php',
             'VERSION',
         ];
+
+        $requiredAfterCopy = ['admin', 'api', 'core', 'fieldtypes', 'index.php', 'VERSION'];
         
         foreach ($coreFiles as $file) {
             $sourcePath = $sourceDir . '/' . $file;
@@ -1010,7 +1012,21 @@ class BirklyVersion {
                 if (!self::copyDirectory($sourcePath, $backupPath)) {
                     return false;
                 }
+            } elseif (str_ends_with($file, '/')) {
+                // Required program tree missing before update — abort rather than an empty backup.
+                return false;
             }
+        }
+
+        foreach ($requiredAfterCopy as $component) {
+            $path = $backupDir . '/' . $component;
+            if (!is_file($path) && !is_dir($path)) {
+                return false;
+            }
+        }
+
+        if (!is_file($backupDir . '/core/version.php')) {
+            return false;
         }
         
         return true;
@@ -1067,6 +1083,9 @@ class BirklyVersion {
         foreach ($iterator as $item) {
             $relativePath = str_replace('\\', '/', $iterator->getSubPathName());
             if (self::updatePathIsExcluded($relativePath, $excludeFiles)) {
+                continue;
+            }
+            if (str_ends_with($relativePath, '.gitkeep')) {
                 continue;
             }
 
