@@ -23,6 +23,24 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 }
 
 assert_true(
+    'sub_entry_save can normalize multilang modes without fatal',
+    (static function (): bool {
+        try {
+            birkly_sub_entry_prepare_save_data(
+                'pages',
+                'sections',
+                'sub_normalize_smoke',
+                ['multilang_field_modes[hero]' => 'shared', 'title' => 'Smoke'],
+                []
+            );
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    })()
+);
+
+assert_true(
     'strip flat bracket keys',
     !array_key_exists(
         'en[cover]',
