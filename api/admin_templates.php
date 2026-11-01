@@ -798,6 +798,11 @@ function birkly_admin_multilang_field_html(string $html, string $fieldName, stri
     $html = preg_replace('/\bid=(["\'])field_' . $quoted . '_value\1/i', 'id=$1field_' . $langFieldName . '_value$1', $html);
     $html = preg_replace('/\bid=(["\'])field_' . $quoted . '\1/i', 'id=$1field_' . $langFieldName . '$1', $html);
 
+    // File / gallery pickers use separate input ids (not covered by field_{name} rewrite)
+    $html = preg_replace('/\bid=(["\'])file_input_' . $quoted . '\1/i', 'id=$1file_input_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bid=(["\'])gallery_input_' . $quoted . '\1/i', 'id=$1gallery_input_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bdata-field=(["\'])' . $quoted . '\1/i', 'data-field=$1' . $langFieldName . '$1', $html);
+
     // DynamicItems onclick handlers use bare field name as DOM key
     $html = preg_replace(
         "/showAddBlockModal\\(['\"]" . $quoted . "['\"]\\)/",
