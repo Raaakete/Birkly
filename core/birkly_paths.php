@@ -289,7 +289,7 @@ function birkly_paths_reset_cache(): void
  */
 function birkly_runtime_dir_names(): array
 {
-    return ['content', 'media', 'users', 'settings', 'logs', 'temp', 'cache', 'plugins'];
+    return ['content', 'media', 'users', 'settings', 'logs', 'temp', 'cache', 'plugins', 'backups'];
 }
 
 /**
