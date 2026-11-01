@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/plugins/template_functions.php';
 require_once __DIR__ . '/media_storage.php';
 require_once __DIR__ . '/dynamicitems_presentation.php';
+require_once __DIR__ . '/dynamicitems_template.php';
 require_once __DIR__ . '/relation_resolve.php';
 require_once __DIR__ . '/map_presentation.php';
 
@@ -53,7 +54,9 @@ function birkly_fieldtype_register_template_shelf(): void
     $registered = true;
 
     register_template_function('media_url', static function ($mediaId) {
-        $item = birkly_media_resolve_item((string) $mediaId);
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $id = birkly_dynamicitems_coerce_media_arg($mediaId);
+        $item = birkly_media_resolve_item($id);
         return $item ? (string) ($item['url'] ?? '') : '';
     }, [
         'description' => 'Public URL for a media library id (file or gallery item).',
@@ -61,7 +64,9 @@ function birkly_fieldtype_register_template_shelf(): void
     ]);
 
     register_template_function('media_img', static function ($mediaId, $alt = '') {
-        $item = birkly_media_resolve_item((string) $mediaId);
+        require_once __DIR__ . '/dynamicitems_template.php';
+        $id = birkly_dynamicitems_coerce_media_arg($mediaId);
+        $item = birkly_media_resolve_item($id);
         if (!$item) {
             return '';
         }
@@ -200,5 +205,12 @@ function birkly_fieldtype_register_template_shelf(): void
     }, [
         'description' => 'Render DynamicItems blocks (markdown/editor as HTML, other types escaped).',
         'arguments' => ['dynamicitems_value' => 'array|string'],
+    ]);
+
+    register_template_function('dynamicitem', static function ($fieldName, $blockName) {
+        return birkly_dynamicitems_resolve_named_item((string) $fieldName, (string) $blockName, []);
+    }, [
+        'description' => 'Render one DynamicItems block by field and block name on the current entry (SSR uses live render context).',
+        'arguments' => ['field_name' => 'string', 'block_name' => 'string'],
     ]);
 }
