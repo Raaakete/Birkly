@@ -56,13 +56,20 @@ window.HaruFieldtypes['dynamicitems'] = {
     return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
   },
 
-  // Show modal for adding a new block
-  showAddBlockModal: function(fieldName) {
+  // Show modal for adding a new block, or editing block metadata (label, required, settings).
+  showAddBlockModal: function(fieldName, editIndex) {
     const container = document.getElementById('field_' + fieldName);
     if (!container) return;
     
     const fieldConfig = this.getFieldConfigFromDom(fieldName);
     if (!fieldConfig) return;
+
+    const isEdit = typeof editIndex === 'number' && !Number.isNaN(editIndex);
+    const blocksForEdit = isEdit ? this.getValue(fieldName) : [];
+    const editingBlock = isEdit ? blocksForEdit[editIndex] : null;
+    if (isEdit && !editingBlock) {
+      return;
+    }
     
     const availableFieldtypes = fieldConfig.availableFieldtypes || [];
     
@@ -72,6 +79,10 @@ window.HaruFieldtypes['dynamicitems'] = {
     if (existingModal) {
       existingModal.remove();
     }
+
+    const modalTitle = isEdit ? 'Edit block' : 'Add block';
+    const confirmLabel = isEdit ? 'Save block' : 'Add block';
+    const editIndexAttr = isEdit ? ' data-dynamicitems-edit-index="' + String(editIndex) + '"' : '';
     
     // Group fieldtypes by category
     const fieldtypesByCategory = {};
@@ -93,16 +104,16 @@ window.HaruFieldtypes['dynamicitems'] = {
     });
     
     const modalHtml = `
-      <div id="${modalId}" class="dynamicitems-modal-overlay" data-dynamicitems-field="${this.escapeHtml(fieldName)}">
+      <div id="${modalId}" class="dynamicitems-modal-overlay" data-dynamicitems-field="${this.escapeHtml(fieldName)}"${editIndexAttr}>
         <div class="dynamicitems-modal">
           <div class="dynamicitems-modal-header">
-            <h3>Add block</h3>
+            <h3>${modalTitle}</h3>
             <button type="button" class="dynamicitems-modal-close" data-dynamicitems-action="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="dynamicitems-modal-body">
             <div class="dynamicitems-form-group">
               <label>Field type <span class="required">*</span></label>
-              <select id="block-fieldtype-select" class="input" required>
+              <select id="block-fieldtype-select" class="input" required${isEdit ? ' disabled' : ''}>
                 <option value="">Select a fieldtype...</option>
                 ${fieldtypeOptionsHtml}
               </select>
@@ -113,7 +124,7 @@ window.HaruFieldtypes['dynamicitems'] = {
             </div>
             <div class="dynamicitems-form-group">
               <label>API name <span class="required">*</span></label>
-              <input type="text" id="block-name-input" class="input" placeholder="e.g., title" required pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores">
+              <input type="text" id="block-name-input" class="input" placeholder="e.g., title" required pattern="[a-z0-9_]+" title="Only lowercase letters, numbers, and underscores"${isEdit ? ' readonly' : ''}>
               <small>Used in API responses. Only lowercase letters, numbers, and underscores.</small>
             </div>
             <div class="dynamicitems-form-group">
@@ -129,7 +140,7 @@ window.HaruFieldtypes['dynamicitems'] = {
           </div>
           <div class="dynamicitems-modal-footer">
             <button type="button" class="button" data-dynamicitems-action="modal-cancel">Cancel</button>
-            <button type="button" class="button is-main" data-dynamicitems-action="modal-confirm">Add block</button>
+            <button type="button" class="button is-main" data-dynamicitems-action="modal-confirm">${confirmLabel}</button>
           </div>
         </div>
       </div>
@@ -141,14 +152,23 @@ window.HaruFieldtypes['dynamicitems'] = {
     const labelInput = document.getElementById('block-label-input');
     const nameInput = document.getElementById('block-name-input');
     const fieldtypeSelect = document.getElementById('block-fieldtype-select');
+    const requiredCheckbox = document.getElementById('block-required-checkbox');
     let slugAutoSync = true;
+
+    if (isEdit && editingBlock) {
+      fieldtypeSelect.value = editingBlock.type || '';
+      labelInput.value = editingBlock.label || '';
+      nameInput.value = editingBlock.name || '';
+      requiredCheckbox.checked = !!editingBlock.required;
+      slugAutoSync = false;
+    }
 
     nameInput.addEventListener('input', function() {
       slugAutoSync = false;
     });
 
     labelInput.addEventListener('input', function() {
-      if (!slugAutoSync) {
+      if (!slugAutoSync || isEdit) {
         return;
       }
       const apiName = this.value.toLowerCase()
@@ -158,27 +178,23 @@ window.HaruFieldtypes['dynamicitems'] = {
       nameInput.value = apiName;
     });
     
-    // Load fieldtype settings when type is selected
     const dynamicItemsApi = this;
-    fieldtypeSelect.addEventListener('change', function() {
-      const fieldtypeName = this.value;
+
+    const loadFieldtypeSettingsUi = function(fieldtypeName, existingSettings) {
       const settingsContainer = document.getElementById('block-settings-container');
       const settingsContent = document.getElementById('block-settings-content');
-      
       if (!fieldtypeName) {
         settingsContainer.style.display = 'none';
         return;
       }
-      
-      // Load fieldtype config UI
-      fetch(dynamicItemsApi.resolveUrl(`/api/admin_fieldtypes.php?action=get_config_ui&fieldtype=${encodeURIComponent(fieldtypeName)}&fieldIndex=0&existingData={}`))
+      const existingPayload = encodeURIComponent(JSON.stringify(existingSettings || {}));
+      fetch(dynamicItemsApi.resolveUrl('/api/admin_fieldtypes.php?action=get_config_ui&fieldtype=' + encodeURIComponent(fieldtypeName) + '&fieldIndex=0&existingData=' + existingPayload))
         .then(response => response.json())
         .then(data => {
           if (data.status === 'ok' && data.html) {
             settingsContent.innerHTML = data.html;
             settingsContainer.style.display = 'block';
-            
-            // Extract and execute any inline scripts
+
             const scripts = settingsContent.querySelectorAll('script');
             scripts.forEach(function(oldScript) {
               const newScript = document.createElement('script');
@@ -197,7 +213,15 @@ window.HaruFieldtypes['dynamicitems'] = {
           console.error('Error loading fieldtype config:', err);
           settingsContainer.style.display = 'none';
         });
+    };
+
+    fieldtypeSelect.addEventListener('change', function() {
+      loadFieldtypeSettingsUi(this.value, {});
     });
+
+    if (isEdit && editingBlock && editingBlock.type) {
+      loadFieldtypeSettingsUi(editingBlock.type, editingBlock.settings || {});
+    }
     
     // Close modal on overlay click
     document.getElementById(modalId).addEventListener('click', function(e) {
@@ -208,15 +232,41 @@ window.HaruFieldtypes['dynamicitems'] = {
   },
   
   // Add block from modal
+  collectBlockSettingsFromModal: function() {
+    const settings = {};
+    const settingsContent = document.getElementById('block-settings-content');
+    if (!settingsContent) {
+      return settings;
+    }
+    const inputs = settingsContent.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+      if (input.name && input.name.startsWith('config[')) {
+        const match = input.name.match(/config\[(.+)\]/);
+        if (match) {
+          const key = match[1];
+          if (input.type === 'checkbox') {
+            settings[key] = input.checked;
+          } else {
+            settings[key] = input.value;
+          }
+        }
+      }
+    });
+    return settings;
+  },
+
   addBlockFromModal: function(fieldName) {
     const modal = document.getElementById('dynamicitems-add-block-modal');
     if (!modal) return;
+
+    const editIndexRaw = modal.getAttribute('data-dynamicitems-edit-index');
+    const editIndex = editIndexRaw !== null && editIndexRaw !== '' ? parseInt(editIndexRaw, 10) : NaN;
+    const isEdit = !Number.isNaN(editIndex);
     
     const fieldtypeSelect = document.getElementById('block-fieldtype-select');
     const labelInput = document.getElementById('block-label-input');
     const nameInput = document.getElementById('block-name-input');
     const requiredCheckbox = document.getElementById('block-required-checkbox');
-    const settingsContent = document.getElementById('block-settings-content');
     
     // Validate
     if (!fieldtypeSelect.value || !labelInput.value || !nameInput.value) {
@@ -230,34 +280,40 @@ window.HaruFieldtypes['dynamicitems'] = {
       return;
     }
     
-    // Check for duplicate API names
     const existingBlocks = this.getValue(fieldName);
-    if (existingBlocks.some(block => block.name === nameInput.value)) {
+    const duplicate = existingBlocks.some(function(block, idx) {
+      return block.name === nameInput.value && (!isEdit || idx !== editIndex);
+    });
+    if (duplicate) {
       alert('A block with this API name already exists');
       return;
     }
-    
-    // Collect settings from config UI
-    const settings = {};
-    if (settingsContent) {
-      const inputs = settingsContent.querySelectorAll('input, select, textarea');
-      inputs.forEach(input => {
-        if (input.name && input.name.startsWith('config[')) {
-          // Parse config[key] format
-          const match = input.name.match(/config\[(.+)\]/);
-          if (match) {
-            const key = match[1];
-            if (input.type === 'checkbox') {
-              settings[key] = input.checked;
-            } else {
-              settings[key] = input.value;
-            }
-          }
-        }
+
+    const settings = this.collectBlockSettingsFromModal();
+
+    if (isEdit) {
+      const current = existingBlocks[editIndex];
+      if (!current) {
+        modal.remove();
+        return;
+      }
+      const updated = Object.assign({}, current, {
+        type: fieldtypeSelect.value,
+        name: nameInput.value,
+        label: labelInput.value,
+        required: requiredCheckbox.checked,
+        settings: settings,
       });
+      existingBlocks[editIndex] = updated;
+      this.renderBlocks(fieldName, existingBlocks);
+      this.updateHiddenInput(fieldName, existingBlocks);
+      if (this.isMultilangOwnerField(fieldName)) {
+        this.syncMultilangBlocks(fieldName);
+      }
+      modal.remove();
+      return;
     }
     
-    // Create block data
     const blockData = {
       type: fieldtypeSelect.value,
       name: nameInput.value,
@@ -267,10 +323,7 @@ window.HaruFieldtypes['dynamicitems'] = {
       value: null
     };
     
-    // Add block
     this.addBlock(fieldName, blockData);
-    
-    // Close modal
     modal.remove();
   },
   
@@ -449,12 +502,7 @@ window.HaruFieldtypes['dynamicitems'] = {
   
   // Edit a block
   editBlock: function(fieldName, idx) {
-    const blocks = this.getValue(fieldName);
-    const block = blocks[idx];
-    if (!block) return;
-    
-    // For now, just show an alert - can be enhanced with a proper edit modal
-    alert('Edit functionality coming soon. For now, remove and re-add the block.');
+    this.showAddBlockModal(fieldName, idx);
   },
   
   // Remove a block
@@ -648,7 +696,13 @@ window.HaruFieldtypes['dynamicitems'] = {
   },
 
   getMultilangCodes: function() {
-    return Array.from(document.querySelectorAll('.entry-language-tabs .language-tab-btn'))
+    const fromPanels = Array.from(document.querySelectorAll('.language-tab-content[data-lang]'))
+      .map(function(el) { return el.getAttribute('data-lang') || ''; })
+      .filter(Boolean);
+    if (fromPanels.length > 0) {
+      return fromPanels;
+    }
+    return Array.from(document.querySelectorAll('.language-switch .language-tab-btn, .entry-language-tabs .language-tab-btn'))
       .map(function(btn) { return btn.dataset.lang || ''; })
       .filter(Boolean);
   },
