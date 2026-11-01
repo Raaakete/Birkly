@@ -359,27 +359,9 @@ class BirklyVersion {
 
     private static function updateInstallPathPriority(string $relativePath): int
     {
-        $path = str_replace('\\', '/', $relativePath);
-        if ($path === 'api/updates.php') {
-            return 1000;
-        }
-        if ($path === 'api/session.php') {
-            return 990;
-        }
-        if (str_starts_with($path, 'core/')) {
-            return 10;
-        }
-        if (str_starts_with($path, 'fieldtypes/')) {
-            return 20;
-        }
-        if (str_starts_with($path, 'admin/')) {
-            return 30;
-        }
-        if (str_starts_with($path, 'api/')) {
-            return 50;
-        }
+        require_once __DIR__ . '/update_staging.php';
 
-        return 40;
+        return birkly_update_install_path_priority($relativePath);
     }
 
     private static function copyFileForUpdate(string $source, string $target, string $relativePath = '', bool $deferSwap = false): bool
@@ -821,6 +803,8 @@ class BirklyVersion {
         $backupDir = self::allocatePreUpdateBackupDir($cmsRoot);
         
         try {
+            require_once __DIR__ . '/update_staging.php';
+
             if ($backupDir === null) {
                 return ['error' => self::preUpdateBackupFailedMessage()];
             }
@@ -869,8 +853,6 @@ class BirklyVersion {
                 return ['error' => self::updateInstallFailureMessage($cmsRoot, self::$lastMoveError)];
             }
 
-            require_once __DIR__ . '/update_staging.php';
-
             // Do not promote staged files in this request (updates.php / version.php are running).
             // The next admin request applies staging via api/session.php — same as a manual reload.
             file_put_contents(self::$versionFile, $version);
@@ -885,7 +867,7 @@ class BirklyVersion {
                 'backup_location' => $backupDir,
                 'staged_files' => $staged,
                 'restart_recommended' => true,
-                'finish_on_reload' => birkly_count_pending_staged_update_files($cmsRoot) > 0,
+                'finish_on_reload' => self::installHasPendingStagedFiles($cmsRoot),
             ];
             
         } catch (Exception $e) {
@@ -903,6 +885,16 @@ class BirklyVersion {
         }
     }
     
+    private static function installHasPendingStagedFiles(string $cmsRoot): bool
+    {
+        require_once __DIR__ . '/update_staging.php';
+        if (!function_exists('birkly_count_pending_staged_update_files')) {
+            return false;
+        }
+
+        return birkly_count_pending_staged_update_files($cmsRoot) > 0;
+    }
+
     /**
      * User-facing message when no writable pre-update backup location is available.
      */
