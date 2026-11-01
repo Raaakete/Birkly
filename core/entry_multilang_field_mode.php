@@ -112,6 +112,51 @@ function birkly_multilang_normalize_mode_value($raw): string
         : BIRKLY_MULTILANG_MODE_LOCALIZE;
 }
 
+/**
+ * Merge flat bracket POST keys (JSON sub-entry saves) into multilang_field_modes tree.
+ *
+ * @param array<string, mixed> $entryData
+ * @return array<string, mixed>
+ */
+function birkly_entry_data_normalize_multilang_post_keys(array $entryData): array
+{
+    $modes = [];
+    if (isset($entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY]) && is_array($entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY])) {
+        $modes = $entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY];
+    }
+
+    foreach ($entryData as $key => $value) {
+        if (!is_string($key)) {
+            continue;
+        }
+        if (!preg_match('/^multilang_field_modes\[([a-zA-Z0-9_-]+)\](?:\[([a-zA-Z0-9_-]+)\])?$/', $key, $matches)) {
+            continue;
+        }
+        $fieldName = $matches[1];
+        $blockName = $matches[2] ?? '';
+        if ($blockName !== '') {
+            if (!isset($modes[$fieldName]) || !is_array($modes[$fieldName])) {
+                $modes[$fieldName] = [];
+            }
+            $modes[$fieldName][$blockName] = $value;
+        } else {
+            $modes[$fieldName] = $value;
+        }
+    }
+
+    if ($modes !== []) {
+        $entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $modes;
+    }
+
+    foreach (array_keys($entryData) as $key) {
+        if (is_string($key) && str_starts_with($key, 'multilang_field_modes[')) {
+            unset($entryData[$key]);
+        }
+    }
+
+    return $entryData;
+}
+
 function birkly_multilang_block_mode_storage_key(string $fieldName, string $blockName): string
 {
     return $fieldName . '.' . $blockName;
@@ -172,6 +217,8 @@ function birkly_multilang_entry_field_modes_from_post(
     if (!$multilanguageEnabled) {
         return [];
     }
+
+    $entryData = birkly_entry_data_normalize_multilang_post_keys($entryData);
 
     $posted = $entryData[BIRKLY_MULTILANG_ENTRY_MODES_KEY] ?? [];
     if (!is_array($posted)) {

@@ -66,6 +66,8 @@ function birkly_sub_entry_prepare_save_data(
     $existingEntry = is_array($existingEntry) ? $existingEntry : [];
     $fields = birkly_sub_entry_schema_fields($parentCollection, $subCollectionSlug);
 
+    $entryData = birkly_entry_data_normalize_multilang_post_keys($entryData);
+
     $multilanguageLanguages = birkly_entry_collection_multilanguage_languages($parentCollection);
     $entryOutput = $existingEntry;
 

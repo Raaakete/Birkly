@@ -435,6 +435,11 @@
   gap: var(--s-3);
 }
 
+.entry-editor-page[data-birch] .entry-field .field-header.field-header--split .field-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .entry-editor-page[data-birch] .field-header__aside {
   display: inline-flex;
   align-items: center;
