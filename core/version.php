@@ -10,6 +10,7 @@ class BirklyVersion {
 
     /** @var list<string> */
     private static array $stagedUpdateRelativePaths = [];
+    private static string $updateInstallCmsRoot = '';
     // GitHub repository for update checks and downloads
     private static $githubRepo = 'Raaakete/Birkly';
     private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
@@ -373,7 +374,7 @@ class BirklyVersion {
         return 40;
     }
 
-    private static function copyFileForUpdate(string $source, string $target, string $relativePath = ''): bool
+    private static function copyFileForUpdate(string $source, string $target, string $relativePath = '', bool $deferSwap = false): bool
     {
         $targetDir = dirname($target);
         if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
@@ -382,11 +383,8 @@ class BirklyVersion {
 
         $normalizedRelative = str_replace('\\', '/', $relativePath);
         if (PHP_OS_FAMILY === 'Windows' && in_array($normalizedRelative, self::updateInstallDeferredApiPaths(), true)) {
-            $stagingPath = $target . '.birkly-staged';
-            if (is_file($stagingPath)) {
-                @unlink($stagingPath);
-            }
-            if (!@copy($source, $stagingPath)) {
+            $stagingPath = self::persistUpdateStagingFile($source, $target, $normalizedRelative);
+            if ($stagingPath === null) {
                 return false;
             }
             self::$stagedUpdateRelativePaths[] = $normalizedRelative;
@@ -394,22 +392,69 @@ class BirklyVersion {
             return true;
         }
 
-        $stagingPath = $target . '.birkly-staged';
-        if (is_file($stagingPath)) {
-            @unlink($stagingPath);
+        $stagingPath = self::persistUpdateStagingFile($source, $target, $normalizedRelative);
+        if ($stagingPath === null) {
+            return false;
         }
 
-        if (!@copy($source, $stagingPath)) {
-            return false;
+        if ($deferSwap) {
+            self::$stagedUpdateRelativePaths[] = $normalizedRelative;
+
+            return true;
         }
 
         clearstatcache(true, $target);
 
-        if (!is_file($target)) {
-            return self::finalizeStagedUpdateFile($stagingPath, $target, $normalizedRelative);
+        return self::finalizeStagedUpdateFile($stagingPath, $target, $normalizedRelative);
+    }
+
+    /**
+     * Write package file bytes to a staging path beside the target or under data/cms_update_staging/.
+     */
+    private static function persistUpdateStagingFile(string $source, string $target, string $relativePath): ?string
+    {
+        $normalized = str_replace('\\', '/', $relativePath);
+        $cmsRoot = self::$updateInstallCmsRoot !== ''
+            ? self::$updateInstallCmsRoot
+            : rtrim(dirname(dirname($target)), '/\\');
+
+        require_once __DIR__ . '/update_staging.php';
+
+        $candidates = [
+            $target . '.birkly-staged',
+            birkly_update_offload_staging_path($normalized, $cmsRoot),
+        ];
+
+        foreach ($candidates as $stagingPath) {
+            if (self::writeStagingContents($source, $stagingPath)) {
+                return $stagingPath;
+            }
         }
 
-        return self::finalizeStagedUpdateFile($stagingPath, $target, $normalizedRelative);
+        return null;
+    }
+
+    private static function writeStagingContents(string $source, string $stagingPath): bool
+    {
+        $dir = dirname($stagingPath);
+        if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+            return false;
+        }
+
+        if (is_file($stagingPath)) {
+            @unlink($stagingPath);
+        }
+
+        if (@copy($source, $stagingPath)) {
+            return is_file($stagingPath) && filesize($stagingPath) > 0;
+        }
+
+        $data = @file_get_contents($source);
+        if ($data === false || $data === '') {
+            return false;
+        }
+
+        return @file_put_contents($stagingPath, $data) !== false && is_file($stagingPath);
     }
 
     /**
@@ -417,26 +462,9 @@ class BirklyVersion {
      */
     private static function finalizeStagedUpdateFile(string $stagingPath, string $target, string $relativePath): bool
     {
-        if (@rename($stagingPath, $target)) {
+        require_once __DIR__ . '/update_staging.php';
+        if (birkly_promote_staged_file($stagingPath, $target)) {
             return true;
-        }
-
-        if (@copy($stagingPath, $target)) {
-            @unlink($stagingPath);
-            return true;
-        }
-
-        if (is_file($target)) {
-            @chmod($target, 0644);
-            if (@unlink($target)) {
-                if (@rename($stagingPath, $target)) {
-                    return true;
-                }
-                if (@copy($stagingPath, $target)) {
-                    @unlink($stagingPath);
-                    return true;
-                }
-            }
         }
 
         if (is_file($stagingPath) && filesize($stagingPath) > 0) {
@@ -475,6 +503,17 @@ class BirklyVersion {
                     . 'Hub updates need PHP to update program folders (core/, admin/, api/), not only content/ and media/. '
                     . 'Ask your hosting provider to fix permissions on the CMS installation.';
             }
+        }
+
+        $dataPath = $root . '/data';
+        if (!is_dir($dataPath)) {
+            @mkdir($dataPath, 0755, true);
+        }
+        require_once __DIR__ . '/update_staging.php';
+        $stagingRoot = birkly_update_offload_staging_root($root);
+        if (!is_dir($stagingRoot) && !@mkdir($stagingRoot, 0755, true)) {
+            return 'Cannot update Birkly: the server cannot write to data/cms_update_staging/. '
+                . 'Ask your hosting provider to allow PHP to write under data/.';
         }
 
         return null;
@@ -844,7 +883,14 @@ class BirklyVersion {
                 return ['error' => $filesystemError];
             }
             
-            if (!self::moveUpdateFiles($actualCmsRoot, $cmsRoot, $excludeFiles)) {
+            if (!self::moveUpdateFiles($actualCmsRoot, $cmsRoot, $excludeFiles, true)) {
+                self::restoreBackup($backupDir, $cmsRoot);
+                return ['error' => self::updateInstallFailureMessage($cmsRoot, self::$lastMoveError)];
+            }
+
+            require_once __DIR__ . '/update_staging.php';
+            birkly_apply_staged_update_files($cmsRoot);
+            if (birkly_count_pending_staged_update_files($cmsRoot) > 0) {
                 self::restoreBackup($backupDir, $cmsRoot);
                 return ['error' => self::updateInstallFailureMessage($cmsRoot, self::$lastMoveError)];
             }
@@ -1032,8 +1078,9 @@ class BirklyVersion {
     /**
      * Move update files to CMS root
      */
-    private static function moveUpdateFiles(string $sourceDir, string $targetDir, array $excludeFiles): bool {
+    private static function moveUpdateFiles(string $sourceDir, string $targetDir, array $excludeFiles, bool $deferSwap = false): bool {
         self::$lastMoveError = null;
+        self::$updateInstallCmsRoot = $targetDir;
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
@@ -1078,7 +1125,7 @@ class BirklyVersion {
         });
 
         foreach ($files as $file) {
-            if (!self::copyFileForUpdate($file['source'], $file['target'], $file['relative'])) {
+            if (!self::copyFileForUpdate($file['source'], $file['target'], $file['relative'], $deferSwap)) {
                 self::$lastMoveError = $file['relative'];
                 return false;
             }
