@@ -893,6 +893,12 @@ class BirklyVersion {
             if (is_dir($backupDir)) {
                 self::restoreBackup($backupDir, $cmsRoot);
             }
+            if (is_file(__DIR__ . '/update_staging.php')) {
+                require_once __DIR__ . '/update_staging.php';
+                if (function_exists('birkly_purge_update_staging')) {
+                    birkly_purge_update_staging($cmsRoot);
+                }
+            }
             return ['error' => 'Installation failed: ' . $e->getMessage()];
         }
     }
