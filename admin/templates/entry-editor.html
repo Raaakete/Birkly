@@ -85,6 +85,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     $multilanguageEnabled = !empty($multilanguage_enabled);
     $multilanguageLanguages = $multilanguage_languages ?? [];
     $languageFields = $language_fields ?? [];
+    $sharedFields = $shared_fields ?? [];
     $entryEditorHasLanguages = $multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields);
     // One mint per view: Publish while the entry is not live, Save changes once it is.
     $entryEditorShowPublish = !$isSubEntry && !$entryEditorIsPublished;
@@ -196,8 +197,9 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             ? 'field_' . $langCode . '_' . $fieldName
                             : ($field['label_for_id'] ?? ('field_' . $fieldName));
                         $fieldType = (string) ($field['type'] ?? '');
+                        $isSharedAcrossLangs = !empty($field['is_multilang_shared']);
                         ?>
-                        <div class="field-block entry-field" data-field-name="<?= htmlspecialchars($fieldName) ?>"<?= $fieldType !== '' ? ' data-fieldtype="' . htmlspecialchars($fieldType) . '"' : '' ?><?= $langCode !== null ? ' data-lang="' . htmlspecialchars($langCode) . '"' : '' ?>>
+                        <div class="field-block entry-field<?= $isSharedAcrossLangs ? ' is-shared' : '' ?>" data-field-name="<?= htmlspecialchars($fieldName) ?>"<?= $fieldType !== '' ? ' data-fieldtype="' . htmlspecialchars($fieldType) . '"' : '' ?><?= $langCode !== null ? ' data-lang="' . htmlspecialchars($langCode) . '"' : '' ?>>
                             <div class="field-header">
                                 <label class="field-title" for="<?= htmlspecialchars($fieldLabelFor) ?>">
                                     <?= htmlspecialchars($field['label'] ?? $fieldName) ?>
@@ -225,6 +227,9 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <?php if ($fieldHelpText !== ''): ?>
                                 <p class="field-help field-subtitle"><?= htmlspecialchars($fieldHelpText) ?></p>
                             <?php endif; ?>
+                            <?php if ($isSharedAcrossLangs): ?>
+                                <p class="field-help"><?= htmlspecialchars(__('admin.entry_editor_field_shared_all_languages')) ?></p>
+                            <?php endif; ?>
                             <div class="field-feedback error" role="alert" aria-live="polite"></div>
                         </div>
                         <?php
@@ -232,6 +237,13 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     $isTitleField = static fn (array $field): bool => ($field['name'] ?? '') === 'title';
                     ?>
                     <?php if ($entryEditorHasLanguages): ?>
+                        <?php if (!empty($sharedFields)): ?>
+                            <div class="entry-shared-fields">
+                                <?php foreach ($sharedFields as $field): ?>
+                                    <?php $renderFieldSlab($field); ?>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="language-tabs-container entry-language-tabs">
                             <?php $firstLangLabel = birkly_locale_endonym((string) ($multilanguageLanguages[0] ?? '')); ?>
                             <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>

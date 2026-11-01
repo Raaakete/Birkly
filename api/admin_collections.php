@@ -432,6 +432,7 @@ try {
     error_log("fields: " . print_r($fields, true));
     
     require_once __DIR__ . '/../core/entry_slug.php';
+    require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
 
     // Check if collection already exists (for updates) — use posted slug to locate directory
     $existingCollection = null;
@@ -702,7 +703,10 @@ try {
                             $field['allow_roles'] = array_values(array_filter(array_map('strval', $fieldData['allow_roles'])));
                         }
                     }
-                    
+
+                    $subMultilangEnabled = !empty($subCollectionData['multilanguage_enabled']);
+                    $field = birkly_multilang_schema_field_apply_mode($field, $fieldData, $subMultilangEnabled);
+
                     error_log("Processed field: " . json_encode($field));
                     $processedSubFields[] = $field;
                 }
@@ -1010,7 +1014,8 @@ try {
                     $field['allow_roles'] = array_values(array_filter(array_map('strval', $fieldData['allow_roles'])));
                 }
             }
-            
+
+            $field = birkly_multilang_schema_field_apply_mode($field, $fieldData, $multilanguageEnabled);
             $processedFields[] = $field;
         }
     }
