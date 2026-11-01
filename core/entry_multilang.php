@@ -254,6 +254,41 @@ function birkly_entry_apply_multilang_fields(
     ?array $existingEntry,
     string $entryId
 ): array {
+    require_once __DIR__ . '/entry_multilang_field_mode.php';
+
+    $sharedProcessed = [];
+    foreach ($fields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $fieldName = (string) ($field['name'] ?? '');
+        if ($fieldName === '' || $fieldName === 'title') {
+            continue;
+        }
+        if (!birkly_multilang_field_is_shared($field, true)) {
+            continue;
+        }
+        if (!function_exists('birkly_fieldtype_persists_in_entry')) {
+            require_once __DIR__ . '/fieldtype_virtual.php';
+        }
+        if (!birkly_fieldtype_persists_in_entry($field)) {
+            continue;
+        }
+
+        $rawValue = birkly_multilang_shared_field_raw_from_post($entryData, $fieldName, $multilanguageLanguages);
+        if ($rawValue === null) {
+            continue;
+        }
+
+        $fieldType = (string) ($field['type'] ?? '');
+        $sharedProcessed[$fieldName] = birkly_entry_process_fieldtype_value(
+            $fieldName,
+            $fieldType,
+            $rawValue,
+            $field
+        );
+    }
+
     foreach ($multilanguageLanguages as $langCode) {
         if (!is_string($langCode) || $langCode === '') {
             continue;
@@ -265,7 +300,7 @@ function birkly_entry_apply_multilang_fields(
                 : [];
         }
 
-            foreach ($fields as $field) {
+        foreach ($fields as $field) {
             if (!is_array($field)) {
                 continue;
             }
@@ -278,6 +313,13 @@ function birkly_entry_apply_multilang_fields(
                 require_once __DIR__ . '/fieldtype_virtual.php';
             }
             if (!birkly_fieldtype_persists_in_entry($field)) {
+                continue;
+            }
+
+            if (birkly_multilang_field_is_shared($field, true)) {
+                if (array_key_exists($fieldName, $sharedProcessed)) {
+                    $entryOutput[$langCode][$fieldName] = $sharedProcessed[$fieldName];
+                }
                 continue;
             }
 
