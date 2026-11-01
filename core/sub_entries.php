@@ -679,6 +679,11 @@ function updateSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
         if (function_exists('invalidate_sub_entries_cache')) {
             invalidate_sub_entries_cache($parent_collection, $parent_entry_id, $sub_collection);
         }
+
+        require_once __DIR__ . '/project_ssr.php';
+        if (function_exists('birkly_project_ssr_invalidate_all')) {
+            birkly_project_ssr_invalidate_all();
+        }
         
         // Fire hook
         if (function_exists('do_action')) {
