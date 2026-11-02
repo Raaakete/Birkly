@@ -184,6 +184,15 @@ function birkly_hosting_uri_excluded_from_custom_404(string $uri): bool
         return true;
     }
 
+    require_once __DIR__ . '/http_routes.php';
+    if (birkly_http_route_is_platform_discovery_path($path)) {
+        return true;
+    }
+
+    if ($path === '/robots.txt') {
+        return true;
+    }
+
     $prefixes = [
         '/api/',
         '/admin',
