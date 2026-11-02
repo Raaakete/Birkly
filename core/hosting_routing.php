@@ -152,12 +152,6 @@ function birkly_hosting_dispatch(string $uri): bool
             birkly_hosting_serve_public_file($publicFile);
             return true;
         }
-
-        if (($role === 'public' || $role === 'local') && birkly_project_custom_404_hosting_applies()) {
-            if (birkly_hosting_try_respond_not_found($uri)) {
-                return true;
-            }
-        }
     }
 
     if ($uri === '/') {

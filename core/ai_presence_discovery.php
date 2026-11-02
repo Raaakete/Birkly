@@ -457,6 +457,25 @@ function birkly_ai_presence_discovery_footer_line_snippet(?array $published = nu
 }
 
 /**
+ * Whether a discovery/SEO path reaches platform HTTP handlers on the public host
+ * (hosting dispatch must fall through; index.php HTTP routes must handle the URI).
+ * No outbound HTTP — used by admin discovery health checks.
+ */
+function birkly_ai_presence_discovery_public_route_reachable(string $uri): bool
+{
+    if (!function_exists('birkly_hosting_dispatch')) {
+        require_once __DIR__ . '/hosting_routing.php';
+    }
+    require_once __DIR__ . '/http_routes.php';
+
+    if (birkly_hosting_dispatch($uri)) {
+        return false;
+    }
+
+    return birkly_http_route_uri_has_handler($uri);
+}
+
+/**
  * @return array<string, mixed>
  */
 function birkly_ai_presence_discovery_status(): array
@@ -551,6 +570,33 @@ function birkly_ai_presence_discovery_status(): array
                 ? 'llms.txt, robots.txt, sitemap, /for-agents, and agent-guide.json reference each other.'
                 : 'Some discovery endpoints are missing — check hosting URLs and publication settings.',
         ];
+
+        $hosting = birkly_hosting_load();
+        if (($hosting['public_site_mode'] ?? '') === 'project' && $base !== '') {
+            $probePaths = [
+                '/sitemap.xml',
+                '/llms.txt',
+                '/for-agents',
+                '/.well-known/agent-guide.json',
+            ];
+            if ($indexnowKey !== '') {
+                $probePaths[] = '/' . $indexnowKey . '.txt';
+            }
+            $routingFailed = [];
+            foreach ($probePaths as $probePath) {
+                if (!birkly_ai_presence_discovery_public_route_reachable($probePath)) {
+                    $routingFailed[] = $probePath;
+                }
+            }
+            $checks[] = [
+                'id' => 'public_discovery_routing',
+                'label' => 'Public discovery routing',
+                'status' => $routingFailed === [] ? 'pass' : 'fail',
+                'detail' => $routingFailed === []
+                    ? 'Discovery paths reach platform handlers on the public host before project 404.'
+                    : 'Not routed on the public host: ' . implode(', ', $routingFailed),
+            ];
+        }
     }
 
     return [

@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/core/hosting_urls.php';
 require_once dirname(__DIR__) . '/core/project_custom_404.php';
 require_once dirname(__DIR__) . '/core/hosting_routing.php';
+require_once dirname(__DIR__) . '/core/http_routes.php';
 require_once dirname(__DIR__) . '/core/ai_presence_discovery.php';
 
 $failures = 0;
@@ -76,6 +77,49 @@ function custom404_capture_not_found(string $uri): array
     }
 
     return ['code' => $code, 'body' => $body, 'headers' => headers_list()];
+}
+
+/**
+ * Mimics index.php order after hosting dispatch: HTTP routes, then custom/plain 404.
+ *
+ * @return array{via: string, code: int|false, body: string}
+ */
+function custom404_simulate_index_path(string $uri): array
+{
+    ob_start();
+    $via = 'unhandled';
+    if (birkly_hosting_dispatch($uri)) {
+        $via = 'hosting_dispatch';
+    } elseif (birkly_dispatch_http_route($uri)) {
+        $via = 'http_route';
+    } elseif (birkly_hosting_try_respond_not_found($uri)) {
+        $via = 'not_found_fallback';
+    } else {
+        http_response_code(404);
+        echo 'Not found';
+        $via = 'plain_exit';
+    }
+    $body = ob_get_clean();
+
+    return ['via' => $via, 'code' => http_response_code(), 'body' => $body];
+}
+
+function custom404_assert_discovery_routing(string $label, string $uri): void
+{
+    assert_true(
+        $label . ' hosting dispatch fall-through',
+        birkly_hosting_dispatch($uri) === false,
+        'hosting_dispatch handled the URI before HTTP routes'
+    );
+    assert_true(
+        $label . ' has platform HTTP handler',
+        birkly_http_route_uri_has_handler($uri),
+        'no handler registered for ' . $uri
+    );
+    assert_true(
+        $label . ' excluded from custom HTML 404',
+        birkly_hosting_uri_excluded_from_custom_404($uri)
+    );
 }
 
 try {
@@ -155,6 +199,41 @@ try {
     assert_true(
         'asset path not eligible for custom page',
         !birkly_hosting_request_prefers_custom_404_page('/style.css')
+    );
+
+    $discoveryPaths = [
+        '/sitemap.xml',
+        '/llms.txt',
+        '/for-agents',
+        '/.well-known/agent-guide.json',
+    ];
+    $indexnowKey = birkly_ai_presence_discovery_indexnow_key();
+    if ($indexnowKey !== '') {
+        $discoveryPaths[] = '/' . $indexnowKey . '.txt';
+    }
+
+    foreach (['on' => true, 'off' => false] as $mode => $enabled) {
+        custom404_write_settings(['custom_404_enabled' => $enabled]);
+        foreach ($discoveryPaths as $path) {
+            custom404_assert_discovery_routing('custom404 ' . $mode . ' ' . $path, $path);
+        }
+        assert_true(
+            'for-agents excluded from custom HTML 404 when ' . $mode,
+            !birkly_hosting_request_prefers_custom_404_page('/for-agents')
+        );
+    }
+
+    assert_true(
+        'hosting dispatch does not swallow sitemap.xml',
+        birkly_hosting_dispatch('/sitemap.xml') === false
+    );
+
+    custom404_write_settings(['custom_404_enabled' => true]);
+    $missingPage = custom404_simulate_index_path('/totally-missing-page');
+    assert_true(
+        'unknown HTML path still uses not_found fallback when custom 404 on',
+        $missingPage['via'] === 'not_found_fallback'
+            && str_contains($missingPage['body'], 'CUSTOM404MARKER')
     );
 } finally {
     if ($hostingBackup !== null) {
