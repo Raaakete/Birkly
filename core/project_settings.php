@@ -31,6 +31,8 @@ function birkly_project_settings_defaults(): array
         'render_mode' => 'server',  // client | server | auto
         'hosting_type' => 'birkly', // birkly | external
         'ssr_cache_ttl' => 300,
+        'custom_404_enabled' => false,
+        'custom_404_path' => '404.html',
     ];
 }
 

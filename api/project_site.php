@@ -343,6 +343,9 @@ if ($action === 'overview') {
         static fn (string $host): bool => $host !== '' && $host !== $publicPrimary
     ));
 
+    require_once __DIR__ . '/../core/project_custom_404.php';
+    $custom404Slice = birkly_project_custom_404_settings_slice($projectSettings);
+
     echo json_encode([
         'status' => 'ok',
         'data' => [
@@ -366,6 +369,11 @@ if ($action === 'overview') {
             'hosting_type' => (string) ($projectSettings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($projectSettings['ssr_cache_ttl'] ?? 300),
             'ssr_runtime' => birkly_project_ssr_runtime_status(),
+            'custom_404_enabled' => $custom404Slice['custom_404_enabled'],
+            'custom_404_path' => $custom404Slice['custom_404_path'],
+            'custom_404_file_exists' => birkly_project_custom_404_resolve_file($projectSettings) !== null,
+            'custom_404_suggestion' => birkly_project_custom_404_show_enable_suggestion(),
+            'custom_404_applies' => birkly_project_custom_404_hosting_applies(),
         ],
     ]);
     exit;
@@ -492,6 +500,16 @@ if ($action === 'save_settings') {
     }
     $patch = array_merge($patch, $renderSettings['patch']);
 
+    require_once __DIR__ . '/../core/project_custom_404.php';
+    $custom404 = birkly_project_custom_404_validate_save_input($input);
+    if ($custom404['error'] !== null) {
+        echo json_encode(['status' => 'error', 'message' => $custom404['error']]);
+        exit;
+    }
+    if ($custom404['patch'] !== []) {
+        $patch = array_merge($patch, $custom404['patch']);
+    }
+
     if ($patch === []) {
         echo json_encode(['status' => 'error', 'message' => 'No settings to save']);
         exit;
@@ -507,12 +525,20 @@ if ($action === 'save_settings') {
     if ($renderSettings['ssr_affected']) {
         birkly_project_ssr_invalidate_all();
     }
+    if ($custom404['patch'] !== []) {
+        birkly_project_ssr_invalidate_all();
+    }
 
     log_security_event('project_settings_updated', $patch);
 
     birkly_ensure_public_site_path();
     $indexPath = birkly_public_site_path() . '/index.html';
     $settings = birkly_load_project_settings();
+    $custom404Slice = birkly_project_custom_404_settings_slice($settings);
+    $custom404Warning = $custom404['warning'];
+    if ($custom404Warning === null && $custom404Slice['custom_404_enabled'] && birkly_project_custom_404_resolve_file($settings) === null) {
+        $custom404Warning = 'The chosen custom 404 page was not found in project/. Visitors will still see the plain Not found response until the file exists.';
+    }
 
     echo json_encode([
         'status' => 'ok',
@@ -524,9 +550,15 @@ if ($action === 'save_settings') {
             'render_mode' => (string) ($settings['render_mode'] ?? 'server'),
             'hosting_type' => (string) ($settings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($settings['ssr_cache_ttl'] ?? 300),
-            'ssr_cache_invalidated' => $renderSettings['ssr_affected'],
+            'ssr_cache_invalidated' => $renderSettings['ssr_affected'] || $custom404['patch'] !== [],
             'visit_url' => birkly_public_site_visit_url($settings),
             'has_index' => is_file($indexPath),
+            'custom_404_enabled' => $custom404Slice['custom_404_enabled'],
+            'custom_404_path' => $custom404Slice['custom_404_path'],
+            'custom_404_file_exists' => birkly_project_custom_404_resolve_file($settings) !== null,
+            'custom_404_warning' => $custom404Warning,
+            'custom_404_suggestion' => birkly_project_custom_404_show_enable_suggestion(),
+            'custom_404_applies' => birkly_project_custom_404_hosting_applies(),
         ],
     ]);
     exit;
