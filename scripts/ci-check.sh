@@ -27,6 +27,9 @@ php tests/project_ssr_test.php
 echo "==> Project render settings API tests (V-SET-03/04/05/07)"
 php tests/project_ssr_settings_api_test.php
 
+echo "==> Custom 404 routing tests"
+php tests/hosting_custom_404_test.php
+
 echo "==> Template region tests"
 node tests/template_regions_test.js
 node tests/birkly_region_test.js

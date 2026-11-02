@@ -30,6 +30,7 @@ Default to **project site** unless the user wants admin pages only.
 4. **Script** — `birkly-client.js` on every templated page
 5. **Forms** — if contact/newsletter: `entry_method: public_api` + `{entry for}` (see `public-forms`)
 6. **Verify** — CMS data visible, detail links work, styles under correct prefix
+7. **Optional 404** — if the site ships `project/404.html`, offer enabling **Settings → Project → Custom 404 page** (or MCP `project_site.save_settings` with `custom_404_enabled: true`, `custom_404_path: "404.html"`) so missing URLs render that page with HTTP 404. Use root-relative asset links in the template.
 
 ## Worked example: small bakery site
 
