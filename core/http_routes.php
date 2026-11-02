@@ -32,10 +32,64 @@ function birkly_http_route_map(): array
     ];
 }
 
+/**
+ * True when $uri is served by core HTTP route handlers (discovery, OAuth, health, …)
+ * before the project not-found fallback in index.php.
+ */
+function birkly_http_route_is_platform_discovery_path(string $uri): bool
+{
+    $path = '/' . ltrim(parse_url($uri, PHP_URL_PATH) ?: $uri, '/');
+    if ($path === '//') {
+        $path = '/';
+    }
+
+    foreach (birkly_http_route_map() as $prefix => $_handler) {
+        if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+            return true;
+        }
+    }
+
+    if (preg_match('#^/[a-f0-9]{32}\\.txt$#i', $path)) {
+        return true;
+    }
+
+    return false;
+}
+
 // Bootstrap plugin system at file scope (not inside dispatch) so registries use $GLOBALS.
 require_once __DIR__ . '/plugin_public_routes.php';
 if (!function_exists('load_plugins')) {
     require_once __DIR__ . '/plugins.php';
+}
+
+/**
+ * Whether index.php would hand $uri to a core HTTP route handler (without executing it).
+ */
+function birkly_http_route_uri_has_handler(string $uri): bool
+{
+    $path = '/' . ltrim(parse_url($uri, PHP_URL_PATH) ?: $uri, '/');
+    if ($path === '//') {
+        $path = '/';
+    }
+
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    if (preg_match('#^/([a-f0-9]{32})\\.txt$#i', $path, $m)) {
+        $meta = birkly_ai_presence_load_meta();
+        $stored = strtolower(trim((string) ($meta['discovery_indexnow_key'] ?? '')));
+        if ($stored !== '' && $stored === strtolower($m[1])) {
+            return true;
+        }
+    }
+
+    foreach (birkly_http_route_map() as $prefix => $handler) {
+        if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+            $full = __DIR__ . '/..' . $handler;
+
+            return is_file($full);
+        }
+    }
+
+    return false;
 }
 
 function birkly_dispatch_http_route(string $uri): bool
