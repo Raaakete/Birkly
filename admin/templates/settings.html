@@ -480,6 +480,39 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             </div>
           </section>
+          <section class="card" id="project-custom-404">
+            <div class="card-header">
+              <div class="card-heading">
+                <h3 class="card-title"><?= __('admin.settings_project_custom_404_title') ?></h3>
+                <p class="section-description"><?= __('admin.settings_project_custom_404_desc') ?></p>
+              </div>
+            </div>
+            <div class="card-body u-stack-4">
+            <p class="form-help" id="project-custom-404-disabled-note" role="status" hidden><?= __('admin.settings_project_custom_404_disabled_note') ?></p>
+            <p class="form-help" id="project-custom-404-suggestion" role="status" hidden></p>
+            <p class="form-help is-warning" id="project-custom-404-warning" role="status" hidden></p>
+            <div class="form-group setting-row">
+              <div class="setting-label">
+                <label for="project-custom-404-enabled"><?= __('admin.settings_project_custom_404_toggle') ?></label>
+                <small class="form-help"><?= __('admin.settings_project_custom_404_help') ?></small>
+              </div>
+              <div class="setting-value">
+                <label class="switch switch--compact">
+                  <input type="checkbox" id="project-custom-404-enabled" value="1">
+                  <span class="switch__slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="form-group setting-row">
+              <div class="setting-label">
+                <label for="project-custom-404-path"><?= __('admin.settings_project_custom_404_path_label') ?></label>
+              </div>
+              <div class="setting-value">
+                <input type="text" id="project-custom-404-path" class="input" value="404.html" autocomplete="off" spellcheck="false">
+              </div>
+            </div>
+            </div>
+          </section>
           </div>
         </div>
 

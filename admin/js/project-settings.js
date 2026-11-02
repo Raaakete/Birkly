@@ -262,6 +262,72 @@
         }
         syncVisitProjectButton(!!data.show_visit_button);
         applyRenderSettings(data);
+        applyCustom404Settings(data);
+    }
+
+    function applyCustom404Settings(data) {
+        var enabled = document.getElementById('project-custom-404-enabled');
+        var pathInput = document.getElementById('project-custom-404-path');
+        var disabledNote = document.getElementById('project-custom-404-disabled-note');
+        var suggestion = document.getElementById('project-custom-404-suggestion');
+        var warning = document.getElementById('project-custom-404-warning');
+        var applies = data.custom_404_applies !== false;
+        if (enabled) {
+            enabled.checked = !!data.custom_404_enabled;
+            enabled.disabled = !applies;
+        }
+        if (pathInput) {
+            pathInput.value = data.custom_404_path || '404.html';
+            pathInput.disabled = !applies;
+        }
+        if (disabledNote) disabledNote.hidden = applies;
+        if (suggestion) {
+            if (applies && data.custom_404_suggestion && !data.custom_404_enabled) {
+                suggestion.hidden = false;
+                suggestion.textContent = t('settings_project_custom_404_suggestion', 'This project includes a 404.html file. You can turn on the custom not-found page above to use it for missing URLs.');
+            } else {
+                suggestion.hidden = true;
+                suggestion.textContent = '';
+            }
+        }
+        if (warning) {
+            var showWarn = applies && data.custom_404_enabled && data.custom_404_file_exists === false;
+            warning.hidden = !showWarn;
+            warning.textContent = showWarn
+                ? t('settings_project_custom_404_missing_file', 'The configured file was not found in project/. Visitors will still see the plain Not found response until the file exists.')
+                : '';
+        }
+    }
+
+    function saveCustom404Settings() {
+        if (!state.renderSettingsLoaded) {
+            return Promise.resolve();
+        }
+        var enabled = document.getElementById('project-custom-404-enabled');
+        var pathInput = document.getElementById('project-custom-404-path');
+        if (!enabled || enabled.disabled) {
+            return Promise.resolve();
+        }
+        return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'save_settings',
+                custom_404_enabled: !!enabled.checked,
+                custom_404_path: pathInput ? pathInput.value : '404.html',
+                _csrf: getCsrfToken()
+            })
+        }).then(function (payload) {
+            if (payload.data) {
+                applyCustom404Settings(payload.data);
+            }
+            if (payload.data && payload.data.custom_404_warning) {
+                BirklyFeedback.toast(payload.data.custom_404_warning, 'warning');
+            }
+        }).catch(function (error) {
+            BirklyFeedback.toast(error.message || t('project_err_request_failed', 'Request failed'), 'error');
+        });
     }
 
     var ssrRuntime = { ready: true, reason: null };
@@ -709,6 +775,21 @@
             invalidateBtn.dataset.bound = '1';
             invalidateBtn.addEventListener('click', function () {
                 invalidateSsrCache();
+            });
+        }
+
+        var custom404Enabled = document.getElementById('project-custom-404-enabled');
+        if (custom404Enabled && custom404Enabled.dataset.bound !== '1') {
+            custom404Enabled.dataset.bound = '1';
+            custom404Enabled.addEventListener('change', function () {
+                saveCustom404Settings();
+            });
+        }
+        var custom404Path = document.getElementById('project-custom-404-path');
+        if (custom404Path && custom404Path.dataset.bound !== '1') {
+            custom404Path.dataset.bound = '1';
+            custom404Path.addEventListener('change', function () {
+                saveCustom404Settings();
             });
         }
 

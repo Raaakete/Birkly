@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/hosting_urls.php';
 require_once __DIR__ . '/project_site.php';
 require_once __DIR__ . '/hosting_redirects.php';
+require_once __DIR__ . '/project_custom_404.php';
 
 /**
  * Serve a resolved public file. For project HTML this first attempts SSR
@@ -144,7 +145,18 @@ function birkly_hosting_dispatch(string $uri): bool
 
         $publicFile = birkly_hosting_resolve_public_file($uri);
         if ($publicFile !== null && birkly_hosting_role_can_serve_public_project($role, $uri)) {
+            if (birkly_project_custom_404_is_configured_public_file($publicFile)) {
+                birkly_hosting_serve_custom_not_found_page($publicFile, $uri);
+                return true;
+            }
             birkly_hosting_serve_public_file($publicFile);
+            return true;
+        }
+
+        if (($role === 'public' || $role === 'local') && birkly_project_custom_404_hosting_applies()) {
+            if (birkly_hosting_try_respond_not_found($uri)) {
+                return true;
+            }
         }
     }
 

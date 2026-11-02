@@ -813,6 +813,7 @@ function cms_mcp_handler_project_site(string $subAction, array $input, array $ai
     require_once __DIR__ . '/project_site_filesystem.php';
     require_once __DIR__ . '/project_settings.php';
     require_once __DIR__ . '/project_ssr.php';
+    require_once __DIR__ . '/project_custom_404.php';
 
     $fs = new ProjectSiteFileSystem();
 
@@ -821,8 +822,30 @@ function cms_mcp_handler_project_site(string $subAction, array $input, array $ai
             return cms_mcp_ok(birkly_project_site_info());
         case 'save_settings':
             $settings = is_array($input['settings'] ?? null) ? $input['settings'] : $input;
-            birkly_save_project_settings($settings);
-            return cms_mcp_ok(['saved' => true]);
+            $validated = birkly_project_custom_404_validate_save_input($settings);
+            if ($validated['error'] !== null) {
+                return cms_mcp_error($validated['error']);
+            }
+            $render = birkly_project_ssr_validate_render_settings($settings);
+            if ($render['error'] !== null) {
+                return cms_mcp_error($render['error']);
+            }
+            $patch = array_merge($render['patch'], $validated['patch']);
+            if (array_key_exists('show_visit_button', $settings)) {
+                $patch['show_visit_button'] = filter_var($settings['show_visit_button'], FILTER_VALIDATE_BOOLEAN);
+            }
+            if (array_key_exists('visit_url_format', $settings)) {
+                require_once __DIR__ . '/project_site.php';
+                $patch['visit_url_format'] = birkly_normalize_visit_url_format((string) $settings['visit_url_format']);
+            }
+            if ($patch === []) {
+                return cms_mcp_error('No settings to save');
+            }
+            birkly_save_project_settings($patch);
+            if ($render['ssr_affected'] || $validated['patch'] !== []) {
+                birkly_project_ssr_invalidate_all();
+            }
+            return cms_mcp_ok(['saved' => true, 'warning' => $validated['warning']]);
         case 'invalidate_ssr_cache':
             birkly_project_ssr_invalidate_all();
             return cms_mcp_ok(['invalidated' => true]);
