@@ -1134,14 +1134,22 @@ function birkly_project_ssr_inject_signature(): string
  *
  * @param string|null $cacheWrite Optional write diagnostic: ok|fail|skip
  */
-function birkly_project_ssr_send(string $html, string $cacheState, ?string $cacheWrite = null): void
+function birkly_project_ssr_send(string $html, string $cacheState, ?string $cacheWrite = null, array $sendOptions = []): void
 {
     if (!headers_sent()) {
+        $httpStatus = (int) ($sendOptions['http_status'] ?? 200);
+        if ($httpStatus !== 200) {
+            http_response_code($httpStatus);
+        }
         header('Content-Type: text/html; charset=UTF-8');
         header('X-Birkly-Render: server');
         header('X-Birkly-SSR-Cache: ' . $cacheState);
         if ($cacheWrite !== null && $cacheWrite !== '') {
             header('X-Birkly-SSR-Cache-Write: ' . $cacheWrite);
+        }
+        if (!empty($sendOptions['not_found_uri'])) {
+            header('X-Robots-Tag: noindex');
+            header('Cache-Control: no-store');
         }
     }
     echo birkly_project_prepare_html_for_serve($html);
@@ -1152,8 +1160,9 @@ function birkly_project_ssr_send(string $html, string $cacheState, ?string $cach
  * Returns true when the response was emitted; false to fall back to static.
  *
  * @param array<string,mixed> $query
+ * @param array<string,mixed> $serveOptions http_status, skip_cache, not_found_uri
  */
-function birkly_project_ssr_serve(string $filePath, array $query = []): bool
+function birkly_project_ssr_serve(string $filePath, array $query = [], array $serveOptions = []): bool
 {
     $html = @file_get_contents($filePath);
     if ($html === false) {
@@ -1164,9 +1173,11 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     require_once __DIR__ . '/storage/StorageFactory.php';
 
     $settings = birkly_project_ssr_settings();
-    $ttl = (int) $settings['ssr_cache_ttl'];
+    $skipCache = !empty($serveOptions['skip_cache']);
+    $ttl = $skipCache ? 0 : (int) $settings['ssr_cache_ttl'];
     $language = birkly_project_ssr_language($query);
     $relative = birkly_project_ssr_relative_path($filePath);
+    $notFoundUri = (string) ($serveOptions['not_found_uri'] ?? '');
 
     $storage = get_storage(birkly_project_root() . '/content');
     $requests = birkly_project_ssr_collect_requests($html);
@@ -1186,7 +1197,11 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     if ($ttl > 0) {
         $cached = birkly_project_ssr_cache_get($cacheKey, $ttl, $sourceFingerprint);
         if ($cached !== null) {
-            birkly_project_ssr_send($cached, 'HIT');
+            if ($notFoundUri !== '') {
+                require_once __DIR__ . '/project_custom_404.php';
+                $cached = birkly_project_custom_404_inject_not_found_meta($cached, $notFoundUri);
+            }
+            birkly_project_ssr_send($cached, 'HIT', null, $serveOptions);
             return true;
         }
     }
@@ -1212,6 +1227,11 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
         error_log('birkly_project_ssr_inject_discovery_packs: ' . $e->getMessage());
     }
 
+    if ($notFoundUri !== '') {
+        require_once __DIR__ . '/project_custom_404.php';
+        $rendered = birkly_project_custom_404_inject_not_found_meta($rendered, $notFoundUri);
+    }
+
     $cacheWrite = 'skip';
     if ($ttl > 0) {
         $cacheWrite = birkly_project_ssr_cache_put(
@@ -1224,6 +1244,6 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
         ) ? 'ok' : 'fail';
     }
 
-    birkly_project_ssr_send($rendered, 'MISS', $cacheWrite);
+    birkly_project_ssr_send($rendered, 'MISS', $cacheWrite, $serveOptions);
     return true;
 }

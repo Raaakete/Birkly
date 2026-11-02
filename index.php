@@ -58,6 +58,11 @@ if ($file && str_starts_with($uri, '/project')) {
     if (($hosting['public_site_mode'] ?? 'none') === 'project') {
         $resolved = birkly_hosting_resolve_public_file($uri);
         if ($resolved !== null && preg_match('/\.html?$/i', $resolved)) {
+            require_once __DIR__ . '/core/project_custom_404.php';
+            if (birkly_project_custom_404_is_configured_public_file($resolved)) {
+                birkly_hosting_serve_custom_not_found_page($resolved, $uri);
+                exit;
+            }
             birkly_hosting_serve_public_file($resolved);
             exit;
         }
@@ -96,5 +101,10 @@ if (birkly_dispatch_http_route($uri)) {
 }
 
 // 404 for other requests
+require_once __DIR__ . '/core/project_custom_404.php';
+if (birkly_hosting_try_respond_not_found($uri)) {
+    exit;
+}
+
 http_response_code(404);
 echo 'Not found';

@@ -418,6 +418,16 @@
         }
 
         function trackPageView() {
+            var nfMeta = document.querySelector('meta[name="birkly-not-found"]');
+            if (nfMeta) {
+                var requested = nfMeta.getAttribute('content') || '';
+                sendTrackPayload(buildTrackPayload({
+                    event_type: 'not_found',
+                    path: requested || (window.location.pathname + window.location.search),
+                    requested_path: requested
+                }));
+                return;
+            }
             sendTrackPayload(buildTrackPayload({ event_type: 'pageview' }));
         }
 

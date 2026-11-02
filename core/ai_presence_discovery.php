@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/ai_presence.php';
 require_once __DIR__ . '/hosting_urls.php';
 require_once __DIR__ . '/project_site.php';
+require_once __DIR__ . '/project_custom_404.php';
 
 /** @return list<string> */
 function birkly_ai_presence_discovery_ai_crawler_agents(): array
@@ -148,6 +149,9 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
                     continue;
                 }
                 if (str_contains($rel, '/vendor/') || str_contains($rel, '/_p64/')) {
+                    continue;
+                }
+                if (birkly_project_custom_404_sitemap_should_skip_rel($rel)) {
                     continue;
                 }
                 $loc = $base . ($rel === '/index.html' ? '/' : $rel);

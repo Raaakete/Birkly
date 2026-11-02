@@ -1178,6 +1178,10 @@ function birkly_seo_sitemap_entries(): array
         if ($file !== '' && in_array($file, $detailTemplates, true)) {
             continue;
         }
+        require_once __DIR__ . '/project_custom_404.php';
+        if ($file !== '' && birkly_project_custom_404_sitemap_should_skip_rel('/' . $file)) {
+            continue;
+        }
         $loc = birkly_seo_canonical_url((string) $path, []);
         if ($loc === '' || $loc[0] === '/') {
             continue;

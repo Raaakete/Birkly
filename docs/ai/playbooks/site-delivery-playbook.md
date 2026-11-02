@@ -52,6 +52,16 @@ From `get_project_info`:
 
 Common codes: empty CMS URL, unknown request host, public URL unreachable, domain not registered, snippet missing `data-cms-url`.
 
+## Project settings (`settings/project.json`)
+
+| Key | Purpose |
+|-----|---------|
+| `render_mode` | `server` · `client` · `auto` (SSR pipeline) |
+| `custom_404_enabled` | When `true`, missing HTML-like URLs serve a project page with HTTP **404** |
+| `custom_404_path` | Path inside `project/` (default `404.html`) |
+
+Toggle via **Settings → Project → Custom 404 page**, or MCP `cms_admin_action` → `project_site.save_settings` with `custom_404_enabled` and `custom_404_path`. Only applies when Site delivery mode is **In Birkly (project/)**. Redirects, real files, CMS routes, and detail pages still win; the custom page replaces only the final plain `Not found` body. Use root-relative links in the 404 template.
+
 ## Automation (P66-D4)
 
 - Detection runs on load; **proposal requires confirm** (Apply suggestion)
