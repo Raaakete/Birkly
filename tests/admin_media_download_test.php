@@ -31,6 +31,13 @@ $assert(
     birkly_media_safe_download_filename('') === 'download',
     'empty name becomes download'
 );
+$assert(
+    str_contains(
+        birkly_media_content_disposition_attachment('Café photo.jpg'),
+        "filename*=UTF-8''"
+    ),
+    'non-ascii download uses RFC 5987 filename*'
+);
 
 $mediaDir = birkly_media_dir();
 $metadataPath = birkly_media_metadata_path();
