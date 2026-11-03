@@ -1080,8 +1080,10 @@ function updateMedia() {
                     $metadata[$mediaId]['crop_rect'] = $crop;
                 }
             }
-            
-            file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT));
+
+            if (file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT)) === false) {
+                return ['status' => 'error', 'message' => 'Could not save media metadata'];
+            }
             
             return [
                 'status' => 'ok',

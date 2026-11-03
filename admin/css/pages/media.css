@@ -439,6 +439,17 @@
 
 .media-sheet-move { margin-inline-start: auto; }
 
+#media-modal .modal-footer {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  flex-shrink: 0;
+}
+
+#media-modal .modal-footer .button.is-main {
+  order: 99;
+}
+
 /* ============================================
    Media picker overlay (admin/js/media-modal.js)
    Used by fieldtypes on any page, so it ships in the global bundle rather

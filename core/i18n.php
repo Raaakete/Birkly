@@ -476,6 +476,18 @@ function __($key, $params = []) {
 }
 
 /**
+ * Translate with English/default fallback when the key is missing from catalogs.
+ */
+function birkly_translate_with_fallback(string $key, string $fallback, array $params = []): string {
+    $translated = __($key, $params);
+    if ($translated === $key && $fallback !== '') {
+        return $fallback;
+    }
+
+    return $translated;
+}
+
+/**
  * Get current language
  */
 function getCurrentLanguage() {
