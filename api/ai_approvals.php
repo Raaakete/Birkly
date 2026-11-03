@@ -1223,6 +1223,19 @@ function executeUpdateMedia($actionData, $aiUser = null, $originalUserId = null)
         $post['focal_x'] = $payload['focal_point']['x'] ?? null;
         $post['focal_y'] = $payload['focal_point']['y'] ?? null;
     }
+    $crop = $payload['crop_rect'] ?? null;
+    if (is_array($crop)) {
+        $post['crop_x'] = $crop['x'] ?? null;
+        $post['crop_y'] = $crop['y'] ?? null;
+        $post['crop_w'] = $crop['w'] ?? null;
+        $post['crop_h'] = $crop['h'] ?? null;
+    } else {
+        foreach (['crop_x', 'crop_y', 'crop_w', 'crop_h'] as $key) {
+            if (array_key_exists($key, $payload)) {
+                $post[$key] = $payload[$key];
+            }
+        }
+    }
 
     $GLOBALS['__CMS_MCP_DISPATCH'] = true;
     $_POST = $post;

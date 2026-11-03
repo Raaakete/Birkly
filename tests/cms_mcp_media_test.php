@@ -24,6 +24,8 @@ $meta = cms_mcp_admin_action_meta();
 assert_true('media.list in catalog', isset($meta['media.list']));
 assert_true('media.rename_folder in catalog', isset($meta['media.rename_folder']));
 assert_true('media.update is write', ($meta['media.update']['write'] ?? false) === true);
+assert_true('media.replace in catalog', isset($meta['media.replace']));
+assert_true('media.create_variant in catalog', isset($meta['media.create_variant']));
 
 $aiUser = ['id' => 'test', 'role' => 'admin', 'email' => 'admin@test.local', 'name' => 'Admin'];
 
@@ -59,12 +61,30 @@ $update = cms_mcp_dispatch_admin('media.update', [
     'id' => $testId,
     'title' => 'Renamed via MCP',
     'alt_text' => 'Alt from MCP',
+    'crop_rect' => ['x' => 10, 'y' => 10, 'w' => 80, 'h' => 80],
 ], $aiUser);
 assert_true('media.update ok', ($update['status'] ?? '') === 'ok', json_encode($update));
 
 $get = cms_mcp_dispatch_admin('media.get', ['id' => $testId], $aiUser);
 $title = $get['data']['title'] ?? '';
 assert_true('media.get title updated', $title === 'Renamed via MCP', 'got: ' . $title);
+$crop = $get['data']['crop_rect'] ?? null;
+assert_true(
+    'media.update crop_rect',
+    is_array($crop) && (int) ($crop['x'] ?? 0) === 10 && (int) ($crop['w'] ?? 0) === 80,
+    json_encode($crop)
+);
+
+$pngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+$replace = cms_mcp_dispatch_admin('media.replace', [
+    'id' => $testId,
+    'base64' => base64_encode($pngBytes),
+    'name' => 'replaced.png',
+], $aiUser);
+assert_true('media.replace ok', ($replace['status'] ?? '') === 'ok', json_encode($replace));
+$getReplaced = cms_mcp_dispatch_admin('media.get', ['id' => $testId], $aiUser);
+$url = (string) ($getReplaced['data']['url'] ?? '');
+assert_true('media.replace updates url extension', str_ends_with($url, '.png'), 'url=' . $url);
 
 $createFolder = cms_mcp_dispatch_admin('media.create_folder', ['name' => 'mcp_test_folder'], $aiUser);
 assert_true('media.create_folder ok', ($createFolder['status'] ?? '') === 'ok');
@@ -93,7 +113,8 @@ $metadata = json_decode((string) file_get_contents($metadataPath), true) ?: [];
 if (isset($metadata[$testId])) {
     $item = $metadata[$testId];
     $folder = (string) ($item['folder'] ?? '');
-    $path = $mediaDir . ($folder !== '' ? '/' . $folder : '') . '/' . $testId . '.txt';
+    $ext = (string) ($item['ext'] ?? 'txt');
+    $path = $mediaDir . ($folder !== '' ? '/' . $folder : '') . '/' . $testId . '.' . $ext;
     if (is_file($path)) {
         unlink($path);
     }
