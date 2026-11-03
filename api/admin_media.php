@@ -717,9 +717,13 @@ function createMediaVariant(): array
         return ['status' => 'error', 'message' => $result['message'] ?? 'Could not create variant'];
     }
 
+    $message = $variant === 'crop'
+        ? 'Crop variant created'
+        : 'Web-optimized variant created';
+
     return [
         'status' => 'ok',
-        'message' => 'Web-optimized variant created',
+        'message' => $message,
         'data' => ['media' => $result['data']],
     ];
 }
@@ -749,7 +753,7 @@ function admin_media_serve_download(): void
 
     $size = filesize($resolved['path']);
     header('Content-Type: ' . $resolved['mime']);
-    header('Content-Disposition: attachment; filename="' . $resolved['filename'] . '"');
+    header('Content-Disposition: ' . birkly_media_content_disposition_attachment($resolved['filename']));
     if ($size !== false) {
         header('Content-Length: ' . (string) $size);
     }
@@ -797,6 +801,8 @@ function getMediaItem() {
                         'dimensions' => $item['dimensions'] ?? getImageDimensions($realPath, $item['type'] ?? mime_content_type($realPath)),
                         'alt_text' => $item['alt_text'] ?? '',
                         'focal_point' => normalizeFocalPoint($item['focal_point'] ?? null),
+                        'crop_rect' => $item['crop_rect'] ?? null,
+                        'variants' => $item['variants'] ?? null,
                     ]
                 ];
             }

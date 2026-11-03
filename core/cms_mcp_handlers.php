@@ -1440,6 +1440,85 @@ function cms_mcp_media_apply_post(array $input): void
     $_POST = $input;
 }
 
+/**
+ * Resolve binary body from MCP replace/upload-style input (url or base64).
+ *
+ * @return array{ok:bool,message?:string,content?:string,name?:string}
+ */
+function cms_mcp_media_resolve_binary_input(array $input): array
+{
+    require_once dirname(__DIR__) . '/core/safe_http_fetch.php';
+
+    $url = $input['url'] ?? '';
+    $base64 = $input['base64'] ?? '';
+    $name = (string) ($input['name'] ?? $input['filename'] ?? 'uploaded-file');
+
+    if ($url === '' && $base64 === '') {
+        return ['ok' => false, 'message' => 'url or base64 is required'];
+    }
+
+    if ($url !== '') {
+        $fetched = birkly_safe_http_fetch((string) $url);
+        if (empty($fetched['ok']) || !isset($fetched['body']) || !is_string($fetched['body'])) {
+            return ['ok' => false, 'message' => 'Failed to download file from URL'];
+        }
+        $path = parse_url((string) $url, PHP_URL_PATH);
+        if ($name === 'uploaded-file' && is_string($path) && $path !== '') {
+            $name = basename($path) ?: $name;
+        }
+
+        return ['ok' => true, 'content' => $fetched['body'], 'name' => $name];
+    }
+
+    $decoded = base64_decode((string) $base64, true);
+    if ($decoded === false) {
+        $decoded = base64_decode((string) $base64);
+    }
+    if ($decoded === false) {
+        return ['ok' => false, 'message' => 'Invalid base64 data'];
+    }
+
+    return ['ok' => true, 'content' => $decoded, 'name' => $name];
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function cms_mcp_media_build_update_post(array $input): array
+{
+    $post = [
+        'id' => (string) ($input['id'] ?? ''),
+        'title' => (string) ($input['title'] ?? $input['name'] ?? ''),
+    ];
+    if (array_key_exists('alt_text', $input)) {
+        $post['alt_text'] = (string) $input['alt_text'];
+    } elseif (array_key_exists('alt', $input)) {
+        $post['alt_text'] = (string) $input['alt'];
+    }
+    if (array_key_exists('focal_x', $input) || array_key_exists('focal_y', $input)) {
+        $post['focal_x'] = $input['focal_x'] ?? null;
+        $post['focal_y'] = $input['focal_y'] ?? null;
+    } elseif (isset($input['focal_point']) && is_array($input['focal_point'])) {
+        $post['focal_x'] = $input['focal_point']['x'] ?? null;
+        $post['focal_y'] = $input['focal_point']['y'] ?? null;
+    }
+    $crop = $input['crop_rect'] ?? null;
+    if (is_array($crop)) {
+        $post['crop_x'] = $crop['x'] ?? null;
+        $post['crop_y'] = $crop['y'] ?? null;
+        $post['crop_w'] = $crop['w'] ?? null;
+        $post['crop_h'] = $crop['h'] ?? null;
+    } else {
+        foreach (['crop_x', 'crop_y', 'crop_w', 'crop_h'] as $key) {
+            if (array_key_exists($key, $input)) {
+                $post[$key] = $input[$key];
+            }
+        }
+    }
+
+    return $post;
+}
+
 /** @return array<string, mixed> */
 function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): array
 {
@@ -1483,16 +1562,53 @@ function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): 
                 case 'upload':
                     return ['status' => 'error', 'message' => 'Use upload_media tool for url/base64 uploads'];
                 case 'update':
+                    cms_mcp_media_apply_post(cms_mcp_media_build_update_post($input));
+                    return updateMedia();
+                case 'replace':
+                    require_once dirname(__DIR__) . '/core/media_image.php';
+                    $mediaId = (string) ($input['id'] ?? '');
+                    if ($mediaId === '') {
+                        return cms_mcp_error('id is required');
+                    }
+                    $binary = cms_mcp_media_resolve_binary_input($input);
+                    if (empty($binary['ok'])) {
+                        return cms_mcp_error((string) ($binary['message'] ?? 'Could not load file'));
+                    }
+                    $tmp = tempnam(sys_get_temp_dir(), 'birklymcpmedia');
+                    if ($tmp === false) {
+                        return cms_mcp_error('Could not create temp file');
+                    }
+                    try {
+                        if (file_put_contents($tmp, (string) $binary['content']) === false) {
+                            return cms_mcp_error('Could not write temp file');
+                        }
+                        $displayName = (string) ($binary['name'] ?? 'upload');
+                        $mime = detectUploadMimeType($tmp, $displayName);
+                        $allowed = admin_media_allowed_mime_types();
+                        if (!in_array($mime, $allowed, true)) {
+                            return cms_mcp_error('Invalid file type for media replace');
+                        }
+                        $result = birkly_media_replace_master_from_path($mediaId, $tmp, $displayName, $mime);
+                        if (!$result['ok']) {
+                            return cms_mcp_error((string) ($result['message'] ?? 'Replace failed'));
+                        }
+                        $item = is_array($result['data'] ?? null) ? $result['data'] : [];
+
+                        return cms_mcp_ok(['media' => $item]);
+                    } finally {
+                        @unlink($tmp);
+                    }
+                case 'create_variant':
                     cms_mcp_media_apply_post([
                         'id' => (string) ($input['id'] ?? ''),
-                        'title' => (string) ($input['title'] ?? $input['name'] ?? ''),
-                        'alt_text' => array_key_exists('alt_text', $input)
-                            ? (string) $input['alt_text']
-                            : (array_key_exists('alt', $input) ? (string) $input['alt'] : null),
-                        'focal_x' => $input['focal_x'] ?? ($input['focal_point']['x'] ?? null),
-                        'focal_y' => $input['focal_y'] ?? ($input['focal_point']['y'] ?? null),
+                        'variant' => (string) ($input['variant'] ?? 'web'),
                     ]);
-                    return updateMedia();
+                    $variantResult = createMediaVariant();
+                    if (($variantResult['status'] ?? '') === 'ok') {
+                        return cms_mcp_ok($variantResult['data'] ?? $variantResult);
+                    }
+
+                    return cms_mcp_error((string) ($variantResult['message'] ?? 'Could not create variant'));
                 case 'delete':
                     cms_mcp_media_apply_post(['id' => (string) ($input['id'] ?? '')]);
                     return deleteMedia();
