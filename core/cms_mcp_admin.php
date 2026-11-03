@@ -290,6 +290,7 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'media.update', 'description' => 'Update title, alt_text, focal point, crop_rect', 'write' => true, 'permission' => 'manage_media'],
                 ['action' => 'media.replace', 'description' => 'Replace master file (id plus url or base64 and optional name)', 'write' => true, 'permission' => 'manage_media'],
                 ['action' => 'media.create_variant', 'description' => 'Create derivative file (variant: web or crop)', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.bulk_create_variants', 'description' => 'Create web variants for many ids (max 50; raster images)', 'write' => true, 'permission' => 'manage_media'],
                 ['action' => 'media.delete', 'description' => 'Delete a media file', 'write' => true, 'permission' => 'manage_media'],
                 ['action' => 'media.create_folder', 'description' => 'Create media folder', 'write' => true, 'permission' => 'manage_media'],
                 ['action' => 'media.rename_folder', 'description' => 'Rename media folder and update metadata refs', 'write' => true, 'permission' => 'manage_media'],

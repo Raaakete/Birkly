@@ -266,6 +266,9 @@ function resolveMediaItemUrl(url) {
     document.querySelectorAll('[data-media-action="delete-selected"]').forEach(function (el) {
       el.addEventListener('click', deleteSelectedMedia);
     });
+    document.querySelectorAll('[data-media-action="bulk-web-variants"]').forEach(function (el) {
+      el.addEventListener('click', createWebVariantsForSelected);
+    });
     document.querySelectorAll('[data-media-action="clear-selection"]').forEach(function (el) {
       el.addEventListener('click', clearSelection);
     });
@@ -1680,6 +1683,66 @@ function resolveMediaItemUrl(url) {
     } catch (error) {
       return { status: 'error', message: error.message };
     }
+  }
+
+  async function createWebVariantsForSelected() {
+    const ids = selectedRasterImageIds();
+    if (!ids.length) {
+      showError(mdT('media_js_bulk_variant_none', 'Select raster images (not SVG) to create web variants.'));
+      return;
+    }
+    if (!(await BirklyFeedback.confirm(mdT('media_js_bulk_variant_confirm', 'Create web-optimized variants for {count} selected image(s)?').replace('{count}', String(ids.length))))) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('ids', JSON.stringify(ids));
+      formData.append('variant', 'web');
+      formData.append('_csrf', getCSRFToken());
+      const response = await fetch(ADMIN_MEDIA_API() + '?action=bulk_create_variants', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const result = await response.json();
+      if (result.status !== 'ok') {
+        showError(getResultMessage(result, mdT('media_js_bulk_variant_failed', 'Bulk variant creation failed.')));
+        return;
+      }
+      await loadMedia();
+      const failed = Number(result.data?.failed ?? 0);
+      if (failed > 0) {
+        showError(getResultMessage(result, mdT('media_js_bulk_variant_partial', 'Some variants could not be created.')));
+      } else {
+        showSuccess(getResultMessage(result, mdT('media_js_bulk_variant_ok', 'Web variants created for selected images.')));
+      }
+      if (state.currentMediaItem && ids.includes(state.currentMediaItem.id)) {
+        const refreshed = state.currentMedia.find(function (item) {
+          return item.id === state.currentMediaItem.id;
+        });
+        if (refreshed) {
+          state.currentMediaItem = refreshed;
+          renderMediaModalBody(refreshed);
+        }
+      }
+    } catch (error) {
+      showError(error.message || mdT('media_js_bulk_variant_failed', 'Bulk variant creation failed.'));
+    }
+  }
+
+  function selectedRasterImageIds() {
+    const byId = new Map();
+    state.currentMedia.forEach(function (item) {
+      byId.set(item.id, item);
+    });
+    const ids = [];
+    state.selectedIds.forEach(function (id) {
+      const item = byId.get(id);
+      if (item && isRasterImageItem(item)) {
+        ids.push(id);
+      }
+    });
+    return ids;
   }
 
   async function deleteSelectedMedia() {
