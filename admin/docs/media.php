@@ -49,12 +49,24 @@
 </ul>
 
 <h3>Editing and Deleting Media</h3>
-<p>You can manage your media files:</p>
+<p>Click a file to open the detail sheet. From there you can:</p>
 <ul>
-    <li><strong>View:</strong> Click on a file to see details</li>
-    <li><strong>Replace:</strong> Upload a new version to replace an existing file</li>
-    <li><strong>Delete:</strong> Remove files you no longer need (be careful - this removes them from entries too!)</li>
+    <li><strong>Download:</strong> Save the original file to your computer</li>
+    <li><strong>Replace file:</strong> Upload a new master file while keeping the same media ID (entries and URLs that reference the ID stay valid)</li>
+    <li><strong>Alt text and metadata:</strong> Edit display name, alt text, and folder</li>
+    <li><strong>Delete:</strong> Remove files you no longer need (be careful — this removes them from entries too)</li>
 </ul>
+
+<h3>Crop and focal point (images)</h3>
+<p>For raster images, the preview includes a framing editor:</p>
+<ul>
+    <li><strong>Focal point:</strong> Click the image to set where cropping should center (used in templates with <code>{media_img}</code>)</li>
+    <li><strong>Crop region:</strong> Drag the box to move the crop; drag the corner handle to resize. Percent fields stay in sync with the overlay</li>
+    <li><strong>Save details:</strong> Persists focal point and crop metadata on the master file (non-destructive — the original pixels are unchanged)</li>
+    <li><strong>Create web variant:</strong> Writes an optimized derivative (WebP when supported) for faster pages; reference in templates with <code>{media_img('field', alt, 'web')}</code></li>
+    <li><strong>Bake crop to file:</strong> After saving a partial crop, exports a cropped derivative file (<code>variants.crop</code>) you can use where a fixed crop asset is needed</li>
+</ul>
+<p>SVG and non-image files do not show crop or variant actions. Variant generation requires PHP GD on the server.</p>
 
 <p>Now that you know how to manage media, you're ready to create rich, visual content!</p>
 
