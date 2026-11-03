@@ -2862,6 +2862,7 @@
         "updates_js_version_available": "Version {version} ist verfügbar",
         "upload": "Hochladen",
         "upload_media": "Medien hochladen",
+        "download_media": "Herunterladen",
         "upload_site_pack": "Hochladen",
         "upload_site_pack_hint": "Installieren Sie ein Website-Paket als ZIP (manifest.json + collections/ + project/). Es gilt derselbe Ablauf wie bei Installationen über den Hub.",
         "url": "URL",

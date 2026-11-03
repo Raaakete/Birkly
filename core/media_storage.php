@@ -298,3 +298,77 @@ function birkly_delete_media_by_url(?string $url): void
     $mediaId = $matches[1];
     birkly_delete_media_item($mediaId);
 }
+
+/**
+ * Sanitize a filename for Content-Disposition (attachment).
+ */
+function birkly_media_safe_download_filename(string $name): string
+{
+    $name = str_replace(["\r", "\n", '"', '\\'], '', $name);
+    $name = basename($name);
+    if ($name === '' || $name === '.' || $name === '..') {
+        return 'download';
+    }
+
+    return $name;
+}
+
+/**
+ * Resolve an on-disk media file for authenticated download.
+ *
+ * @return array{path:string,mime:string,filename:string}|null
+ */
+function birkly_media_resolve_download_file(string $mediaId): ?array
+{
+    if (!birkly_validate_media_id($mediaId)) {
+        return null;
+    }
+
+    $mediaDir = realpath(birkly_media_dir());
+    if ($mediaDir === false) {
+        return null;
+    }
+
+    $metadata = birkly_load_media_metadata();
+    if (isset($metadata[$mediaId])) {
+        $item = $metadata[$mediaId];
+        $extension = preg_replace('/[^a-zA-Z0-9]/', '', (string) ($item['ext'] ?? ''));
+        $folder = (string) ($item['folder'] ?? '');
+        $relative = $folder !== ''
+            ? $folder . '/' . $mediaId . ($extension !== '' ? '.' . $extension : '')
+            : $mediaId . ($extension !== '' ? '.' . $extension : '');
+        $candidate = $mediaDir . '/' . $relative;
+        $realPath = realpath($candidate);
+        if ($realPath !== false && str_starts_with($realPath, $mediaDir) && is_file($realPath)) {
+            $mime = (string) ($item['type'] ?? mime_content_type($realPath) ?: 'application/octet-stream');
+            $displayName = (string) ($item['name'] ?? basename($realPath));
+            if ($extension !== '' && !str_contains($displayName, '.')) {
+                $displayName .= '.' . $extension;
+            }
+
+            return [
+                'path' => $realPath,
+                'mime' => $mime,
+                'filename' => birkly_media_safe_download_filename($displayName),
+            ];
+        }
+    }
+
+    $matches = glob($mediaDir . '/' . $mediaId . '.*');
+    if ($matches === false || $matches === []) {
+        return null;
+    }
+
+    $realPath = realpath($matches[0]);
+    if ($realPath === false || !str_starts_with($realPath, $mediaDir) || !is_file($realPath)) {
+        return null;
+    }
+
+    $mime = mime_content_type($realPath) ?: 'application/octet-stream';
+
+    return [
+        'path' => $realPath,
+        'mime' => $mime,
+        'filename' => birkly_media_safe_download_filename(basename($realPath)),
+    ];
+}

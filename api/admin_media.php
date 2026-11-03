@@ -579,6 +579,33 @@ function validateMediaFolder($folder) {
     return birkly_validate_media_folder((string) $folder);
 }
 
+/**
+ * Stream a media file as an attachment (admin download).
+ */
+function admin_media_serve_download(): void
+{
+    $mediaId = (string) ($_GET['id'] ?? '');
+    $resolved = birkly_media_resolve_download_file($mediaId);
+    if ($resolved === null) {
+        http_response_code(404);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Media not found';
+
+        return;
+    }
+
+    $size = filesize($resolved['path']);
+    header('Content-Type: ' . $resolved['mime']);
+    header('Content-Disposition: attachment; filename="' . $resolved['filename'] . '"');
+    if ($size !== false) {
+        header('Content-Length: ' . (string) $size);
+    }
+    header('Cache-Control: private, no-store');
+    header('X-Content-Type-Options: nosniff');
+
+    readfile($resolved['path']);
+}
+
 function getMediaItem() {
     $mediaId = $_GET['id'] ?? '';
     if (!validateMediaId($mediaId)) {
@@ -1123,8 +1150,6 @@ $__adminMediaHttpEntry = !$__cmsMcpFunctionsOnly
     && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__);
 
 if ($__adminMediaHttpEntry) {
-    header('Content-Type: application/json');
-
     require_once __DIR__ . '/../core/cors.php';
     set_cors_headers('admin');
 
@@ -1132,6 +1157,14 @@ if ($__adminMediaHttpEntry) {
     haru_secure_session_start();
 
     $action = $_GET['action'] ?? 'list';
+
+    if ($action === 'download') {
+        requireAuth('read_media');
+        admin_media_serve_download();
+        exit;
+    }
+
+    header('Content-Type: application/json');
 
     if ($action === 'list' || $action === 'folders' || $action === 'get') {
         requireAuth('read_media');

@@ -2768,6 +2768,7 @@
         "updates_js_version_available": "Version {version} is disponible",
         "upload": "Subir",
         "upload_media": "Subir Media",
+        "download_media": "Descargar",
         "upload_site_pack": "Subir",
         "upload_site_pack_hint": "Instale un ZIP de paquete de sitio (manifest.json + collections/ + project/). Usa el mismo motor que las instalaciones de Hub.",
         "url": "URL",
