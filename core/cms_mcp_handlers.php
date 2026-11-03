@@ -1609,6 +1609,17 @@ function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): 
                     }
 
                     return cms_mcp_error((string) ($variantResult['message'] ?? 'Could not create variant'));
+                case 'bulk_create_variants':
+                    cms_mcp_media_apply_post([
+                        'ids' => $input['ids'] ?? [],
+                        'variant' => (string) ($input['variant'] ?? 'web'),
+                    ]);
+                    $bulkResult = bulkCreateMediaVariants();
+                    if (($bulkResult['status'] ?? '') === 'ok') {
+                        return cms_mcp_ok($bulkResult['data'] ?? $bulkResult);
+                    }
+
+                    return cms_mcp_error((string) ($bulkResult['message'] ?? 'Bulk variant creation failed'));
                 case 'delete':
                     cms_mcp_media_apply_post(['id' => (string) ($input['id'] ?? '')]);
                     return deleteMedia();

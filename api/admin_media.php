@@ -728,6 +728,94 @@ function createMediaVariant(): array
     ];
 }
 
+/**
+ * @return list<string>
+ */
+function admin_media_parse_id_list(mixed $raw): array
+{
+    if (is_array($raw)) {
+        $ids = $raw;
+    } elseif (is_string($raw) && trim($raw) !== '') {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $ids = $decoded;
+        } else {
+            $ids = preg_split('/[\s,]+/', $raw) ?: [];
+        }
+    } else {
+        $ids = [];
+    }
+
+    $out = [];
+    foreach ($ids as $id) {
+        $id = trim((string) $id);
+        if ($id === '' || !validateMediaId($id)) {
+            continue;
+        }
+        $out[$id] = $id;
+    }
+
+    return array_values($out);
+}
+
+function bulkCreateMediaVariants(): array
+{
+    require_once __DIR__ . '/../core/media_image.php';
+
+    if (!admin_media_csrf_valid()) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    $variant = (string) ($_POST['variant'] ?? 'web');
+    if ($variant !== 'web') {
+        return ['status' => 'error', 'message' => 'Bulk variants support web only'];
+    }
+
+    $ids = admin_media_parse_id_list($_POST['ids'] ?? null);
+    if ($ids === []) {
+        return ['status' => 'error', 'message' => 'No valid media IDs provided'];
+    }
+
+    $max = 50;
+    if (count($ids) > $max) {
+        return ['status' => 'error', 'message' => 'Too many items (max ' . $max . ')'];
+    }
+
+    $results = [];
+    $okCount = 0;
+    $failCount = 0;
+
+    foreach ($ids as $mediaId) {
+        $created = birkly_media_create_web_variant($mediaId);
+        if (!empty($created['ok'])) {
+            $okCount++;
+            $results[] = [
+                'id' => $mediaId,
+                'status' => 'ok',
+                'variants' => $created['data']['variants'] ?? null,
+            ];
+        } else {
+            $failCount++;
+            $results[] = [
+                'id' => $mediaId,
+                'status' => 'error',
+                'message' => $created['message'] ?? 'Could not create variant',
+            ];
+        }
+    }
+
+    return [
+        'status' => 'ok',
+        'message' => $okCount . ' web variant(s) created' . ($failCount > 0 ? ', ' . $failCount . ' failed' : ''),
+        'data' => [
+            'variant' => 'web',
+            'succeeded' => $okCount,
+            'failed' => $failCount,
+            'results' => $results,
+        ],
+    ];
+}
+
 function validateMediaId($mediaId) {
     return birkly_validate_media_id((string) $mediaId);
 }
@@ -1367,6 +1455,9 @@ if ($__adminMediaHttpEntry) {
             break;
         case 'create_variant':
             echo json_encode(createMediaVariant());
+            break;
+        case 'bulk_create_variants':
+            echo json_encode(bulkCreateMediaVariants());
             break;
         case 'delete':
             echo json_encode(deleteMedia());
