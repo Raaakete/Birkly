@@ -2863,6 +2863,8 @@
         "upload": "Hochladen",
         "upload_media": "Medien hochladen",
         "download_media": "Herunterladen",
+        "replace_media_file": "Datei ersetzen",
+        "create_web_variant": "Web-Variante erstellen",
         "upload_site_pack": "Hochladen",
         "upload_site_pack_hint": "Installieren Sie ein Website-Paket als ZIP (manifest.json + collections/ + project/). Es gilt derselbe Ablauf wie bei Installationen über den Hub.",
         "url": "URL",

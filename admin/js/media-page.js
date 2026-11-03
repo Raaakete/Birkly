@@ -80,6 +80,9 @@ function resolveMediaItemUrl(url) {
     const focalPoint = item && typeof item.focal_point === 'object' && item.focal_point !== null
       ? item.focal_point
       : {};
+    const cropRect = item && typeof item.crop_rect === 'object' && item.crop_rect !== null
+      ? item.crop_rect
+      : null;
 
     return {
       ...item,
@@ -88,6 +91,13 @@ function resolveMediaItemUrl(url) {
         x: Number.isFinite(Number(focalPoint.x)) ? Number(focalPoint.x) : 50,
         y: Number.isFinite(Number(focalPoint.y)) ? Number(focalPoint.y) : 50,
       },
+      crop_rect: cropRect ? {
+        x: Number.isFinite(Number(cropRect.x)) ? Number(cropRect.x) : 0,
+        y: Number.isFinite(Number(cropRect.y)) ? Number(cropRect.y) : 0,
+        w: Number.isFinite(Number(cropRect.w)) ? Number(cropRect.w) : 100,
+        h: Number.isFinite(Number(cropRect.h)) ? Number(cropRect.h) : 100,
+      } : null,
+      variants: item && typeof item.variants === 'object' && item.variants !== null ? item.variants : {},
     };
   }
 
@@ -226,6 +236,16 @@ function resolveMediaItemUrl(url) {
     document.querySelectorAll('[data-media-action="download-media"]').forEach(function (el) {
       el.addEventListener('click', downloadCurrentMedia);
     });
+    document.querySelectorAll('[data-media-action="replace-media"]').forEach(function (el) {
+      el.addEventListener('click', triggerReplaceMediaFile);
+    });
+    document.querySelectorAll('[data-media-action="create-web-variant"]').forEach(function (el) {
+      el.addEventListener('click', createWebVariantForCurrent);
+    });
+    const replaceInput = document.getElementById('media-replace-input');
+    if (replaceInput) {
+      replaceInput.addEventListener('change', handleReplaceMediaFileSelected);
+    }
     document.querySelectorAll('[data-media-action="save-media"]').forEach(function (el) {
       el.addEventListener('click', saveCurrentMediaDetails);
     });
@@ -978,6 +998,7 @@ function resolveMediaItemUrl(url) {
     state.currentMediaItem = normalizeMediaItem(item);
     document.getElementById('media-modal-title').textContent = item.name || 'Media details';
     renderMediaModalBody(state.currentMediaItem);
+    updateMediaSheetActions(state.currentMediaItem);
     openModal('media-modal');
   }
 
@@ -989,6 +1010,17 @@ function resolveMediaItemUrl(url) {
     const folderLabel = item.folder || 'Root';
     const focalX = Math.max(0, Math.min(100, Math.round(Number(item.focal_point?.x || 50))));
     const focalY = Math.max(0, Math.min(100, Math.round(Number(item.focal_point?.y || 50))));
+    const crop = item.crop_rect || null;
+    const cropX = crop ? Math.max(0, Math.min(100, Math.round(Number(crop.x)))) : 0;
+    const cropY = crop ? Math.max(0, Math.min(100, Math.round(Number(crop.y)))) : 0;
+    const cropW = crop ? Math.max(1, Math.min(100, Math.round(Number(crop.w)))) : 100;
+    const cropH = crop ? Math.max(1, Math.min(100, Math.round(Number(crop.h)))) : 100;
+    const webVariant = item.variants && item.variants.web ? item.variants.web : null;
+    const variantNote = webVariant
+      ? mdT('media_js_web_variant_ready', 'Web variant: {size}', {
+          size: webVariant.size_formatted || formatBytes(Number(webVariant.size || 0)),
+        })
+      : '';
 
     const details = [
       ['Name', item.name || ''],
@@ -1024,7 +1056,53 @@ function resolveMediaItemUrl(url) {
             '<input type="number" id="media-focal-y" class="input is-mono" min="0" max="100" value="' + escapeHtml(focalY) + '">' +
           '</div>' +
         '</div>' +
+        '<div class="media-sheet-crop">' +
+          '<p class="field-help">' + escapeHtml(mdT('media_js_crop_help', 'Crop box uses percent of the original image (non-destructive). Leave full frame at 0,0 and 100×100.')) + '</p>' +
+          '<div class="media-sheet-focal">' +
+            '<div class="field-group">' +
+              '<label class="field-label" for="media-crop-x">' + escapeHtml(mdT('media_js_crop_x', 'Crop X')) + '</label>' +
+              '<input type="number" id="media-crop-x" class="input is-mono" min="0" max="100" value="' + escapeHtml(cropX) + '">' +
+            '</div>' +
+            '<div class="field-group">' +
+              '<label class="field-label" for="media-crop-y">' + escapeHtml(mdT('media_js_crop_y', 'Crop Y')) + '</label>' +
+              '<input type="number" id="media-crop-y" class="input is-mono" min="0" max="100" value="' + escapeHtml(cropY) + '">' +
+            '</div>' +
+            '<div class="field-group">' +
+              '<label class="field-label" for="media-crop-w">' + escapeHtml(mdT('media_js_crop_w', 'Crop width')) + '</label>' +
+              '<input type="number" id="media-crop-w" class="input is-mono" min="1" max="100" value="' + escapeHtml(cropW) + '">' +
+            '</div>' +
+            '<div class="field-group">' +
+              '<label class="field-label" for="media-crop-h">' + escapeHtml(mdT('media_js_crop_h', 'Crop height')) + '</label>' +
+              '<input type="number" id="media-crop-h" class="input is-mono" min="1" max="100" value="' + escapeHtml(cropH) + '">' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        (variantNote ? '<p class="field-help">' + escapeHtml(variantNote) + '</p>' : '') +
       '</div>';
+
+    const replaceInput = document.getElementById('media-replace-input');
+    if (replaceInput && !body.contains(replaceInput)) {
+      body.appendChild(replaceInput);
+    }
+  }
+
+  function formatBytes(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 1) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const pow = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    return (bytes / Math.pow(1024, pow)).toFixed(pow === 0 ? 0 : 1) + ' ' + units[pow];
+  }
+
+  function isRasterImageItem(item) {
+    if (!item || item.category !== 'image') return false;
+    return String(item.type || '') !== 'image/svg+xml';
+  }
+
+  function updateMediaSheetActions(item) {
+    const variantBtn = document.querySelector('[data-media-action="create-web-variant"]');
+    if (variantBtn) {
+      variantBtn.hidden = !isRasterImageItem(item);
+    }
   }
 
   function getMediaPreviewHTML(item) {
@@ -1072,6 +1150,84 @@ function resolveMediaItemUrl(url) {
     link.remove();
   }
 
+  function triggerReplaceMediaFile() {
+    if (!state.currentMediaItem?.id) {
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
+      return;
+    }
+    document.getElementById('media-replace-input')?.click();
+  }
+
+  async function handleReplaceMediaFileSelected(event) {
+    const input = event.target;
+    const file = input?.files?.[0];
+    input.value = '';
+    if (!file || !state.currentMediaItem?.id) {
+      return;
+    }
+    if (!(await BirklyFeedback.confirm(mdT('media_js_confirm_replace', 'Replace the original file for this media item? References keep the same ID.')))) {
+      return;
+    }
+    try {
+      setUploadBusy(true, mdT('media_js_replacing', 'Replacing file…'));
+      const formData = new FormData();
+      formData.append('id', state.currentMediaItem.id);
+      formData.append('file', file);
+      formData.append('_csrf', getCSRFToken());
+      const response = await fetch(ADMIN_MEDIA_API() + '?action=replace', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const result = await parseMediaApiResponse(response);
+      if (result.status !== 'ok') {
+        showError(getResultMessage(result, mdT('media_js_replace_failed', 'Replace failed.')));
+        return;
+      }
+      const updated = normalizeMediaItem(result.data?.media || result.data || {});
+      state.currentMediaItem = updated;
+      state.currentMedia = state.currentMedia.map(function (entry) {
+        return entry.id === updated.id ? { ...entry, ...updated } : entry;
+      });
+      renderMediaModalBody(updated);
+      updateMediaSheetActions(updated);
+      renderMediaCollection(state.currentMedia);
+      showSuccess(getResultMessage(result, mdT('media_js_replace_ok', 'File replaced successfully.')));
+    } catch (error) {
+      showError(error.message || mdT('media_js_replace_failed', 'Replace failed.'));
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
+  async function createWebVariantForCurrent() {
+    if (!state.currentMediaItem?.id || !isRasterImageItem(state.currentMediaItem)) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append('id', state.currentMediaItem.id);
+      formData.append('variant', 'web');
+      formData.append('_csrf', getCSRFToken());
+      const response = await fetch(ADMIN_MEDIA_API() + '?action=create_variant', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const result = await response.json();
+      if (result.status !== 'ok') {
+        showError(getResultMessage(result, mdT('media_js_variant_failed', 'Could not create web variant.')));
+        return;
+      }
+      const updated = normalizeMediaItem(result.data?.media || state.currentMediaItem);
+      state.currentMediaItem = updated;
+      renderMediaModalBody(updated);
+      showSuccess(getResultMessage(result, mdT('media_js_variant_ok', 'Web-optimized variant created.')));
+    } catch (error) {
+      showError(error.message || mdT('media_js_variant_failed', 'Could not create web variant.'));
+    }
+  }
+
   async function saveCurrentMediaDetails() {
     if (!state.currentMediaItem) {
       showError(mdT('media_js_no_item_selected', 'No media item selected.'));
@@ -1081,6 +1237,10 @@ function resolveMediaItemUrl(url) {
     const altText = (document.getElementById('media-alt-text')?.value || '').trim();
     const focalX = Number(document.getElementById('media-focal-x')?.value || 50);
     const focalY = Number(document.getElementById('media-focal-y')?.value || 50);
+    const cropX = Number(document.getElementById('media-crop-x')?.value || 0);
+    const cropY = Number(document.getElementById('media-crop-y')?.value || 0);
+    const cropW = Number(document.getElementById('media-crop-w')?.value || 100);
+    const cropH = Number(document.getElementById('media-crop-h')?.value || 100);
 
     try {
       const formData = new FormData();
@@ -1088,6 +1248,10 @@ function resolveMediaItemUrl(url) {
       formData.append('alt_text', altText);
       formData.append('focal_x', String(Math.max(0, Math.min(100, Math.round(focalX)))));
       formData.append('focal_y', String(Math.max(0, Math.min(100, Math.round(focalY)))));
+      formData.append('crop_x', String(Math.max(0, Math.min(100, Math.round(cropX)))));
+      formData.append('crop_y', String(Math.max(0, Math.min(100, Math.round(cropY)))));
+      formData.append('crop_w', String(Math.max(1, Math.min(100, Math.round(cropW)))));
+      formData.append('crop_h', String(Math.max(1, Math.min(100, Math.round(cropH)))));
       formData.append('_csrf', getCSRFToken());
 
       const response = await fetch(ADMIN_MEDIA_API() + '?action=update', {
@@ -1102,6 +1266,8 @@ function resolveMediaItemUrl(url) {
           ...state.currentMediaItem,
           alt_text: altText,
           focal_point: { x: focalX, y: focalY },
+          crop_rect: result.data?.media?.crop_rect ?? null,
+          variants: result.data?.media?.variants ?? state.currentMediaItem.variants,
         });
 
         state.currentMedia = state.currentMedia.map(function (item) {
