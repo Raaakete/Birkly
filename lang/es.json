@@ -2771,6 +2771,7 @@
         "download_media": "Descargar",
         "replace_media_file": "Reemplazar archivo",
         "create_web_variant": "Crear variante web",
+        "bake_crop_variant": "Exportar recorte",
         "upload_site_pack": "Subir",
         "upload_site_pack_hint": "Instale un ZIP de paquete de sitio (manifest.json + collections/ + project/). Usa el mismo motor que las instalaciones de Hub.",
         "url": "URL",

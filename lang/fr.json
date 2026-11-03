@@ -2773,6 +2773,7 @@
         "download_media": "Télécharger",
         "replace_media_file": "Remplacer le fichier",
         "create_web_variant": "Créer variante web",
+        "bake_crop_variant": "Exporter le recadrage",
         "upload_site_pack": "Téléverser",
         "upload_site_pack_hint": "Installez un ZIP de pack de site (manifest.json + collections/ + project/). Il utilise le même moteur que les installations du Hub.",
         "url": "URL",

@@ -242,6 +242,153 @@ function birkly_media_raster_save_scaled(
 }
 
 /**
+ * Crop a raster source to $destPath using a normalized crop rectangle (percent).
+ */
+function birkly_media_raster_crop_to_file(
+    string $sourcePath,
+    string $destPath,
+    array $cropRect,
+    int $maxWidth = 2560,
+    int $quality = 85
+): bool {
+    $crop = birkly_media_normalize_crop_rect($cropRect);
+    if ($crop === null || !is_file($sourcePath)) {
+        return false;
+    }
+
+    if (!function_exists('imagecreatetruecolor')) {
+        return false;
+    }
+
+    $info = @getimagesize($sourcePath);
+    if ($info === false) {
+        return false;
+    }
+
+    $width = (int) ($info[0] ?? 0);
+    $height = (int) ($info[1] ?? 0);
+    $type = (int) ($info[2] ?? 0);
+    if ($width < 1 || $height < 1) {
+        return false;
+    }
+
+    $source = null;
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $source = @imagecreatefromjpeg($sourcePath);
+            break;
+        case IMAGETYPE_PNG:
+            $source = @imagecreatefrompng($sourcePath);
+            break;
+        case IMAGETYPE_GIF:
+            $source = @imagecreatefromgif($sourcePath);
+            break;
+        case IMAGETYPE_WEBP:
+            if (function_exists('imagecreatefromwebp')) {
+                $source = @imagecreatefromwebp($sourcePath);
+            }
+            break;
+    }
+
+    if (!$source) {
+        return false;
+    }
+
+    $srcX = (int) floor($width * ($crop['x'] / 100));
+    $srcY = (int) floor($height * ($crop['y'] / 100));
+    $srcW = max(1, (int) floor($width * ($crop['w'] / 100)));
+    $srcH = max(1, (int) floor($height * ($crop['h'] / 100)));
+    $srcW = min($srcW, $width - $srcX);
+    $srcH = min($srcH, $height - $srcY);
+
+    $maxWidth = max(1, $maxWidth);
+    $scale = min(1.0, $maxWidth / $srcW);
+    $targetW = max(1, (int) round($srcW * $scale));
+    $targetH = max(1, (int) round($srcH * $scale));
+
+    $canvas = imagecreatetruecolor($targetW, $targetH);
+    if (!$canvas) {
+        imagedestroy($source);
+
+        return false;
+    }
+
+    if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_WEBP) {
+        imagealphablending($canvas, false);
+        imagesavealpha($canvas, true);
+        $transparent = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+        imagefilledrectangle($canvas, 0, 0, $targetW, $targetH, $transparent);
+        imagealphablending($canvas, true);
+    }
+
+    imagecopyresampled(
+        $canvas,
+        $source,
+        0,
+        0,
+        $srcX,
+        $srcY,
+        $targetW,
+        $targetH,
+        $srcW,
+        $srcH
+    );
+
+    $quality = max(1, min(100, $quality));
+    $useWebp = function_exists('imagewebp') && str_ends_with(strtolower($destPath), '.webp');
+    $saved = $useWebp
+        ? @imagewebp($canvas, $destPath, $quality)
+        : @imagejpeg($canvas, $destPath, $quality);
+
+    imagedestroy($source);
+    imagedestroy($canvas);
+
+    return $saved && is_file($destPath);
+}
+
+/**
+ * @param array<string, mixed> $variantMeta
+ */
+function birkly_media_store_variant(
+    string $mediaId,
+    string $variantKey,
+    string $variantFileId,
+    string $destPath,
+    string $folder,
+    array $extra = []
+): array {
+    $extension = strtolower(pathinfo($destPath, PATHINFO_EXTENSION));
+    $mime = $extension === 'webp' ? 'image/webp' : ($extension === 'png' ? 'image/png' : 'image/jpeg');
+    $url = birkly_media_public_url($folder, $variantFileId, $extension);
+    $size = filesize($destPath) ?: 0;
+    $dimensions = birkly_media_image_dimensions($destPath, $mime);
+
+    $metadata = birkly_load_media_metadata();
+    if (!isset($metadata[$mediaId]) || !is_array($metadata[$mediaId])) {
+        return ['ok' => false, 'message' => 'Media metadata not found.'];
+    }
+
+    if (!isset($metadata[$mediaId]['variants']) || !is_array($metadata[$mediaId]['variants'])) {
+        $metadata[$mediaId]['variants'] = [];
+    }
+
+    $metadata[$mediaId]['variants'][$variantKey] = array_merge($extra, [
+        'url' => $url,
+        'ext' => $extension,
+        'type' => $mime,
+        'size' => $size,
+        'dimensions' => $dimensions,
+        'created_at' => date('Y-m-d H:i:s'),
+    ]);
+
+    if (!birkly_save_media_metadata($metadata)) {
+        return ['ok' => false, 'message' => 'Failed to save variant metadata.'];
+    }
+
+    return ['ok' => true, 'data' => $metadata[$mediaId]];
+}
+
+/**
  * @return array{ok:bool,message?:string,data?:array<string,mixed>}
  */
 function birkly_media_create_web_variant(string $mediaId): array
@@ -280,32 +427,75 @@ function birkly_media_create_web_variant(string $mediaId): array
         return ['ok' => false, 'message' => 'Could not create optimized variant.'];
     }
 
-    $url = birkly_media_public_url($folder, $variantId, $extension);
-    $size = filesize($destPath) ?: 0;
-    $dimensions = birkly_media_image_dimensions($destPath, $mime);
-
-    if (!isset($metadata[$mediaId]['variants']) || !is_array($metadata[$mediaId]['variants'])) {
-        $metadata[$mediaId]['variants'] = [];
-    }
-
-    $metadata[$mediaId]['variants']['web'] = [
-        'url' => $url,
-        'ext' => $extension,
-        'type' => $mime,
-        'size' => $size,
-        'dimensions' => $dimensions,
-        'created_at' => date('Y-m-d H:i:s'),
-    ];
-
-    if (!birkly_save_media_metadata($metadata)) {
+    $stored = birkly_media_store_variant($mediaId, 'web', $variantId, $destPath, $folder);
+    if (!$stored['ok']) {
         @unlink($destPath);
 
-        return ['ok' => false, 'message' => 'Failed to save variant metadata.'];
+        return ['ok' => false, 'message' => $stored['message'] ?? 'Failed to save variant metadata.'];
     }
 
     return [
         'ok' => true,
-        'data' => $metadata[$mediaId],
+        'data' => $stored['data'],
+    ];
+}
+
+/**
+ * Bake the current crop_rect into a derivative file (variants.crop).
+ *
+ * @return array{ok:bool,message?:string,data?:array<string,mixed>}
+ */
+function birkly_media_bake_crop_variant(string $mediaId): array
+{
+    if (!birkly_validate_media_id($mediaId)) {
+        return ['ok' => false, 'message' => 'Invalid media ID.'];
+    }
+
+    $resolved = birkly_media_resolve_download_file($mediaId);
+    if ($resolved === null) {
+        return ['ok' => false, 'message' => 'Media file not found.'];
+    }
+
+    if (!birkly_media_is_raster_path($resolved['path'], $resolved['mime'])) {
+        return ['ok' => false, 'message' => 'Crop variants are only available for raster images.'];
+    }
+
+    $metadata = birkly_load_media_metadata();
+    if (!isset($metadata[$mediaId]) || !is_array($metadata[$mediaId])) {
+        return ['ok' => false, 'message' => 'Media metadata not found.'];
+    }
+
+    $crop = birkly_media_normalize_crop_rect($metadata[$mediaId]['crop_rect'] ?? null);
+    if ($crop === null) {
+        return ['ok' => false, 'message' => 'Set a crop region before baking (not full frame).'];
+    }
+
+    $folder = (string) ($metadata[$mediaId]['folder'] ?? '');
+    $variantId = $mediaId . '-crop';
+    $extension = function_exists('imagewebp') ? 'webp' : 'jpg';
+
+    $dirResult = birkly_ensure_media_folder($folder);
+    if (!$dirResult['ok'] || empty($dirResult['path'])) {
+        return ['ok' => false, 'message' => $dirResult['message'] ?? 'Media folder is not writable.'];
+    }
+
+    $destPath = $dirResult['path'] . '/' . $variantId . '.' . $extension;
+    if (!birkly_media_raster_crop_to_file($resolved['path'], $destPath, $crop)) {
+        return ['ok' => false, 'message' => 'Could not bake crop variant.'];
+    }
+
+    $stored = birkly_media_store_variant($mediaId, 'crop', $variantId, $destPath, $folder, [
+        'source_crop' => $crop,
+    ]);
+    if (!$stored['ok']) {
+        @unlink($destPath);
+
+        return ['ok' => false, 'message' => $stored['message'] ?? 'Failed to save variant metadata.'];
+    }
+
+    return [
+        'ok' => true,
+        'data' => $stored['data'],
     ];
 }
 
