@@ -201,12 +201,37 @@ function resolveMediaItemUrl(url) {
     state.currentView = localStorage.getItem(viewStorageKey) === 'list' ? 'list' : 'grid';
 
     setupMediaPageActions();
+    localizeMediaSheetFooter();
     bindModalDismissals();
     setupDragAndDrop();
     setView(state.currentView, false);
     updateBreadcrumb();
     loadFolders();
     loadMedia();
+  }
+
+  function localizeMediaSheetFooter() {
+    const specs = [
+      ['download-media', 'download_media', 'Download'],
+      ['replace-media', 'replace_media_file', 'Replace file'],
+      ['create-web-variant', 'create_web_variant', 'Create web variant'],
+      ['bake-crop-variant', 'bake_crop_variant', 'Bake crop to file'],
+      ['bulk-web-variants', 'bulk_create_web_variants', 'Create web variants'],
+    ];
+    specs.forEach(function (entry) {
+      const action = entry[0];
+      const i18nKey = entry[1];
+      const fallback = entry[2];
+      document.querySelectorAll('[data-media-action="' + action + '"]').forEach(function (btn) {
+        const label = mdT(i18nKey, fallback);
+        const iconEl = btn.querySelector('svg');
+        btn.textContent = '';
+        if (iconEl) {
+          btn.appendChild(iconEl);
+        }
+        btn.appendChild(document.createTextNode(label));
+      });
+    });
   }
 
   function setupMediaPageActions() {
@@ -1457,7 +1482,10 @@ function resolveMediaItemUrl(url) {
       return;
     }
     try {
-      await saveCurrentMediaDetails(true);
+      const saved = await saveCurrentMediaDetails(true);
+      if (!saved) {
+        return;
+      }
       const formData = new FormData();
       formData.append('id', state.currentMediaItem.id);
       formData.append('variant', 'crop');
@@ -1485,7 +1513,7 @@ function resolveMediaItemUrl(url) {
   async function saveCurrentMediaDetails(skipSuccessToast) {
     if (!state.currentMediaItem) {
       showError(mdT('media_js_no_item_selected', 'No media item selected.'));
-      return;
+      return false;
     }
 
     const altText = (document.getElementById('media-alt-text')?.value || '').trim();
@@ -1514,7 +1542,19 @@ function resolveMediaItemUrl(url) {
         credentials: 'same-origin',
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (parseError) {
+        showError(mdT('media_js_err_save_details_generic', 'Error saving media details:') + ' ' + (parseError.message || 'Invalid response'));
+        return false;
+      }
+
+      if (!response.ok && (result.status ?? '') !== 'ok') {
+        showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, response.status + ' ' + response.statusText));
+        return false;
+      }
+
       if (result.status === 'ok') {
         const updatedMedia = normalizeMediaItem(result.data?.media || {
           ...state.currentMediaItem,
@@ -1533,11 +1573,13 @@ function resolveMediaItemUrl(url) {
         if (!skipSuccessToast) {
           showSuccess(mdT('media_js_media_details_saved', 'Media details saved successfully.'));
         }
-      } else {
-        showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
+        return true;
       }
+      showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
+      return false;
     } catch (error) {
       showError(mdT('media_js_err_save_details_generic', 'Error saving media details:') + ' ' + error.message);
+      return false;
     }
   }
 
