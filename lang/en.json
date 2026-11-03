@@ -2881,6 +2881,7 @@
         "download_media": "Download",
         "replace_media_file": "Replace file",
         "create_web_variant": "Create web variant",
+        "bake_crop_variant": "Bake crop to file",
         "upload_site_pack": "Upload",
         "upload_site_pack_hint": "Install a site pack ZIP (manifest.json + collections/ + project/). Uses the same engine as Hub installs.",
         "url": "URL",

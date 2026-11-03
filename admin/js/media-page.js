@@ -242,6 +242,9 @@ function resolveMediaItemUrl(url) {
     document.querySelectorAll('[data-media-action="create-web-variant"]').forEach(function (el) {
       el.addEventListener('click', createWebVariantForCurrent);
     });
+    document.querySelectorAll('[data-media-action="bake-crop-variant"]').forEach(function (el) {
+      el.addEventListener('click', bakeCropVariantForCurrent);
+    });
     const replaceInput = document.getElementById('media-replace-input');
     if (replaceInput) {
       replaceInput.addEventListener('change', handleReplaceMediaFileSelected);
@@ -1016,11 +1019,19 @@ function resolveMediaItemUrl(url) {
     const cropW = crop ? Math.max(1, Math.min(100, Math.round(Number(crop.w)))) : 100;
     const cropH = crop ? Math.max(1, Math.min(100, Math.round(Number(crop.h)))) : 100;
     const webVariant = item.variants && item.variants.web ? item.variants.web : null;
-    const variantNote = webVariant
-      ? mdT('media_js_web_variant_ready', 'Web variant: {size}', {
-          size: webVariant.size_formatted || formatBytes(Number(webVariant.size || 0)),
-        })
-      : '';
+    const cropVariant = item.variants && item.variants.crop ? item.variants.crop : null;
+    const variantNotes = [];
+    if (webVariant) {
+      variantNotes.push(mdT('media_js_web_variant_ready', 'Web variant: {size}', {
+        size: webVariant.size_formatted || formatBytes(Number(webVariant.size || 0)),
+      }));
+    }
+    if (cropVariant) {
+      variantNotes.push(mdT('media_js_crop_variant_ready', 'Baked crop variant: {size}', {
+        size: cropVariant.size_formatted || formatBytes(Number(cropVariant.size || 0)),
+      }));
+    }
+    const variantNote = variantNotes.join(' · ');
 
     const details = [
       ['Name', item.name || ''],
@@ -1057,7 +1068,7 @@ function resolveMediaItemUrl(url) {
           '</div>' +
         '</div>' +
         '<div class="media-sheet-crop">' +
-          '<p class="field-help">' + escapeHtml(mdT('media_js_crop_help', 'Crop box uses percent of the original image (non-destructive). Leave full frame at 0,0 and 100×100.')) + '</p>' +
+          '<p class="field-help">' + escapeHtml(mdT('media_js_crop_help', 'Crop box uses percent of the original image (non-destructive). Drag the box or click the image to set focal point.')) + '</p>' +
           '<div class="media-sheet-focal">' +
             '<div class="field-group">' +
               '<label class="field-label" for="media-crop-x">' + escapeHtml(mdT('media_js_crop_x', 'Crop X')) + '</label>' +
@@ -1084,6 +1095,201 @@ function resolveMediaItemUrl(url) {
     if (replaceInput && !body.contains(replaceInput)) {
       body.appendChild(replaceInput);
     }
+
+    initMediaFramingEditor();
+  }
+
+  let mediaFramingCleanup = null;
+
+  function clampPercent(value, min, max) {
+    return Math.max(min, Math.min(max, Math.round(value)));
+  }
+
+  function hasPartialCropRect(crop) {
+    if (!crop) {
+      return false;
+    }
+    return Number(crop.x) > 0 || Number(crop.y) > 0 || Number(crop.w) < 100 || Number(crop.h) < 100;
+  }
+
+  function normalizeCropRect(crop) {
+    const x = clampPercent(Number(crop?.x ?? 0), 0, 100);
+    const y = clampPercent(Number(crop?.y ?? 0), 0, 100);
+    let w = clampPercent(Number(crop?.w ?? 100), 1, 100);
+    let h = clampPercent(Number(crop?.h ?? 100), 1, 100);
+    w = Math.min(w, 100 - x);
+    h = Math.min(h, 100 - y);
+    return { x: x, y: y, w: w, h: h };
+  }
+
+  function readFramingFromDom() {
+    return {
+      focal: {
+        x: clampPercent(Number(document.getElementById('media-focal-x')?.value || 50), 0, 100),
+        y: clampPercent(Number(document.getElementById('media-focal-y')?.value || 50), 0, 100),
+      },
+      crop: normalizeCropRect({
+        x: document.getElementById('media-crop-x')?.value,
+        y: document.getElementById('media-crop-y')?.value,
+        w: document.getElementById('media-crop-w')?.value,
+        h: document.getElementById('media-crop-h')?.value,
+      }),
+    };
+  }
+
+  function writeFramingToDom(framing) {
+    const focalX = document.getElementById('media-focal-x');
+    const focalY = document.getElementById('media-focal-y');
+    const cropX = document.getElementById('media-crop-x');
+    const cropY = document.getElementById('media-crop-y');
+    const cropW = document.getElementById('media-crop-w');
+    const cropH = document.getElementById('media-crop-h');
+    if (focalX) focalX.value = String(framing.focal.x);
+    if (focalY) focalY.value = String(framing.focal.y);
+    if (cropX) cropX.value = String(framing.crop.x);
+    if (cropY) cropY.value = String(framing.crop.y);
+    if (cropW) cropW.value = String(framing.crop.w);
+    if (cropH) cropH.value = String(framing.crop.h);
+  }
+
+  function applyFramingOverlay(stage, framing) {
+    const box = stage.querySelector('[data-media-crop-box]');
+    const handle = stage.querySelector('[data-media-crop-handle]');
+    const focal = stage.querySelector('[data-media-crop-focal]');
+    if (!box || !handle || !focal) {
+      return;
+    }
+    box.style.left = framing.crop.x + '%';
+    box.style.top = framing.crop.y + '%';
+    box.style.width = framing.crop.w + '%';
+    box.style.height = framing.crop.h + '%';
+    handle.style.left = 'calc(' + (framing.crop.x + framing.crop.w) + '% - 6px)';
+    handle.style.top = 'calc(' + (framing.crop.y + framing.crop.h) + '% - 6px)';
+    focal.style.left = framing.focal.x + '%';
+    focal.style.top = framing.focal.y + '%';
+  }
+
+  function initMediaFramingEditor() {
+    if (mediaFramingCleanup) {
+      mediaFramingCleanup();
+      mediaFramingCleanup = null;
+    }
+
+    const stage = document.querySelector('[data-media-crop-stage]');
+    if (!stage) {
+      return;
+    }
+
+    const box = stage.querySelector('[data-media-crop-box]');
+    const handle = stage.querySelector('[data-media-crop-handle]');
+    const image = stage.querySelector('.media-crop-image');
+    if (!box || !handle || !image) {
+      return;
+    }
+
+    let dragMode = null;
+    let dragStart = null;
+    let framingStart = null;
+
+    function refreshOverlay() {
+      applyFramingOverlay(stage, readFramingFromDom());
+      if (state.currentMediaItem) {
+        updateMediaSheetActions(state.currentMediaItem);
+      }
+    }
+
+    function onPointerMove(event) {
+      if (!dragMode || !dragStart || !framingStart) {
+        return;
+      }
+      const rect = stage.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) {
+        return;
+      }
+      const dx = ((event.clientX - dragStart.x) / rect.width) * 100;
+      const dy = ((event.clientY - dragStart.y) / rect.height) * 100;
+      let next = {
+        focal: { x: framingStart.focal.x, y: framingStart.focal.y },
+        crop: {
+          x: framingStart.crop.x,
+          y: framingStart.crop.y,
+          w: framingStart.crop.w,
+          h: framingStart.crop.h,
+        },
+      };
+      if (dragMode === 'move') {
+        next.crop.x = clampPercent(framingStart.crop.x + dx, 0, 100 - framingStart.crop.w);
+        next.crop.y = clampPercent(framingStart.crop.y + dy, 0, 100 - framingStart.crop.h);
+      } else if (dragMode === 'resize') {
+        next.crop.w = clampPercent(framingStart.crop.w + dx, 1, 100 - framingStart.crop.x);
+        next.crop.h = clampPercent(framingStart.crop.h + dy, 1, 100 - framingStart.crop.y);
+      }
+      next.crop = normalizeCropRect(next.crop);
+      writeFramingToDom(next);
+      applyFramingOverlay(stage, next);
+    }
+
+    function endDrag() {
+      dragMode = null;
+      dragStart = null;
+      framingStart = null;
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', endDrag);
+      if (state.currentMediaItem) {
+        updateMediaSheetActions(state.currentMediaItem);
+      }
+    }
+
+    function startDrag(mode, event) {
+      event.preventDefault();
+      dragMode = mode;
+      dragStart = { x: event.clientX, y: event.clientY };
+      framingStart = readFramingFromDom();
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', endDrag);
+    }
+
+    function onImageClick(event) {
+      if (event.target !== image) {
+        return;
+      }
+      const rect = stage.getBoundingClientRect();
+      const x = clampPercent(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+      const y = clampPercent(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+      const framing = readFramingFromDom();
+      framing.focal = { x: x, y: y };
+      writeFramingToDom(framing);
+      applyFramingOverlay(stage, framing);
+    }
+
+    const onBoxDown = function (event) {
+      startDrag('move', event);
+    };
+    const onHandleDown = function (event) {
+      event.stopPropagation();
+      startDrag('resize', event);
+    };
+
+    box.addEventListener('pointerdown', onBoxDown);
+    handle.addEventListener('pointerdown', onHandleDown);
+    image.addEventListener('click', onImageClick);
+
+    ['media-focal-x', 'media-focal-y', 'media-crop-x', 'media-crop-y', 'media-crop-w', 'media-crop-h'].forEach(function (id) {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener('change', refreshOverlay);
+        input.addEventListener('input', refreshOverlay);
+      }
+    });
+
+    refreshOverlay();
+
+    mediaFramingCleanup = function () {
+      box.removeEventListener('pointerdown', onBoxDown);
+      handle.removeEventListener('pointerdown', onHandleDown);
+      image.removeEventListener('click', onImageClick);
+      endDrag();
+    };
   }
 
   function formatBytes(bytes) {
@@ -1100,8 +1306,14 @@ function resolveMediaItemUrl(url) {
 
   function updateMediaSheetActions(item) {
     const variantBtn = document.querySelector('[data-media-action="create-web-variant"]');
+    const bakeBtn = document.querySelector('[data-media-action="bake-crop-variant"]');
+    const raster = isRasterImageItem(item);
     if (variantBtn) {
-      variantBtn.hidden = !isRasterImageItem(item);
+      variantBtn.hidden = !raster;
+    }
+    if (bakeBtn) {
+      const crop = readFramingFromDom().crop;
+      bakeBtn.hidden = !raster || !hasPartialCropRect(crop);
     }
   }
 
@@ -1112,7 +1324,12 @@ function resolveMediaItemUrl(url) {
     const altText = escapeHtml(item.alt_text || item.name || '');
 
     if (category === 'image') {
-      return '<img src="' + escapeHtml(url) + '" alt="' + altText + '">';
+      return '<div class="media-crop-stage" data-media-crop-stage>' +
+        '<img class="media-crop-image" src="' + escapeHtml(url) + '" alt="' + altText + '">' +
+        '<div class="media-crop-box" data-media-crop-box></div>' +
+        '<div class="media-crop-handle" data-media-crop-handle aria-hidden="true"></div>' +
+        '<div class="media-crop-focal" data-media-crop-focal aria-hidden="true"></div>' +
+        '</div>';
     }
     if (category === 'video') {
       return '<video controls><source src="' + escapeHtml(url) + '" type="' + escapeHtml(type) + '">Your browser does not support the video tag.</video>';
@@ -1228,7 +1445,41 @@ function resolveMediaItemUrl(url) {
     }
   }
 
-  async function saveCurrentMediaDetails() {
+  async function bakeCropVariantForCurrent() {
+    if (!state.currentMediaItem?.id || !isRasterImageItem(state.currentMediaItem)) {
+      return;
+    }
+    if (!hasPartialCropRect(readFramingFromDom().crop)) {
+      showError(mdT('media_js_crop_bake_need_region', 'Adjust the crop box before baking.'));
+      return;
+    }
+    try {
+      await saveCurrentMediaDetails(true);
+      const formData = new FormData();
+      formData.append('id', state.currentMediaItem.id);
+      formData.append('variant', 'crop');
+      formData.append('_csrf', getCSRFToken());
+      const response = await fetch(ADMIN_MEDIA_API() + '?action=create_variant', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+      const result = await response.json();
+      if (result.status !== 'ok') {
+        showError(getResultMessage(result, mdT('media_js_crop_bake_failed', 'Could not bake crop variant.')));
+        return;
+      }
+      const updated = normalizeMediaItem(result.data?.media || state.currentMediaItem);
+      state.currentMediaItem = updated;
+      renderMediaModalBody(updated);
+      updateMediaSheetActions(updated);
+      showSuccess(getResultMessage(result, mdT('media_js_crop_bake_ok', 'Crop baked to variant file.')));
+    } catch (error) {
+      showError(error.message || mdT('media_js_crop_bake_failed', 'Could not bake crop variant.'));
+    }
+  }
+
+  async function saveCurrentMediaDetails(skipSuccessToast) {
     if (!state.currentMediaItem) {
       showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
@@ -1276,7 +1527,9 @@ function resolveMediaItemUrl(url) {
         state.currentMediaItem = normalizeMediaItem({ ...state.currentMediaItem, ...updatedMedia });
         renderMediaCollection(getFilteredMedia());
         renderMediaModalBody(state.currentMediaItem);
-        showSuccess(mdT('media_js_media_details_saved', 'Media details saved successfully.'));
+        if (!skipSuccessToast) {
+          showSuccess(mdT('media_js_media_details_saved', 'Media details saved successfully.'));
+        }
       } else {
         showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
