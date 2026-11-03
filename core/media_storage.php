@@ -314,6 +314,25 @@ function birkly_media_safe_download_filename(string $name): string
 }
 
 /**
+ * Content-Disposition value for attachment downloads (ASCII + RFC 5987 filename*).
+ */
+function birkly_media_content_disposition_attachment(string $name): string
+{
+    $safe = birkly_media_safe_download_filename($name);
+    $ascii = preg_replace('/[^\x20-\x7E]/', '_', $safe) ?? '';
+    if ($ascii === '' || $ascii === '.' || $ascii === '..') {
+        $ascii = 'download';
+    }
+    $ascii = str_replace('"', '', $ascii);
+
+    if ($safe === $ascii) {
+        return 'attachment; filename="' . $ascii . '"';
+    }
+
+    return 'attachment; filename="' . $ascii . '"; filename*=UTF-8\'\'' . rawurlencode($safe);
+}
+
+/**
  * Resolve an on-disk media file for authenticated download.
  *
  * @return array{path:string,mime:string,filename:string}|null

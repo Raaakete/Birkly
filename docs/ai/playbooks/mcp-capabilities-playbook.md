@@ -96,7 +96,7 @@ There is **no** `analytics_*` entry in `tools/list`; use admin actions above. Fu
 | `dashboard` | `dashboard.stats`, `dashboard.pending_review` | Read-only widgets |
 | `hosting` | `hosting.get`, `hosting.probe`, `hosting.set_domain_role` | Delivery / domains |
 | `discovery` | `discovery.get`, `discovery.save_seo` | SEO packs (no `scan_urls` yet) |
-| `media` | `media.list`, `media.update`, `media.move` | Prefer over legacy `list_media` |
+| `media` | `media.list`, `media.update`, `media.replace`, `media.create_variant`, `media.move` | Prefer over legacy `list_media` |
 
 Legacy named tools (`list_media`, `create_entry`, …) remain; `media.*` and `cms_admin_action` are the SSOT for admin parity.
 
