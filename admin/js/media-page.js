@@ -223,6 +223,9 @@ function resolveMediaItemUrl(url) {
     document.querySelectorAll('[data-media-action="delete-media"]').forEach(function (el) {
       el.addEventListener('click', deleteCurrentMedia);
     });
+    document.querySelectorAll('[data-media-action="download-media"]').forEach(function (el) {
+      el.addEventListener('click', downloadCurrentMedia);
+    });
     document.querySelectorAll('[data-media-action="save-media"]').forEach(function (el) {
       el.addEventListener('click', saveCurrentMediaDetails);
     });
@@ -1040,13 +1043,33 @@ function resolveMediaItemUrl(url) {
       return '<audio controls><source src="' + escapeHtml(url) + '" type="' + escapeHtml(type) + '">Your browser does not support the audio tag.</audio>';
     }
     return '<div class="media-sheet-nopreview">' + icon('content', { size: 26 }) +
-      '<p>' + escapeHtml(mdT('media_js_no_preview', 'No preview for this file type.')) + '</p>' +
-      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="button is-small">' + icon('download') + escapeHtml(mdT('media_js_download', 'Download')) + '</a></div>';
+      '<p>' + escapeHtml(mdT('media_js_no_preview', 'No preview for this file type.')) + '</p></div>';
+  }
+
+  function mediaDownloadUrl(mediaId) {
+    if (!mediaId) {
+      return '';
+    }
+    return ADMIN_MEDIA_API() + '?action=download&id=' + encodeURIComponent(String(mediaId));
   }
 
   function closeMediaModal() {
     closeModal('media-modal');
     state.currentMediaItem = null;
+  }
+
+  function downloadCurrentMedia() {
+    if (!state.currentMediaItem || !state.currentMediaItem.id) {
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = mediaDownloadUrl(state.currentMediaItem.id);
+    link.rel = 'noopener';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   async function saveCurrentMediaDetails() {
