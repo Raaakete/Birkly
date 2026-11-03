@@ -83,6 +83,8 @@ function listMedia() {
                     'folder' => $item['folder'] ?? $folder,
                     'alt_text' => $item['alt_text'] ?? '',
                     'focal_point' => normalizeFocalPoint($item['focal_point'] ?? null),
+                    'crop_rect' => $item['crop_rect'] ?? null,
+                    'variants' => $item['variants'] ?? null,
                     'dimensions' => isset($item['dimensions']) ? $item['dimensions'] : null,
                     'duration' => isset($item['duration']) ? $item['duration'] : null
                 ];
@@ -571,12 +573,188 @@ function uploadMedia() {
     ];
 }
 
+/**
+ * @return array{ok:bool,mime?:string,ext?:string,message?:string}
+ */
+function admin_media_validate_upload_file(array $file): array
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'Upload error (code ' . (int) ($file['error'] ?? 0) . ').'];
+    }
+
+    if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        return ['ok' => false, 'message' => 'No file uploaded'];
+    }
+
+    $allowedTypes = admin_media_allowed_mime_types();
+    $detectedMimeType = detectUploadMimeType($file['tmp_name'], (string) ($file['name'] ?? ''));
+
+    if (!in_array($detectedMimeType, $allowedTypes, true)) {
+        return [
+            'ok' => false,
+            'message' => 'Invalid file type. Only images, videos, audio, documents, and archives are allowed.',
+        ];
+    }
+
+    if (isRasterImageMime($detectedMimeType)) {
+        $imageInfo = @getimagesize($file['tmp_name']);
+        if ($imageInfo === false) {
+            return ['ok' => false, 'message' => 'Invalid image file. File does not appear to be a valid image.'];
+        }
+    }
+
+    $maxBytes = admin_media_configured_max_bytes();
+    if (($file['size'] ?? 0) > $maxBytes) {
+        $mb = max(1, (int) round($maxBytes / (1024 * 1024)));
+
+        return ['ok' => false, 'message' => 'File too large. Maximum size is ' . $mb . 'MB.'];
+    }
+
+    $extension = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+
+    return ['ok' => true, 'mime' => $detectedMimeType, 'ext' => $extension];
+}
+
+function replaceMedia(): array
+{
+    @set_time_limit(0);
+    require_once __DIR__ . '/../core/media_image.php';
+
+    if (admin_media_request_exceeds_post_limit() || admin_media_upload_rejected_by_ini()) {
+        return ['status' => 'error', 'message' => admin_media_server_upload_limit_message()];
+    }
+
+    if (!admin_media_csrf_valid()) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    require_once __DIR__ . '/rate_limit.php';
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userId = $_SESSION['user']['id'] ?? $ip;
+    $rateLimiter = new RateLimiter('admin_media_upload_' . $userId, 30, 300);
+    if (!$rateLimiter->check()) {
+        return [
+            'status' => 'error',
+            'message' => 'Too many upload attempts. Please try again later.',
+            'retry_after' => $rateLimiter->getRetryAfter(),
+        ];
+    }
+
+    $mediaId = (string) ($_POST['id'] ?? '');
+    if (!validateMediaId($mediaId)) {
+        return ['status' => 'error', 'message' => 'Invalid media ID'];
+    }
+
+    if (!isset($_FILES['file'])) {
+        return ['status' => 'error', 'message' => 'No file uploaded'];
+    }
+
+    $validation = admin_media_validate_upload_file($_FILES['file']);
+    if (!$validation['ok']) {
+        return ['status' => 'error', 'message' => $validation['message'] ?? 'Invalid upload'];
+    }
+
+    $file = $_FILES['file'];
+    $tempPath = (string) $file['tmp_name'];
+    $result = birkly_media_replace_master_from_path(
+        $mediaId,
+        $tempPath,
+        (string) ($file['name'] ?? ''),
+        (string) ($validation['mime'] ?? '')
+    );
+
+    if (!$result['ok']) {
+        return ['status' => 'error', 'message' => $result['message'] ?? 'Replace failed'];
+    }
+
+    $item = $result['data'] ?? [];
+
+    return [
+        'status' => 'ok',
+        'message' => 'Media file replaced successfully',
+        'data' => [
+            'media' => $item,
+            'id' => $item['id'] ?? $mediaId,
+            'name' => $item['name'] ?? '',
+            'title' => $item['title'] ?? '',
+            'url' => $item['url'] ?? '',
+            'type' => $item['type'] ?? '',
+            'category' => getMediaCategory((string) ($item['type'] ?? '')),
+            'size' => $item['size'] ?? 0,
+            'size_formatted' => formatFileSize((int) ($item['size'] ?? 0)),
+            'folder' => $item['folder'] ?? '',
+            'alt_text' => $item['alt_text'] ?? '',
+            'focal_point' => normalizeFocalPoint($item['focal_point'] ?? null),
+            'crop_rect' => $item['crop_rect'] ?? null,
+            'variants' => $item['variants'] ?? null,
+            'dimensions' => $item['dimensions'] ?? null,
+        ],
+    ];
+}
+
+function createMediaVariant(): array
+{
+    require_once __DIR__ . '/../core/media_image.php';
+
+    if (!admin_media_csrf_valid()) {
+        return ['status' => 'error', 'message' => 'Invalid CSRF token'];
+    }
+
+    $mediaId = (string) ($_POST['id'] ?? '');
+    $variant = (string) ($_POST['variant'] ?? 'web');
+    if ($variant !== 'web') {
+        return ['status' => 'error', 'message' => 'Unsupported variant type'];
+    }
+
+    if (!validateMediaId($mediaId)) {
+        return ['status' => 'error', 'message' => 'Invalid media ID'];
+    }
+
+    $result = birkly_media_create_web_variant($mediaId);
+    if (!$result['ok']) {
+        return ['status' => 'error', 'message' => $result['message'] ?? 'Could not create variant'];
+    }
+
+    return [
+        'status' => 'ok',
+        'message' => 'Web-optimized variant created',
+        'data' => ['media' => $result['data']],
+    ];
+}
+
 function validateMediaId($mediaId) {
     return birkly_validate_media_id((string) $mediaId);
 }
 
 function validateMediaFolder($folder) {
     return birkly_validate_media_folder((string) $folder);
+}
+
+/**
+ * Stream a media file as an attachment (admin download).
+ */
+function admin_media_serve_download(): void
+{
+    $mediaId = (string) ($_GET['id'] ?? '');
+    $resolved = birkly_media_resolve_download_file($mediaId);
+    if ($resolved === null) {
+        http_response_code(404);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Media not found';
+
+        return;
+    }
+
+    $size = filesize($resolved['path']);
+    header('Content-Type: ' . $resolved['mime']);
+    header('Content-Disposition: attachment; filename="' . $resolved['filename'] . '"');
+    if ($size !== false) {
+        header('Content-Length: ' . (string) $size);
+    }
+    header('Cache-Control: private, no-store');
+    header('X-Content-Type-Options: nosniff');
+
+    readfile($resolved['path']);
 }
 
 function getMediaItem() {
@@ -752,12 +930,18 @@ function updateMedia() {
     if (!admin_media_csrf_valid()) {
         return ['status' => 'error', 'message' => 'Invalid CSRF token'];
     }
+
+    require_once __DIR__ . '/../core/media_image.php';
     
     $mediaId = $_POST['id'] ?? '';
     $title = $_POST['title'] ?? '';
     $altText = isset($_POST['alt_text']) ? trim((string) $_POST['alt_text']) : null;
     $focalX = $_POST['focal_x'] ?? null;
     $focalY = $_POST['focal_y'] ?? null;
+    $cropX = $_POST['crop_x'] ?? null;
+    $cropY = $_POST['crop_y'] ?? null;
+    $cropW = $_POST['crop_w'] ?? null;
+    $cropH = $_POST['crop_h'] ?? null;
 
     if (!validateMediaId($mediaId)) {
         return ['status' => 'error', 'message' => 'Invalid media ID'];
@@ -786,6 +970,19 @@ function updateMedia() {
                     'x' => $focalX,
                     'y' => $focalY,
                 ]);
+            }
+            if ($cropX !== null || $cropY !== null || $cropW !== null || $cropH !== null) {
+                $crop = birkly_media_normalize_crop_rect([
+                    'x' => $cropX,
+                    'y' => $cropY,
+                    'w' => $cropW,
+                    'h' => $cropH,
+                ]);
+                if ($crop === null) {
+                    unset($metadata[$mediaId]['crop_rect']);
+                } else {
+                    $metadata[$mediaId]['crop_rect'] = $crop;
+                }
             }
             
             file_put_contents($metadataPath, json_encode($metadata, JSON_PRETTY_PRINT));
@@ -1123,8 +1320,6 @@ $__adminMediaHttpEntry = !$__cmsMcpFunctionsOnly
     && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__);
 
 if ($__adminMediaHttpEntry) {
-    header('Content-Type: application/json');
-
     require_once __DIR__ . '/../core/cors.php';
     set_cors_headers('admin');
 
@@ -1133,9 +1328,17 @@ if ($__adminMediaHttpEntry) {
 
     $action = $_GET['action'] ?? 'list';
 
+    if ($action === 'download') {
+        requireAuth('read_media');
+        admin_media_serve_download();
+        exit;
+    }
+
+    header('Content-Type: application/json');
+
     if ($action === 'list' || $action === 'folders' || $action === 'get') {
         requireAuth('read_media');
-    } elseif ($action === 'upload') {
+    } elseif ($action === 'upload' || $action === 'replace') {
         requireAuth('upload');
     } else {
         requireAuth('manage_media');
@@ -1150,6 +1353,12 @@ if ($__adminMediaHttpEntry) {
             break;
         case 'upload':
             echo json_encode(uploadMedia());
+            break;
+        case 'replace':
+            echo json_encode(replaceMedia());
+            break;
+        case 'create_variant':
+            echo json_encode(createMediaVariant());
             break;
         case 'delete':
             echo json_encode(deleteMedia());
