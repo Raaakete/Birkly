@@ -14,6 +14,7 @@ Files in `media/` with sidecar `.metadata.json`. Organized in folders.
 | `upload_media` | Upload file (approval may apply) |
 | `create_media_folder` | New folder |
 | `move_media` | Organize files |
+| `media.bulk_create_variants` (via `cms_admin_action`) | Web-optimize many raster images (max 50 ids) |
 | `delete_media` | Remove file |
 
 ## Workflow: image in entry

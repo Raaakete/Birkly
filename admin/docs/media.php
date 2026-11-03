@@ -64,6 +64,7 @@
     <li><strong>Crop region:</strong> Drag the box to move the crop; drag the corner handle to resize. Percent fields stay in sync with the overlay</li>
     <li><strong>Save details:</strong> Persists focal point and crop metadata on the master file (non-destructive — the original pixels are unchanged)</li>
     <li><strong>Create web variant:</strong> Writes an optimized derivative (WebP when supported) for faster pages; reference in templates with <code>{media_img('field', alt, 'web')}</code></li>
+    <li><strong>Bulk bar:</strong> Select multiple raster images and use <strong>Create web variants</strong> to optimize them in one step (SVG and non-images are skipped)</li>
     <li><strong>Bake crop to file:</strong> After saving a partial crop, exports a cropped derivative file (<code>variants.crop</code>) you can use where a fixed crop asset is needed</li>
 </ul>
 <p>SVG and non-image files do not show crop or variant actions. Variant generation requires PHP GD on the server.</p>
