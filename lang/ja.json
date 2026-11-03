@@ -2773,6 +2773,7 @@
         "download_media": "ダウンロード",
         "replace_media_file": "ファイルを差し替え",
         "create_web_variant": "Web版を作成",
+        "bake_crop_variant": "切り抜きを書き出し",
         "upload_site_pack": "アップロード",
         "upload_site_pack_hint": "サイト パック ZIP (manifest.json + collections/ + project/) をインストールします。 Hub がインストールするものと同じエンジンを使用します。",
         "url": "URL",

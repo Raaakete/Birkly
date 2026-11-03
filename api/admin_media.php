@@ -702,7 +702,7 @@ function createMediaVariant(): array
 
     $mediaId = (string) ($_POST['id'] ?? '');
     $variant = (string) ($_POST['variant'] ?? 'web');
-    if ($variant !== 'web') {
+    if (!in_array($variant, ['web', 'crop'], true)) {
         return ['status' => 'error', 'message' => 'Unsupported variant type'];
     }
 
@@ -710,7 +710,9 @@ function createMediaVariant(): array
         return ['status' => 'error', 'message' => 'Invalid media ID'];
     }
 
-    $result = birkly_media_create_web_variant($mediaId);
+    $result = $variant === 'crop'
+        ? birkly_media_bake_crop_variant($mediaId)
+        : birkly_media_create_web_variant($mediaId);
     if (!$result['ok']) {
         return ['status' => 'error', 'message' => $result['message'] ?? 'Could not create variant'];
     }

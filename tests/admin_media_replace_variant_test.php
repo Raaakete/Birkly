@@ -82,11 +82,19 @@ try {
     $assert(($metaAfter['alt_text'] ?? '') === 'keep', 'replace preserves alt metadata');
     $assert(str_ends_with((string) ($metaAfter['url'] ?? ''), '.jpg'), 'metadata url updated');
 
+    $metadata[$testId]['crop_rect'] = ['x' => 5, 'y' => 5, 'w' => 50, 'h' => 50];
+    birkly_save_media_metadata($metadata);
+
     if (function_exists('imagecreatetruecolor')) {
         $variant = birkly_media_create_web_variant($testId);
         $assert($variant['ok'] ?? false, 'web variant created when GD available');
         $webPath = $mediaDir . '/' . $testId . '-web.' . (function_exists('imagewebp') ? 'webp' : 'jpg');
         $assert(is_file($webPath), 'variant file exists on disk');
+
+        $cropVariant = birkly_media_bake_crop_variant($testId);
+        $assert($cropVariant['ok'] ?? false, 'crop variant baked when GD available');
+        $cropPath = $mediaDir . '/' . $testId . '-crop.' . (function_exists('imagewebp') ? 'webp' : 'jpg');
+        $assert(is_file($cropPath), 'baked crop file exists on disk');
     } else {
         echo "skip - GD not available for variant test\n";
     }
@@ -95,6 +103,8 @@ try {
     @unlink($mediaDir . '/' . $testId . '.jpg');
     @unlink($mediaDir . '/' . $testId . '-web.webp');
     @unlink($mediaDir . '/' . $testId . '-web.jpg');
+    @unlink($mediaDir . '/' . $testId . '-crop.webp');
+    @unlink($mediaDir . '/' . $testId . '-crop.jpg');
     if ($metadataBackup !== null) {
         file_put_contents($metadataPath, $metadataBackup);
     } else {
