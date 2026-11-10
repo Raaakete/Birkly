@@ -19,6 +19,9 @@ temp/
 config.php
 *.local.php
 
+# Agent session artifacts (not product)
+.agent-case-media/
+
 # IDE and editor files
 .vscode/
 .idea/
