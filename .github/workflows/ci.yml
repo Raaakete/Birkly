@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   syntax:
@@ -35,4 +36,4 @@ jobs:
         run: ./scripts/ci-check.sh
 
       - name: Public CI note
-        run: echo "Public CI: syntax + template engine OK (full admin suite runs in private Birkly-Marketplace internal workspace)"
+        run: echo 'Public CI OK — syntax and template engine (full suite in private Birkly-Marketplace)'
