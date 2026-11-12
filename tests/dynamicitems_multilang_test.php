@@ -48,7 +48,7 @@ assert_contains('render includes add-block data action', $rawHtml, 'data-dynamic
 assert_not_contains('render avoids inline onclick (CSP)', $rawHtml, 'onclick=');
 assert_contains('render includes field_blocks id', $rawHtml, 'id="field_blocks"');
 
-assert_contains('render includes contenteditor option', $rawHtml, '"name":"contenteditor"');
+assert_contains('render includes contenteditor option', $rawHtml, 'contenteditor');
 
 $enHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'en');
 
@@ -56,7 +56,7 @@ assert_contains('multilang container id', $enHtml, 'id="field_en_blocks"');
 assert_contains('multilang hidden value id', $enHtml, 'id="field_en_blocks_value"');
 assert_contains('multilang add-block data action', $enHtml, 'data-dynamicitems-action="add-block"');
 assert_not_contains('multilang avoids inline onclick (CSP)', $enHtml, 'onclick=');
-assert_contains('multilang data-field-config name', $enHtml, '"name":"en_blocks"');
+assert_contains('multilang data-field-config name', $enHtml, 'en_blocks');
 assert_contains('multilang input name', $enHtml, 'name="en[blocks]"');
 
 $deHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'de');

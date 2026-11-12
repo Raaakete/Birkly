@@ -153,10 +153,15 @@ assert_true(birkly_ai_presence_llms_txt_body() === null, 'llms.txt null after un
 
 echo "==> Publish validates before persisting enabled flag\n";
 birkly_ai_presence_reset_for_tests();
-$invalidDraft = birkly_ai_presence_default_draft();
+$baselineDraft = birkly_ai_presence_default_draft();
+$baselineDraft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($baselineDraft);
+assert_true((birkly_ai_presence_publish()['ok'] ?? false) === true, 'baseline publish before invalid attempt');
+assert_true((birkly_ai_presence_unpublish()['ok'] ?? false) === true, 'baseline unpublish before invalid attempt');
+
+$invalidDraft = birkly_ai_presence_load_draft();
 $invalidDraft['publication_settings']['enabled'] = false;
 $invalidDraft['claims'] = [['id' => 'bad', 'status' => 'not_a_real_status']];
-birkly_ai_presence_ensure_dir();
 birkly_ai_presence_write_json(birkly_ai_presence_dir() . '/draft.json', $invalidDraft);
 $resultInvalid = birkly_ai_presence_publish();
 assert_true(($resultInvalid['ok'] ?? true) === false, 'publish returns errors for invalid draft');
@@ -165,6 +170,7 @@ $stillDisabled = birkly_ai_presence_load_draft();
 assert_true(empty($stillDisabled['publication_settings']['enabled']), 'invalid publish does not flip enabled flag');
 
 $draftReenable = birkly_ai_presence_load_draft();
+$draftReenable['claims'] = birkly_ai_presence_default_draft()['claims'];
 $draftReenable['publication_settings']['enabled'] = true;
 birkly_ai_presence_save_draft($draftReenable);
 $ps5 = birkly_ai_presence_publish_state($draftReenable);
