@@ -21,12 +21,12 @@ MCP: `birkly://docs/{topic}` for each playbook.
 |----------------|----------------------------|
 | `fieldtypes` | `admin/docs/fieldtypes.php` |
 | `public-forms` | `admin/docs/public-api-forms.php` |
-| `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html |
-| `media` | https://docs.birkly.com/01-admin/media-library.html |
-| `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
-| `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
+| `mcp-setup` | https://docs.birkly.io/01-admin/mcp-connections.html |
+| `media` | https://docs.birkly.io/01-admin/media-library.html |
+| `content-editor` | https://docs.birkly.io/02-content/content-editor.html |
+| `plugins-overview` | https://docs.birkly.io/06-extensibility/marketplace-go-live.html |
 | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
-| `commerce` | https://docs.birkly.com/06-extensibility/plugins/commerce.html — the manual is the Commerce Docs tab |
+| `commerce` | https://docs.birkly.io/06-extensibility/plugins/commerce.html — the manual is the Commerce Docs tab |
 
 Playbooks are auto-loaded server-side for matching intents (site builds, forms, MCP, plugins). Otherwise call `read_birkly_docs` once — do not skip playbooks for casual prompts like "build me a website."
 

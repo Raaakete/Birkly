@@ -43,7 +43,7 @@ User request
 
 ## Cross-reference map (where to read depth)
 
-| Need | Playbook topic | Human docs (docs.birkly.com) |
+| Need | Playbook topic | Human docs (docs.birkly.io) |
 |------|----------------|------------------------------|
 | Content model | `content-model` | /02-content/content-model-overview.html |
 | Field types | `fieldtypes` | /02-content/field-types.html |

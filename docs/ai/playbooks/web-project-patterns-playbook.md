@@ -252,11 +252,11 @@ Admin entry-detail for sub-collections expects consistent markup when mixing mai
 
 | Topic | Human doc (Birkly-Docs) |
 |-------|-------------------------|
-| Templating overview | https://docs.birkly.com/03-templating/templating-overview.html |
-| Detail pages / `.current` | https://docs.birkly.com/03-templating/detail-pages-and-url-context.html |
-| Client setup | https://docs.birkly.com/03-templating/client-setup.html |
-| Site elements pattern | https://docs.birkly.com/02-content/site-elements-pattern.html (`site_elements`) |
-| Reference projects | https://docs.birkly.com/03-templating/reference-projects.html |
+| Templating overview | https://docs.birkly.io/03-templating/templating-overview.html |
+| Detail pages / `.current` | https://docs.birkly.io/03-templating/detail-pages-and-url-context.html |
+| Client setup | https://docs.birkly.io/03-templating/client-setup.html |
+| Site elements pattern | https://docs.birkly.io/02-content/site-elements-pattern.html (`site_elements`) |
+| Reference projects | https://docs.birkly.io/03-templating/reference-projects.html |
 | Template playbook / spec | `templating` · `docs/TEMPLATE_LANGUAGE_SPEC.md` |
 
 ---

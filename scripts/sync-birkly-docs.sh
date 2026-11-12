@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copy the Birkly-Docs help manifest into the CMS repo.
 #
-# Product articles are not copied. Help fetches them from docs.birkly.com
+# Product articles are not copied. Help fetches them from docs.birkly.io
 # when a topic is opened (P104).
 #
 # Usage:

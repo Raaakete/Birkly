@@ -39,7 +39,7 @@ foreach ($requiredIds as $id) {
 }
 
 $helpJs = (string) file_get_contents($root . '/admin/js/help.js');
-assert_true('help.js links to docs.birkly.com', str_contains($helpJs, 'docs.birkly.com'));
+assert_true('help.js links to docs.birkly.io', str_contains($helpJs, 'docs.birkly.io'));
 assert_true('help.js does not fetch the offline manifest', !str_contains($helpJs, 'help_offline_manifest.php'));
 
 $sync = (string) file_get_contents($root . '/scripts/sync-birkly-docs.sh');

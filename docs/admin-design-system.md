@@ -4,10 +4,10 @@
 >
 > The Birch design language — the four questions, the eight roles, tokens, density, the component kit, pixel icons, gestures and motion, and the do/don't rules — is documented once, publicly, in Birkly-Docs:
 >
-> - **[Admin design language](https://docs.birkly.com/01-admin/admin-design-language.html)** — the build kit
-> - **[Plugin admin styling](https://docs.birkly.com/06-plugin-economy/plugin-admin-styling.html)** — adoption layer, class and token reference, P56-to-Birch rename tables, the `.fieldtype-*` API
-> - **[Admin design system](https://docs.birkly.com/01-admin/design-system.html)** — short orientation
-> - **[Plugin navigation icon](https://docs.birkly.com/06-plugin-economy/plugin-navigation-icon.html)** — registry names through `birkly_nav_icon()`
+> - **[Admin design language](https://docs.birkly.io/01-admin/admin-design-language.html)** — the build kit
+> - **[Plugin admin styling](https://docs.birkly.io/06-plugin-economy/plugin-admin-styling.html)** — adoption layer, class and token reference, P56-to-Birch rename tables, the `.fieldtype-*` API
+> - **[Admin design system](https://docs.birkly.io/01-admin/design-system.html)** — short orientation
+> - **[Plugin navigation icon](https://docs.birkly.io/06-plugin-economy/plugin-navigation-icon.html)** — registry names through `birkly_nav_icon()`
 >
 > Source repo: `Raaakete/Birkly-Docs` → `01-admin/admin-design-language.md`, `06-plugin-economy/plugin-admin-styling.md`.
 >

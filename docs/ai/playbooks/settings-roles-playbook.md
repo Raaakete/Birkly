@@ -2,7 +2,7 @@
 
 Use for: CMS permissions, custom roles, global settings, security, storage, AI connection roles.
 
-**Admin doc (human UI):** https://docs.birkly.com/01-admin/settings.html  
+**Admin doc (human UI):** https://docs.birkly.io/01-admin/settings.html  
 **Help topic id:** `settings` → AI playbook `settings-roles`
 
 ---
@@ -164,4 +164,4 @@ Collection-level `api_settings.rate_limit` on `public_api` collections — relat
 | All settings tabs | Admin → Settings |
 | Admin users | Settings → Users |
 | Roles JSON | `settings/roles.json` |
-| Human docs | https://docs.birkly.com/01-admin/settings.html |
+| Human docs | https://docs.birkly.io/01-admin/settings.html |

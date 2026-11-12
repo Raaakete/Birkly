@@ -3,7 +3,7 @@
 Use for: template syntax, loops, ordering, dates, `{from…get}`, detail URL context, regions, and phantoms.
 
 **Canonical engine SSOT:** `docs/TEMPLATE_LANGUAGE_SPEC.md` (v1.0).  
-**Human docs:** https://docs.birkly.com/03-templating/templating-overview.html  
+**Human docs:** https://docs.birkly.io/03-templating/templating-overview.html  
 **Do not invent syntax.** If unsure, match the spec — not Jinja/Liquid/Blade.
 
 ## Load this when

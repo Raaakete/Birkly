@@ -10,8 +10,8 @@ function birkly_help_manifest_defaults(): array
 {
     return [
         'version' => 2,
-        'docs_base_url' => 'https://docs.birkly.com',
-        'live_manifest_url' => 'https://docs.birkly.com/help-manifest.json',
+        'docs_base_url' => 'https://docs.birkly.io',
+        'live_manifest_url' => 'https://docs.birkly.io/help-manifest.json',
         'topics' => [],
     ];
 }
@@ -216,7 +216,7 @@ function birkly_help_topic_is_plugin(array $topic): bool
  * Public content-fragment URL for a product Help topic.
  * Plugin topics return an empty string; their body stays on the plugin.
  */
-function birkly_help_topic_content_url(array $topic, string $docsBase = 'https://docs.birkly.com'): string
+function birkly_help_topic_content_url(array $topic, string $docsBase = 'https://docs.birkly.io'): string
 {
     if (birkly_help_topic_is_plugin($topic)) {
         return '';
@@ -296,7 +296,7 @@ function birkly_build_platform_help_manifest(): array
 {
     $settings = birkly_load_help_settings();
     $manifest = birkly_load_core_help_manifest();
-    $manifest['docs_base_url'] = (string) ($settings['docs_base_url'] ?? $manifest['docs_base_url'] ?? 'https://docs.birkly.com');
+    $manifest['docs_base_url'] = (string) ($settings['docs_base_url'] ?? $manifest['docs_base_url'] ?? 'https://docs.birkly.io');
     $manifest['live_manifest_url'] = (string) ($settings['live_manifest_url'] ?? '');
 
     $localTopics = is_array($manifest['topics'] ?? null) ? $manifest['topics'] : [];
