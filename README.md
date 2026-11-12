@@ -58,6 +58,10 @@ Official plugin sources and the full test suite live in the private **Birkly-Mar
 ./scripts/install-dev-plugins.sh   # optional: install official plugins for dev
 ```
 
+## Releases
+
+Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
+
 ## License
 
 Birkly is released under the GNU Affero General Public License v3.0 or any later version. See [LICENSE](LICENSE).
