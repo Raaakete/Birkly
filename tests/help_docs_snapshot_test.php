@@ -23,11 +23,11 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 
 $url = birkly_help_topic_content_url(
     ['id' => 'collections', 'docs_path' => '02-content/collections.html'],
-    'https://docs.birkly.com'
+    'https://docs.birkly.io'
 );
 assert_true(
     'content url for collections',
-    $url === 'https://docs.birkly.com/content/02-content/collections.html',
+    $url === 'https://docs.birkly.io/content/02-content/collections.html',
     $url
 );
 
@@ -67,7 +67,7 @@ $helpJs = (string) file_get_contents($root . '/admin/js/help.js');
 assert_true('help.js fetches /content/ fragments', str_contains($helpJs, "docsBase + '/content/'"));
 assert_true(
     'help.js names the unavailable state',
-    str_contains($helpJs, 'Documentation is unavailable because docs.birkly.com could not be reached.')
+    str_contains($helpJs, 'Documentation is unavailable because docs.birkly.io could not be reached.')
 );
 
 exit($failures > 0 ? 1 : 0);

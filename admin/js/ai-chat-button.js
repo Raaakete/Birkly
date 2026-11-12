@@ -1906,13 +1906,13 @@
     function chatActivityTips() {
         var learn = chatT('ai_chat_js_learn_more', 'Learn more');
         return [
-            { text: chatT('ai_chat_js_tip_storage', 'Did you know Birkly can run with MySQL or PostgreSQL instead of flat files?'), href: 'https://docs.birkly.com/content/01-admin/settings.html#storage-backends', label: learn },
-            { text: chatT('ai_chat_js_tip_project_files', 'The AI can read and edit files in your project/ folder for site builds.'), href: 'https://docs.birkly.com/content/03-ai/ai-assistant.html', label: learn },
+            { text: chatT('ai_chat_js_tip_storage', 'Did you know Birkly can run with MySQL or PostgreSQL instead of flat files?'), href: 'https://docs.birkly.io/content/01-admin/settings.html#storage-backends', label: learn },
+            { text: chatT('ai_chat_js_tip_project_files', 'The AI can read and edit files in your project/ folder for site builds.'), href: 'https://docs.birkly.io/content/03-ai/ai-assistant.html', label: learn },
             { text: chatT('ai_chat_js_tip_attachments', 'You can attach images and documents to chat messages for context.') },
-            { text: chatT('ai_chat_js_tip_approvals', 'Use the Approvals tab to review AI-proposed changes before they run.'), href: 'https://docs.birkly.com/content/03-ai/approvals.html', label: learn },
-            { text: chatT('ai_chat_js_tip_backup', 'Collections and entries live under content/ — back them up regularly.'), href: 'https://docs.birkly.com/content/07-operations/backup-and-restore.html', label: learn },
+            { text: chatT('ai_chat_js_tip_approvals', 'Use the Approvals tab to review AI-proposed changes before they run.'), href: 'https://docs.birkly.io/content/03-ai/approvals.html', label: learn },
+            { text: chatT('ai_chat_js_tip_backup', 'Collections and entries live under content/ — back them up regularly.'), href: 'https://docs.birkly.io/content/07-operations/backup-and-restore.html', label: learn },
             { text: chatT('ai_chat_js_tip_models', 'Switch models from the sparkle menu in the composer for faster or smarter replies.') },
-            { text: chatT('ai_chat_js_tip_templating', "Birkly templates use {for each entry in 'collection'} syntax for dynamic pages."), href: 'https://docs.birkly.com/content/02-content/templating.html', label: learn },
+            { text: chatT('ai_chat_js_tip_templating', "Birkly templates use {for each entry in 'collection'} syntax for dynamic pages."), href: 'https://docs.birkly.io/content/02-content/templating.html', label: learn },
         ];
     }
 

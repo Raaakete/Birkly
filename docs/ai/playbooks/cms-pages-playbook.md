@@ -2,7 +2,7 @@
 
 Use when the user wants **admin-managed pages** editable in the CMS without editing raw `project/` HTML files.
 
-**Admin doc (human UI):** https://docs.birkly.com/02-content/entries.html (pages are entry-like records)  
+**Admin doc (human UI):** https://docs.birkly.io/02-content/entries.html (pages are entry-like records)  
 **Help topic id:** `entries` (pages share content model concepts)
 
 ---
@@ -151,4 +151,4 @@ Use `get_project_info` for correct URL prefix if instance uses subpath.
 |-------|----------|
 | Pages UI | Admin → Pages |
 | Entries model (similar concepts) | Admin → Content |
-| Human docs | https://docs.birkly.com/02-content/entries.html |
+| Human docs | https://docs.birkly.io/02-content/entries.html |

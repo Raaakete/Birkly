@@ -64,38 +64,38 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 
 | Help topic id | Playbook (ai_topic) | Human doc |
 |---------------|---------------------|-----------|
-| `entries` | `content-model` | https://docs.birkly.com/02-content/entries.html |
-| `collection-groups` | `collection-groups` | https://docs.birkly.com/02-content/collection-groups.html |
-| `settings` | `settings-roles` | https://docs.birkly.com/01-admin/settings.html |
-| `mcp-connections` | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html |
-| `user-plugin` | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
-| `plugins` / `marketplace` | `plugins-overview` | https://docs.birkly.com/06-extensibility/plugins.html |
-| `public-forms` / `public-forms-templating` | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html |
-| `templating-overview` / `canonical-syntax` / `loops-and-lists` | `templating` | https://docs.birkly.com/03-templating/templating-overview.html |
-| `detail-pages-and-url-context` | `web-project-patterns` | https://docs.birkly.com/03-templating/detail-pages-and-url-context.html |
-| `media` | `media` | https://docs.birkly.com/01-admin/media-library.html |
-| `content-editor` | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
+| `entries` | `content-model` | https://docs.birkly.io/02-content/entries.html |
+| `collection-groups` | `collection-groups` | https://docs.birkly.io/02-content/collection-groups.html |
+| `settings` | `settings-roles` | https://docs.birkly.io/01-admin/settings.html |
+| `mcp-connections` | `mcp-setup` | https://docs.birkly.io/01-admin/mcp-connections.html |
+| `user-plugin` | `user-management` | https://docs.birkly.io/06-extensibility/user-plugin.html |
+| `plugins` / `marketplace` | `plugins-overview` | https://docs.birkly.io/06-extensibility/plugins.html |
+| `public-forms` / `public-forms-templating` | `public-forms` | https://docs.birkly.io/04-integration/public-forms.html |
+| `templating-overview` / `canonical-syntax` / `loops-and-lists` | `templating` | https://docs.birkly.io/03-templating/templating-overview.html |
+| `detail-pages-and-url-context` | `web-project-patterns` | https://docs.birkly.io/03-templating/detail-pages-and-url-context.html |
+| `media` | `media` | https://docs.birkly.io/01-admin/media-library.html |
+| `content-editor` | `content-editor` | https://docs.birkly.io/02-content/content-editor.html |
 | `ai` / `ai-connections` / `mcp-connections` | `ai-connections` / `mcp-setup` | **Settings → AI** (not Agent Guide) |
-| `agent-guide` / `agent-guide-getting-started` / `agent-guide-claims` / `agent-guide-api` | `agent-guide` | https://docs.birkly.com/02-content/agent-guide.html |
-| `webmcp-tools` | `webmcp-tools` | https://docs.birkly.com/04-integration/webmcp-tools.html |
-| `automation` | `automation` | https://docs.birkly.com/05-automation/automation-overview.html |
+| `agent-guide` / `agent-guide-getting-started` / `agent-guide-claims` / `agent-guide-api` | `agent-guide` | https://docs.birkly.io/02-content/agent-guide.html |
+| `webmcp-tools` | `webmcp-tools` | https://docs.birkly.io/04-integration/webmcp-tools.html |
+| `automation` | `automation` | https://docs.birkly.io/05-automation/automation-overview.html |
 | `help` | `playbooks-index` | This index |
 
 | Topic | Playbook | Human doc (Birkly-Docs SSOT) |
 |-------|----------|------------------------------|
-| Content model | `content-model` | https://docs.birkly.com/02-content/content-model-overview.html |
-| Field types | `fieldtypes` | https://docs.birkly.com/02-content/field-types.html |
-| Fieldtype storefront QA | `fieldtype-qa` | Playbook + https://docs.birkly.com/03-templating/core-template-shelf.html |
-| Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html · https://docs.birkly.com/03-templating/public-forms-templating.html |
-| Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/03-templating/templating-overview.html · https://docs.birkly.com/03-templating/client-setup.html |
-| MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html (**Settings → AI**) |
+| Content model | `content-model` | https://docs.birkly.io/02-content/content-model-overview.html |
+| Field types | `fieldtypes` | https://docs.birkly.io/02-content/field-types.html |
+| Fieldtype storefront QA | `fieldtype-qa` | Playbook + https://docs.birkly.io/03-templating/core-template-shelf.html |
+| Public API forms | `public-forms` | https://docs.birkly.io/04-integration/public-forms.html · https://docs.birkly.io/03-templating/public-forms-templating.html |
+| Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.io/03-templating/templating-overview.html · https://docs.birkly.io/03-templating/client-setup.html |
+| MCP connections | `mcp-setup` | https://docs.birkly.io/01-admin/mcp-connections.html (**Settings → AI**) |
 | MCP troubleshooting | `mcp-troubleshooting` | Same admin snapshot troubleshooting table |
-| Media | `media` | https://docs.birkly.com/01-admin/media-library.html |
-| Content editor | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
-| Marketplace | `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
-| Commerce | `commerce`, `commerce-store-kit` | https://docs.birkly.com/06-extensibility/plugins/commerce.html |
-| User plugin | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
-| Template language | `templating` | Playbook + https://docs.birkly.com/03-templating/canonical-syntax.html ; full engine: `docs/TEMPLATE_LANGUAGE_SPEC.md` (`template-language-spec`) |
+| Media | `media` | https://docs.birkly.io/01-admin/media-library.html |
+| Content editor | `content-editor` | https://docs.birkly.io/02-content/content-editor.html |
+| Marketplace | `plugins-overview` | https://docs.birkly.io/06-extensibility/marketplace-go-live.html |
+| Commerce | `commerce`, `commerce-store-kit` | https://docs.birkly.io/06-extensibility/plugins/commerce.html |
+| User plugin | `user-management` | https://docs.birkly.io/06-extensibility/user-plugin.html |
+| Template language | `templating` | Playbook + https://docs.birkly.io/03-templating/canonical-syntax.html ; full engine: `docs/TEMPLATE_LANGUAGE_SPEC.md` (`template-language-spec`) |
 | Platform overview | `admin` (context pack) | `docs/ai/birkly-context-pack.md` |
 
 ## Decision tree

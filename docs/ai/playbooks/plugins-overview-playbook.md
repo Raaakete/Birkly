@@ -2,7 +2,7 @@
 
 Use for: installing official plugins, enabling/disabling, dependencies, plugin AI docs, capability boundaries.
 
-**Admin doc (human UI):** https://docs.birkly.com/06-extensibility/plugins.html, https://docs.birkly.com/06-extensibility/marketplace-go-live.html  
+**Admin doc (human UI):** https://docs.birkly.io/06-extensibility/plugins.html, https://docs.birkly.io/06-extensibility/marketplace-go-live.html  
 **Help topic ids:** `plugins`, `marketplace` → AI playbook `plugins-overview`
 
 ---
@@ -117,7 +117,7 @@ Scaffold: `php scripts/scaffold-plugin.php --id=my-plugin --title="My Plugin"`
 - Declare capabilities in `plugin.json`
 - `register_plugin_docs()` for AI shelf
 - `register_plugin_mcp_tools()` for inbound MCP tool injection (definitions + handlers in plugin, e.g. `docs/mcp_tools.php`)
-- See https://docs.birkly.com/06-extensibility/scaffold-plugin-cli.html
+- See https://docs.birkly.io/06-extensibility/scaffold-plugin-cli.html
 
 Out of scope for casual site builds — don't scaffold unless user asks.
 
@@ -164,4 +164,4 @@ Per-plugin depth:
 | Plugin list | Settings → Plugins |
 | Marketplace | Plugins → Marketplace |
 | Denylist | Settings → Security |
-| Human docs | https://docs.birkly.com/06-extensibility/plugins.html, https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
+| Human docs | https://docs.birkly.io/06-extensibility/plugins.html, https://docs.birkly.io/06-extensibility/marketplace-go-live.html |

@@ -200,8 +200,8 @@ Do not ask non-technical users to hunt settings the tools can set.
 
 | Topic | Admin / human doc |
 |-------|-------------------|
-| Public forms templating | https://docs.birkly.com/03-templating/public-forms-templating.html |
-| Public API forms | https://docs.birkly.com/04-integration/public-forms.html |
+| Public forms templating | https://docs.birkly.io/03-templating/public-forms-templating.html |
+| Public API forms | https://docs.birkly.io/04-integration/public-forms.html |
 | Collection entry_method | Collection settings / AI `update_collection` |
 | Help topics | `public-forms-templating`, `public-forms` → playbook `public-forms` |
 

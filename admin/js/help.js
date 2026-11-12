@@ -287,9 +287,9 @@
         } catch (apiErr) {
             manifest = {
                 topics: [],
-                docs_base_url: 'https://docs.birkly.com',
+                docs_base_url: 'https://docs.birkly.io',
                 _loadedFrom: 'unavailable',
-                _offlineMessage: 'Documentation is unavailable because docs.birkly.com could not be reached.',
+                _offlineMessage: 'Documentation is unavailable because docs.birkly.io could not be reached.',
             };
         }
         buildTopicLinkMaps();
@@ -460,11 +460,11 @@
             let banner = '';
             if (manifest && (manifest._loadedFrom === 'offline' || manifest._loadedFrom === 'unavailable')) {
                 banner = '<div class="help-offline-banner callout callout-info callout--block u-mb-4">' +
-                    escapeHtml(manifest._offlineMessage || 'Documentation is unavailable because docs.birkly.com could not be reached.') + '</div>';
+                    escapeHtml(manifest._offlineMessage || 'Documentation is unavailable because docs.birkly.io could not be reached.') + '</div>';
             }
 
             const sectionLabel = navSectionLabel(navSectionForTopic(topic));
-            const docsBase = String(manifest.docs_base_url || 'https://docs.birkly.com').replace(/\/$/, '');
+            const docsBase = String(manifest.docs_base_url || 'https://docs.birkly.io').replace(/\/$/, '');
             const fullDocPath = String(topic.docs_path || '').replace(/^\//, '');
             const fullDocUrl = fullDocPath ? docsBase + '/' + fullDocPath : '';
             const isPluginTopic = topic.source === 'plugin' || String(topic.snapshot || '').indexOf('plugin_doc.php') !== -1;
@@ -489,13 +489,13 @@
                     if (!res.ok) throw new Error('origin');
                     originHtml = await res.text();
                 } catch (originErr) {
-                    throw new Error('Documentation is unavailable because docs.birkly.com could not be reached.');
+                    throw new Error('Documentation is unavailable because docs.birkly.io could not be reached.');
                 }
                 articleHtml = rewriteOriginDocHtml(originHtml, contentUrl, docsBase);
             }
 
             const fullDocLink = (!isPluginTopic && fullDocUrl)
-                ? '<p class="u-mt-4"><a class="button is-small" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Open on docs.birkly.com</a></p>'
+                ? '<p class="u-mt-4"><a class="button is-small" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Open on docs.birkly.io</a></p>'
                 : '';
             content.innerHTML = banner +
                 '<div class="u-mb-4"><span class="badge badge-accent">' + escapeHtml(sectionLabel) + '</span></div>' +
