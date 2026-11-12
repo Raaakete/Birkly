@@ -4,7 +4,7 @@
 require_once __DIR__ . '/outbound_http.php';
 
 class BirklyVersion {
-    private static $currentVersion = '1.0.0';
+    private static $currentVersion = '0.0.1';
     private static $versionFile = __DIR__ . '/../VERSION';
     private static ?string $lastMoveError = null;
 
