@@ -1,8 +1,28 @@
-![Birkly — Hello World](docs/images/readme-hero.jpg)
-
 # Birkly
 
-A flat-file, modular CMS — upload and run. No database, no build step.
+**An open-source CMS for humans and AI.**
+
+A modular, API-first PHP CMS with a predictable architecture, no build step, no external core dependencies, and an optional database. Content lives as JSON on disk by default — upload a release zip, run, and manage everything from `/admin`.
+
+### Admin
+
+The admin is where you define collections, edit entries, manage media, and install plugins. The same Public API and MCP surface powers your site, automation, and AI agents.
+
+![Birkly admin — content editor](docs/images/readme-hero.jpg)
+
+### Content model
+
+| Concept | What it is |
+|---------|------------|
+| **Collection** | A content type: field schema, permissions, and how entries are created (admin-only or public API). Stored under `content/collections/{handle}/`. |
+| **Entry** | One item in a collection (e.g. a blog post or service page) — typically one JSON file in `entries/`, editable in admin or via API. |
+| **Project** | Your public site files (`project/`): HTML, CSS, and templating wired to collections through `birkly-client.js` or direct API calls. |
+
+See [What is Birkly?](https://docs.birkly.io/00-overview/what-is-birkly.html) in the docs for a longer introduction.
+
+### Alpha release
+
+Try the current self-host build: **[v0.0.1 (alpha)](https://github.com/Raaakete/Birkly/releases/tag/v0.0.1)** — download `birkly-release.zip`, extract, open **`0_START-HERE.html`**, then run `./start-server.sh`. Versioning: **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable — details in [RELEASE.md](RELEASE.md).
 
 ## Quick start
 
@@ -63,7 +83,7 @@ Official plugin sources and the full test suite live in the private **Birkly-Mar
 
 ## Releases
 
-Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
+Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Latest alpha: [v0.0.1](https://github.com/Raaakete/Birkly/releases/tag/v0.0.1). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
 
 ## License
 
