@@ -1,3 +1,5 @@
+![Birkly — Hello World](docs/images/readme-hero.jpg)
+
 # Birkly
 
 A flat-file, modular CMS — upload and run. No database, no build step.
