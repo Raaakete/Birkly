@@ -7,6 +7,11 @@ Thank you for your interest in Birkly. This repository is the **public open-sour
 - **User & developer docs:** [Birkly-Docs](https://github.com/Raaakete/Birkly-Docs)
 - **Quick start:** open `0_START-HERE.html` after extracting a release zip
 
+## Community
+
+- **[GitHub Discussions](https://github.com/Raaakete/Birkly/discussions)** — questions, ideas, and what you are building (read [Welcome to Birkly Discussions](https://github.com/Raaakete/Birkly/discussions/931) first)
+- Use **Issues** (below) for reproducible bugs; use **Discussions** for open-ended help and feedback before opening an issue
+
 ## Reporting issues
 
 Open a GitHub issue with steps to reproduce, expected behavior, and your PHP version.

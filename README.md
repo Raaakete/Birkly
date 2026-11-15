@@ -40,6 +40,7 @@ Install plugins from the [Birkly Marketplace](https://marketplace.birkly.cloud) 
 ## Documentation
 
 - **[Birkly-Docs](https://github.com/Raaakete/Birkly-Docs)** — guides, API reference, plugin development
+- **[GitHub Discussions](https://github.com/Raaakete/Birkly/discussions)** — community Q&A, ideas, and show-and-tell ([welcome thread](https://github.com/Raaakete/Birkly/discussions/931))
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — issues and pull requests for the open-source CMS
 - **[SECURITY.md](SECURITY.md)** — vulnerability reporting and secure self-hosting
 
