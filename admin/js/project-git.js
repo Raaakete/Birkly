@@ -584,22 +584,40 @@
     }
 
     function push() {
+        var defaultMessage = 'Update project files from Birkly';
         var promptPromise = (window.BirklyFeedback && typeof BirklyFeedback.prompt === 'function')
-            ? BirklyFeedback.prompt('', '', {
-                title: 'Push to remote',
-                placeholder: 'Update project files from Birkly',
-                confirmLabel: 'Push'
-            })
-            : Promise.resolve('');
+            ? BirklyFeedback.prompt(
+                'Commit message for this push:',
+                defaultMessage,
+                {
+                    title: 'Push to remote',
+                    placeholder: defaultMessage,
+                    confirmLabel: 'Push'
+                }
+            )
+            : Promise.resolve(defaultMessage);
 
         Promise.resolve(promptPromise).then(function (message) {
             if (message === null) return;
             setBusy(true);
-            return request('push', { message: message || '' }).then(function (result) {
+            var commitMessage = typeof message === 'string' ? message.trim() : '';
+            return request('push', { message: commitMessage }).then(function (result) {
+                hidePanel();
                 afterAction(result, 'Pushed');
             }).catch(function (error) {
                 setBusy(false);
-                toast(error.message, 'error');
+                if (error.payload && error.payload.data) {
+                    state.data = error.payload.data;
+                    render();
+                }
+                showPanel(
+                    '<div class="u-stack-2">' +
+                        '<p class="form-help" role="alert">' + escapeHtml(error.message || 'Push failed') + '</p>' +
+                        '<button type="button" class="button is-small" id="project-git-error-dismiss">Dismiss</button>' +
+                    '</div>'
+                );
+                bindClick('project-git-error-dismiss', hidePanel);
+                toast(error.message || 'Push failed', 'error');
             });
         });
     }

@@ -5,7 +5,8 @@
     'use strict';
 
     var syncIntervalMs = 30 * 60 * 1000;
-    var SESSION_DISMISS_KEY = 'birkly_cms_update_modal_dismissed';
+    var DISMISS_STORAGE_KEY = 'birkly_cms_update_modal_dismissed';
+    var DISMISS_TTL_MS = 24 * 60 * 60 * 1000;
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function' ? window.Birkly.url(path) : path;
@@ -21,24 +22,41 @@
         return params.get('page') === 'settings' && params.get('tab') === 'system';
     }
 
+    function readDismissRecord() {
+        try {
+            var raw = localStorage.getItem(DISMISS_STORAGE_KEY);
+            if (!raw) {
+                return null;
+            }
+            var parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed.version !== 'string') {
+                return null;
+            }
+            return parsed;
+        } catch (e) {
+            return null;
+        }
+    }
+
     function isModalDismissedForVersion(version) {
         if (!version) {
             return false;
         }
-        try {
-            if (sessionStorage.getItem(SESSION_DISMISS_KEY) === version) {
-                return true;
-            }
-        } catch (e) { /* ignore */ }
-        return false;
+        var record = readDismissRecord();
+        if (!record || record.version !== version) {
+            return false;
+        }
+        var until = parseInt(record.until, 10) || 0;
+        return until > Date.now();
     }
 
-    function rememberModalDismissed(version) {
+    function rememberModalDismissed(version, untilMs) {
         if (!version) {
             return;
         }
+        untilMs = untilMs || (Date.now() + DISMISS_TTL_MS);
         try {
-            sessionStorage.setItem(SESSION_DISMISS_KEY, version);
+            localStorage.setItem(DISMISS_STORAGE_KEY, JSON.stringify({ version: version, until: untilMs }));
         } catch (e) { /* ignore */ }
     }
 
@@ -127,10 +145,19 @@
         });
     }
 
+    function syncDismissFromServer(payload) {
+        var version = payload.modal_dismissed_version || '';
+        var untilSec = parseInt(payload.modal_dismissed_until, 10) || 0;
+        if (version && untilSec * 1000 > Date.now()) {
+            rememberModalDismissed(version, untilSec * 1000);
+        }
+    }
+
     function applyAttentionPayload(payload) {
         if (!payload) {
             return;
         }
+        syncDismissFromServer(payload);
         if (typeof window.loadUnreadCount === 'function') {
             window.loadUnreadCount();
         }
@@ -146,6 +173,8 @@
         if (showModalFlag && !isModalDismissedForVersion(latest)) {
             bindModalOnce();
             showModal(latest, payload.current_version || '');
+        } else {
+            hideModal();
         }
     }
 

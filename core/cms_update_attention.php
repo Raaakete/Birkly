@@ -252,6 +252,7 @@ function birkly_cms_update_attention_dismiss_modal(string $version): void
     }
     $state = birkly_cms_update_attention_load_state();
     $state['modal_dismissed_version'] = $version;
+    $state['modal_dismissed_until'] = time() + 86400;
     birkly_cms_update_attention_save_state($state);
 }
 
@@ -270,6 +271,11 @@ function birkly_cms_update_attention_should_show_modal(array $status, array $sta
         return false;
     }
     $dismissed = (string) ($state['modal_dismissed_version'] ?? '');
+    $dismissedUntil = (int) ($state['modal_dismissed_until'] ?? 0);
+    if ($dismissed === $latest && $dismissedUntil > time()) {
+        return false;
+    }
+
     return $dismissed !== $latest;
 }
 
@@ -293,17 +299,11 @@ function birkly_cms_update_attention_sync(?array $status = null, bool $forceRefr
         if ($latest !== '') {
             $sameVersion = (string) ($state['latest_version'] ?? '') === $latest;
             $hasActive = birkly_cms_update_attention_has_active_attention();
+            $dismissed = (string) ($state['modal_dismissed_version'] ?? '');
+            $dismissedUntil = (int) ($state['modal_dismissed_until'] ?? 0);
+            $snoozed = $dismissed === $latest && $dismissedUntil > time();
 
-            if ($sameVersion && !empty($state['acknowledged'])) {
-                return [
-                    'emitted' => 0,
-                    'cleared' => 0,
-                    'status' => $status,
-                    'show_modal' => birkly_cms_update_attention_should_show_modal($status, $state),
-                ];
-            }
-
-            if ($sameVersion && $hasActive) {
+            if ($sameVersion && (!empty($state['acknowledged']) || $hasActive || $snoozed || !empty($state['activity_id']))) {
                 return [
                     'emitted' => 0,
                     'cleared' => 0,

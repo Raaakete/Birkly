@@ -111,7 +111,8 @@ $git->initialize('main');
 assert_true('repository initialized', $git->isInitialized());
 assert_true('gitignore written on init', is_file($projectA . '/.gitignore'));
 assert_true('gitignore blocks php', str_contains((string) file_get_contents($projectA . '/.gitignore'), '*.php'));
-assert_true('gitignore blocks cms content', str_contains((string) file_get_contents($projectA . '/.gitignore'), '/content/'));
+assert_true('gitignore blocks mistaken cms paths', str_contains((string) file_get_contents($projectA . '/.gitignore'), '/cms-content/'));
+assert_true('gitignore allows project settings', !str_contains((string) file_get_contents($projectA . '/.gitignore'), "\n/settings/\n"));
 
 $git->setRemote($bare);
 assert_true('remote recorded', $git->remoteUrl() === $bare);
@@ -120,6 +121,41 @@ $status = $git->status('main');
 assert_true('status reports connected', $status['connected'] === true);
 assert_true('status reports branch', $status['branch'] === 'main');
 assert_true('status has no remote branch yet', $status['has_remote_branch'] === false);
+
+// ---------------------------------------------------------------------------
+// Dubious ownership (Docker: project/ owned by root, PHP another user)
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'dubious ownership' . PHP_EOL;
+$foreignOwned = $tmp . '/foreign-owned/project';
+@mkdir($foreignOwned, 0755, true);
+if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+    $me = posix_getpwuid(posix_geteuid());
+    $otherUid = null;
+    if (is_array($me) && ($me['name'] ?? '') === 'root') {
+        $www = posix_getpwnam('www-data');
+        $otherUid = is_array($www) ? (int) ($www['uid'] ?? 0) : null;
+    } else {
+        $otherUid = 0;
+    }
+    if ($otherUid !== null && $otherUid !== posix_geteuid()) {
+        @chown($foreignOwned, $otherUid);
+        @chown(dirname($foreignOwned), $otherUid);
+        try {
+            $foreignGit = new ProjectGit($foreignOwned);
+            $foreignGit->setIdentity('Birkly Test', 'test@birkly.local');
+            $foreignGit->initialize('main');
+            assert_true('safe.directory allows foreign-owned project init', $foreignGit->isInitialized());
+            assert_true('foreign-owned status uses configured branch', $foreignGit->status('main')['branch'] === 'main');
+        } catch (ProjectGitException $e) {
+            assert_true('safe.directory allows foreign-owned project init', false);
+        }
+    } else {
+        echo '  foreign-owned repo: SKIP (no distinct owner)' . PHP_EOL;
+    }
+} else {
+    echo '  foreign-owned repo: SKIP (posix unavailable)' . PHP_EOL;
+}
 
 // ---------------------------------------------------------------------------
 // Commit + push allowlisted files only
@@ -141,6 +177,8 @@ assert_true('status lists allowlisted css', in_array('css/style.css', $changed, 
 assert_true('status hides php files', !in_array('secret.php', $changed, true));
 assert_true('status hides dot directories', !in_array('.private/token.txt', $changed, true));
 
+@mkdir($projectA . '/settings', 0755, true);
+file_put_contents($projectA . '/settings/project.json', '{"render_mode":"server"}');
 $git->stageAllowlisted();
 $sha = $git->commit('Initial project files');
 assert_true('commit produced a sha', is_string($sha) && $sha !== '');
@@ -149,6 +187,7 @@ $tracked = $git->trackedPaths();
 assert_true('tracked includes index.html', in_array('index.html', $tracked, true));
 assert_true('tracked includes css/style.css', in_array('css/style.css', $tracked, true));
 assert_true('tracked includes .gitignore', in_array('.gitignore', $tracked, true));
+assert_true('tracked includes project settings json', in_array('settings/project.json', $tracked, true));
 assert_true('php file never tracked', !in_array('secret.php', $tracked, true));
 assert_true('dot directory never tracked', !in_array('.private/token.txt', $tracked, true));
 
@@ -284,6 +323,27 @@ assert_true('allows normal project files', !birkly_is_git_metadata_path('/projec
 assert_true('allows filenames containing git', !birkly_is_git_metadata_path('/project/gitignore.html'));
 
 rrmdir($tmp);
+
+// ---------------------------------------------------------------------------
+// Commit message + legacy gitignore collision
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'commit message and gitignore' . PHP_EOL;
+$msgDir = $tmp . '/msg/project';
+@mkdir($msgDir, 0755, true);
+$msgGit = new ProjectGit($msgDir);
+$msgGit->setIdentity('Birkly Test', 'msg@birkly.local');
+$msgGit->initialize('main');
+file_put_contents($msgDir . '/.gitignore', "# Managed by Birkly\n/settings/\n*.php\n");
+@mkdir($msgDir . '/settings', 0755, true);
+file_put_contents($msgDir . '/settings/project.json', '{}');
+$msgFs = new ProjectSiteFileSystem($msgDir);
+$msgFs->writeFile('index.html', '<p>msg</p>');
+$msgGit->stageAllowlisted();
+$msgGit->commit('Snapshot of the live site before the redesign');
+$last = $msgGit->lastCommit();
+assert_true('custom commit message is stored', is_array($last) && $last['message'] === 'Snapshot of the live site before the redesign');
+assert_true('settings json staged despite legacy gitignore', in_array('settings/project.json', $msgGit->trackedPaths(), true));
 
 // ---------------------------------------------------------------------------
 // Credential storage — encrypted at rest, never echoed back to the browser

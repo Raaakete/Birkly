@@ -228,24 +228,64 @@ final class ProjectGit
     {
         $branch = self::normalizeBranch($branch);
         if (!$this->isInitialized()) {
-            $this->mustRun(['init', '--quiet']);
-        }
-        // `git init -b` is 2.28+; setting HEAD directly works on every version.
-        // Only safe before the first commit — afterwards it would move the
-        // branch pointer without touching the worktree.
-        if (!$this->refExists('HEAD')) {
-            $this->run(['symbolic-ref', 'HEAD', 'refs/heads/' . $branch]);
+            $version = self::gitVersion();
+            if ($version !== null && version_compare($version, '2.28.0', '>=')) {
+                $this->mustRun(['init', '--quiet', '-b', $branch]);
+            } else {
+                $this->mustRun(['init', '--quiet']);
+                if (!$this->refExists('HEAD')) {
+                    $this->run(['symbolic-ref', 'HEAD', 'refs/heads/' . $branch]);
+                }
+            }
+        } else {
+            $this->ensureLocalBranch($branch);
         }
         $this->writeGitignore();
+    }
+
+    /**
+     * Keep the configured branch name before the first commit (git init defaults to master).
+     */
+    public function ensureLocalBranch(string $branch): void
+    {
+        $branch = self::normalizeBranch($branch);
+        $current = $this->currentBranch();
+        if ($current === $branch) {
+            return;
+        }
+
+        if (!$this->refExists('HEAD')) {
+            $this->mustRun(['symbolic-ref', 'HEAD', 'refs/heads/' . $branch]);
+            return;
+        }
+
+        if ($this->commitCount('HEAD') === 0) {
+            $this->mustRun(['checkout', '-B', $branch]);
+        }
     }
 
     public function writeGitignore(): bool
     {
         $path = $this->root . '/.gitignore';
         if (is_file($path)) {
+            $existing = (string) file_get_contents($path);
+            if (str_contains($existing, 'Managed by Birkly') && self::gitignoreNeedsRefresh($existing)) {
+                return @file_put_contents($path, self::gitignoreTemplate()) !== false;
+            }
+
             return true;
         }
+
         return @file_put_contents($path, self::gitignoreTemplate()) !== false;
+    }
+
+    private static function gitignoreNeedsRefresh(string $content): bool
+    {
+        if (str_contains($content, '/cms-content/')) {
+            return false;
+        }
+
+        return preg_match('#^/(content|media|users|settings|logs|cache|data|backups)/#m', $content) === 1;
     }
 
     public static function gitignoreTemplate(): string
@@ -268,15 +308,15 @@ final class ProjectGit
 *.p12
 config.php
 
-# CMS data — belongs to the installation, not the repository
-/content/
-/media/
-/users/
-/settings/
-/logs/
-/cache/
-/data/
-/backups/
+# CMS data paths (outside project/) — listed here only if copied into the repo by mistake.
+# project/settings/project.json (render/hosting options) is synced intentionally.
+/cms-content/
+/cms-media/
+/cms-users/
+/cms-logs/
+/cms-cache/
+/cms-data/
+/cms-backups/
 
 # OS and editor junk
 .DS_Store
@@ -393,7 +433,7 @@ GITIGNORE;
             'initialized' => $initialized,
             'connected' => $remote !== null,
             'remote_url' => $remote !== null ? self::redactUrl($remote) : null,
-            'branch' => $initialized ? ($this->currentBranch() ?? $branch) : $branch,
+            'branch' => $initialized ? ($this->displayBranch($branch) ?? $branch) : $branch,
             'ahead' => 0,
             'behind' => 0,
             'dirty' => 0,
@@ -434,6 +474,23 @@ GITIGNORE;
         }
         $branch = trim($result['stdout']);
         return $branch === '' ? null : $branch;
+    }
+
+    /**
+     * Prefer the configured branch in admin when the worktree is still on git's default (master).
+     */
+    public function displayBranch(string $configuredBranch): ?string
+    {
+        $configuredBranch = self::normalizeBranch($configuredBranch);
+        $current = $this->currentBranch();
+        if ($current === null) {
+            return $configuredBranch;
+        }
+        if ($current === 'master' && $configuredBranch !== 'master' && !$this->refExists('refs/heads/' . $configuredBranch)) {
+            return $configuredBranch;
+        }
+
+        return $current;
     }
 
     /**
@@ -520,10 +577,19 @@ GITIGNORE;
      */
     public function stageAllowlisted(): int
     {
+        $this->writeGitignore();
         $allowed = $this->syncablePaths();
         $staged = 0;
+        $toAdd = [];
 
-        foreach (array_chunk($allowed, 200) as $chunk) {
+        foreach ($allowed as $path) {
+            if ($this->isIgnoredPath($path)) {
+                continue;
+            }
+            $toAdd[] = $path;
+        }
+
+        foreach (array_chunk($toAdd, 200) as $chunk) {
             $args = array_merge(['add', '--'], $chunk);
             $this->mustRun($args);
             $staged += count($chunk);
@@ -538,6 +604,12 @@ GITIGNORE;
         }
 
         return $staged;
+    }
+
+    private function isIgnoredPath(string $path): bool
+    {
+        $result = $this->run(['check-ignore', '-q', '--', $path]);
+        return $result['exit'] === 0;
     }
 
     /** @return list<string> */
@@ -903,7 +975,9 @@ GITIGNORE;
         }
 
         $env = $this->baseEnv();
-        $configArgs = [];
+        $configArgs = [
+            '-c', 'safe.directory=' . $this->root,
+        ];
 
         if ($withAuth) {
             $config = $this->authConfig();

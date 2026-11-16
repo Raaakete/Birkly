@@ -109,6 +109,23 @@ fi
 
 chmod -R 777 $chmod_dirs 2>/dev/null || true
 
+# Git sync runs as www-data; project/ must be owned by the web user (not root from image build).
+project_git_dir() {
+  if [ -d /app/content/project ]; then
+    echo /app/content/project
+  elif [ -L /app/project ]; then
+    readlink -f /app/project 2>/dev/null || echo /app/project
+  elif [ -d /app/project ]; then
+    echo /app/project
+  fi
+}
+PROJECT_GIT_DIR="$(project_git_dir)"
+if [ -n "$PROJECT_GIT_DIR" ] && [ -d "$PROJECT_GIT_DIR" ]; then
+  chown -R www-data:www-data "$PROJECT_GIT_DIR" 2>/dev/null || true
+  find "$PROJECT_GIT_DIR" -type d -exec chmod 775 {} \; 2>/dev/null || true
+  find "$PROJECT_GIT_DIR" -type f -exec chmod 664 {} \; 2>/dev/null || true
+fi
+
 # In-app Hub updates copy files under core/, admin/, api/, and fieldtypes/.
 # The image ships those trees as root; PHP-FPM runs as www-data.
 ensure_hub_program_tree_writable() {

@@ -540,10 +540,45 @@ class BirklyVersion {
         if (file_exists(self::$versionFile)) {
             $version = trim(file_get_contents(self::$versionFile));
             if (preg_match('/^\d+\.\d+\.\d+/', $version)) {
-                return $version;
+                if ($version !== '0.0.1' || !self::shouldPreferDeployRevision()) {
+                    return $version;
+                }
             }
         }
+
+        $revision = self::deployRevisionDisplayVersion();
+        if ($revision !== null) {
+            return $revision;
+        }
+
         return self::$currentVersion;
+    }
+
+    private static function shouldPreferDeployRevision(): bool
+    {
+        require_once __DIR__ . '/hub_update_filesystem.php';
+
+        return birkly_is_docker_deployment();
+    }
+
+    /**
+     * Docker images bake BUILD_REVISION at build time; use it when VERSION is still the dev label.
+     */
+    private static function deployRevisionDisplayVersion(): ?string
+    {
+        if (!function_exists('birkly_deploy_revision')) {
+            require_once __DIR__ . '/birkly_data_paths.php';
+        }
+
+        $revision = birkly_deploy_revision();
+        if ($revision === null || $revision === '' || $revision === 'unknown') {
+            return null;
+        }
+        if (preg_match('/^v?(\d+\.\d+\.\d+)/', $revision, $m) === 1) {
+            return $m[1];
+        }
+
+        return null;
     }
     
     /**

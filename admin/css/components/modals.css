@@ -53,6 +53,21 @@
   display: flex;
 }
 
+/* CMS update notice — bottom corner toast; does not block clicks behind it (P90). */
+#cms-update-modal.active {
+  pointer-events: none;
+  background: transparent;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: var(--s-6);
+}
+
+#cms-update-modal.active .modal-content {
+  pointer-events: auto;
+  max-width: 28rem;
+  box-shadow: var(--shadow-menu);
+}
+
 /* Panel */
 .modal-content,
 .modal-dialog {

@@ -190,6 +190,10 @@ function birkly_project_site_activity_icon(string $event): string
             return '⬇️';
         case 'project_git_conflict_resolved':
             return '🔀';
+        case 'project_git_push_failed':
+        case 'project_git_test_failed':
+        case 'project_git_pull_failed':
+            return '⚠️';
         default:
             return '📌';
     }
@@ -231,6 +235,10 @@ function birkly_project_site_activity_message(string $event, array $details): st
             return 'Pulled project files from ' . (string) ($details['branch'] ?? 'the remote');
         case 'project_git_conflict_resolved':
             return 'Resolved a git conflict (' . (string) ($details['strategy'] ?? 'unknown') . ')';
+        case 'project_git_push_failed':
+        case 'project_git_pull_failed':
+        case 'project_git_test_failed':
+            return (string) ($details['message'] ?? 'Git sync failed');
         case 'ai_approval_created':
             return 'Requested approval: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix;
         case 'ai_approval_approved':
@@ -258,6 +266,9 @@ function birkly_project_site_activity(int $limit = 30): array
         'project_git_pushed',
         'project_git_pulled',
         'project_git_conflict_resolved',
+        'project_git_push_failed',
+        'project_git_pull_failed',
+        'project_git_test_failed',
         'ai_approval_approved',
         'ai_approval_created',
     ];

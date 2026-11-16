@@ -36,12 +36,25 @@ function birkly_project_git_json(array $payload): void
     exit;
 }
 
-function birkly_project_git_error(string $message, int $httpCode = 200): void
+function birkly_project_git_error(string $message, int $httpCode = 200, ?array $data = null): void
 {
     if ($httpCode !== 200) {
         http_response_code($httpCode);
     }
-    birkly_project_git_json(['status' => 'error', 'message' => $message]);
+    $payload = ['status' => 'error', 'message' => $message];
+    if ($data !== null) {
+        $payload['data'] = $data;
+    }
+    birkly_project_git_json($payload);
+}
+
+function birkly_project_git_log_failure(string $action, string $message): void
+{
+    log_security_event('project_git_' . $action . '_failed', [
+        'action' => $action,
+        'message' => $message,
+        'source' => 'admin',
+    ]);
 }
 
 /**
@@ -91,6 +104,8 @@ function birkly_project_git_require_connection(): array
     $git = birkly_project_git_engine();
     if (!$git->isInitialized()) {
         $git->initialize($branch);
+    } else {
+        $git->ensureLocalBranch($branch);
     }
     $git->setRemote((string) ($stored['remote_url'] ?? ''));
 
@@ -274,7 +289,12 @@ if ($action === 'push') {
 
         $git->push($branch);
     } catch (ProjectGitException $e) {
-        birkly_project_git_error($e->getMessage());
+        birkly_project_git_log_failure('push', $e->getMessage());
+        birkly_project_git_error($e->getMessage(), 200, birkly_project_git_state());
+        exit;
+    } catch (Throwable $e) {
+        birkly_project_git_log_failure('push', $e->getMessage());
+        birkly_project_git_error('Push failed: ' . $e->getMessage(), 200, birkly_project_git_state());
         exit;
     }
 

@@ -124,6 +124,8 @@ if ($action === 'cms_update_sync') {
             'current_version' => (string) ($status['current_version'] ?? ''),
             'latest_version' => (string) ($status['latest_version'] ?? ''),
             'show_modal' => !empty($result['show_modal']),
+            'modal_dismissed_version' => (string) (birkly_cms_update_attention_load_state()['modal_dismissed_version'] ?? ''),
+            'modal_dismissed_until' => (int) (birkly_cms_update_attention_load_state()['modal_dismissed_until'] ?? 0),
             'counts' => birkly_plugin_activity_nav_attention_counts(),
         ],
     ]);
