@@ -777,33 +777,93 @@ function cms_mcp_handler_project_git(string $subAction, array $input, array $aiU
 
     $git = birkly_project_git_engine();
 
-    switch ($subAction) {
-        case 'capability':
-            return cms_mcp_ok(['capability' => $git->capability()]);
-        case 'status':
-            return cms_mcp_ok($git->status());
-        case 'connect':
-            $remote = (string) ($input['remote_url'] ?? $input['remote'] ?? '');
-            $branch = (string) ($input['branch'] ?? 'main');
-            $git->initialize();
-            $git->setRemote($remote);
-            return cms_mcp_ok(['connected' => true, 'remote' => $remote, 'branch' => $branch]);
-        case 'test':
-            return cms_mcp_ok($git->testConnection());
-        case 'disconnect':
-            birkly_project_git_write(['remote_url' => '', 'branch' => 'main', 'connected' => false]);
-            return cms_mcp_ok(['disconnected' => true]);
-        case 'push':
-            return cms_mcp_ok($git->push((string) ($input['message'] ?? 'Update from MCP')));
-        case 'pull_preview':
-            return cms_mcp_ok($git->pullPreview());
-        case 'pull_apply':
-            return cms_mcp_ok($git->pullApply());
-        case 'resolve_conflict':
-            $strategy = (string) ($input['strategy'] ?? 'ours');
-            return cms_mcp_ok($git->resolveConflict($strategy, is_array($input['files'] ?? null) ? $input['files'] : []));
-        default:
-            return cms_mcp_error('Unknown project_git action: ' . $subAction);
+    try {
+        switch ($subAction) {
+            case 'capability':
+                return cms_mcp_ok(['capability' => ProjectGit::capability()]);
+            case 'status':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_ok([
+                        'configured' => false,
+                        'capability' => ProjectGit::capability(),
+                        'repository' => $git->status(ProjectGit::DEFAULT_BRANCH),
+                    ]);
+                }
+                return cms_mcp_ok($prepared['git']->status($prepared['branch']));
+            case 'connect':
+                $remote = (string) ($input['remote_url'] ?? $input['remote'] ?? '');
+                $branch = ProjectGit::normalizeBranch((string) ($input['branch'] ?? ProjectGit::DEFAULT_BRANCH));
+                $git->initialize($branch);
+                $git->setRemote($remote);
+                return cms_mcp_ok(['connected' => true, 'remote' => $remote, 'branch' => $branch]);
+            case 'test':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_error('Connect a git remote first.');
+                }
+                $prepared['git']->testConnection();
+                return cms_mcp_ok(['ok' => true]);
+            case 'disconnect':
+                birkly_project_git_write(['remote_url' => '', 'branch' => 'main', 'connected' => false]);
+                return cms_mcp_ok(['disconnected' => true]);
+            case 'push':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_error('Connect a git remote first.');
+                }
+                $prepared['git']->stageAllowlisted();
+                $message = trim((string) ($input['message'] ?? ''));
+                $prepared['git']->commit($message);
+                $prepared['git']->fetch();
+                $prepared['git']->push($prepared['branch']);
+                return cms_mcp_ok($prepared['git']->status($prepared['branch']));
+            case 'pull_preview':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_error('Connect a git remote first.');
+                }
+                $prepared['git']->fetch();
+                $repository = $prepared['git']->status($prepared['branch']);
+                $incoming = $prepared['git']->pullPreview($prepared['branch']);
+                return cms_mcp_ok([
+                    'repository' => $repository,
+                    'incoming' => $incoming,
+                    'conflict' => birkly_project_git_conflict($repository, $incoming, $prepared['branch']),
+                ]);
+            case 'pull_apply':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_error('Connect a git remote first.');
+                }
+                $prepared['git']->fetch();
+                $repository = $prepared['git']->status($prepared['branch']);
+                $incoming = $prepared['git']->pullPreview($prepared['branch']);
+                $conflict = birkly_project_git_conflict($repository, $incoming, $prepared['branch']);
+                if ($conflict !== null) {
+                    return cms_mcp_error($conflict['message'] ?? 'Pull blocked by a conflict.');
+                }
+                $prepared['git']->pullApply($prepared['branch']);
+                return cms_mcp_ok($prepared['git']->status($prepared['branch']));
+            case 'resolve_conflict':
+                $prepared = birkly_project_git_prepared_engine($input);
+                if ($prepared === null) {
+                    return cms_mcp_error('Connect a git remote first.');
+                }
+                $strategy = (string) ($input['strategy'] ?? 'keep_birkly');
+                if ($strategy === 'ours') {
+                    $strategy = 'keep_birkly';
+                } elseif ($strategy === 'theirs') {
+                    $strategy = 'keep_remote';
+                }
+                $message = trim((string) ($input['message'] ?? ''));
+                $prepared['git']->resolveConflict($strategy, $prepared['branch'], $message);
+                return cms_mcp_ok($prepared['git']->status($prepared['branch']));
+            default:
+                return cms_mcp_error('Unknown project_git action: ' . $subAction);
+        }
+    } catch (ProjectGitException $e) {
+        return cms_mcp_error($e->getMessage());
     }
 }
 

@@ -493,6 +493,7 @@
 
         setBusy(true);
         request('connect', payload).then(function (result) {
+            setBusy(false);
             state.data = result.data || state.data;
             state.editing = false;
             render();
@@ -510,6 +511,7 @@
     function testConnection() {
         setBusy(true);
         request('test', {}).then(function (result) {
+            setBusy(false);
             state.data = result.data || state.data;
             state.editing = false;
             render();
@@ -569,6 +571,7 @@
     function afterAction(result, successMessage) {
         state.data = result.data || state.data;
         state.editing = false;
+        setBusy(false);
         render();
 
         var conflict = result.data && result.data.conflict;
@@ -581,6 +584,10 @@
         toast(result.message || successMessage, 'success');
         refreshActivity();
         return true;
+    }
+
+    function endPreviewBusy() {
+        setBusy(false);
     }
 
     function push() {
@@ -627,6 +634,7 @@
         request('pull_preview', {}).then(function (result) {
             state.data = result.data || state.data;
             render();
+            endPreviewBusy();
 
             var data = result.data || {};
             if (data.conflict) {
@@ -655,7 +663,7 @@
             bindClick('project-git-pull-cancel-btn', hidePanel);
         }).catch(function (error) {
             setBusy(false);
-            toast(error.message, 'error');
+            toast(error.message || 'Pull preview failed', 'error');
         });
     }
 
@@ -670,7 +678,18 @@
             }
         }).catch(function (error) {
             setBusy(false);
-            toast(error.message, 'error');
+            if (error.payload && error.payload.data) {
+                state.data = error.payload.data;
+                render();
+            }
+            showPanel(
+                '<div class="u-stack-2">' +
+                    '<p class="form-help" role="alert">' + escapeHtml(error.message || 'Pull failed') + '</p>' +
+                    '<button type="button" class="button is-small" id="project-git-error-dismiss">Dismiss</button>' +
+                '</div>'
+            );
+            bindClick('project-git-error-dismiss', hidePanel);
+            toast(error.message || 'Pull failed', 'error');
         });
     }
 
@@ -745,7 +764,9 @@
             : Promise.resolve(true);
 
         Promise.resolve(confirmPromise).then(function (confirmed) {
-            if (!confirmed) return;
+            if (!confirmed) {
+                return;
+            }
             setBusy(true);
             return request('resolve_conflict', { strategy: strategy }).then(function (result) {
                 if (afterAction(result, 'Conflict resolved')) {
@@ -756,7 +777,18 @@
                 }
             }).catch(function (error) {
                 setBusy(false);
-                toast(error.message, 'error');
+                if (error.payload && error.payload.data) {
+                    state.data = error.payload.data;
+                    render();
+                }
+                showPanel(
+                    '<div class="u-stack-2">' +
+                        '<p class="form-help" role="alert">' + escapeHtml(error.message || 'Could not resolve conflict') + '</p>' +
+                        '<button type="button" class="button is-small" id="project-git-error-dismiss">Dismiss</button>' +
+                    '</div>'
+                );
+                bindClick('project-git-error-dismiss', hidePanel);
+                toast(error.message || 'Could not resolve conflict', 'error');
             });
         });
     }

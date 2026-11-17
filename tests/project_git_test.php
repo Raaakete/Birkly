@@ -346,6 +346,111 @@ assert_true('custom commit message is stored', is_array($last) && $last['message
 assert_true('settings json staged despite legacy gitignore', in_array('settings/project.json', $msgGit->trackedPaths(), true));
 
 // ---------------------------------------------------------------------------
+// Branch rename master → configured name
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'branch rename' . PHP_EOL;
+$branchDir = $tmp . '/branch/project';
+@mkdir($branchDir, 0755, true);
+$branchGit = new ProjectGit($branchDir);
+$branchGit->setIdentity('Birkly Test', 'branch@birkly.local');
+$branchGit->initialize('master');
+$fsBranch = new ProjectSiteFileSystem($branchDir);
+$fsBranch->writeFile('index.html', '<p>master</p>');
+$branchGit->stageAllowlisted();
+$branchGit->commit('On master');
+$branchGit->ensureLocalBranch('main');
+assert_true('master renamed to main', $branchGit->currentBranch() === 'main');
+$branchStatus = $branchGit->status('main');
+assert_true('status reports configured branch', $branchStatus['branch'] === 'main');
+
+// ---------------------------------------------------------------------------
+// MCP handler
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'mcp handler' . PHP_EOL;
+require_once dirname(__DIR__) . '/core/project_git_settings.php';
+require_once dirname(__DIR__) . '/core/cms_mcp_handlers.php';
+$aiUser = ['id' => '1', 'role' => 'admin', 'email' => 'admin@test.local', 'name' => 'Admin'];
+
+$settingsFile = dirname(__DIR__) . '/settings/project_git.json';
+$mcpSettingsBackup = is_file($settingsFile) ? file_get_contents($settingsFile) : null;
+$mcpBare = $tmp . '/bare-mcp/project.git';
+@mkdir(dirname($mcpBare), 0755, true);
+exec('git init --bare --quiet ' . escapeshellarg($mcpBare) . ' 2>&1', $mcpBareOut, $mcpBareCode);
+assert_true('mcp bare repo created', $mcpBareCode === 0);
+try {
+    birkly_project_git_write([
+        'provider' => 'generic',
+        'remote_url' => $mcpBare,
+        'branch' => 'main',
+    ]);
+    $mcpProject = $tmp . '/mcp/project';
+    @mkdir($mcpProject, 0755, true);
+    $GLOBALS['birkly_project_git_engine_base_path'] = $mcpProject;
+    $mcpGit = new ProjectGit($mcpProject);
+    $mcpGit->setIdentity('MCP', 'mcp@test.local');
+    $mcpGit->initialize('main');
+    $mcpGit->setRemote($mcpBare);
+    (new ProjectSiteFileSystem($mcpProject))->writeFile('index.html', '<p>MCP</p>');
+    $mcpGit->stageAllowlisted();
+    $mcpGit->commit('Seed');
+    $mcpGit->push('main');
+
+    $mcpStatus = cms_mcp_handler_project_git('status', [], $aiUser);
+    assert_true('mcp status ok', ($mcpStatus['status'] ?? '') === 'ok');
+    assert_true('mcp status branch is main', ($mcpStatus['data']['branch'] ?? '') === 'main');
+
+    $mcpPreview = cms_mcp_handler_project_git('pull_preview', ['branch' => 'main'], $aiUser);
+    assert_true('mcp pull_preview ok', ($mcpPreview['status'] ?? '') === 'ok');
+    assert_true('mcp pull_preview has incoming', is_array($mcpPreview['data']['incoming'] ?? null));
+
+    $bareGit = new ProjectGit($tmp . '/mcp-remote/project');
+    @mkdir($tmp . '/mcp-remote/project', 0755, true);
+    $bareGit->setIdentity('Remote', 'remote@test.local');
+    $bareGit->initialize('main');
+    $bareGit->setRemote($mcpBare);
+    $bareGit->fetch();
+    $bareGit->pullApply('main');
+    (new ProjectSiteFileSystem($tmp . '/mcp-remote/project'))->writeFile('about.html', '<p>about</p>');
+    $bareGit->stageAllowlisted();
+    $bareGit->commit('Remote about');
+    $bareGit->push('main');
+
+    $mcpPreview2 = cms_mcp_handler_project_git('pull_preview', ['branch' => 'main'], $aiUser);
+    assert_true('mcp pull_preview sees incoming', count($mcpPreview2['data']['incoming'] ?? []) > 0);
+
+    $mcpApply = cms_mcp_handler_project_git('pull_apply', ['branch' => 'main'], $aiUser);
+    assert_true('mcp pull_apply ok', ($mcpApply['status'] ?? '') === 'ok');
+    assert_true('mcp pull_apply wrote about.html', is_file($mcpProject . '/about.html'));
+
+    (new ProjectSiteFileSystem($mcpProject))->writeFile('contact.html', '<p>contact</p>');
+    $mcpGit = birkly_project_git_engine();
+    $mcpGit->stageAllowlisted();
+    $mcpGit->commit('Add contact');
+    $mcpPush = cms_mcp_handler_project_git('push', ['branch' => 'main', 'message' => 'MCP push message'], $aiUser);
+    assert_true('mcp push ok', ($mcpPush['status'] ?? '') === 'ok');
+} finally {
+    unset($GLOBALS['birkly_project_git_engine_base_path']);
+    if ($mcpSettingsBackup !== null) {
+        file_put_contents($settingsFile, $mcpSettingsBackup);
+    } elseif (is_file($settingsFile)) {
+        unlink($settingsFile);
+    } else {
+        birkly_project_git_delete();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Admin UI contract (busy flag after pull preview)
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'admin ui contract' . PHP_EOL;
+$js = (string) file_get_contents(dirname(__DIR__) . '/admin/js/project-git.js');
+assert_true('pullPreview releases busy state', str_contains($js, 'endPreviewBusy'));
+assert_true('pull apply uses pull_apply action', str_contains($js, "request('pull_apply'"));
+
+// ---------------------------------------------------------------------------
 // Credential storage — encrypted at rest, never echoed back to the browser
 // ---------------------------------------------------------------------------
 
@@ -450,6 +555,16 @@ $bothChanged = array_merge($clean, [
 ]);
 $conflict = birkly_project_git_conflict($bothChanged, [['path' => 'index.html', 'state' => 'modified']], 'main');
 assert_true('both sides changed is a conflict', is_array($conflict));
+
+$localOnlyDirty = array_merge($clean, [
+    'behind' => 1,
+    'dirty' => 1,
+    'changes' => [['path' => 'local-only.html', 'state' => 'added']],
+]);
+assert_true(
+    'local-only files with remote changes allow fast-forward',
+    birkly_project_git_conflict($localOnlyDirty, [['path' => 'remote-only.html', 'state' => 'modified']], 'main') === null
+);
 assert_true('conflict reason is both_changed', ($conflict['reason'] ?? '') === 'both_changed');
 assert_true('conflict lists the overlapping file', ($conflict['overlapping_files'] ?? []) === ['index.html']);
 assert_true('conflict lists local files', in_array('new.html', $conflict['local_files'] ?? [], true));

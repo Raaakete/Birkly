@@ -259,6 +259,13 @@ final class ProjectGit
             return;
         }
 
+        if (!$this->refExists('refs/heads/' . $branch)) {
+            if ($current !== null) {
+                $this->mustRun(['branch', '-m', $branch]);
+                return;
+            }
+        }
+
         if ($this->commitCount('HEAD') === 0) {
             $this->mustRun(['checkout', '-B', $branch]);
         }
@@ -433,7 +440,8 @@ GITIGNORE;
             'initialized' => $initialized,
             'connected' => $remote !== null,
             'remote_url' => $remote !== null ? self::redactUrl($remote) : null,
-            'branch' => $initialized ? ($this->displayBranch($branch) ?? $branch) : $branch,
+            'branch' => $branch,
+            'local_branch' => $initialized ? $this->currentBranch() : null,
             'ahead' => 0,
             'behind' => 0,
             'dirty' => 0,

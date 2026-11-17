@@ -302,6 +302,9 @@ function birkly_project_git_secret_hint(string $secret): string
  */
 function birkly_project_git_engine(?string $basePath = null): ProjectGit
 {
+    if ($basePath === null && isset($GLOBALS['birkly_project_git_engine_base_path'])) {
+        $basePath = (string) $GLOBALS['birkly_project_git_engine_base_path'];
+    }
     $git = new ProjectGit($basePath);
     $git->setAuth(birkly_project_git_credentials());
 
@@ -347,12 +350,16 @@ function birkly_project_git_conflict(array $repository, array $incoming, string 
     $dirty = (int) ($repository['dirty'] ?? 0);
     $ahead = (int) ($repository['ahead'] ?? 0);
     $behind = (int) ($repository['behind'] ?? 0);
+    $localPaths = array_column($repository['changes'] ?? [], 'path');
+    $remotePaths = array_column($incoming, 'path');
 
     $reason = null;
     if ($unmerged !== []) {
         $reason = 'unmerged';
     } elseif ($behind > 0 && $dirty > 0) {
-        $reason = 'both_changed';
+        if (array_values(array_intersect($localPaths, $remotePaths)) !== []) {
+            $reason = 'both_changed';
+        }
     } elseif ($behind > 0 && $ahead > 0) {
         $reason = 'diverged';
     }
@@ -360,9 +367,6 @@ function birkly_project_git_conflict(array $repository, array $incoming, string 
     if ($reason === null) {
         return null;
     }
-
-    $localPaths = array_column($repository['changes'] ?? [], 'path');
-    $remotePaths = array_column($incoming, 'path');
 
     return [
         'reason' => $reason,
@@ -390,4 +394,37 @@ function birkly_project_git_record_event(string $key, array $details): void
             'by' => birkly_project_git_current_user(),
         ], $details),
     ]);
+}
+
+/**
+ * Connected git engine + configured tracking branch (admin API and MCP).
+ *
+ * @param array<string, mixed> $input
+ * @return array{git: ProjectGit, branch: string}|null
+ */
+function birkly_project_git_prepared_engine(array $input = []): ?array
+{
+    $config = birkly_project_git_public_config();
+    if (!$config['configured']) {
+        return null;
+    }
+
+    $stored = birkly_project_git_read();
+    $branch = ProjectGit::normalizeBranch(
+        (string) ($input['branch'] ?? $stored['branch'] ?? ProjectGit::DEFAULT_BRANCH)
+    );
+
+    $git = birkly_project_git_engine();
+    if (!$git->isInitialized()) {
+        $git->initialize($branch);
+    } else {
+        $git->ensureLocalBranch($branch);
+    }
+
+    $remote = (string) ($stored['remote_url'] ?? '');
+    if ($remote !== '') {
+        $git->setRemote($remote);
+    }
+
+    return ['git' => $git, 'branch' => $branch];
 }

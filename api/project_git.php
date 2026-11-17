@@ -79,7 +79,11 @@ function birkly_project_git_state(): array
 
     try {
         $git = birkly_project_git_engine();
-        $state['repository'] = $git->status((string) $config['branch']);
+        $branch = ProjectGit::normalizeBranch((string) ($config['branch'] ?? ProjectGit::DEFAULT_BRANCH));
+        if (!empty($config['configured']) && $git->isInitialized()) {
+            $git->ensureLocalBranch($branch);
+        }
+        $state['repository'] = $git->status($branch);
     } catch (ProjectGitException $e) {
         $state['repository'] = null;
         $state['error'] = $e->getMessage();
