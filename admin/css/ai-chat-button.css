@@ -27,10 +27,14 @@
   flex-direction: column;
   align-items: flex-end;
   gap: var(--s-2);
+  pointer-events: none;
 }
 
+/* Menu is out of flow so the closed speed-dial does not reserve a dead hit zone. */
 .assist-fab-menu {
-  order: 1;
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: calc(100% + var(--s-2));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -44,8 +48,12 @@
               visibility var(--dur-2);
 }
 
+.ai-chat-floating-btn.assist-fab-main,
+.assist-fab-wrap.fab-menu .assist-fab-action {
+  pointer-events: auto;
+}
+
 .assist-fab-wrap.fab-menu .assist-fab-menu { opacity: 1; visibility: visible; transform: translateY(0); pointer-events: auto; }
-.assist-fab-main { order: 2; }
 
 /* Secondary action pills — .btn, made pill-shaped and lifted off the page */
 .assist-fab-action { border-radius: var(--r); background: var(--surface); box-shadow: var(--shadow-float-2); font-size: var(--size-small); }

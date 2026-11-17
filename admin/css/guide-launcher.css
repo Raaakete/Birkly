@@ -25,13 +25,18 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  /* Pass clicks through the stack frame; only launcher controls opt back in. */
+  pointer-events: none;
 }
 
-.assist-chrome-stack .assist-fab-wrap,
-.assist-chrome-stack #guide-launcher-mount,
 .assist-chrome-stack .guide-launcher-btn,
-.assist-chrome-stack .ai-chat-floating-btn {
+.assist-chrome-stack .ai-chat-floating-btn,
+.assist-chrome-stack .assist-fab-wrap.fab-menu .assist-fab-action {
   pointer-events: auto;
+}
+
+.assist-chrome-stack #guide-launcher-mount {
+  pointer-events: none;
 }
 
 .assist-fab-wrap {
