@@ -61,14 +61,21 @@ file_put_contents($versionFile, "0.0.1\n");
 $GLOBALS['__birkly_platform_config'] = ['release_channel' => 'alpha'];
 
 $compat = birkly_cms_version_for_plugin_compat();
-if ($compat !== '1.0.0') {
-    $errors[] = 'alpha 0.0.1 should floor compat version to 1.0.0, got ' . $compat;
+if ($compat !== '1.1.0') {
+    $errors[] = '0.0.1 dev/alpha label should floor compat version to 1.1.0, got ' . $compat;
 }
 
 $GLOBALS['__birkly_platform_config'] = ['release_channel' => 'stable'];
 $compatStable = birkly_cms_version_for_plugin_compat();
-if ($compatStable !== '0.0.1') {
-    $errors[] = 'stable 0.0.1 should not floor compat version, got ' . $compatStable;
+if ($compatStable !== '1.1.0') {
+    $errors[] = 'stable 0.0.1 sentinel should use 1.1.0 for plugin compat, got ' . $compatStable;
+}
+
+file_put_contents($versionFile, "0.0.9\n");
+$GLOBALS['__birkly_platform_config'] = ['release_channel' => 'alpha'];
+$compatPre = birkly_cms_version_for_plugin_compat();
+if ($compatPre !== '1.0.0') {
+    $errors[] = 'alpha 0.0.9 should floor compat version to 1.0.0, got ' . $compatPre;
 }
 
 if ($originalVersion !== null) {
