@@ -9,7 +9,7 @@ Step-by-step runbooks for complex tasks. System prompt lists all slugs; load dep
 - **`ai-quality-guide`** — how to produce reliable outputs; read when unsure
 - **`playbooks-index`** — master routing & decision tree
 - **Core:** `content-model`, `fieldtypes`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `collection-groups`, `cms-pages`, `media`, `content-editor`
-- **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
+- **AI:** `mcp-direct-execution`, `mcp-capabilities`, `agent-guide`, `mcp-setup`, `ai-connections`
 - **Plugins:** `plugins-overview`, `commerce`, `commerce-store-kit`, `automation`, `events`, `user-management`
 - **Admin:** `settings-roles`
 
