@@ -1262,6 +1262,29 @@ function birkly_marketplace_find_fallback_offer(string $slug): ?array
 }
 
 /**
+ * Offer used for install gating — prefer live marketplace detail when available.
+ *
+ * Bundled fallback can lag behind Provider Studio (e.g. status still coming_soon);
+ * install must not block when the live catalog says published.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_marketplace_resolve_install_offer(string $slug): ?array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return null;
+    }
+
+    $detail = birkly_marketplace_offer_detail($slug);
+    if (!empty($detail['ok']) && is_array($detail['offer'] ?? null)) {
+        return $detail['offer'];
+    }
+
+    return birkly_marketplace_find_fallback_offer($slug);
+}
+
+/**
  * @param array<string, mixed> $offer
  * @return array{ok:bool,offer:array,releases:array,fallback:bool}
  */

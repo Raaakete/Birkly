@@ -457,13 +457,7 @@ if ($action === 'install') {
         exit;
     }
 
-    $installableOffer = birkly_marketplace_find_fallback_offer($slug);
-    if ($installableOffer === null) {
-        $offerDetail = birkly_marketplace_offer_detail($slug);
-        if ($offerDetail['ok']) {
-            $installableOffer = is_array($offerDetail['offer'] ?? null) ? $offerDetail['offer'] : null;
-        }
-    }
+    $installableOffer = birkly_marketplace_resolve_install_offer($slug);
     if (is_array($installableOffer) && !birkly_marketplace_offer_is_installable($installableOffer)) {
         echo json_encode([
             'status' => 'error',
