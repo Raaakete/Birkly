@@ -104,7 +104,20 @@ window.ContentEditorPreview = {
         while (atEnd < cssText.length && cssText[atEnd] !== '{') {
           atEnd++;
         }
-        const atRule = cssText.substring(i, atEnd);
+        const atRule = cssText.substring(i, atEnd).trim();
+        if (cssText[atEnd] !== '{') {
+          let semi = atEnd;
+          while (semi < cssText.length && cssText[semi] !== ';') {
+            semi++;
+          }
+          if (semi < cssText.length) {
+            result += cssText.substring(i, semi + 1);
+            i = semi + 1;
+            continue;
+          }
+          result += cssText.substring(i);
+          break;
+        }
         result += atRule;
         i = atEnd;
         if (cssText[atEnd] === '{') {

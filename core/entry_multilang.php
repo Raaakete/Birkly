@@ -300,6 +300,8 @@ function birkly_entry_apply_multilang_fields(
         );
     }
 
+    $primaryLang = $multilanguageLanguages[0] ?? null;
+
     foreach ($multilanguageLanguages as $langCode) {
         if (!is_string($langCode) || $langCode === '') {
             continue;
@@ -335,6 +337,12 @@ function birkly_entry_apply_multilang_fields(
             }
 
             $rawValue = birkly_entry_lang_field_raw($entryData, $langCode, $fieldName);
+            if ($rawValue === null
+                && $langCode === $primaryLang
+                && array_key_exists($fieldName, $entryData)
+                && !is_array($entryData[$fieldName])) {
+                $rawValue = $entryData[$fieldName];
+            }
             if ($rawValue === null) {
                 continue;
             }

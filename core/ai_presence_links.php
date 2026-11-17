@@ -626,6 +626,7 @@ function birkly_ai_presence_enrich_public_export(array $export): array
                 $ev['url'] = birkly_ai_presence_resolve_cms_entry_url($m[1], $m[2]);
             }
         }
+        unset($ev['internal_notes']);
         $evidence[] = $ev;
     }
     $export['evidence'] = $evidence;
@@ -653,6 +654,7 @@ function birkly_ai_presence_enrich_public_export(array $export): array
             }
         }
         $claim['linked_evidence'] = $linkedEvidence;
+        unset($claim['notes'], $claim['internal_notes']);
         $claims[] = $claim;
     }
     $export['claims'] = $claims;

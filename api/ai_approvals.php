@@ -691,7 +691,7 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             'id' => $entryId,
             'created_at' => date('c'),
             'created_by' => $createdBy,
-            'status' => 'draft',
+            'status' => 'unpublished',
         ], $entryData);
 
         require_once __DIR__ . '/../core/entry_multilang.php';

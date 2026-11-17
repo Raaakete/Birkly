@@ -98,6 +98,67 @@ function birkly_seo_public_path_from_file(string $relativePath): string
     return $rel;
 }
 
+/**
+ * @param array<string, mixed> $input
+ * @return array<string, mixed>
+ */
+function birkly_seo_sanitize_url_map_payload(array $input): array
+{
+    $sections = ['pages', 'details', 'redirects', 'custom', 'excludes'];
+    $out = [];
+    foreach ($sections as $section) {
+        if (!isset($input[$section]) || !is_array($input[$section])) {
+            continue;
+        }
+        if ($section === 'excludes') {
+            $out[$section] = array_values(array_filter(
+                array_map(static fn ($v): string => (string) $v, $input[$section]),
+                static fn (string $v): bool => $v !== ''
+            ));
+            continue;
+        }
+        $out[$section] = $input[$section];
+    }
+    return $out;
+}
+
+function birkly_seo_html_title(string $html): string
+{
+    if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $html, $m)) {
+        return trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+    }
+    return '';
+}
+
+function birkly_seo_html_has_noindex(string $html): bool
+{
+    if (preg_match('/<meta\s+[^>]*name=["\']robots["\'][^>]*content=["\']([^"\']+)["\']/i', $html, $m)) {
+        return stripos($m[1], 'noindex') !== false;
+    }
+    if (preg_match('/<meta\s+[^>]*content=["\']([^"\']+)["\'][^>]*name=["\']robots["\']/i', $html, $m)) {
+        return stripos($m[1], 'noindex') !== false;
+    }
+    return false;
+}
+
+/**
+ * Read a project HTML file relative to the public site dir.
+ */
+function birkly_seo_read_project_html(string $relativeFile): string
+{
+    require_once __DIR__ . '/project_site.php';
+    $rel = ltrim(str_replace('\\', '/', $relativeFile), '/');
+    if ($rel === '') {
+        return '';
+    }
+    $path = birkly_project_root() . '/' . birkly_public_site_dir() . '/' . $rel;
+    if (!is_readable($path)) {
+        return '';
+    }
+    $content = file_get_contents($path);
+    return is_string($content) ? $content : '';
+}
+
 function birkly_seo_label_from_path(string $pathKey): string
 {
     if ($pathKey === '/' || $pathKey === '') {
@@ -1182,6 +1243,16 @@ function birkly_seo_sitemap_entries(): array
         if ($file !== '' && birkly_project_custom_404_sitemap_should_skip_rel('/' . $file)) {
             continue;
         }
+        if ($file !== '') {
+            $html = birkly_seo_read_project_html($file);
+            if ($html !== '' && birkly_seo_html_has_noindex($html)) {
+                continue;
+            }
+        }
+        $overrides = is_array($page['overrides'] ?? null) ? $page['overrides'] : [];
+        if (!empty($overrides['noindex'])) {
+            continue;
+        }
         $loc = birkly_seo_canonical_url((string) $path, []);
         if ($loc === '' || $loc[0] === '/') {
             continue;
@@ -1264,6 +1335,15 @@ function birkly_seo_health_checks(): array
             continue;
         }
         $title = trim((string) ($row['title'] ?? ''));
+        if ($title === '' && ($row['type'] ?? '') === 'page') {
+            $file = ltrim((string) ($row['file'] ?? $row['project_file'] ?? ''), '/');
+            if ($file !== '') {
+                $html = birkly_seo_read_project_html($file);
+                if ($html !== '') {
+                    $title = birkly_seo_html_title($html);
+                }
+            }
+        }
         if ($title === '' && ($row['type'] ?? '') === 'page') {
             $checks[] = [
                 'id' => 'seo_missing_title_' . md5((string) ($row['key'] ?? '')),

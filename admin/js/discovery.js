@@ -41,6 +41,7 @@
         status: null,
         seo: null,
         seoBaseline: null,
+        seoUrlMapBaseline: null,
         urlMapRows: [],
         urlMapFilter: 'all',
         activeBindingId: null,
@@ -324,14 +325,21 @@
         return JSON.stringify(collectSeoPayload());
     }
 
+    function urlMapFingerprint() {
+        return JSON.stringify((state.seo && state.seo.url_map) ? state.seo.url_map : {});
+    }
+
     function markSeoBaseline() {
         state.seoBaseline = seoFormFingerprint();
+        state.seoUrlMapBaseline = urlMapFingerprint();
         updateSeoStickyBar();
     }
 
     function isSeoDirty() {
         if (state.seoBaseline === null) return false;
-        return seoFormFingerprint() !== state.seoBaseline;
+        if (seoFormFingerprint() !== state.seoBaseline) return true;
+        if (state.seoUrlMapBaseline === null) return false;
+        return urlMapFingerprint() !== state.seoUrlMapBaseline;
     }
 
     function updateSeoStickyBar() {
@@ -851,6 +859,7 @@
         state.status = res.data.status || state.status;
         renderUrlMap(state.seo, res.data.summary || null);
         renderDetailBindings(state.seo);
+        updateSeoStickyBar();
         if (message) showMessage(message);
     }
 
@@ -903,7 +912,17 @@
                 var row = (state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(state.seo))
                     .find(function (r) { return r.key === key; });
                 if (!row) return;
-                var title = window.prompt(t('discovery_seo_edit_title_prompt', 'Search title (leave blank for site default)'), row.title || '');
+                var promptPromise = (window.BirklyFeedback && typeof BirklyFeedback.prompt === 'function')
+                    ? BirklyFeedback.prompt(
+                        t('discovery_seo_edit_title_prompt', 'Search title (leave blank for site default)'),
+                        row.title || '',
+                        { title: t('discovery_seo_edit_title_prompt', 'Search title') }
+                    )
+                    : Promise.resolve(window.prompt(
+                        t('discovery_seo_edit_title_prompt', 'Search title (leave blank for site default)'),
+                        row.title || ''
+                    ));
+                promptPromise.then(function (title) {
                 if (title === null) return;
                 var patch = { pages: {}, details: {} };
                 if (row.type === 'page') {
@@ -918,8 +937,10 @@
                     state.seo = res.data.seo;
                     state.urlMapRows = res.data.rows || buildUrlMapRowsFromSeo(state.seo);
                     renderUrlMap(state.seo);
+                    updateSeoStickyBar();
                     showMessage(t('discovery_js_url_override_saved', 'URL override saved'));
                 }).catch(function (err) { showMessage(err.message, true); });
+                }).catch(function () { /* dismissed */ });
             });
         }
 

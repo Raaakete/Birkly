@@ -985,6 +985,7 @@ GITIGNORE;
         $env = $this->baseEnv();
         $configArgs = [
             '-c', 'safe.directory=' . $this->root,
+            '-c', 'core.fileMode=false',
         ];
 
         if ($withAuth) {
