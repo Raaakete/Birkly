@@ -2027,24 +2027,30 @@
      * Dynamic Items structure is shared across language tabs; only block values differ.
      */
     function initMultilangDynamicItems() {
-        const tabs = document.querySelectorAll('.entry-language-tabs .language-tab-content');
-        if (tabs.length < 2) {
-            return;
-        }
+        const defaultLang = document.querySelector('.language-tab-btn.active')?.dataset.lang || '';
+        document.querySelectorAll('.entry-language-tabs').forEach(function(container) {
+            const tabs = container.querySelectorAll('.language-tab-content');
+            if (tabs.length < 2) {
+                return;
+            }
 
-        tabs.forEach(function(tab, index) {
-            tab.querySelectorAll('.block-field').forEach(function(field) {
-                if (index === 0) {
-                    field.setAttribute('data-dynamicitems-owner', '1');
-                    return;
-                }
+            tabs.forEach(function(tab) {
+                const isOwnerTab = tab.dataset.lang === defaultLang;
+                tab.querySelectorAll('.block-field').forEach(function(field) {
+                    if (isOwnerTab) {
+                        field.setAttribute('data-dynamicitems-owner', '1');
+                        field.removeAttribute('data-dynamicitems-follower');
+                        return;
+                    }
 
-                field.setAttribute('data-dynamicitems-follower', '1');
-                field.querySelectorAll('.block-controls').forEach(function(el) {
-                    el.style.display = 'none';
-                });
-                field.querySelectorAll('[data-dynamicitems-action="edit-block"], [data-dynamicitems-action="remove-block"]').forEach(function(btn) {
-                    btn.style.display = 'none';
+                    field.setAttribute('data-dynamicitems-follower', '1');
+                    field.removeAttribute('data-dynamicitems-owner');
+                    field.querySelectorAll('.block-controls').forEach(function(el) {
+                        el.style.display = 'none';
+                    });
+                    field.querySelectorAll('[data-dynamicitems-action="edit-block"], [data-dynamicitems-action="remove-block"]').forEach(function(btn) {
+                        btn.style.display = 'none';
+                    });
                 });
             });
         });
@@ -2056,7 +2062,7 @@
 
         // Sync block structure after fieldtypes load values from per-language hidden inputs.
         window.setTimeout(function() {
-            tabs[0].querySelectorAll('.block-field[data-dynamicitems-owner="1"]').forEach(function(field) {
+            document.querySelectorAll('.block-field[data-dynamicitems-owner="1"]').forEach(function(field) {
                 const fieldName = field.id.replace(/^field_/, '');
                 dynamicItems.syncMultilangBlocks(fieldName);
             });

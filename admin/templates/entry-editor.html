@@ -86,6 +86,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     $multilanguageLanguages = $multilanguage_languages ?? [];
     $languageFields = $language_fields ?? [];
     $sharedFields = $shared_fields ?? [];
+    $multilangSegments = $multilang_segments ?? [];
     $entryEditorHasLanguages = $multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields);
     $entryEditorSameForAllLabel = __('admin.entry_editor_same_for_all_languages');
     if ($entryEditorSameForAllLabel === 'admin.entry_editor_same_for_all_languages') {
@@ -267,23 +268,27 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     };
                     $isTitleField = static fn (array $field): bool => ($field['name'] ?? '') === 'title';
                     ?>
-                    <?php if ($entryEditorHasLanguages): ?>
-                        <?php if (!empty($sharedFields)): ?>
-                            <div class="entry-shared-fields">
-                                <?php foreach ($sharedFields as $field): ?>
-                                    <?php $renderFieldSlab($field); ?>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="language-tabs-container entry-language-tabs">
-                            <?php $firstLangLabel = birkly_locale_endonym((string) ($multilanguageLanguages[0] ?? '')); ?>
+                    <?php
+                    $multilangSegmentIndex = 0;
+                    $renderLocalizedLanguageTabs = function (array $segmentLanguageFields) use (
+                        $multilanguageLanguages,
+                        $renderFieldSlab,
+                        $renderSlugSlab,
+                        $renderSlugMirror,
+                        $isTitleField,
+                        &$multilangSegmentIndex
+                    ): void {
+                        $segmentIndex = $multilangSegmentIndex++;
+                        $firstLangLabel = birkly_locale_endonym((string) ($multilanguageLanguages[0] ?? ''));
+                        ?>
+                        <div class="language-tabs-container entry-language-tabs" data-multilang-segment="<?= (int) $segmentIndex ?>">
                             <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
                                 <?php
-                                $langFields = $languageFields[$langCode] ?? [];
+                                $langFields = $segmentLanguageFields[$langCode] ?? [];
                                 $hasTitle = (bool) array_filter($langFields, $isTitleField);
                                 ?>
                                 <div class="language-tab-content <?= $langIdx === 0 ? 'active' : '' ?>"
-                                     id="entry-lang-<?= htmlspecialchars($langCode) ?>"
+                                     id="entry-lang-<?= (int) $segmentIndex ?>-<?= htmlspecialchars($langCode) ?>"
                                      data-lang="<?= htmlspecialchars($langCode) ?>"
                                      role="tabpanel">
                                     <?php if (!$hasTitle): ?>
@@ -298,6 +303,26 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 </div>
                             <?php endforeach; ?>
                         </div>
+                        <?php
+                    };
+                    ?>
+                    <?php if ($entryEditorHasLanguages && !empty($multilangSegments)): ?>
+                        <?php foreach ($multilangSegments as $segment): ?>
+                            <?php if (($segment['kind'] ?? '') === 'shared'): ?>
+                                <?php foreach (($segment['fields'] ?? []) as $field): ?>
+                                    <?php $renderFieldSlab($field); ?>
+                                <?php endforeach; ?>
+                            <?php elseif (($segment['kind'] ?? '') === 'localized'): ?>
+                                <?php $renderLocalizedLanguageTabs($segment['language_fields'] ?? []); ?>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php elseif ($entryEditorHasLanguages): ?>
+                        <?php if (!empty($sharedFields)): ?>
+                            <?php foreach ($sharedFields as $field): ?>
+                                <?php $renderFieldSlab($field); ?>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                        <?php $renderLocalizedLanguageTabs($languageFields); ?>
                     <?php elseif (!empty($fields)): ?>
                         <?php if (!array_filter($fields, $isTitleField)) { $renderSlugSlab(); } ?>
                         <?php foreach ($fields as $field): ?>
