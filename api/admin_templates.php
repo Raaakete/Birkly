@@ -1005,7 +1005,7 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
 }
 
 /**
- * Fields stored once for all languages (rendered outside language tabs).
+ * Shared multilanguage fields enriched for the entry editor (schema order preserved).
  *
  * @param list<array<string, mixed>> $fields
  * @return list<array<string, mixed>>
@@ -1044,6 +1044,91 @@ function birkly_admin_build_shared_multilang_fields(
     }
 
     return $shared;
+}
+
+/**
+ * Split schema fields into ordered shared / localized segments for multilanguage entry editor layout.
+ *
+ * @param list<array<string, mixed>> $fields
+ * @return list<array{kind: string, fields?: list<array<string, mixed>>, language_fields?: array<string, list<array<string, mixed>>>}>
+ */
+function birkly_admin_build_multilang_segments(
+    array $fields,
+    array $entry,
+    array $collectionData,
+    bool $includeFieldHtml
+): array {
+    $languages = $collectionData['multilanguage']['languages'] ?? [];
+    if (empty($languages) || empty($collectionData['multilanguage']['enabled'])) {
+        return [];
+    }
+
+    require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+
+    $segments = [];
+    $buffer = [];
+    $bufferKind = null;
+
+    foreach ($fields as $field) {
+        $name = (string) ($field['name'] ?? '');
+        if ($name === '') {
+            continue;
+        }
+
+        $isShared = $name !== 'title'
+            && birkly_multilang_field_is_shared_for_entry($field, true, $entry);
+        $kind = $isShared ? 'shared' : 'localized';
+
+        if ($bufferKind !== null && $kind !== $bufferKind) {
+            $segments[] = birkly_admin_build_multilang_segment_payload(
+                $bufferKind,
+                $buffer,
+                $entry,
+                $collectionData,
+                $includeFieldHtml
+            );
+            $buffer = [];
+        }
+
+        $bufferKind = $kind;
+        $buffer[] = $field;
+    }
+
+    if ($bufferKind !== null && $buffer !== []) {
+        $segments[] = birkly_admin_build_multilang_segment_payload(
+            $bufferKind,
+            $buffer,
+            $entry,
+            $collectionData,
+            $includeFieldHtml
+        );
+    }
+
+    return $segments;
+}
+
+/**
+ * @param list<array<string, mixed>> $fields
+ * @return array{kind: string, fields?: list<array<string, mixed>>, language_fields?: array<string, list<array<string, mixed>>>}
+ */
+function birkly_admin_build_multilang_segment_payload(
+    string $kind,
+    array $fields,
+    array $entry,
+    array $collectionData,
+    bool $includeFieldHtml
+): array {
+    if ($kind === 'shared') {
+        return [
+            'kind' => 'shared',
+            'fields' => birkly_admin_build_shared_multilang_fields($fields, $entry, $collectionData, $includeFieldHtml),
+        ];
+    }
+
+    return [
+        'kind' => 'localized',
+        'language_fields' => birkly_admin_build_language_fields($fields, $entry, $collectionData, $includeFieldHtml),
+    ];
 }
 
 function getEntryEditorData($includeFieldHtml = false) {
@@ -1688,6 +1773,13 @@ function getEntryEditorData($includeFieldHtml = false) {
     $payload['multilanguage_enabled'] = !empty($collectionData['multilanguage']['enabled']);
     $payload['multilanguage_languages'] = $collectionData['multilanguage']['languages'] ?? [];
     if ($payload['multilanguage_enabled'] && !empty($payload['multilanguage_languages'])) {
+        $payload['multilang_segments'] = birkly_admin_build_multilang_segments(
+            $payload['fields'] ?? [],
+            $payload['entry'] ?? [],
+            $collectionData,
+            $includeFieldHtml
+        );
+        // Legacy keys (full list) — prefer multilang_segments in templates.
         $payload['language_fields'] = birkly_admin_build_language_fields(
             $payload['fields'] ?? [],
             $payload['entry'] ?? [],
