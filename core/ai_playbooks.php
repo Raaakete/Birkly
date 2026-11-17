@@ -284,6 +284,30 @@ function birkly_ai_core_site_build_topics(): array
 }
 
 /**
+ * Playbook topics inlined into MCP initialize (inbound only — admin chat uses L2 on intent).
+ *
+ * @return list<string>
+ */
+function birkly_ai_mcp_initialize_playbook_topics(): array
+{
+    return ['mcp-direct-execution'];
+}
+
+/**
+ * Compact site-build cheat sheet for MCP initialize (full playbooks via read_birkly_docs on demand).
+ */
+function birkly_ai_mcp_site_build_cheat_sheet(): string
+{
+    return "SITE BUILD (use MCP tools directly — read_birkly_docs \"site-building\" + \"web-project-patterns\" for depth):\n"
+        . "1. get_project_info + list_collections once\n"
+        . "2. create_collection / update_collection — full fields[] schema (never [])\n"
+        . "3. create_entry — status published\n"
+        . "4. write_project_file — index.html, list/detail pages, css/style.css (no project/ prefix on paths)\n"
+        . "5. allow_public_read: true for loops; detail page = URL slug context, NO collection loop on detail\n"
+        . "6. birkly-client.js on every templated page; {entry for} for public_api forms\n\n";
+}
+
+/**
  * Detect playbook topics to auto-load from user message + recent history.
  *
  * @return list<string>
@@ -410,11 +434,12 @@ function birkly_ai_build_auto_playbook_section(array $topics, int $maxCharsPerTo
 }
 
 /**
- * MCP initialize instructions — always includes core site-building playbooks.
+ * MCP initialize instructions — direct-execution playbook + cheat sheet; full site playbooks on demand.
  */
 function birkly_ai_mcp_initialize_instructions(): string
 {
-    $playbooks = birkly_ai_build_auto_playbook_section(birkly_ai_core_site_build_topics());
+    $playbooks = birkly_ai_build_auto_playbook_section(birkly_ai_mcp_initialize_playbook_topics());
+    $siteBuildCheat = birkly_ai_mcp_site_build_cheat_sheet();
 
     $header = "You are connected to a Birkly CMS instance via MCP.\n"
         . "Users may give very short prompts (e.g. \"build me a bakery website\") — aim to deliver a complete Birkly project site when that is what they want.\n\n";
@@ -429,7 +454,7 @@ function birkly_ai_mcp_initialize_instructions(): string
     $rules = "GUIDANCE (role permissions + MCP approval settings are authoritative — playbooks are tips, not extra restrictions):\n"
         . "- mcp-direct-execution and ai-quality-guide when unsure; playbooks-index for routing\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
-        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, mcp-capabilities, public-forms, web-project-patterns — when not pre-loaded below\n"
+        . "- Site builds: read_birkly_docs web-project-patterns, site-building, fieldtypes, public-forms once if the cheat sheet is not enough\n"
         . "- Admin help topics link to playbooks via ai_topic (e.g. entries→content-model, mcp-connections→mcp-setup)\n"
         . "- List pages: loops need allow_public_read: true on the collection; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
         . "- Images on the site: use image/gallery/media fieldtypes + media library — not text/url fields for CMS assets\n"
@@ -441,10 +466,10 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
         . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Hub; active plugins add commerce_* / automation_* MCP tools\n"
-        . "- Playbooks below are pre-loaded — inspiration and Birkly-specific behavior, not a permission layer\n"
+        . "- mcp-direct-execution playbook is pre-loaded below; other playbooks load via read_birkly_docs — not a permission layer\n"
         . "- After a Birkly upgrade, reconnect the MCP client or call tools/list again — some clients cache tool schemas from initialize\n\n";
 
-    return trim($header . $directExecution . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
+    return trim($header . $directExecution . $siteBuildCheat . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
 }
 
 /**

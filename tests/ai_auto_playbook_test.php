@@ -118,6 +118,16 @@ assert_true(
     str_contains($mcpInstructions, 'mcp-direct-execution')
     && str_contains($mcpInstructions, 'DIRECT EXECUTION')
 );
+assert_true(
+    'MCP init stays slim (no full templating playbook inlined)',
+    strlen($mcpInstructions) < 16000
+    && !str_contains($mcpInstructions, '--- Client templating language (templating) ---'),
+    'len=' . strlen($mcpInstructions)
+);
+assert_true(
+    'MCP init includes site build cheat sheet',
+    str_contains($mcpInstructions, 'SITE BUILD (use MCP tools directly')
+);
 
 // Project discovery gate
 assert_true(
