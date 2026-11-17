@@ -99,11 +99,72 @@ function birkly_site_seo_load(): array
 }
 
 /**
+ * Drop unknown keys and unwrap common MCP/admin wrappers before merge.
+ *
+ * @param array<string, mixed> $input
+ * @return array<string, mixed>
+ */
+function birkly_site_seo_sanitize_save_input(array $input): array
+{
+    if (isset($input['seo']) && is_array($input['seo'])) {
+        $input = array_merge($input, $input['seo']);
+        unset($input['seo']);
+    }
+    unset($input['action'], $input['_csrf']);
+
+    $defaults = birkly_site_seo_defaults();
+    $allowedTop = array_keys($defaults);
+    $filtered = [];
+    foreach ($input as $key => $value) {
+        if (!in_array($key, $allowedTop, true)) {
+            continue;
+        }
+        if ($key === 'url_map' && is_array($value)) {
+            $filtered[$key] = birkly_seo_sanitize_url_map_payload($value);
+            continue;
+        }
+        if ($key === 'detail_bindings' && is_array($value)) {
+            $filtered[$key] = $value;
+            continue;
+        }
+        if (is_array($value) && is_array($defaults[$key] ?? null) && !array_is_list($defaults[$key])) {
+            $filtered[$key] = birkly_site_seo_whitelist_shape($value, $defaults[$key]);
+        } else {
+            $filtered[$key] = $value;
+        }
+    }
+
+    return $filtered;
+}
+
+/**
+ * @param array<string, mixed> $input
+ * @param array<string, mixed> $shape
+ * @return array<string, mixed>
+ */
+function birkly_site_seo_whitelist_shape(array $input, array $shape): array
+{
+    $out = [];
+    foreach ($input as $key => $value) {
+        if (!array_key_exists($key, $shape)) {
+            continue;
+        }
+        if (is_array($value) && is_array($shape[$key]) && !array_is_list($shape[$key])) {
+            $out[$key] = birkly_site_seo_whitelist_shape($value, $shape[$key]);
+        } else {
+            $out[$key] = $value;
+        }
+    }
+    return $out;
+}
+
+/**
  * @param array<string, mixed> $input
  * @return array<string, mixed>
  */
 function birkly_site_seo_normalize(array $input): array
 {
+    $input = birkly_site_seo_sanitize_save_input($input);
     $defaults = birkly_site_seo_defaults();
     $out = array_replace_recursive($defaults, $input);
     $out['enabled'] = !empty($out['enabled']);
@@ -393,7 +454,14 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         if ($meta['description'] !== '') {
             $ld['description'] = $meta['description'];
         }
-        if ($meta['canonical'] !== '') {
+        $siteBase = '';
+        if (function_exists('birkly_hosting_public_base_url')) {
+            require_once __DIR__ . '/hosting_urls.php';
+            $siteBase = trim((string) birkly_hosting_public_base_url());
+        }
+        if ($siteBase !== '') {
+            $ld['url'] = $siteBase;
+        } elseif ($meta['canonical'] !== '') {
             $ld['url'] = $meta['canonical'];
         }
         $json = json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -415,7 +483,14 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         if ($meta['description'] !== '') {
             $org['description'] = $meta['description'];
         }
-        if ($meta['canonical'] !== '') {
+        $siteBase = '';
+        if (function_exists('birkly_hosting_public_base_url')) {
+            require_once __DIR__ . '/hosting_urls.php';
+            $siteBase = trim((string) birkly_hosting_public_base_url());
+        }
+        if ($siteBase !== '') {
+            $org['url'] = $siteBase;
+        } elseif ($meta['canonical'] !== '') {
             $org['url'] = $meta['canonical'];
         }
         if ($meta['og_image'] !== '') {

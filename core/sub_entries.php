@@ -919,3 +919,41 @@ function getSubCollectionConfig($collection_slug, $sub_collection_slug, $parent_
     
     return null;
 }
+
+/**
+ * Remove all sub-entries when a parent entry is trashed.
+ */
+function birkly_sub_entries_delete_all_for_parent(string $parentCollection, string $parentEntryId): void
+{
+    if (!function_exists('get_storage')) {
+        require_once __DIR__ . '/storage/StorageFactory.php';
+    }
+    try {
+        $storage = get_storage();
+    } catch (Exception $e) {
+        error_log('birkly_sub_entries_delete_all_for_parent: storage unavailable');
+        return;
+    }
+
+    $base = "collections/{$parentCollection}/entries/{$parentEntryId}/sub_entries";
+    if (!$storage->exists($base)) {
+        return;
+    }
+
+    $deletePath = null;
+    $deletePath = static function (string $path) use ($storage, &$deletePath): void {
+        if (!$storage->exists($path)) {
+            return;
+        }
+        foreach ($storage->list($path) as $item) {
+            $child = rtrim($path, '/') . '/' . $item;
+            if (str_ends_with($item, '.json')) {
+                $storage->delete($child);
+                continue;
+            }
+            $deletePath($child);
+        }
+    };
+
+    $deletePath($base);
+}

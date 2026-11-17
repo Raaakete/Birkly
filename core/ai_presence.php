@@ -1102,9 +1102,6 @@ function birkly_ai_presence_llms_txt_body(): ?string
     if ($forAgentsUrl !== null && $forAgentsUrl !== '') {
         $lines[] = '- [Agent Guide (HTML for visiting AIs)](' . $forAgentsUrl . ')';
     }
-    if ($cmsBase !== '' && $cmsBase !== $siteUrl) {
-        $lines[] = '- [Birkly CMS](' . $cmsBase . ')';
-    }
     $lines[] = '- [llms.txt standard](https://llmstxt.org/)';
     $lines[] = '';
 

@@ -131,9 +131,30 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
         $lastmod = $ts !== false ? gmdate('c', $ts) : '';
     }
 
+    $seoSitemapActive = function_exists('birkly_site_seo_is_published')
+        && birkly_site_seo_is_published()
+        && function_exists('birkly_site_seo_surface_enabled')
+        && birkly_site_seo_surface_enabled('sitemap');
+
     $hosting = birkly_hosting_load();
-    if (($hosting['public_site_mode'] ?? 'none') === 'project') {
+    if (!$seoSitemapActive && ($hosting['public_site_mode'] ?? 'none') === 'project') {
+        require_once __DIR__ . '/site_seo_url_map.php';
+        require_once __DIR__ . '/project_custom_404.php';
         $projectDir = birkly_project_root() . '/' . birkly_public_site_dir();
+        $excludes = [];
+        if (function_exists('birkly_site_seo_load')) {
+            $seoCfg = birkly_site_seo_load();
+            $excludes = is_array($seoCfg['url_map']['excludes'] ?? null)
+                ? $seoCfg['url_map']['excludes'] : [];
+        }
+        $detailTemplates = [];
+        if (function_exists('birkly_site_seo_load')) {
+            foreach (birkly_site_seo_load()['detail_bindings'] ?? [] as $binding) {
+                if (is_array($binding) && !empty($binding['template_path'])) {
+                    $detailTemplates[] = ltrim((string) $binding['template_path'], '/');
+                }
+            }
+        }
         if (is_dir($projectDir)) {
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($projectDir, FilesystemIterator::SKIP_DOTS)
@@ -142,23 +163,39 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
                 if (!$file->isFile()) {
                     continue;
                 }
-                $path = $file->getPathname();
-                $rel = substr($path, strlen($projectDir));
-                $rel = str_replace('\\', '/', $rel);
+                $resolved = birkly_seo_project_relative_path($projectDir, $file->getPathname());
+                if ($resolved === null) {
+                    continue;
+                }
+                $rel = $resolved['relative'];
                 if (!preg_match('/\.html?$/i', $rel)) {
                     continue;
                 }
-                if (str_contains($rel, '/vendor/') || str_contains($rel, '/_p64/')) {
+                if (birkly_seo_scan_should_exclude($rel, $excludes)) {
                     continue;
                 }
-                if (birkly_project_custom_404_sitemap_should_skip_rel($rel)) {
+                if (in_array($rel, $detailTemplates, true)) {
                     continue;
                 }
-                $loc = $base . ($rel === '/index.html' ? '/' : $rel);
+                if (birkly_project_custom_404_sitemap_should_skip_rel('/' . $rel)) {
+                    continue;
+                }
+                $html = @file_get_contents($file->getPathname());
+                if (is_string($html)) {
+                    if (birkly_seo_html_has_noindex($html)) {
+                        continue;
+                    }
+                    if (preg_match('/<meta\s+name=["\']birkly-collection["\']/i', $html)) {
+                        continue;
+                    }
+                }
+                $pathKey = birkly_seo_public_path_from_file($rel);
+                $suffix = $pathKey === '/' ? '' : $pathKey;
+                $loc = rtrim($base, '/') . $suffix;
                 $entries[] = [
                     'loc' => $loc,
                     'lastmod' => gmdate('c', (int) $file->getMTime()),
-                    'priority' => str_ends_with(strtolower($rel), 'index.html') ? '1.0' : '0.8',
+                    'priority' => $pathKey === '/' ? '1.0' : '0.8',
                 ];
             }
         }
@@ -197,7 +234,7 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
         $unique[] = $entry;
     }
 
-    if (function_exists('birkly_site_seo_is_published') && birkly_site_seo_is_published()) {
+    if ($seoSitemapActive) {
         require_once __DIR__ . '/site_seo_url_map.php';
         foreach (birkly_seo_sitemap_entries() as $seoEntry) {
             $loc = $seoEntry['loc'];
@@ -341,8 +378,8 @@ function birkly_ai_presence_discovery_indexnow_ping(): array
 
     $urlList = [];
     $map = birkly_ai_presence_discovery_url_map();
-    foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $key) {
-        $url = $map[$key] ?? null;
+    foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $mapKey) {
+        $url = $map[$mapKey] ?? null;
         if ($url !== null && $url !== '') {
             $urlList[] = $url;
         }
@@ -385,9 +422,16 @@ function birkly_ai_presence_discovery_indexnow_ping(): array
     $meta['discovery_last_indexnow_at'] = date('c');
     $meta['discovery_last_indexnow_status'] = $status;
     $meta['discovery_last_indexnow_ok'] = $ok;
+    $meta['discovery_last_indexnow_body'] = is_string($response)
+        ? substr(trim($response), 0, 2000) : '';
     birkly_ai_presence_save_meta($meta);
 
-    return ['ok' => $ok, 'status' => $status, 'submitted' => count($urlList)];
+    return [
+        'ok' => $ok,
+        'status' => $status,
+        'submitted' => count($urlList),
+        'response_body' => $meta['discovery_last_indexnow_body'],
+    ];
 }
 
 /**

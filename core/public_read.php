@@ -101,6 +101,24 @@ function birkly_public_transform_entry_for_language($entry, $language, $multilan
         return $entry;
     }
 
+    $defaultLang = $multilanguageLanguages[0] ?? 'en';
+    if ($language !== $defaultLang) {
+        $defaultBlock = is_array($entry[$defaultLang] ?? null) ? $entry[$defaultLang] : null;
+        if ($defaultBlock !== null) {
+            foreach ($localized as $fieldName => $value) {
+                if (!is_string($fieldName)) {
+                    continue;
+                }
+                if (($value === '' || $value === null)
+                    && isset($defaultBlock[$fieldName])
+                    && $defaultBlock[$fieldName] !== ''
+                    && $defaultBlock[$fieldName] !== null) {
+                    $localized[$fieldName] = $defaultBlock[$fieldName];
+                }
+            }
+        }
+    }
+
     $transformed = array_merge($entry, $localized);
     $transformed['id'] = $entry['id'] ?? '';
     $transformed['slug'] = $entry['slug'] ?? '';

@@ -1075,6 +1075,9 @@ function deleteEntry() {
         return ['status' => 'error', 'message' => 'Failed to move entry to trash'];
     }
 
+    require_once __DIR__ . '/../core/sub_entries.php';
+    birkly_sub_entries_delete_all_for_parent($collectionSlug, $entryId);
+
     log_security_event('trash_entry', ['collection' => $collectionSlug, 'entry_id' => $entryId]);
 
     return [

@@ -205,6 +205,14 @@ assert_true('after push nothing is behind', $status['behind'] === 0);
 assert_true('after push the tree is clean', $status['dirty'] === 0);
 assert_true('last commit is reported', is_array($status['last_commit']) && $status['last_commit']['message'] === 'Initial project files');
 
+echo PHP_EOL . 'fileMode' . PHP_EOL;
+$indexPath = $projectA . '/index.html';
+$previousMode = fileperms($indexPath);
+@chmod($indexPath, $previousMode | 0111);
+$statusMode = $git->status('main');
+assert_true('permission-only chmod does not dirty tree', ($statusMode['dirty'] ?? 1) === 0);
+@chmod($indexPath, $previousMode);
+
 // ---------------------------------------------------------------------------
 // Pull into a second worktree
 // ---------------------------------------------------------------------------
