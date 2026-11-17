@@ -950,6 +950,8 @@ function cms_mcp_handler_webhooks(string $subAction, array $input, array $aiUser
 /** @return array<string, mixed> */
 function cms_mcp_handler_redirects(string $subAction, array $input, array $aiUser): array
 {
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once dirname(__DIR__) . '/core/hosting_redirects.php';
     require_once dirname(__DIR__) . '/api/redirects.php';
 
     switch ($subAction) {

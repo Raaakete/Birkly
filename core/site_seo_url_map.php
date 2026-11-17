@@ -42,6 +42,15 @@ function birkly_seo_normalize_url_map_sections(array $config): array
     $config['url_map']['excludes'] = is_array($config['url_map']['excludes'] ?? null)
         ? array_values(array_filter(array_map('strval', $config['url_map']['excludes']))) : [];
 
+    $pages = $config['url_map']['pages'];
+    if (isset($pages['/index.html']) && !isset($pages['/'])) {
+        $pages['/'] = $pages['/index.html'];
+    }
+    if (isset($pages['/index.html'])) {
+        unset($pages['/index.html']);
+    }
+    $config['url_map']['pages'] = $pages;
+
     $bindings = is_array($config['detail_bindings'] ?? null) ? $config['detail_bindings'] : [];
     $normalizedBindings = [];
     foreach ($bindings as $binding) {
@@ -631,7 +640,10 @@ function birkly_seo_canonical_url(string $pathKey, array $query = []): string
     if ($base === '') {
         $base = rtrim((string) (birkly_hosting_load()['cms_base_url'] ?? ''), '/');
     }
-    $path = $pathKey === '/' ? '/index.html' : $pathKey;
+    if ($pathKey === '/' || strcasecmp($pathKey, '/index.html') === 0) {
+        return $base !== '' ? $base . '/' : '/';
+    }
+    $path = $pathKey;
     $url = $base !== '' ? $base . $path : $path;
     $collection = trim((string) ($query['collection'] ?? ''));
     $slug = trim((string) ($query['slug'] ?? ''));

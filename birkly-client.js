@@ -68,19 +68,21 @@
         
         // Current language
         currentLanguage: (function() {
-            // Get from URL parameter
             const urlParams = new URLSearchParams(window.location.search);
             const langFromUrl = urlParams.get('lang');
             if (langFromUrl) {
                 localStorage.setItem('birkly_language', langFromUrl);
                 return langFromUrl;
             }
-            // Get from localStorage
-            const langFromStorage = localStorage.getItem('birkly_language');
-            if (langFromStorage) {
-                return langFromStorage;
+            const clientScript = document.querySelector('script[src*="birkly-client"]');
+            const hasLangUi = document.querySelector('select[data-birkly-language-select]')
+                || (clientScript && clientScript.getAttribute('data-birkly-floating-language-selector') === 'true');
+            if (hasLangUi) {
+                const langFromStorage = localStorage.getItem('birkly_language');
+                if (langFromStorage) {
+                    return langFromStorage;
+                }
             }
-            // Default to 'en'
             return 'en';
         })(),
         
@@ -5227,7 +5229,8 @@
         function tryInject() {
             try {
                 if (document.querySelector('[data-birkly-agent-guide="footer-link"]')) return true;
-                var footer = document.querySelector('footer');
+                var footers = document.querySelectorAll('footer');
+                var footer = footers.length ? footers[footers.length - 1] : null;
                 if (!footer) return false;
 
                 var nav = footer.querySelector('nav[aria-label="Footer navigation"]');
@@ -5619,6 +5622,11 @@
             }
 
             if (form.dataset.haruSubmitting === '1') return;
+
+            if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+                return;
+            }
+
             form.dataset.haruSubmitting = '1';
             Birkly.warn('Birkly: handleSubmit()', {
                 eventType: e?.type,

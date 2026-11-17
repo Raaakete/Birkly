@@ -739,14 +739,29 @@ GITIGNORE;
             ));
         }
 
-        $result = $this->run(['diff', '--name-status', '-z', 'HEAD', $remoteRef]);
-        $records = array_values(array_filter(explode("\0", $result['stdout']), static fn(string $p): bool => $p !== ''));
-
+        $result = $this->run(['diff', '--name-status', 'HEAD', $remoteRef]);
         $changes = [];
-        for ($i = 0; $i + 1 < count($records); $i += 2) {
-            $code = $records[$i];
-            $path = $records[$i + 1];
-            $changes[] = ['path' => $path, 'state' => self::describeStatusCode(substr($code, 0, 1) . ' ')];
+        foreach (explode("\n", trim($result['stdout'])) as $line) {
+            if ($line === '') {
+                continue;
+            }
+            $tab = strpos($line, "\t");
+            if ($tab === false) {
+                continue;
+            }
+            $code = substr($line, 0, $tab);
+            $rest = substr($line, $tab + 1);
+            $parts = explode("\t", $rest);
+            $path = $parts[0] ?? $rest;
+            if ($path === '') {
+                continue;
+            }
+            $state = self::describeStatusCode($code);
+            if (str_starts_with($code, 'R') && isset($parts[1]) && $parts[1] !== '') {
+                $path = $parts[1];
+                $state = 'renamed';
+            }
+            $changes[] = ['path' => $path, 'state' => $state];
         }
         return $changes;
     }
@@ -922,13 +937,11 @@ GITIGNORE;
 
     private static function describeStatusCode(string $code): string
     {
-        if (trim($code) === '??') {
+        $trimmed = trim($code);
+        if ($trimmed === '??') {
             $primary = '?';
         } else {
-            $primary = trim(substr($code, 0, 1));
-            if ($primary === '') {
-                $primary = trim(substr($code, 1, 1));
-            }
+            $primary = $trimmed !== '' ? $trimmed[0] : '';
         }
 
         return match ($primary) {

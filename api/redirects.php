@@ -1,15 +1,6 @@
 <?php
-header('Content-Type: application/json');
 
-require_once __DIR__ . '/../core/cors.php';
-require_once __DIR__ . '/../core/csrf.php';
-require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/hosting_redirects.php';
-
-set_cors_headers('admin');
-haru_secure_session_start();
-requireAuth('manage_settings');
 
 function birkly_redirects_file(): string
 {
@@ -47,6 +38,21 @@ function birkly_normalize_redirect_record(array $input, ?array $existing = null)
         'updated_at' => date('c'),
     ];
 }
+
+if (!empty($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    return;
+}
+
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../core/cors.php';
+require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/log.php';
+
+set_cors_headers('admin');
+haru_secure_session_start();
+requireAuth('manage_settings');
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput ?: '[]', true);
