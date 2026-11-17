@@ -1230,6 +1230,21 @@ function getEntryEditorData($includeFieldHtml = false) {
     if (!$collectionSlug) {
         return ['error' => 'Collection parameter required'];
     }
+
+    if (!empty($entryId) && empty($subEntryId) && empty($subCollectionSlug)) {
+        require_once __DIR__ . '/../core/entry_storage.php';
+        $resolvedEntryId = birkly_entry_resolve_record_id($collectionSlug, (string) $entryId);
+        if ($resolvedEntryId !== null) {
+            $entryId = $resolvedEntryId;
+        } elseif (!birkly_entry_record_exists($collectionSlug, (string) $entryId)) {
+            return [
+                'error' => 'Entry not found',
+                'entry_not_found' => true,
+                'collection' => $collectionSlug,
+                'requested_entry' => (string) ($_GET['entry'] ?? ''),
+            ];
+        }
+    }
     
     // Get collection data
     $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
@@ -1864,6 +1879,8 @@ function getEntriesData() {
 
     if ($params['sort'] !== '') {
         $entries = birkly_admin_sort_entries($entries, $params['sort'], $params['order'], $collectionData);
+    } else {
+        $entries = birkly_admin_sort_entries($entries, 'updated_at', 'desc', $collectionData);
     }
 
     $totalEntries = count($entries);

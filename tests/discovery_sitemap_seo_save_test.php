@@ -104,6 +104,10 @@ assert_true($missingHome === false, 'home page with <title> not flagged missing'
 @rmdir($projectRoot . '/project');
 @rmdir($projectRoot . '/settings');
 @rmdir($projectRoot);
+echo "==> Homepage canonical URL uses trailing slash only\n";
+assert_true(birkly_seo_canonical_url('/') === 'https://example.test/', 'canonical / is site root');
+assert_true(birkly_seo_canonical_url('/index.html') === 'https://example.test/', 'canonical /index.html maps to site root');
+
 echo "==> Discovery admin title edit uses modal prompt\n";
 $discoveryJs = (string) file_get_contents($root . '/admin/js/discovery.js');
 assert_true(str_contains($discoveryJs, 'BirklyFeedback.prompt'), 'discovery.js uses BirklyFeedback.prompt');

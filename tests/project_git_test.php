@@ -263,6 +263,19 @@ exec('git --git-dir=' . escapeshellarg($bare) . ' ls-tree -r --name-only main 2>
 assert_true('deleted file removed from remote', !in_array('about.html', $remoteFiles, true));
 assert_true('remaining files still tracked', in_array('index.html', $remoteFiles, true));
 
+echo PHP_EOL . 'pull preview deleted files' . PHP_EOL;
+$gitB->fetch();
+$deletePreview = $gitB->pullPreview('main');
+$deletedRow = null;
+foreach ($deletePreview as $row) {
+    if (($row['path'] ?? '') === 'about.html') {
+        $deletedRow = $row;
+        break;
+    }
+}
+assert_true('preview lists remote deletions', $deletedRow !== null);
+assert_true('deletion state is deleted', ($deletedRow['state'] ?? '') === 'deleted');
+
 // ---------------------------------------------------------------------------
 // Conflicts — both sides changed the same file
 // ---------------------------------------------------------------------------

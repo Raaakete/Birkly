@@ -79,6 +79,38 @@ function birkly_entry_record_exists(string $collectionSlug, string $entryId): bo
     );
 }
 
+/**
+ * Resolve an entry id from a stored id or public slug (admin deep links).
+ */
+function birkly_entry_resolve_record_id(string $collectionSlug, string $idOrSlug): ?string
+{
+    $idOrSlug = trim($idOrSlug);
+    if ($idOrSlug === '') {
+        return null;
+    }
+    if (birkly_entry_record_exists($collectionSlug, $idOrSlug)) {
+        return $idOrSlug;
+    }
+
+    require_once __DIR__ . '/entry_slug.php';
+    $needle = birkly_normalize_slug($idOrSlug);
+    if ($needle === '') {
+        return null;
+    }
+
+    foreach (birkly_entry_list_records($collectionSlug) as $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if (birkly_entry_matches_slug($entry, $needle)) {
+            $id = trim((string) ($entry['id'] ?? ''));
+            return $id !== '' ? $id : null;
+        }
+    }
+
+    return null;
+}
+
 function birkly_entry_write_record(string $collectionSlug, string $entryId, array $entryData): bool
 {
     $entryData['id'] = $entryId;
