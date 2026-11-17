@@ -18,12 +18,20 @@ function birkly_resolve_cms_version_string(): string
  * CMS version used when evaluating plugin requires_birkly / requires.
  *
  * Alpha and beta installs may ship a low distribution label (e.g. 0.0.1) while
- * still running the 1.x plugin API. Pre-release channels floor sub-1.0 labels
- * to 1.0.0 for compatibility checks only (display version is unchanged).
+ * still running the 1.x plugin API. Pre-release channels floor other sub-1.0
+ * labels to 1.0.0 for compatibility checks only (display version is unchanged).
+ *
+ * The repo and v0.0.1-alpha zip use VERSION **0.0.1** as a distribution label;
+ * plugin compatibility is evaluated as **1.1.0** so Hub installs (e.g. Events >=1.1.0)
+ * match current main.
  */
 function birkly_cms_version_for_plugin_compat(): string
 {
-    $version = birkly_resolve_cms_version_string();
+    $version = trim(birkly_resolve_cms_version_string());
+
+    if ($version === '0.0.1') {
+        return '1.1.0';
+    }
 
     if (!function_exists('birkly_ops_release_channel')) {
         $opsPath = dirname(__DIR__) . '/platform_ops.php';
