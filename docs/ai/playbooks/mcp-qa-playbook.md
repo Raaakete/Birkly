@@ -2,6 +2,8 @@
 
 Use when auditing **inbound MCP** on a staging or production CMS: exercise `tools/list`, named tools, `cms_admin_action`, and plugin `*_admin_action` surfaces; record PASS/FAIL without destructive calls.
 
+**Not for casual site builds.** The harness below is for regression audits; normal work uses direct MCP tools — see `mcp-direct-execution`.
+
 **Live reference (test host):** `project/mcp-qa.html` + `project/mcp-qa-matrix.json` on `test.birkly.cloud` (written via MCP). Ops write-up: `Birkly-Marketplace` → `internal/planning/reviews/P91-mcp-full-tool-audit-*.md`.
 
 ## When to use

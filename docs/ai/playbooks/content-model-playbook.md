@@ -8,6 +8,8 @@ Use for: collections, entries, schema design, publishing, bulk content, slug rul
 - **Entry** = one item (a blog post, a team member). JSON file under `entries/`.
 - **Slug** = URL-safe id. Rules: lowercase, `[a-z0-9-]`, underscores normalized to hyphens.
 
+**Inbound MCP:** Paths above describe on-disk layout for operators. **Do not edit them in git or via shell.** Use `create_collection`, `update_collection`, `create_entry`, and `update_entry` (see `mcp-direct-execution`).
+
 ## Before you write
 
 1. `list_collections` once — note existing slugs and fields.

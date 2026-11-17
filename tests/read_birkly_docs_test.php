@@ -31,7 +31,7 @@ $coreTopics = [
     'sub-collections', 'site-building', 'site-delivery', 'web-project-patterns', 'playbooks-index',
     'ai-quality-guide', 'fieldtypes', 'collection-groups',
     'content-model', 'public-forms',
-    'agent-guide', 'webmcp-tools', 'mcp-setup', 'ai-connections', 'plugins-overview',
+    'agent-guide', 'webmcp-tools', 'mcp-setup', 'mcp-capabilities', 'mcp-direct-execution', 'mcp-qa', 'ai-connections', 'plugins-overview',
     'media', 'cms-pages', 'content-editor', 'settings-roles',
 ];
 

@@ -184,6 +184,7 @@ eval_assert(
 
 $mcpInit = birkly_ai_mcp_initialize_instructions();
 eval_assert('MCP init mentions ai-quality-guide', str_contains($mcpInit, 'ai-quality-guide'));
+eval_assert('MCP init mentions mcp-direct-execution', str_contains($mcpInit, 'mcp-direct-execution'));
 eval_assert('MCP init mentions list_plugins', str_contains($mcpInit, 'list_plugins'));
 eval_assert('MCP init mentions known bad patterns / entry for', str_contains($mcpInit, '{entry for}'));
 

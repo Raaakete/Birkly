@@ -45,7 +45,7 @@ Shared bot with **fixed role** (e.g. always Editor). Admin creates under Connect
 
 ## Recommended first prompt in external AI
 
-> Read birkly://documentation and birkly://docs/mcp-capabilities. Then list my collections and plugins.
+> Get project info and list collections and plugins. Build with MCP tools (create_entry, write_project_file) — do not write seed scripts. If unsure, read birkly://docs/mcp-direct-execution once.
 
 ## Plugin MCP tools
 

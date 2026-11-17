@@ -12,6 +12,7 @@ Read this when you want reliable, production-ready results — especially for ca
 4. **Execute, don't narrate** — Use tool actions. Do not claim files were written without a successful tool result.
 5. **One discovery pass per turn** — If playbooks or project discovery are pre-loaded in the system prompt, do not call `get_project_info` / `list_project_files` again unless the user changed something.
 6. **Verify wiring** — Every templated HTML page needs `<script src="/birkly-client.js"></script>`. List pages loop; detail pages use URL slug context (no collection loop on detail).
+7. **MCP direct execution** — On inbound MCP, use `tools/call` for every write. Do not shell out, curl the API, or edit `content/` JSON for tenant work. Repeat tools or use `cms_bulk_entry_action` for bulk — see `mcp-direct-execution`.
 
 ## Decision flow (every task)
 
@@ -40,6 +41,7 @@ User request
 | Wrong dates / ordering | Phantom helpers | `{created_at format "…"}`; `ordered by newest` / `ordered="newest"` |
 | Form vs load phantom | Confused `{entry…}` | Forms: `{entry for 'slug'}`; load entry: `{from … get entry …}` |
 | Wrong field type in schema | Guessing types | `read_birkly_docs` topic `fieldtypes` |
+| Agent wrote seed PHP/shell instead of MCP | Repo engineer habit | `read_birkly_docs` `mcp-direct-execution`; call `create_entry` / `write_project_file` |
 
 ## Cross-reference map (where to read depth)
 

@@ -43,6 +43,7 @@ If a tool call is allowed by the role and passes approval settings, playbooks do
 | `webmcp-tools` | Agent Guide Tools tab: WebMCP visitor actions, form allowlist, hosting snippets |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
 | `mcp-capabilities` | MCP tool families, plugin tools, allow_public_read, fieldtype picks |
+| `mcp-direct-execution` | Use MCP tools/call for writes; no shell/seed scripts for tenant work |
 | `mcp-qa` | Full MCP tool audit, analytics via admin actions, `mcp-qa.html` harness |
 | `mcp-troubleshooting` | OAuth failures, stale tools/list, two approval channels, reconnect |
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
@@ -123,6 +124,7 @@ Sell / automate / members?
 └─ Login & registration → user-management
 
 AI connectivity?
+├─ Inbound MCP — avoid scripting → mcp-direct-execution (then mcp-capabilities)
 ├─ Chat inside admin → ai-connections (Settings → AI)
 ├─ Claude/Cursor/ChatGPT → mcp-setup (Settings → AI)
 ├─ Brand facts for external AI → agent-guide (Guide · Tools · Publish)

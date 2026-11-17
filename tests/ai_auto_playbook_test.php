@@ -113,6 +113,11 @@ assert_true(
     && str_contains($mcpInstructions, 'write_project_file')
     && str_contains($mcpInstructions, 'detail pages')
 );
+assert_true(
+    'MCP instructions include direct execution guidance',
+    str_contains($mcpInstructions, 'mcp-direct-execution')
+    && str_contains($mcpInstructions, 'DIRECT EXECUTION')
+);
 
 // Project discovery gate
 assert_true(
