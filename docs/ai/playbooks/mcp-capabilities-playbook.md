@@ -2,6 +2,8 @@
 
 Use when connected via MCP and you need to know what Birkly can do, which tool to call, or how plugin extensions expose extra tools.
 
+**Start with `mcp-direct-execution` if you are tempted to script, curl, or edit files under `content/`** — MCP tools are the write path.
+
 Playbooks suggest good workflows; **your connection's role** and **approval settings** define what you can run.
 
 ## Three AI surfaces
@@ -133,9 +135,10 @@ Workflow for CMS images: `list_media` or `upload_media` → set field on `create
 ## Recommended MCP session start
 
 1. `get_project_info` + `list_collections` (once per session)
-2. `read_birkly_docs` topic `playbooks-index` if task is unfamiliar
+2. Execute with tools — `create_collection` / `create_entry` / `write_project_file` (see `site-building`); call each tool directly, no local runners
 3. `list_plugins` when user mentions shop, workflows, events, or members
-4. Execute — follow the user's intent; use approval queue when the connection requires it
+4. `read_birkly_docs` only when stuck (`mcp-direct-execution`, `playbooks-index`, or a task playbook)
+5. Client-app approval when the connection requires it for writes
 
 ## Common pitfalls (tips)
 

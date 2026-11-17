@@ -138,6 +138,13 @@ function birkly_ai_core_playbook_catalog(): array
             'triggers' => 'mcp tools, what can you do, plugin tools, allow public read, commerce tools',
             'category' => 'AI & integration',
         ],
+        'mcp-direct-execution' => [
+            'title' => 'MCP direct execution (no scripting)',
+            'topic' => 'mcp-direct-execution',
+            'summary' => 'Use MCP tools/call for writes; no shell/PHP/curl harnesses or content/ file edits for tenant work.',
+            'triggers' => 'mcp direct, stop scripting, seed script, harness, curl loop, edit json files, token waste',
+            'category' => 'AI & integration',
+        ],
         'mcp-qa' => [
             'title' => 'MCP full-tool QA',
             'topic' => 'mcp-qa',
@@ -224,6 +231,7 @@ function birkly_ai_core_docs_topics(): array
         'webmcp-tools' => $playbook('webmcp-tools-playbook.md', 'Website tools (WebMCP) playbook'),
         'mcp-setup' => $playbook('mcp-setup-playbook.md', 'MCP setup playbook'),
         'mcp-capabilities' => $playbook('mcp-capabilities-playbook.md', 'MCP capabilities playbook'),
+        'mcp-direct-execution' => $playbook('mcp-direct-execution-playbook.md', 'MCP direct execution playbook'),
         'mcp-qa' => $playbook('mcp-qa-playbook.md', 'MCP full-tool QA'),
         'mcp-troubleshooting' => $playbook('mcp-troubleshooting-playbook.md', 'MCP troubleshooting playbook'),
         'ai-connections' => $playbook('ai-connections-playbook.md', 'Built-in AI assistant playbook'),
@@ -311,6 +319,7 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
         'user-management' => '/\b(user registration|member registration|member login|site users|logged-in members)\b/i',
         'mcp-setup' => '/\b(mcp|connect claude|connect cursor|connect chatgpt|connector url|model context protocol)\b/i',
         'mcp-capabilities' => '/\b(mcp tools?|what can (?:you|mcp)|plugin tools?|allow_public_read|commerce_list|automation_list)\b/i',
+        'mcp-direct-execution' => '/\b(direct execution|seed script|harness script|stop scripting|mcp harness|edit content\/|curl loop|batch script)\b/i',
         'mcp-qa' => '/\b(mcp qa|mcp audit|full[- ]tool audit|cms_admin_search|analytics\.data|mcp-qa|test all mcp)\b/i',
         'mcp-troubleshooting' => '/\b(mcp (?:won\'?t|doesn\'?t) connect|oauth fail|permission denied|stale tools?|reconnect mcp|always allow|approvals? tab.*mcp)\b/i',
         'ai-connections' => '/\b(built-in assistant|ai connection|approvals tab|floating chat)\b/i',
@@ -410,8 +419,15 @@ function birkly_ai_mcp_initialize_instructions(): string
     $header = "You are connected to a Birkly CMS instance via MCP.\n"
         . "Users may give very short prompts (e.g. \"build me a bakery website\") — aim to deliver a complete Birkly project site when that is what they want.\n\n";
 
+    $directExecution = "DIRECT EXECUTION (inbound MCP — required for tenant/site work):\n"
+        . "- Use MCP tools/call for all writes: create_entry, write_project_file, cms_admin_action, commerce_*, automation_*, etc.\n"
+        . "- Do NOT write PHP/bash/curl harnesses, seed scripts, or edit content/collections/** on disk for CMS or site tasks.\n"
+        . "- Repeating the same tool N times is correct; use cms_bulk_entry_action or entries.bulk only for real bulk.\n"
+        . "- Built-in admin chat {\"actions\":[...]} batching is NOT MCP — one tool per tools/call.\n"
+        . "- read_birkly_docs \"mcp-direct-execution\" for anti-patterns; \"mcp-capabilities\" for tool map.\n\n";
+
     $rules = "GUIDANCE (role permissions + MCP approval settings are authoritative — playbooks are tips, not extra restrictions):\n"
-        . "- playbooks-index and ai-quality-guide when unsure; adapt patterns to the project\n"
+        . "- mcp-direct-execution and ai-quality-guide when unsure; playbooks-index for routing\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
         . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, mcp-capabilities, public-forms, web-project-patterns — when not pre-loaded below\n"
         . "- Admin help topics link to playbooks via ai_topic (e.g. entries→content-model, mcp-connections→mcp-setup)\n"
@@ -428,7 +444,7 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- Playbooks below are pre-loaded — inspiration and Birkly-specific behavior, not a permission layer\n"
         . "- After a Birkly upgrade, reconnect the MCP client or call tools/list again — some clients cache tool schemas from initialize\n\n";
 
-    return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
+    return trim($header . $directExecution . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
 }
 
 /**

@@ -100,7 +100,7 @@ Always read plugin ai-context **after** confirming plugin is active — fieldtyp
 
 1. `list_plugins` — Automation + Commerce?
 2. `read_birkly_docs` `automation`
-3. Workflow CRUD is **Automation admin UI** — AI guides user; no workflow write tool
+3. When Automation is active, workflow CRUD via MCP: `automation_*` tools and `automation_admin_action` (admin UI also available)
 
 ### “Add member login”
 

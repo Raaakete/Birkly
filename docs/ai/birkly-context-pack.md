@@ -9,7 +9,7 @@ Step-by-step runbooks for complex tasks. System prompt lists all slugs; load dep
 - **`ai-quality-guide`** — how to produce reliable outputs; read when unsure
 - **`playbooks-index`** — master routing & decision tree
 - **Core:** `content-model`, `fieldtypes`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `collection-groups`, `cms-pages`, `media`, `content-editor`
-- **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
+- **AI:** `mcp-direct-execution`, `mcp-capabilities`, `agent-guide`, `mcp-setup`, `ai-connections`
 - **Plugins:** `plugins-overview`, `commerce`, `commerce-store-kit`, `automation`, `events`, `user-management`
 - **Admin:** `settings-roles`
 
@@ -80,10 +80,12 @@ Static HTML/CSS/JS for the public site lives under **`project/`** (not in collec
 - `update_sub_entry`: `collection`, `entry_id`, `sub_collection`, `sub_entry_id`, `data`
 - `delete_sub_entry`: `collection`, `entry_id`, `sub_collection`, `sub_entry_id`
 
-**Format:**
+**Format (built-in admin chat executor only — not inbound MCP):**
 ```json
 {"actions":[{"type":"list_entries","data":{"collection":"blog"},"description":"List blog entries"}]}
 ```
+
+Inbound **MCP** uses one `tools/call` per action (same underlying registry, no `actions[]` batch). See playbook **`mcp-direct-execution`**.
 
 There is **no** `create_user` action — direct users to Settings → Users.
 
