@@ -75,9 +75,27 @@ $draft['identity']['official_name'] = 'Verify Co';
 $draft['publication_settings']['enabled'] = true;
 birkly_ai_presence_save_draft($draft);
 birkly_ai_presence_publish();
+$shallow = birkly_discovery_verify_checks(false);
+$shallowSeoDeep = 0;
+foreach ($shallow as $check) {
+    if (($check['pack'] ?? '') === 'seo' && str_starts_with((string) ($check['id'] ?? ''), 'seo_missing_title_')) {
+        $shallowSeoDeep++;
+    }
+}
+assert_true($shallowSeoDeep === 0, 'shallow verify skips per-page SEO health');
+
 $verify = birkly_discovery_run_verify();
 assert_true($verify['ok'] === true, 'verify runs');
 assert_true(count($verify['checks']) >= 3, 'verify has checks');
+$deepSeo = 0;
+foreach ($verify['checks'] as $check) {
+    if (($check['pack'] ?? '') === 'seo' && str_starts_with((string) ($check['id'] ?? ''), 'seo_')) {
+        $deepSeo++;
+    }
+}
+assert_true($deepSeo >= 2, 'deep verify includes SEO checks');
+$cached = birkly_discovery_load();
+assert_true(is_array($cached['verify_cache'] ?? null), 'verify caches SEO health rows');
 $map = birkly_discovery_url_map();
 assert_true(isset($map['for_agents_md']), 'url map has for_agents_md key');
 
