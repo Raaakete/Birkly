@@ -40,6 +40,7 @@
 
       var HUB_ZONES = ['guide', 'tools', 'publish'];
     var discoveryEmbed = false;
+    var discoveryEmbedInitialZone = null;
 
     function settingsAiUrl() {
         if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
@@ -3313,7 +3314,11 @@
             switchZone(getInitialZone(), { updateUrl: false });
         });
 
-        switchZone(getInitialZone(), { updateUrl: false });
+        if (discoveryEmbed) {
+            switchZone(discoveryEmbedInitialZone || 'guide', { updateUrl: false });
+        } else {
+            switchZone(getInitialZone(), { updateUrl: false });
+        }
     }
 
     function badge(el, text, tone) {
@@ -3758,6 +3763,7 @@
     global.initAiPresence = function (config) {
         config = config || {};
         discoveryEmbed = !!config.discoveryEmbed;
+        discoveryEmbedInitialZone = discoveryEmbed ? (config.initialHubZone || 'guide') : null;
         if (!isAiPresencePage()) return;
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
@@ -3770,6 +3776,15 @@
         initWizard();
         initPublishFeedback();
         initAssistTabs();
+        if (discoveryEmbed) {
+            document.addEventListener('birkly:discovery-zone', function (event) {
+                if (!event.detail || !event.detail.embedVisible) return;
+                if (state.meta) return;
+                load().catch(function (err) {
+                    toast(err.message || t('ag_js_failed_load_presence', 'Failed to load AI Presence'), 'error');
+                });
+            });
+        }
         window.addEventListener('birkly:ai-connection-changed', function () {
             loadAiConnections();
         });

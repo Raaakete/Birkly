@@ -17,6 +17,7 @@ if (!in_array($__disc_tab, ['seo', 'agent-guide', 'webmcp'], true)) {
     $__disc_tab = 'seo';
 }
 $__disc_seo = is_array($__disc_bootstrap['seo'] ?? null) ? $__disc_bootstrap['seo'] : [];
+$__disc_seo_url_rows = is_array($discovery_seo_url_rows ?? null) ? $discovery_seo_url_rows : [];
 $__seo_def = is_array($__disc_seo['defaults'] ?? null) ? $__disc_seo['defaults'] : [];
 $__seo_adv = is_array($__disc_seo['advanced'] ?? null) ? $__disc_seo['advanced'] : [];
 $__seo_delivery_mode = (string) ($__disc_seo['delivery']['mode'] ?? 'auto_inject');
@@ -188,7 +189,33 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             </tr>
                         </thead>
                         <tbody id="disc-seo-url-tbody">
+<?php if ($__disc_seo_url_rows === []): ?>
                             <tr class="disc-url-empty"><td colspan="5">{translate 'admin.discovery_seo_url_map_empty'}</td></tr>
+<?php else: ?>
+<?php foreach ($__disc_seo_url_rows as $__url_row):
+    $__url_type = (string) ($__url_row['type'] ?? 'page');
+    $__url_file = (string) ($__url_row['project_file'] ?? $__url_row['file'] ?? '');
+    $__url_title = $__url_type === 'redirect'
+        ? (string) ($__url_row['redirect_status'] ?? $__url_row['title'] ?? '301')
+        : (string) ($__url_row['title'] ?? '—');
+    $__url_list_title = (string) ($__url_row['listing_title'] ?? $__url_row['label'] ?? $__url_row['url'] ?? '');
+    $__url_list_sub = (string) ($__url_row['listing_subtitle'] ?? $__url_row['url'] ?? '');
+    $__url_type_label = match ($__url_type) {
+        'page' => __('admin.discovery_seo_type_page'),
+        'detail' => __('admin.discovery_seo_type_detail'),
+        'redirect' => __('admin.discovery_seo_type_redirect'),
+        default => $__url_type,
+    };
+?>
+                            <tr data-ssr-url-row="1">
+                                <td><?php if ($__url_type === 'redirect' || $__url_file === ''): ?><span class="u-fg-secondary">—</span><?php else: ?><span class="disc-site-file" title="<?= htmlspecialchars($__url_file, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($__url_file, ENT_QUOTES, 'UTF-8') ?></span><?php endif; ?></td>
+                                <td><div class="disc-url-listing-title"><?= htmlspecialchars($__url_list_title, ENT_QUOTES, 'UTF-8') ?></div><div class="disc-url-listing-sub"><code><?= htmlspecialchars($__url_list_sub, ENT_QUOTES, 'UTF-8') ?></code></div></td>
+                                <td><span class="chip"><?= htmlspecialchars($__url_type_label, ENT_QUOTES, 'UTF-8') ?></span></td>
+                                <td><?= htmlspecialchars($__url_title, ENT_QUOTES, 'UTF-8') ?></td>
+                                <td class="cell-actions"><span class="u-fg-secondary">…</span></td>
+                            </tr>
+<?php endforeach; ?>
+<?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -385,9 +412,9 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_AMP
     );
     if ($discBootstrapJson !== false) {
-        echo '<textarea id="disc-bootstrap-data" hidden readonly>'
-            . htmlspecialchars($discBootstrapJson, ENT_NOQUOTES, 'UTF-8')
-            . '</textarea>';
+        // Raw JSON only — htmlspecialchars breaks JSON.parse(); guard </textarea> breakout instead.
+        $discBootstrapSafe = str_replace('</textarea>', '<\/textarea>', $discBootstrapJson);
+        echo '<textarea id="disc-bootstrap-data" hidden readonly>' . $discBootstrapSafe . '</textarea>';
     }
 } ?>
 {include_style 'pages/discovery.css'}
