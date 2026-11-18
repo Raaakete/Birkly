@@ -7,7 +7,11 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require_once $root . '/core/site_seo.php';
+require_once $root . '/core/site_seo_url_map.php';
+require_once $root . '/core/site_seo_json_ld.php';
 require_once $root . '/core/discovery.php';
+require_once $root . '/core/ai_presence.php';
+require_once $root . '/core/hosting_urls.php';
 
 $failures = 0;
 
@@ -75,6 +79,76 @@ assert_true(stripos($injectedPage, '<title>Custom About Title</title>') !== fals
 
 echo "==> Signature part\n";
 assert_true(str_starts_with(birkly_site_seo_signature_part(), 'seo'), 'signature part prefix');
+
+echo "==> Detail page JSON-LD graph\n";
+$hostingBackup = is_file($root . '/settings/hosting.json') ? file_get_contents($root . '/settings/hosting.json') : null;
+birkly_hosting_persist([
+    'cms_base_url' => 'https://cms.example.test',
+    'public_site_mode' => 'project',
+    'public_site_url' => 'https://birkly.example.test',
+]);
+birkly_discovery_save_pack('agent_guide', ['enabled' => true]);
+birkly_ai_presence_reset_for_tests();
+$draft = birkly_ai_presence_default_draft();
+$draft['identity']['official_name'] = 'Birkly';
+$draft['identity']['short_description'] = 'Lightweight CMS for the modern web.';
+$draft['identity']['website'] = 'https://birkly.example.test';
+$draft['identity']['social_profiles'] = [
+    ['platform' => 'github', 'url' => 'https://github.com/Raaakete/Birkly'],
+    ['platform' => 'x', 'url' => 'https://x.com/birkly'],
+];
+$draft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draft);
+assert_true(($resultAg = birkly_ai_presence_publish())['ok'] ?? false, 'agent guide publish for json-ld test');
+
+$config = birkly_site_seo_load();
+$config['defaults']['description'] = 'Site-wide SEO description.';
+$config['defaults']['og_image'] = 'https://birkly.example.test/brand-og.png';
+$config['delivery']['surfaces']['json_ld_article'] = true;
+birkly_site_seo_save($config);
+birkly_site_seo_publish();
+
+$detailContext = [
+    'page_title' => 'Plain PHP in 2026',
+    'entry_title' => 'Plain PHP in 2026',
+    'meta_description' => 'Post excerpt must not become Organization description.',
+    'canonical' => 'https://birkly.example.test/blog-post.html?collection=blog&slug=plain-php',
+    'is_detail' => true,
+    'collection_slug' => 'blog',
+    'entry_date_published' => '2026-01-15T10:00:00+00:00',
+    'entry_date_modified' => '2026-02-01T12:00:00+00:00',
+    'entry_author' => 'Birkly Team',
+    'entry_image_url' => 'https://birkly.example.test/media/hero.webp',
+    'og_image' => 'https://birkly.example.test/media/hero.webp',
+];
+$detailHtml = '<!DOCTYPE html><html><head></head><body></body></html>';
+$detailInjected = birkly_site_seo_inject_head($detailHtml, $detailContext);
+$orgCount = substr_count($detailInjected, '"@type":"Organization"')
+    + substr_count($detailInjected, '"@type": "Organization"');
+assert_true($orgCount === 1, 'single Organization node in JSON-LD');
+assert_true(str_contains($detailInjected, '#organization'), 'Organization has stable @id');
+assert_true(str_contains($detailInjected, 'Site-wide SEO description'), 'Organization uses site description');
+assert_true(!str_contains($detailInjected, 'Post excerpt must not become Organization description')
+    || str_contains($detailInjected, '"description":"Post excerpt'), 'excerpt only on article not org');
+assert_true(str_contains($detailInjected, 'BlogPosting'), 'blog detail uses BlogPosting');
+assert_true(str_contains($detailInjected, 'datePublished'), 'article has datePublished');
+assert_true(str_contains($detailInjected, 'dateModified'), 'article has dateModified');
+assert_true(str_contains($detailInjected, 'Birkly Team'), 'article has author');
+assert_true(str_contains($detailInjected, 'github.com/Raaakete/Birkly'), 'Organization has sameAs');
+assert_true(stripos($detailInjected, 'property="og:type" content="article"') !== false, 'og:type article on detail');
+assert_true(stripos($detailInjected, 'article:published_time') !== false, 'article published time meta');
+
+$stacked = birkly_ai_presence_inject_discovery_into_html($detailInjected);
+$orgCountAfterAg = substr_count($stacked, '"@type":"Organization"')
+    + substr_count($stacked, '"@type": "Organization"');
+assert_true($orgCountAfterAg === 1, 'Agent Guide inject does not duplicate Organization JSON-LD');
+
+if ($hostingBackup !== null) {
+    file_put_contents($root . '/settings/hosting.json', $hostingBackup);
+} elseif (is_file($root . '/settings/hosting.json')) {
+    @unlink($root . '/settings/hosting.json');
+}
+birkly_ai_presence_reset_for_tests();
 
 if ($seoBackup !== null) {
     file_put_contents($seoPath, $seoBackup);
