@@ -13,6 +13,27 @@
 .discovery-page[data-birch] [hidden],
 .disc-hub .tab-panel[hidden] { display: none; }
 
+/* Embed + loading overlays must never intercept clicks on SEO / tab chrome. */
+#disc-ap-embed[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+#disc-ap-embed {
+  position: relative;
+}
+
+.ap-hub--discovery-embed .ap-ai-loading {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-raised);
+}
+
+.ap-hub--discovery-embed .ap-ai-loading[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 /* Page bar slot */
 .disc-page-bars > .disc-page-bar > .main-actions-bar { margin-block-end: var(--s-4); }
 

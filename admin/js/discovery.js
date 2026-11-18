@@ -251,6 +251,9 @@
         var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
 
         embed.hidden = !showEmbed;
+        if (!showEmbed && typeof global.resetAgentGuideUiChrome === 'function') {
+            global.resetAgentGuideUiChrome();
+        }
         // Agent Guide publish bar only on the Agent Guide tab — WebMCP saves inline via its own API.
         syncPageBars(zone);
         document.dispatchEvent(new CustomEvent('birkly:discovery-zone', { detail: { zone: zone, embedVisible: showEmbed } }));
@@ -304,17 +307,23 @@
     function initHubZones() {
         var tablist = $('#disc-hub-tablist');
         if (!tablist) return;
-        tablist.addEventListener('click', function (e) {
-            var btn = e.target.closest('[data-disc-zone]');
-            if (!btn || !tablist.contains(btn)) return;
-            if (btn.tagName === 'A') {
-                e.preventDefault();
-            }
-            switchZone(btn.getAttribute('data-disc-zone'));
-        });
+        if (tablist.getAttribute('data-disc-hub-bound') !== '1') {
+            tablist.setAttribute('data-disc-hub-bound', '1');
+            tablist.addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-disc-zone]');
+                if (!btn || !tablist.contains(btn)) return;
+                var zone = btn.getAttribute('data-disc-zone');
+                if (!zone) return;
+                if (btn.tagName === 'A') {
+                    e.preventDefault();
+                }
+                switchZone(zone);
+            });
+        }
         state.activeZone = getInitialZone();
         syncApEmbed(state.activeZone);
     }
+
 
     function setTabDot(id, ok) {
         var dot = $('#disc-tab-dot-' + id);
