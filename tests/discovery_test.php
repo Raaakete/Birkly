@@ -120,6 +120,29 @@ $discoveryPage = getDiscoveryPageData();
 assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
 assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
 
+echo "==> Discovery template render\n";
+require_once $root . '/admin/template_parser.php';
+require_once $root . '/core/i18n.php';
+require_once $root . '/core/icons.php';
+if (!function_exists('admin_url')) {
+    function admin_url(string $page, array $params = []): string
+    {
+        return birkly_admin_url($page, $params);
+    }
+}
+I18n::init();
+$_GET['tab'] = 'seo';
+$discoveryHtml = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true($discoveryHtml !== '', 'discovery template renders');
+assert_true(
+    preg_match('/id="disc-page-bars"[\s\S]*id="disc-ag-bar"/', $discoveryHtml) === 1,
+    'agent guide bar is inside disc-page-bars'
+);
+assert_true(
+    preg_match('/id="disc-ap-embed"[\s\S]*id="disc-ag-bar"/', $discoveryHtml) !== 1,
+    'agent guide bar is not inside disc-ap-embed'
+);
+
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
 assert_true($code === 0, 'discovery.php syntax');

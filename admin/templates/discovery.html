@@ -48,6 +48,20 @@ $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
     </div>
+    <div class="disc-page-bar" id="disc-ag-bar"<?= $__disc_ag_bar_visible ? '' : ' hidden' ?>>
+<?php
+$stickySaveBarSaveId = 'ai-presence-publish-btn';
+$stickySaveBarSaveLabel = __('admin.publish_ai_presence');
+$stickySaveBarMessageId = 'ai-presence-message';
+$stickySaveBarMessageClass = 'message';
+$stickySaveBarSaveClass = 'button is-main';
+$stickySaveBarExtraActionHtml = '<button type="button" class="button" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="button is-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
+$stickySaveBarRightHtml = '<button type="button" class="button is-quiet is-small" id="ap-about-agent-guide-btn">' . birkly_icon('info') . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
+    . '<button type="button" class="button is-quiet is-small" id="ap-setup-guide-btn">' . birkly_icon('wand') . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
+include $stickyTplDir . '/components/sticky-save-bar.php';
+?>
+    </div>
 </div>
 
 <div class="disc-hub">
@@ -349,24 +363,12 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 <!-- Shared Agent Guide / WebMCP editor (embed) -->
 <div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed"<?= $__disc_ap_embed_visible ? '' : ' hidden' ?>>
-<div class="disc-page-bar" id="disc-ag-bar"<?= $__disc_ag_bar_visible ? '' : ' hidden' ?>>
 <?php
-$stickySaveBarSaveId = 'ai-presence-publish-btn';
-$stickySaveBarSaveLabel = __('admin.publish_ai_presence');
-$stickySaveBarMessageId = 'ai-presence-message';
-$stickySaveBarMessageClass = 'message';
-$stickySaveBarSaveClass = 'button is-main';
-$stickySaveBarExtraActionHtml = '<button type="button" class="button" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
-    . '<button type="button" class="button is-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
-$stickySaveBarRightHtml = '<button type="button" class="button is-quiet is-small" id="ap-about-agent-guide-btn">' . birkly_icon('info') . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
-    . '<button type="button" class="button is-quiet is-small" id="ap-setup-guide-btn">' . birkly_icon('wand') . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
-include $stickyTplDir . '/components/sticky-save-bar.php';
-echo '</div>';
 if (!function_exists('render_template_file')) {
     require_once dirname($stickyTplDir) . '/template_parser.php';
 }
-echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', []);
+echo render_template_file($stickyTplDir . '/partials/ap-hub-body.php', []);
 ?>
 </div>
 
