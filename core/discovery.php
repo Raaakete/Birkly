@@ -381,6 +381,26 @@ function birkly_discovery_save_pack(string $packId, array $patch): array
 }
 
 /**
+ * @return array{draft: array, meta: array, completeness: array, public_urls: array, cms_diff: array, publish_state: array}
+ */
+function birkly_discovery_agent_guide_hydrate(): array
+{
+    require_once __DIR__ . '/ai_presence.php';
+    require_once __DIR__ . '/ai_presence_pro.php';
+
+    $draft = birkly_ai_presence_load_draft();
+
+    return [
+        'draft' => $draft,
+        'meta' => birkly_ai_presence_load_meta(),
+        'completeness' => birkly_ai_presence_completeness($draft),
+        'public_urls' => birkly_ai_presence_public_urls(),
+        'cms_diff' => birkly_ai_presence_cms_sync_diff($draft),
+        'publish_state' => birkly_ai_presence_publish_state($draft),
+    ];
+}
+
+/**
  * Aggregated pack status for the Discovery admin strip.
  *
  * @return array<string, mixed>
@@ -442,6 +462,7 @@ function birkly_discovery_status(): array
     $seoConfig = birkly_site_seo_load();
 
     return [
+        'agent_guide_hydrate' => birkly_discovery_agent_guide_hydrate(),
         'packs' => $packs,
         'hosting' => [
             'public_site_mode' => $mode,

@@ -158,6 +158,10 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     assert_true(strpos($bootRaw, '&quot;') === false, 'discovery bootstrap is raw JSON (no HTML entity quotes)');
     $bootJson = json_decode($bootRaw, true);
     assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
+    assert_true(
+        is_array($bootJson['agent_guide_hydrate']['draft'] ?? null),
+        'discovery bootstrap embeds agent guide draft hydrate'
+    );
 }
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
 $_GET['tab'] = 'agent-guide';
