@@ -1277,6 +1277,25 @@ function birkly_analytics_purge_expired(?int $retentionDays = null): int
         }
     }
 
+    if ($deleted > 0 && function_exists('birkly_analytics_db_connect')) {
+        $dbPath = __DIR__ . '/analytics_db.php';
+        if (is_file($dbPath)) {
+            require_once $dbPath;
+            $cutoffDay = date('Y-m-d', $cutoffTs);
+            $pdo = birkly_analytics_db_connect();
+            if ($pdo instanceof PDO) {
+                try {
+                    $pdo->prepare('DELETE FROM analytics_events WHERE event_day < :cutoff')
+                        ->execute([':cutoff' => $cutoffDay]);
+                    $pdo->prepare('DELETE FROM analytics_daily_rollup WHERE event_day < :cutoff')
+                        ->execute([':cutoff' => $cutoffDay]);
+                } catch (Throwable $e) {
+                    // Best-effort — JSON retention is source of truth.
+                }
+            }
+        }
+    }
+
     return $deleted;
 }
 
