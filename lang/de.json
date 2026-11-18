@@ -3054,6 +3054,8 @@
         "analytics_bar_outbound_links": "Ausgehende Links",
         "analytics_bar_plugin_events": "Plugin-Ereignisse",
         "analytics_bar_referrers": "Verweisende Seiten",
+        "analytics_bar_ai_sources": "KI & Assistenten",
+        "analytics_ai_traffic_note": "KI-zugeordnete Seitenaufrufe (Referrer, Kampagnen-Tags oder bekannte KI-Crawler)",
         "analytics_bar_top_pages": "Meistaufgerufene Seiten",
         "analytics_bar_traffic_sources": "Traffic-Quellen",
         "analytics_consent_required_help": "Für diese Voreinstellung ist ein Besucher-Einwilligungsbanner erforderlich.",

@@ -3054,6 +3054,8 @@
         "analytics_bar_outbound_links": "外部リンク",
         "analytics_bar_plugin_events": "プラグインイベント",
         "analytics_bar_referrers": "参照元",
+        "analytics_bar_ai_sources": "AI・アシスタント",
+        "analytics_ai_traffic_note": "AI 由来のページビュー（参照元・キャンペーンタグ・既知の AI クローラー）",
         "analytics_bar_top_pages": "上位ページ",
         "analytics_bar_traffic_sources": "トラフィックソース",
         "analytics_consent_required_help": "このプリセットには、訪問者の同意バナーが必要です。",

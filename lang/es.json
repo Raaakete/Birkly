@@ -3052,6 +3052,8 @@
         "analytics_bar_outbound_links": "Enlaces salientes",
         "analytics_bar_plugin_events": "Eventos de plugins",
         "analytics_bar_referrers": "Referentes",
+        "analytics_bar_ai_sources": "IA y asistentes",
+        "analytics_ai_traffic_note": "Vistas atribuidas a IA (referentes, etiquetas de campaña o rastreadores de IA conocidos)",
         "analytics_bar_top_pages": "Páginas principales",
         "analytics_bar_traffic_sources": "Fuentes de tráfico",
         "analytics_consent_required_help": "Este ajuste predefinido exige el aviso de consentimiento de los visitantes.",

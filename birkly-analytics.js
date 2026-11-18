@@ -102,9 +102,70 @@
         return config.consent || '';
     }
 
+    function readConsentPrefs() {
+        const parts = (document.cookie || '').split(';');
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i].trim();
+            if (p.indexOf('birkly_analytics_consent_prefs=') === 0) {
+                try {
+                    return JSON.parse(decodeURIComponent(p.slice('birkly_analytics_consent_prefs='.length)));
+                } catch (err) {
+                    return null;
+                }
+            }
+        }
+        if (window.BirklyAnalytics && window.BirklyAnalytics.consentPrefs) {
+            return window.BirklyAnalytics.consentPrefs;
+        }
+        return null;
+    }
+
+    function consentAllowsAnyDetail() {
+        const consent = readConsentCookie();
+        if (consent === 'granted' || consent === '1' || consent === true) {
+            return true;
+        }
+        if (consent !== 'custom') {
+            return false;
+        }
+        const prefs = readConsentPrefs();
+        if (!prefs || typeof prefs !== 'object') {
+            return false;
+        }
+        return !!(prefs.sessions || prefs.devices || prefs.campaigns || prefs.events);
+    }
+
     function consentGranted() {
         const consent = readConsentCookie();
         return consent === 'granted' || consent === '1' || consent === true;
+    }
+
+    function consentPrefEnabled(key) {
+        if (consentGranted()) {
+            return true;
+        }
+        const consent = readConsentCookie();
+        if (consent !== 'custom') {
+            return false;
+        }
+        const prefs = readConsentPrefs();
+        return !!(prefs && prefs[key]);
+    }
+
+    function eventsAllowedByConsent() {
+        if (!eventsEnabled()) {
+            return false;
+        }
+        if (!consentRequired()) {
+            return true;
+        }
+        if (consentGranted()) {
+            return true;
+        }
+        if (readConsentCookie() === 'custom') {
+            return consentPrefEnabled('events');
+        }
+        return false;
     }
 
     function consentRequired() {
@@ -133,8 +194,14 @@
         if (publicConfig && publicConfig.collecting === false) {
             return false;
         }
-        if (consentRequired() && !consentGranted()) {
+        if (consentRequired() && !consentGranted() && !consentAllowsAnyDetail()) {
             return allowsAnonymousPageView(payload);
+        }
+        if (consentRequired() && readConsentCookie() === 'custom') {
+            const eventType = String((payload && payload.event_type) || 'page_view').toLowerCase();
+            if (eventType !== 'page_view' && eventType !== 'pageview' && eventType !== '' && eventType !== 'page_exit' && eventType !== 'not_found') {
+                return consentPrefEnabled('events');
+            }
         }
         return true;
     }
@@ -155,27 +222,61 @@
             return;
         }
         const consent = readConsentCookie();
-        const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payload);
+        const anonymous = consentRequired() && !consentGranted() && !consentAllowsAnyDetail() && allowsAnonymousPageView(payload);
+        const prefs = readConsentPrefs();
         if (anonymous) {
+            const ref = document.referrer || '';
             payload = {
                 tracking_id: trackingId,
                 domain: window.location.hostname,
                 path: window.location.pathname + window.location.search,
                 event_type: 'page_view',
                 consent: 'anonymous',
-                consent_state: 'anonymous'
+                consent_state: 'anonymous',
+                referrer: ref
             };
         } else {
             if (consent) {
                 payload.consent = consent;
             }
+            if (prefs && consent === 'custom') {
+                payload.consent_prefs = prefs;
+            }
             if (consentRequired()) {
-                payload.consent_state = consentGranted() ? 'granted' : 'anonymous';
+                if (consentGranted()) {
+                    payload.consent_state = 'granted';
+                } else if (consent === 'custom') {
+                    payload.consent_state = 'custom';
+                } else {
+                    payload.consent_state = 'anonymous';
+                }
             } else {
                 payload.consent_state = 'not_required';
             }
-            if (!anonymous && (consentGranted() || !consentRequired())) {
+            if (consentPrefEnabled('sessions') || consentGranted() || !consentRequired()) {
                 payload.visitor_token = getVisitorToken();
+            }
+            if (!consentPrefEnabled('sessions') && !consentGranted() && consent === 'custom') {
+                delete payload.session_id;
+                delete payload.visitor_token;
+            }
+            if (!consentPrefEnabled('devices') && !consentGranted() && consent === 'custom') {
+                delete payload.screen_width;
+                delete payload.screen_height;
+                delete payload.viewport_width;
+                delete payload.viewport_height;
+                delete payload.language;
+                delete payload.timezone;
+            }
+            if (!consentPrefEnabled('campaigns') && !consentGranted() && consent === 'custom') {
+                delete payload.utm_source;
+                delete payload.utm_medium;
+                delete payload.utm_campaign;
+                delete payload.utm_term;
+                delete payload.utm_content;
+                if (!payload.referrer) {
+                    payload.referrer = document.referrer || '';
+                }
             }
         }
 
@@ -251,7 +352,7 @@
     }
 
     function bindAdvancedEvents() {
-        if (!eventsEnabled()) {
+        if (!eventsAllowedByConsent()) {
             return;
         }
         document.addEventListener('click', function (e) {
@@ -311,7 +412,7 @@
         });
 
         document.addEventListener('birkly:analytics-consent', function (e) {
-            if (e && e.detail && e.detail.consent === 'granted') {
+            if (e && e.detail && (e.detail.consent === 'granted' || e.detail.consent === 'custom')) {
                 trackPageView();
             }
         });

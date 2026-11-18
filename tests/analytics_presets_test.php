@@ -61,8 +61,15 @@ try {
     ], 'example.com', '203.0.113.4', time());
     ap_assert('anonymous keeps path', is_array($anonymous) && ($anonymous['path'] ?? '') === '/pricing');
     ap_assert('anonymous strips session', is_array($anonymous) && !isset($anonymous['session_id']));
-    ap_assert('anonymous strips referrer', is_array($anonymous) && !isset($anonymous['referrer']));
+    ap_assert('anonymous keeps referrer host for AI', is_array($anonymous) && ($anonymous['referrer_host'] ?? '') === 'google.com');
     ap_assert('anonymous keeps visitor_day_key', is_array($anonymous) && isset($anonymous['visitor_day_key']));
+
+    require_once dirname(__DIR__) . '/core/analytics_consent.php';
+    ap_assert('advanced consent ui', birkly_analytics_save_settings(['preset' => 'advanced']) && birkly_analytics_consent_ui_mode() === 'advanced');
+    ap_assert('custom consent partial', birkly_analytics_consent_allows_full_tracking([
+        'mode' => 'custom',
+        'prefs' => ['sessions' => false, 'devices' => false, 'campaigns' => true, 'events' => false],
+    ]) === true);
 
     ap_assert('save advanced', birkly_analytics_save_settings(['preset' => 'advanced']));
     ap_assert('advanced allows outbound', birkly_analytics_allows_event('outbound_click') === true);

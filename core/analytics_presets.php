@@ -225,7 +225,14 @@ function birkly_analytics_apply_anonymous_page_view_filter(
         $path = '/';
     }
 
-    return [
+    $referrer = trim((string) ($event['referrer'] ?? ''));
+    $referrerHost = trim((string) ($event['referrer_host'] ?? ''));
+    if ($referrerHost === '' && $referrer !== '') {
+        $parsedHost = parse_url($referrer, PHP_URL_HOST);
+        $referrerHost = is_string($parsedHost) ? strtolower($parsedHost) : '';
+    }
+
+    $filtered = [
         'timestamp' => $timestamp,
         'event_type' => 'page_view',
         'path' => $path,
@@ -233,6 +240,28 @@ function birkly_analytics_apply_anonymous_page_view_filter(
         'visitor_day_key' => hash('sha256', 'vd:' . $trackingId . ':' . date('Y-m-d', $timestamp) . ':' . $ip),
         'consent_state' => 'anonymous',
     ];
+
+    if ($referrerHost !== '') {
+        $filtered['referrer'] = $referrerHost;
+        $filtered['referrer_host'] = $referrerHost;
+    }
+
+    if (!function_exists('birkly_analytics_detect_ai_attribution')) {
+        $aiPath = __DIR__ . '/analytics_ai.php';
+        if (is_file($aiPath)) {
+            require_once $aiPath;
+        }
+    }
+    if (function_exists('birkly_analytics_detect_ai_attribution')) {
+        $ai = birkly_analytics_detect_ai_attribution($referrer, $referrerHost, '', '', '');
+        if ($ai['is_ai']) {
+            $filtered['ai_source'] = $ai['ai_source'];
+            $filtered['ai_channel'] = $ai['ai_channel'];
+            $filtered['is_ai'] = true;
+        }
+    }
+
+    return $filtered;
 }
 
 /**

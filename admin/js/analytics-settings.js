@@ -377,6 +377,12 @@
                 '</li>';
         }
 
+        var aiViews = Number(bot.ai_page_views) || 0;
+        var aiNote = aiViews > 0
+            ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_ai_traffic_note', 'AI-attributed page views (referrers, campaign tags, or known AI crawlers)')) +
+                ': <span class="u-numeric">' + formatCount(aiViews) + '</span></p>'
+            : '';
+
         var agents = Array.isArray(bot.top_bot_agents) ? bot.top_bot_agents : [];
         var agentBlock = agents.length
             ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_bot_agents_title', 'Top bot user agents')) + ': ' +
@@ -397,6 +403,7 @@
             (unknownDev > 0
                 ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_unknown_device_hint', '{count} views lacked device context (private browsers or minimal payloads).', { count: unknownDev })) + '</p>'
                 : '') +
+            aiNote +
             agentBlock +
             '</section>';
     }
@@ -697,9 +704,20 @@
         }
 
         if (tab === 'acquisition') {
+            var aiRows = Array.isArray(report.ai_sources) ? report.ai_sources.map(function (row) {
+                var src = String(row.source || '—');
+                var channel = String(row.channel || '');
+                if (channel) {
+                    src += ' (' + channel + ')';
+                }
+                return { source: src, visits: row.views || 0 };
+            }) : [];
             return sectionHeading(t('analytics_tab_acquisition', 'Acquisition'), t('analytics_section_content_sub', 'Where traffic comes from')) +
                 '<div class="analytics-panel-grid">' +
                 renderBarList(t('analytics_bar_traffic_sources', 'Traffic sources'), report.traffic_sources, 'source', 'visits') +
+                (isAdvanced() && aiRows.length
+                    ? renderBarList(t('analytics_bar_ai_sources', 'AI & assistants'), aiRows, 'source', 'visits')
+                    : '') +
                 renderBarList(t('analytics_bar_referrers', 'Referrers'), report.referrers, 'domain', 'visits') +
                 renderBarList(t('analytics_bar_campaigns', 'Campaigns'), report.campaigns, 'campaign', 'visits') +
                 ((preset === 'standard' || isAdvanced())
