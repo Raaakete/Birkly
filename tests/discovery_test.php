@@ -142,6 +142,8 @@ assert_true(
     preg_match('/id="disc-ap-embed"[\s\S]*id="disc-ag-bar"/', $discoveryHtml) !== 1,
     'agent guide bar is not inside disc-ap-embed'
 );
+assert_true(strpos($discoveryHtml, 'Template not found') === false, 'discovery embed has no missing partial');
+assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery embed includes agent guide hub');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
