@@ -218,9 +218,9 @@
             ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this metric means')) + '">' +
             '<span aria-hidden="true">?</span></button>'
             : '';
-        return '<article class="stat analytics-stat ' + modifier + '">' +
-            '<span class="stat-label analytics-stat__label">' + escapeHtml(label) + tipBtn + '</span>' +
-            '<span class="stat-value u-numeric">' + escapeHtml(String(value)) + '</span>' +
+        return '<article class="stat analytics-stat analytics-kpi-tile ' + modifier + '">' +
+            '<span class="stat-label analytics-stat__label analytics-kpi-tile__label">' + escapeHtml(label) + tipBtn + '</span>' +
+            '<span class="stat-value analytics-kpi-tile__value u-numeric">' + escapeHtml(String(value)) + '</span>' +
             '</article>';
     }
 
@@ -264,9 +264,11 @@
         function coverageCompact(title, tip, pct) {
             var p = Math.max(0, Math.min(100, Number(pct) || 0));
             return '<div class="analytics-data-health__chip">' +
-                '<span class="analytics-data-health__chip-label">' + escapeHtml(title) +
+                '<div class="analytics-data-health__chip-label">' +
+                '<span>' + escapeHtml(title) + '</span>' +
                 '<button type="button" class="analytics-metric-info is-tiny" data-tooltip="' + escapeHtml(tip) + '"' +
-                ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this means')) + '"><span aria-hidden="true">?</span></button></span>' +
+                ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this means')) + '"><span aria-hidden="true">?</span></button>' +
+                '</div>' +
                 '<span class="analytics-data-health__chip-value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
                 '<div class="meter analytics-data-health__chip-meter" style="--value:' + Math.max(2, Math.round(p)) + '"><span></span></div>' +
                 '</div>';
@@ -278,20 +280,31 @@
             defSummary = t('analytics_trust_defs_summary', 'Sessions group pages in one tab; visitors count people using tokens or session/day rules.');
         }
 
-        return '<aside class="analytics-data-health analytics-data-health--compact" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
-            '<div class="analytics-data-health__bar u-cluster u-justify-between u-gap-2 u-wrap">' +
-            '<span class="analytics-data-health__bar-title">' + escapeHtml(t('analytics_trust_title', 'How complete is your data?')) + '</span>' +
+        var hints = [];
+        if (tokenPct < 5) {
+            hints.push(escapeHtml(t('analytics_cov_token_zero_hint', 'Tokens appear after visitors accept the analytics banner on your public site (Standard or Advanced preset).')));
+        }
+        if (raw > 0 && indexed < raw) {
+            hints.push(escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })));
+        }
+        if (defSummary) {
+            hints.push(escapeHtml(defSummary));
+        }
+
+        return '<aside class="analytics-data-health" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
+            '<header class="analytics-data-health__header">' +
+            '<h4 class="analytics-data-health__heading">' + escapeHtml(t('analytics_trust_title', 'How complete is your data?')) + '</h4>' +
             '<span class="analytics-trust__badge analytics-trust__badge--' + escapeHtml(confidence) + '">' + escapeHtml(trustConfidenceLabel(confidence)) + '</span>' +
-            '<div class="analytics-data-health__chips">' +
+            '<button type="button" class="button is-small is-secondary analytics-data-health__rebuild" id="analytics-rebuild-index">' + escapeHtml(t('analytics_rebuild_index', 'Rebuild index')) + '</button>' +
+            '</header>' +
+            '<div class="analytics-data-health__metrics">' +
             coverageCompact(t('analytics_cov_sessions', 'Session ids'), t('analytics_cov_sessions_help', 'How often each hit includes a session id so visits can be grouped.'), coverage.has_session_pct) +
             coverageCompact(t('analytics_cov_ua', 'Browser & device'), t('analytics_cov_ua_help', 'How often we received enough browser data to show OS, browser, and screen size.'), coverage.has_ua_pct) +
             coverageCompact(t('analytics_cov_token', 'Visitor tokens'), t('analytics_cov_token_help', 'How often someone accepted analytics and received a privacy-safe token.'), coverage.has_visitor_token_pct) +
             '</div>' +
-            '<button type="button" class="button is-small is-secondary" id="analytics-rebuild-index">' + escapeHtml(t('analytics_rebuild_index', 'Rebuild index')) + '</button>' +
-            '</div>' +
-            (tokenPct < 5 ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_cov_token_zero_hint', 'Tokens appear after visitors accept the analytics banner on your public site (Standard or Advanced preset).')) + '</p>' : '') +
-            (raw > 0 && indexed < raw ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })) + '</p>' : '') +
-            (defSummary ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(defSummary) + '</p>' : '') +
+            (hints.length ? '<footer class="analytics-data-health__footnotes">' + hints.map(function (h) {
+                return '<p class="form-help u-m-0">' + h + '</p>';
+            }).join('') + '</footer>' : '') +
             '</aside>';
     }
 
@@ -591,8 +604,8 @@
         var totalViews = views.reduce(function (a, b) { return a + b; }, 0);
         var totalVisitors = visitors.reduce(function (a, b) { return a + b; }, 0);
         var max = Math.max(1, Math.max.apply(null, views.concat(visitors, ghostViews)));
-        var width = 640;
-        var height = 200;
+        var width = 1000;
+        var height = 220;
         var padX = 8;
         var innerWidth = width - padX * 2;
         var colW = slice.length > 0 ? innerWidth / slice.length : innerWidth;
@@ -634,7 +647,7 @@
             '</div></div>' +
             '<div class="analytics-chart-wrap">' +
             '<div class="analytics-chart-hover" id="analytics-chart-hover" hidden></div>' +
-            '<svg class="traffic-chart analytics-trend-svg" viewBox="0 0 ' + width + ' ' + (height + 20) + '" role="img" aria-label="' + escapeHtml(label) + '">' +
+            '<svg class="traffic-chart analytics-trend-svg" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 ' + width + ' ' + (height + 24) + '" role="img" aria-label="' + escapeHtml(label) + '">' +
             '<g class="analytics-chart-columns">' + columns + '</g>' +
             '<line class="analytics-chart-vline" x1="0" y1="0" x2="0" y2="' + height + '" hidden></line>' +
             (ghostPath ? '<path class="traffic-line is-ghost" d="' + ghostPath + '" pathLength="1"></path>' : '') +
