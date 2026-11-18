@@ -7,6 +7,22 @@ $__disc_wm_on = !empty($__disc_packs['webmcp']['enabled']);
 $__disc_seo_live = !empty($__disc_packs['seo']['live']);
 $__disc_ag_live = !empty($__disc_packs['agent_guide']['live']);
 $__disc_wm_live = !empty($__disc_packs['webmcp']['live']);
+$__disc_tab = isset($_GET['tab']) ? (string) $_GET['tab'] : 'seo';
+if ($__disc_tab === 'tools') {
+    $__disc_tab = 'webmcp';
+} elseif ($__disc_tab === 'guide' || $__disc_tab === 'publish' || $__disc_tab === 'agent_guide') {
+    $__disc_tab = 'agent-guide';
+}
+if (!in_array($__disc_tab, ['seo', 'agent-guide', 'webmcp'], true)) {
+    $__disc_tab = 'seo';
+}
+$__disc_seo = is_array($__disc_bootstrap['seo'] ?? null) ? $__disc_bootstrap['seo'] : [];
+$__seo_def = is_array($__disc_seo['defaults'] ?? null) ? $__disc_seo['defaults'] : [];
+$__seo_adv = is_array($__disc_seo['advanced'] ?? null) ? $__disc_seo['advanced'] : [];
+$__seo_delivery_mode = (string) ($__disc_seo['delivery']['mode'] ?? 'auto_inject');
+$__disc_seo_bar_visible = $__disc_seo_on && $__disc_tab === 'seo';
+$__disc_ag_bar_visible = $__disc_ag_on && $__disc_tab === 'agent-guide';
+$__disc_ap_embed_visible = ($__disc_tab === 'agent-guide' && $__disc_ag_on) || ($__disc_tab === 'webmcp' && $__disc_wm_on);
 ?>
 <div class="discovery-page" data-birch>
 <div class="page-header">
@@ -19,7 +35,7 @@ $__disc_wm_live = !empty($__disc_packs['webmcp']['live']);
 
 <!-- Page bar: the active pack's Publish / Save draft (discovery.js shows one) -->
 <div class="disc-page-bars" id="disc-page-bars">
-    <div class="disc-page-bar" id="disc-seo-bar"<?= $__disc_seo_on ? '' : ' hidden' ?>>
+    <div class="disc-page-bar" id="disc-seo-bar"<?= $__disc_seo_bar_visible ? '' : ' hidden' ?>>
 <?php
 $stickySaveBarSaveId = 'disc-seo-publish-btn';
 $stickySaveBarSaveLabel = __('admin.discovery_publish');
@@ -36,22 +52,22 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 <div class="disc-hub">
     <div class="tabs" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
-        <button type="button" class="tab active" role="tab" id="disc-tab-seo" data-disc-zone="seo" aria-controls="disc-panel-seo" aria-selected="true" tabindex="0">
+        <a class="tab<?= $__disc_tab === 'seo' ? ' active' : '' ?>" role="tab" id="disc-tab-seo" href="<?= htmlspecialchars(admin_url('discovery', ['tab' => 'seo']), ENT_QUOTES, 'UTF-8') ?>" data-disc-zone="seo" aria-controls="disc-panel-seo" aria-selected="<?= $__disc_tab === 'seo' ? 'true' : 'false' ?>" tabindex="<?= $__disc_tab === 'seo' ? '0' : '-1' ?>">
             <span>{translate 'admin.discovery_tab_seo'}</span>
             <span class="ap-tab-dot" id="disc-tab-dot-seo" data-ok="<?= $__disc_seo_live ? '1' : '0' ?>" aria-hidden="true"></span>
-        </button>
-        <button type="button" class="tab" role="tab" id="disc-tab-agent-guide" data-disc-zone="agent-guide" aria-controls="disc-panel-agent-guide" aria-selected="false" tabindex="-1">
+        </a>
+        <a class="tab<?= $__disc_tab === 'agent-guide' ? ' active' : '' ?>" role="tab" id="disc-tab-agent-guide" href="<?= htmlspecialchars(admin_url('discovery', ['tab' => 'agent-guide']), ENT_QUOTES, 'UTF-8') ?>" data-disc-zone="agent-guide" aria-controls="disc-panel-agent-guide" aria-selected="<?= $__disc_tab === 'agent-guide' ? 'true' : 'false' ?>" tabindex="<?= $__disc_tab === 'agent-guide' ? '0' : '-1' ?>">
             <span>{translate 'admin.discovery_tab_agent_guide'}</span>
             <span class="ap-tab-dot" id="disc-tab-dot-agent-guide" data-ok="<?= $__disc_ag_live ? '1' : '0' ?>" aria-hidden="true"></span>
-        </button>
-        <button type="button" class="tab" role="tab" id="disc-tab-webmcp" data-disc-zone="webmcp" aria-controls="disc-panel-webmcp" aria-selected="false" tabindex="-1">
+        </a>
+        <a class="tab<?= $__disc_tab === 'webmcp' ? ' active' : '' ?>" role="tab" id="disc-tab-webmcp" href="<?= htmlspecialchars(admin_url('discovery', ['tab' => 'webmcp']), ENT_QUOTES, 'UTF-8') ?>" data-disc-zone="webmcp" aria-controls="disc-panel-webmcp" aria-selected="<?= $__disc_tab === 'webmcp' ? 'true' : 'false' ?>" tabindex="<?= $__disc_tab === 'webmcp' ? '0' : '-1' ?>">
             <span>{translate 'admin.discovery_tab_webmcp'}</span>
             <span class="ap-tab-dot" id="disc-tab-dot-webmcp" data-ok="<?= $__disc_wm_live ? '1' : '0' ?>" aria-hidden="true"></span>
-        </button>
+        </a>
     </div>
 
     <!-- SEO pack -->
-    <div class="tab-panel active" id="disc-panel-seo" role="tabpanel" aria-labelledby="disc-tab-seo" data-disc-panel="seo">
+    <div class="tab-panel<?= $__disc_tab === 'seo' ? ' active' : '' ?>" id="disc-panel-seo" role="tabpanel" aria-labelledby="disc-tab-seo" data-disc-panel="seo"<?= $__disc_tab === 'seo' ? '' : ' hidden' ?>>
         <section class="module-header disc-pack-intro">
             <span class="module-header-icon"><?= birkly_icon('search') ?></span>
             <div class="module-header-body">
@@ -95,27 +111,27 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="disc-settings">
                 <div class="form-group">
                     <label for="disc-seo-site-title">{translate 'admin.discovery_seo_site_title'}</label>
-                    <input type="text" id="disc-seo-site-title" class="input" placeholder="Your business name">
+                    <input type="text" id="disc-seo-site-title" class="input" placeholder="Your business name" value="<?= htmlspecialchars((string) ($__seo_def['site_title'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <p class="form-help u-m-0">{translate 'admin.discovery_seo_site_title_help'}</p>
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-description">{translate 'admin.discovery_seo_description'}</label>
-                    <textarea id="disc-seo-description" class="input" rows="2"></textarea>
+                    <textarea id="disc-seo-description" class="input" rows="2"><?= htmlspecialchars((string) ($__seo_def['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-title-suffix">{translate 'admin.discovery_seo_title_suffix'}</label>
-                    <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}">
+                    <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}" value="<?= htmlspecialchars((string) ($__seo_def['title_suffix'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-og-image">{translate 'admin.discovery_seo_og_image'}</label>
-                    <input type="url" id="disc-seo-og-image" class="input" placeholder="https://…/share-image.jpg">
+                    <input type="url" id="disc-seo-og-image" class="input" placeholder="https://…/share-image.jpg" value="<?= htmlspecialchars((string) ($__seo_def['og_image'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <p class="form-help u-m-0">{translate 'admin.discovery_seo_og_image_help'}</p>
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-twitter-card">{translate 'admin.discovery_seo_twitter_card'}</label>
                     <select id="disc-seo-twitter-card" class="input">
-                        <option value="summary_large_image">{translate 'admin.discovery_seo_twitter_large'}</option>
-                        <option value="summary">{translate 'admin.discovery_seo_twitter_summary'}</option>
+                        <option value="summary_large_image"<?= ($__seo_def['twitter_card'] ?? 'summary_large_image') === 'summary_large_image' ? ' selected' : '' ?>>{translate 'admin.discovery_seo_twitter_large'}</option>
+                        <option value="summary"<?= ($__seo_def['twitter_card'] ?? '') === 'summary' ? ' selected' : '' ?>>{translate 'admin.discovery_seo_twitter_summary'}</option>
                     </select>
                 </div>
                 </div>
@@ -252,20 +268,21 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="disc-settings">
                 <div class="form-group">
                     <label for="disc-seo-robots">{translate 'admin.discovery_seo_robots'}</label>
+                    <?php $__seo_robots = (string) ($__seo_adv['robots'] ?? 'index,follow'); ?>
                     <select id="disc-seo-robots" class="input">
-                        <option value="index,follow">index, follow (recommended)</option>
-                        <option value="index,nofollow">index, nofollow</option>
-                        <option value="noindex,follow">noindex, follow</option>
-                        <option value="noindex,nofollow">noindex, nofollow</option>
+                        <option value="index,follow"<?= $__seo_robots === 'index,follow' ? ' selected' : '' ?>>index, follow (recommended)</option>
+                        <option value="index,nofollow"<?= $__seo_robots === 'index,nofollow' ? ' selected' : '' ?>>index, nofollow</option>
+                        <option value="noindex,follow"<?= $__seo_robots === 'noindex,follow' ? ' selected' : '' ?>>noindex, follow</option>
+                        <option value="noindex,nofollow"<?= $__seo_robots === 'noindex,nofollow' ? ' selected' : '' ?>>noindex, nofollow</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-google-verify">{translate 'admin.discovery_seo_google_verify'}</label>
-                    <input type="text" id="disc-seo-google-verify" class="input is-mono" placeholder="google-site-verification content value">
+                    <input type="text" id="disc-seo-google-verify" class="input is-mono" placeholder="google-site-verification content value" value="<?= htmlspecialchars((string) ($__seo_adv['google_site_verification'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-bing-verify">{translate 'admin.discovery_seo_bing_verify'}</label>
-                    <input type="text" id="disc-seo-bing-verify" class="input is-mono" placeholder="msvalidate.01 content value">
+                    <input type="text" id="disc-seo-bing-verify" class="input is-mono" placeholder="msvalidate.01 content value" value="<?= htmlspecialchars((string) ($__seo_adv['bing_site_verification'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                 </div>
                 </div>
             </section>
@@ -280,8 +297,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="form-group">
                     <label for="disc-seo-delivery-mode">{translate 'admin.discovery_delivery_mode'}</label>
                     <select id="disc-seo-delivery-mode" class="input">
-                        <option value="auto_inject">{translate 'admin.discovery_delivery_auto'}</option>
-                        <option value="manual">{translate 'admin.discovery_delivery_manual'}</option>
+                        <option value="auto_inject"<?= $__seo_delivery_mode === 'auto_inject' ? ' selected' : '' ?>>{translate 'admin.discovery_delivery_auto'}</option>
+                        <option value="manual"<?= $__seo_delivery_mode === 'manual' ? ' selected' : '' ?>>{translate 'admin.discovery_delivery_manual'}</option>
                     </select>
                 </div>
                 </div>
@@ -292,7 +309,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 
     <!-- Agent Guide pack -->
-    <div class="tab-panel" id="disc-panel-agent-guide" role="tabpanel" aria-labelledby="disc-tab-agent-guide" hidden data-disc-panel="agent-guide">
+    <div class="tab-panel<?= $__disc_tab === 'agent-guide' ? ' active' : '' ?>" id="disc-panel-agent-guide" role="tabpanel" aria-labelledby="disc-tab-agent-guide" data-disc-panel="agent-guide"<?= $__disc_tab === 'agent-guide' ? '' : ' hidden' ?>>
         <section class="module-header disc-pack-intro">
             <span class="module-header-icon"><?= birkly_icon('book') ?></span>
             <div class="module-header-body">
@@ -314,7 +331,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 
     <!-- WebMCP pack -->
-    <div class="tab-panel" id="disc-panel-webmcp" role="tabpanel" aria-labelledby="disc-tab-webmcp" hidden data-disc-panel="webmcp">
+    <div class="tab-panel<?= $__disc_tab === 'webmcp' ? ' active' : '' ?>" id="disc-panel-webmcp" role="tabpanel" aria-labelledby="disc-tab-webmcp" data-disc-panel="webmcp"<?= $__disc_tab === 'webmcp' ? '' : ' hidden' ?>>
         <section class="module-header disc-pack-intro">
             <span class="module-header-icon"><?= birkly_icon('zap') ?></span>
             <div class="module-header-body">
@@ -331,8 +348,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 </div>
 
 <!-- Shared Agent Guide / WebMCP editor (embed) -->
-<div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed" hidden>
-<div class="disc-page-bar" id="disc-ag-bar" hidden>
+<div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed"<?= $__disc_ap_embed_visible ? '' : ' hidden' ?>>
+<div class="disc-page-bar" id="disc-ag-bar"<?= $__disc_ag_bar_visible ? '' : ' hidden' ?>>
 <?php
 $stickySaveBarSaveId = 'ai-presence-publish-btn';
 $stickySaveBarSaveLabel = __('admin.publish_ai_presence');
@@ -372,7 +389,8 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_AMP
     );
     if ($discBootstrapJson !== false) {
-        echo '<script type="application/json" id="disc-bootstrap-data">' . $discBootstrapJson . '</script>';
+        $discBootstrapNonce = function_exists('birkly_csp_nonce_attr') ? birkly_csp_nonce_attr() : '';
+        echo '<script type="application/json" id="disc-bootstrap-data"' . $discBootstrapNonce . '>' . $discBootstrapJson . '</script>';
     }
 } ?>
 {include_style 'pages/discovery.css'}

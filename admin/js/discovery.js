@@ -232,7 +232,9 @@
             if (tab) {
                 tab.classList.toggle('active', active);
                 tab.setAttribute('aria-selected', active ? 'true' : 'false');
-                tab.tabIndex = active ? 0 : -1;
+                if (typeof tab.tabIndex !== 'undefined') {
+                    tab.tabIndex = active ? 0 : -1;
+                }
             }
             if (panel) {
                 panel.classList.toggle('active', active);
@@ -248,7 +250,10 @@
         if (!tablist) return;
         tablist.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-disc-zone]');
-            if (!btn) return;
+            if (!btn || !tablist.contains(btn)) return;
+            if (btn.tagName === 'A') {
+                e.preventDefault();
+            }
             switchZone(btn.getAttribute('data-disc-zone'));
         });
         switchZone(getInitialZone());
@@ -438,6 +443,7 @@
 
     function renderPackToggles(data) {
         if (!data || !data.packs) return;
+        var prevZone = state.activeZone;
         var map = {
             seo: '#disc-seo-enabled',
             agent_guide: '#disc-agent-guide-enabled',
@@ -466,11 +472,15 @@
 
         renderSeoForm(data);
         updateSeoStickyBar();
-        renderUrlMap(data.seo || state.seo);
-        renderDetailBindings(data.seo || state.seo);
+        try {
+            renderUrlMap(data.seo || state.seo);
+            renderDetailBindings(data.seo || state.seo);
+        } catch (urlMapErr) {
+            console.error('Discovery URL map render failed', urlMapErr);
+        }
         updateUrlMapToolbar();
 
-        syncApEmbed(state.activeZone);
+        syncApEmbed(prevZone || state.activeZone);
     }
 
     function renderVerifyChecks(checks, lastRun) {
@@ -1194,7 +1204,12 @@
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
-        applyBootstrap(readBootstrap());
+        try {
+            applyBootstrap(readBootstrap());
+        } catch (bootstrapErr) {
+            console.error('Discovery bootstrap render failed', bootstrapErr);
+            showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
+        }
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
