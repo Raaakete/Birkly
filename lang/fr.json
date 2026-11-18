@@ -3054,6 +3054,8 @@
         "analytics_bar_outbound_links": "Liens sortants",
         "analytics_bar_plugin_events": "Événements d'extension",
         "analytics_bar_referrers": "Sites référents",
+        "analytics_bar_ai_sources": "IA et assistants",
+        "analytics_ai_traffic_note": "Pages vues attribuées à l’IA (référents, tags de campagne ou robots IA connus)",
         "analytics_bar_top_pages": "Pages les plus consultées",
         "analytics_bar_traffic_sources": "Sources de trafic",
         "analytics_consent_required_help": "La bannière de consentement des visiteurs est requise pour ce préréglage.",
