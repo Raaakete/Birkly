@@ -155,6 +155,9 @@
         var hydrate = data && data.agent_guide_hydrate;
         if (!hydrate || typeof global.hydrateAgentGuideFromBootstrap !== 'function') return;
         global.hydrateAgentGuideFromBootstrap(hydrate);
+        if (typeof global.ensureDiscoveryAgentGuideReady === 'function') {
+            global.ensureDiscoveryAgentGuideReady();
+        }
     }
 
     function applyBootstrap(data) {
