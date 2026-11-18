@@ -15,7 +15,8 @@
         initialized: false,
         lastReport: null,
         periodDays: 30,
-        includeBots: false
+        includeBots: false,
+        reportTab: 'overview'
     };
 
     function apiUrl(path) {
@@ -196,7 +197,10 @@
                 markDirty();
                 if (state.lastReport) {
                     var panel = document.getElementById('analytics-report-panel');
-                    if (panel) panel.innerHTML = renderReport(state.lastReport);
+                    if (panel) {
+                        panel.innerHTML = renderReport(state.lastReport);
+                        bindReportChrome(panel);
+                    }
                 }
             });
         });
@@ -235,7 +239,7 @@
             var count = Number(row[valueKey]) || 0;
             var pct = Math.max(4, Math.round((count / max) * 100));
             var label = String(row[labelKey] || '—');
-            return '<li class="analytics-bar-row">' +
+            return '<li class="analytics-bar-row analytics-bar-row--interactive" tabindex="0" data-label="' + escapeHtml(label) + '" data-value="' + count + '" data-pct="' + pct + '">' +
                 '<div class="analytics-bar-row__meta">' +
                 '<span class="analytics-bar-row__label" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span>' +
                 '<span class="analytics-bar-row__value u-numeric">' + escapeHtml(String(count)) + '</span>' +
@@ -244,7 +248,7 @@
                 '<span class="analytics-bar-row__fill" style="width:' + pct + '%"></span>' +
                 '</div></li>';
         }).join('');
-        return '<section class="analytics-panel">' +
+        return '<section class="analytics-panel analytics-panel--interactive">' +
             '<h4 class="analytics-panel__title">' + escapeHtml(title) + '</h4>' +
             '<ul class="analytics-bar-list">' + items + '</ul></section>';
     }
@@ -263,19 +267,75 @@
         return !!(input && input.checked);
     }
 
-    function renderBotTraffic(bot) {
+    function renderTrafficQuality(bot) {
         bot = bot || {};
-        var botViews = Number(bot.bot_page_views) || 0;
         var humanViews = Number(bot.human_page_views) || 0;
-        if (botViews === 0 && humanViews === 0) {
+        var botViews = Number(bot.bot_page_views) || 0;
+        var suspected = Number(bot.suspected_bot_page_views) || 0;
+        var unknownDev = Number(bot.unknown_device_views) || 0;
+        var total = humanViews + botViews + suspected;
+        if (total === 0) {
             return '';
         }
-        return '<section class="analytics-panel analytics-panel--wide">' +
-            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_bot_traffic_title', 'Bot vs human traffic')) + '</h4>' +
-            '<div class="analytics-kpi-grid">' +
-            kpi(humanViews, t('analytics_kpi_human_views', 'Human page views'), t('analytics_kpi_human_views_hint', 'Excludes detected bots')) +
-            kpi(botViews, t('analytics_kpi_bot_views', 'Bot page views'), t('analytics_bot_sessions', 'Bot sessions: {count}', { count: Number(bot.bot_sessions) || 0 })) +
-            '</div></section>';
+
+        function qualityBar(label, count, modifier) {
+            var pct = Math.max(4, Math.round((count / Math.max(total, 1)) * 100));
+            return '<li class="analytics-quality-row analytics-quality-row--' + modifier + '">' +
+                '<div class="analytics-bar-row__meta">' +
+                '<span class="analytics-bar-row__label">' + escapeHtml(label) + '</span>' +
+                '<span class="analytics-bar-row__value u-numeric" data-count="' + count + '">' + escapeHtml(String(count)) + '</span>' +
+                '</div>' +
+                '<div class="analytics-bar-row__track"><span class="analytics-bar-row__fill" style="width:' + pct + '%"></span></div>' +
+                '</li>';
+        }
+
+        var agents = Array.isArray(bot.top_bot_agents) ? bot.top_bot_agents : [];
+        var agentList = agents.length
+            ? renderBarList(t('analytics_bot_agents_title', 'Top bot user agents'), agents, 'agent', 'views')
+            : '';
+
+        return '<section class="analytics-panel analytics-panel--wide analytics-panel--interactive">' +
+            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_traffic_quality_title', 'Traffic quality')) + '</h4>' +
+            '<p class="form-help">' + escapeHtml(t('analytics_traffic_quality_help', 'Human KPIs exclude confirmed and suspected automation. Enable “Include bot traffic” to count everything.')) + '</p>' +
+            '<ul class="analytics-bar-list analytics-quality-list">' +
+            qualityBar(t('analytics_kpi_human_views', 'Human page views'), humanViews, 'human') +
+            qualityBar(t('analytics_kpi_suspected_views', 'Suspected automation'), suspected, 'suspected') +
+            qualityBar(t('analytics_kpi_bot_views', 'Confirmed bots'), botViews, 'bot') +
+            '</ul>' +
+            (unknownDev > 0
+                ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_unknown_device_hint', 'Unknown device context on {count} views (often privacy browsers or incomplete payloads).', { count: unknownDev })) + '</p>'
+                : '') +
+            agentList +
+            '</section>';
+    }
+
+    function reportTabIds(preset) {
+        var tabs = [
+            { id: 'overview', label: t('analytics_tab_overview', 'Overview') },
+            { id: 'acquisition', label: t('analytics_tab_acquisition', 'Acquisition') },
+            { id: 'content', label: t('analytics_tab_content', 'Content') },
+            { id: 'technology', label: t('analytics_tab_technology', 'Technology') }
+        ];
+        if (preset === 'standard' || preset === 'advanced') {
+            tabs.push({ id: 'behavior', label: t('analytics_tab_behavior', 'Behavior') });
+        }
+        if (preset === 'advanced') {
+            tabs.push({ id: 'sessions', label: t('analytics_tab_sessions', 'Sessions') });
+        }
+        return tabs;
+    }
+
+    function renderReportTabs(preset) {
+        var tabs = reportTabIds(preset);
+        var items = tabs.map(function (tab) {
+            var active = state.reportTab === tab.id;
+            return '<button type="button" class="tab' + (active ? ' active' : '') + '" role="tab" aria-selected="' + (active ? 'true' : 'false') + '" data-report-tab="' + escapeHtml(tab.id) + '">' +
+                '<span class="nav-text">' + escapeHtml(tab.label) + '</span></button>';
+        }).join('');
+
+        return '<div class="analytics-report-tabs-wrap">' +
+            '<nav class="tabs analytics-report-tabs" role="tablist" aria-label="' + escapeHtml(t('analytics_report_tabs_label', 'Report sections')) + '">' + items + '</nav>' +
+            '<p class="form-help analytics-drill-hint">' + escapeHtml(t('analytics_drill_hint', 'Pick a section — details load here instead of one long page.')) + '</p></div>';
     }
 
     function renderTopPaths(paths) {
@@ -395,7 +455,8 @@
             var visitors = Number(row.visitors) || 0;
             var viewsPct = Math.max(6, Math.round((views / max) * 100));
             var visitorsPct = Math.max(4, Math.round((visitors / max) * 100));
-            return '<li class="analytics-trend-col" title="' + escapeHtml(t('analytics_trend_tooltip', '{date}: {views} page views, {visitors} visitors', { date: row.date || '', views: views, visitors: visitors })) + '">' +
+            var tip = t('analytics_trend_tooltip', '{date}: {views} page views, {visitors} visitors', { date: row.date || '', views: views, visitors: visitors });
+            return '<li class="analytics-trend-col analytics-trend-col--interactive" tabindex="0" role="button" title="' + escapeHtml(tip) + '" data-date="' + escapeHtml(String(row.date || '')) + '" data-views="' + views + '" data-visitors="' + visitors + '">' +
                 '<span class="analytics-trend-col__stack" aria-hidden="true">' +
                 '<span class="analytics-trend-col__bar analytics-trend-col__bar--views" style="height:' + viewsPct + '%"></span>' +
                 (isAdvanced()
@@ -403,6 +464,7 @@
                     : '') +
                 '</span>' +
                 '<span class="analytics-trend-col__label">' + escapeHtml(String(row.date || '').slice(5)) + '</span>' +
+                '<span class="analytics-trend-col__tip" aria-hidden="true">' + escapeHtml(tip) + '</span>' +
                 '</li>';
         }).join('');
         var legend = isAdvanced()
@@ -419,6 +481,85 @@
             '<ul class="analytics-trend-cols">' + bars + '</ul></section>';
     }
 
+    function renderReportTabBody(report, preset) {
+        var scope = selectedScope();
+        var scopeLabel = scope === 'all' ? t('analytics_scope_all', 'All enabled domains') : scope;
+        var periodDays = selectedPeriodDays();
+        var sub = t('analytics_section_overview_sub', 'Last {days} days · {scope}', { days: periodDays, scope: scopeLabel });
+        var tab = state.reportTab;
+
+        if (tab === 'overview') {
+            var overviewKpis = '<div class="analytics-kpi-grid">' +
+                kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Human-focused totals')) +
+                kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
+            if (preset !== 'minimal' && preset !== 'off') {
+                overviewKpis += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')) +
+                    kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
+            }
+            if (isAdvanced()) {
+                overviewKpis += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions'));
+            }
+            overviewKpis += '</div>';
+            return sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
+                overviewKpis + renderTrafficQuality(report.bot_traffic) + renderTrends(report.daily_stats);
+        }
+
+        if (tab === 'acquisition') {
+            return sectionHeading(t('analytics_tab_acquisition', 'Acquisition'), t('analytics_section_content_sub', 'Where traffic comes from')) +
+                '<div class="analytics-panel-grid">' +
+                renderBarList(t('analytics_bar_traffic_sources', 'Traffic sources'), report.traffic_sources, 'source', 'visits') +
+                renderBarList(t('analytics_bar_referrers', 'Referrers'), report.referrers, 'domain', 'visits') +
+                renderBarList(t('analytics_bar_campaigns', 'Campaigns'), report.campaigns, 'campaign', 'visits') +
+                ((preset === 'standard' || isAdvanced())
+                    ? renderBarList(t('analytics_bar_locations', 'Locations'), report.countries, 'country', 'visits')
+                    : '') +
+                '</div>';
+        }
+
+        if (tab === 'content') {
+            return sectionHeading(t('analytics_tab_content', 'Content'), t('analytics_section_content_sub', 'Where traffic lands')) +
+                '<div class="analytics-panel-grid">' +
+                renderBarList(t('analytics_bar_top_pages', 'Top pages'), report.top_pages, 'path', 'views') +
+                ((preset === 'standard' || isAdvanced())
+                    ? renderBarList(t('analytics_bar_entrance_pages', 'Entrance pages'), report.entrance_pages, 'path', 'entrances') +
+                    renderBarList(t('analytics_bar_exit_pages', 'Exit pages'), report.exit_pages, 'path', 'exits')
+                    : '') +
+                '</div>';
+        }
+
+        if (tab === 'technology') {
+            return sectionHeading(t('analytics_tab_technology', 'Technology'), t('analytics_section_audience_sub', 'Devices and clients')) +
+                '<div class="analytics-panel-grid">' +
+                renderBarList(t('analytics_bar_devices', 'Devices'), report.devices, 'device_type', 'visits') +
+                ((preset === 'standard' || isAdvanced())
+                    ? renderBarList(t('analytics_bar_browsers', 'Browsers'), report.browsers, 'browser', 'visits') +
+                    renderBarList(t('analytics_bar_operating_systems', 'Operating systems'), report.operating_systems, 'os', 'visits')
+                    : '') +
+                '</div>';
+        }
+
+        if (tab === 'behavior' && (preset === 'standard' || preset === 'advanced')) {
+            var body = sectionHeading(t('analytics_tab_behavior', 'Behavior'), t('analytics_section_audience_sub', 'Actions on the site')) +
+                '<div class="analytics-panel-grid">';
+            if (isAdvanced()) {
+                body += renderBarList(t('analytics_bar_outbound_links', 'Outbound links'), report.outbound_targets, 'url', 'clicks') +
+                    renderBarList(t('analytics_bar_forms', 'Forms'), report.forms, 'form', 'submits') +
+                    renderBarList(t('analytics_bar_plugin_events', 'Plugin events'), report.plugin_events, 'event', 'count') +
+                    renderTopPaths(report.top_paths || (report.journey && report.journey.paths));
+            }
+            body += '</div>';
+            return body;
+        }
+
+        if (tab === 'sessions' && preset === 'advanced') {
+            return sectionHeading(t('analytics_tab_sessions', 'Sessions'), t('analytics_section_visitors_sub', 'Pseudonymous footprints (Advanced)')) +
+                renderJourney(report.journey);
+        }
+
+        state.reportTab = 'overview';
+        return renderReportTabBody(report, preset);
+    }
+
     function renderReport(report) {
         report = report || {};
         var preset = selectedPreset();
@@ -427,63 +568,94 @@
         var help = document.getElementById('analytics-report-help');
         if (help) {
             help.textContent = isAdvanced()
-                ? t('analytics_report_help_advanced', 'Advanced report for {scope} — sessions, bounce, funnels, forms, outbound clicks, OS, and plugin events.', { scope: scopeLabel })
+                ? t('analytics_report_help_advanced', 'Use the section tabs to drill into acquisition, behavior, and per-session footprints for {scope}.', { scope: scopeLabel })
                 : t('analytics_report_help_standard', 'Combined snapshot for {scope}. Depth follows your preset.', { scope: scopeLabel });
         }
 
-        var html = '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">';
-
-        var periodDays = selectedPeriodDays();
-        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last {days} days · {scope}', { days: periodDays, scope: scopeLabel })) +
-            '<div class="analytics-kpi-grid">' +
-            kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Page loads only')) +
-            kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
-
-        if (preset !== 'minimal' && preset !== 'off') {
-            html += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')) +
-                kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
-        }
-        if (isAdvanced()) {
-            html += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions')) +
-                kpi((report.event_counts && report.event_counts.form_submit) || 0, t('analytics_kpi_form_submits', 'Form submits'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.outbound_click) || 0, t('analytics_kpi_outbound_clicks', 'Outbound clicks'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.not_found) || 0, t('analytics_kpi_not_found', '404 views'), t('analytics_kpi_not_found_hint', 'Missing pages'));
+        var allowed = reportTabIds(preset).map(function (x) { return x.id; });
+        if (allowed.indexOf(state.reportTab) === -1) {
+            state.reportTab = 'overview';
         }
 
-        html += '</div>' + renderBotTraffic(report.bot_traffic) + renderTrends(report.daily_stats);
+        return '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">' +
+            renderReportTabs(preset) +
+            '<div class="analytics-report-stage" id="analytics-report-stage" role="tabpanel">' +
+            renderReportTabBody(report, preset) +
+            '</div>' +
+            '<div id="analytics-hover-flyout" class="analytics-hover-flyout" hidden aria-live="polite"></div>' +
+            '</div>';
+    }
 
-        html += sectionHeading(t('analytics_section_content', 'Content & acquisition'), t('analytics_section_content_sub', 'Where traffic lands and comes from')) +
-            '<div class="analytics-panel-grid">' +
-            renderBarList(t('analytics_bar_top_pages', 'Top pages'), report.top_pages, 'path', 'views') +
-            renderBarList(t('analytics_bar_traffic_sources', 'Traffic sources'), report.traffic_sources, 'source', 'visits') +
-            renderBarList(t('analytics_bar_referrers', 'Referrers'), report.referrers, 'domain', 'visits') +
-            renderBarList(t('analytics_bar_devices', 'Devices'), report.devices, 'device_type', 'visits');
+    function bindReportChrome(container) {
+        if (!container) return;
+        bindSessionRowToggle(container);
 
-        if (preset === 'standard' || isAdvanced()) {
-            html += renderBarList(t('analytics_bar_entrance_pages', 'Entrance pages'), report.entrance_pages, 'path', 'entrances') +
-                renderBarList(t('analytics_bar_exit_pages', 'Exit pages'), report.exit_pages, 'path', 'exits') +
-                renderBarList(t('analytics_bar_campaigns', 'Campaigns'), report.campaigns, 'campaign', 'visits') +
-                renderBarList(t('analytics_bar_browsers', 'Browsers'), report.browsers, 'browser', 'visits') +
-                renderBarList(t('analytics_bar_locations', 'Locations'), report.countries, 'country', 'visits');
+        container.querySelectorAll('[data-report-tab]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var next = btn.getAttribute('data-report-tab');
+                if (!next || next === state.reportTab) return;
+                state.reportTab = next;
+                if (state.lastReport) {
+                    var stage = container.querySelector('#analytics-report-stage');
+                    var tabs = container.querySelector('.analytics-report-tabs');
+                    if (stage) {
+                        stage.innerHTML = renderReportTabBody(state.lastReport, selectedPreset());
+                    }
+                    if (tabs) {
+                        tabs.querySelectorAll('[data-report-tab]').forEach(function (tbtn) {
+                            var on = tbtn.getAttribute('data-report-tab') === state.reportTab;
+                            tbtn.classList.toggle('active', on);
+                            tbtn.setAttribute('aria-selected', on ? 'true' : 'false');
+                        });
+                    }
+                    bindSessionRowToggle(container);
+                    bindHoverFlyout(container);
+                }
+            });
+        });
+
+        bindHoverFlyout(container);
+    }
+
+    function bindHoverFlyout(container) {
+        var flyout = container.querySelector('#analytics-hover-flyout');
+        if (!flyout) return;
+
+        function showFlyout(target, html, clientX, clientY) {
+            flyout.innerHTML = html;
+            flyout.hidden = false;
+            flyout.style.left = Math.min(clientX + 12, window.innerWidth - 280) + 'px';
+            flyout.style.top = Math.max(24, clientY - 8) + 'px';
+            target.classList.add('is-hovered');
         }
-        html += '</div>';
 
-        if (isAdvanced()) {
-            html += sectionHeading(t('analytics_section_audience', 'Audience & events'), t('analytics_section_audience_sub', 'Advanced-only detail')) +
-                '<div class="analytics-panel-grid">' +
-                renderBarList(t('analytics_bar_operating_systems', 'Operating systems'), report.operating_systems, 'os', 'visits') +
-                renderBarList(t('analytics_bar_outbound_links', 'Outbound links'), report.outbound_targets, 'url', 'clicks') +
-                renderBarList(t('analytics_bar_forms', 'Forms'), report.forms, 'form', 'submits') +
-                renderBarList(t('analytics_bar_plugin_events', 'Plugin events'), report.plugin_events, 'event', 'count') +
-                '</div>';
-
-            html += renderTopPaths(report.top_paths || (report.journey && report.journey.paths));
-            html += renderJourney(report.journey);
+        function hideFlyout(target) {
+            flyout.hidden = true;
+            if (target) target.classList.remove('is-hovered');
         }
 
-        html += '</div>';
-        return html;
+        container.querySelectorAll('.analytics-trend-col--interactive').forEach(function (col) {
+            col.addEventListener('mouseenter', function (e) {
+                var html = '<strong>' + escapeHtml(col.getAttribute('data-date') || '') + '</strong><br>' +
+                    escapeHtml(t('analytics_flyout_views', '{count} page views', { count: col.getAttribute('data-views') || '0' })) + '<br>' +
+                    escapeHtml(t('analytics_flyout_visitors', '{count} visitors', { count: col.getAttribute('data-visitors') || '0' }));
+                showFlyout(col, html, e.clientX, e.clientY);
+            });
+            col.addEventListener('mouseleave', function () { hideFlyout(col); });
+        });
+
+        container.querySelectorAll('.analytics-bar-row--interactive').forEach(function (row) {
+            row.addEventListener('mouseenter', function (e) {
+                var label = row.getAttribute('data-label') || '';
+                var value = row.getAttribute('data-value') || '0';
+                var pct = row.getAttribute('data-pct') || '0';
+                var html = '<strong>' + escapeHtml(label) + '</strong><br>' +
+                    escapeHtml(t('analytics_flyout_count', '{count} events', { count: value })) + '<br>' +
+                    escapeHtml(t('analytics_flyout_share', '{pct}% of top in this list', { pct: pct }));
+                showFlyout(row, html, e.clientX, e.clientY);
+            });
+            row.addEventListener('mouseleave', function () { hideFlyout(row); });
+        });
     }
 
     function loadDomainsAndHealth() {
@@ -547,7 +719,7 @@
                 }
                 state.lastReport = payload.data || {};
                 panel.innerHTML = renderReport(state.lastReport);
-                bindSessionRowToggle(panel);
+                bindReportChrome(panel);
             })
             .catch(function (err) {
                 panel.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(err.message) + '</div>';

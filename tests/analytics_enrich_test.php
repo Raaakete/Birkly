@@ -153,4 +153,22 @@ $pageOnlyTrend = birkly_analytics_aggregate_events([
 assert_true(($pageOnlyTrend['daily_stats'][0]['views'] ?? 0) === 1, 'daily trend counts page views only');
 assert_true(($pageOnlyTrend['daily_stats'][0]['interactions'] ?? 0) === 1, 'daily trend counts form, click and plugin events as interactions');
 
+assert_true(birkly_analytics_is_bot_user_agent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'), 'googlebot detected');
+assert_true(birkly_analytics_traffic_class([
+    'event_type' => 'page_view',
+    'user_agent' => 'Mozilla/5.0 (compatible; Googlebot/2.1)',
+    'browser' => 'Chrome',
+    'device_type' => 'desktop',
+]) === 'bot', 'stored chrome UA still bot when googlebot');
+
+$suspected = birkly_analytics_traffic_class([
+    'event_type' => 'page_view',
+    'user_agent' => '',
+    'browser' => 'Unknown',
+    'os' => 'Unknown',
+    'device_type' => 'unknown',
+    'screen_width' => 0,
+]);
+assert_true($suspected === 'suspected', 'empty UA classified suspected');
+
 echo "analytics_enrich_test: OK\n";
