@@ -1433,6 +1433,9 @@
         try {
             initApEmbed();
             applyAgentGuideHydrate(state.status);
+            if (typeof global.repairDiscoveryEmbedHandlers === 'function') {
+                global.repairDiscoveryEmbedHandlers();
+            }
         } catch (embedErr) {
             console.error('Discovery embed init failed', embedErr);
             showMessage(embedErr.message || t('discovery_js_load_failed', 'Load failed'), true);

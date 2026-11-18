@@ -197,8 +197,26 @@
   align-items: start;
 }
 
-/* Source rows are .card card--sunken u-row-3; only the type glyph tile is
-   page-specific. */
+/* Source rows use .ap-source-row (not .card) so flex stays horizontal — .card
+   sets flex-direction: column and breaks the list layout. */
+.ap-source-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  list-style: none;
+}
+
+.ap-hub--discovery-embed .ap-card-list .ap-source-row {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
 .ap-source-card-icon {
   display: flex;
   align-items: center;
