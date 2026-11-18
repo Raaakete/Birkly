@@ -1240,14 +1240,13 @@
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
+        // Agent Guide / WebMCP editor loads via ai_presence.php — do not gate on discovery.get.
+        initApEmbed();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
-        load().then(function () {
-            initApEmbed();
-        }).catch(function (e) {
+        load().catch(function (e) {
             showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
-            initApEmbed();
         });
     }
 
