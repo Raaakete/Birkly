@@ -1367,7 +1367,6 @@
         var nav = embed.querySelector('.ap-guide-nav');
         if (!nav) return;
         nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
-            if (btn.tagName === 'A' || btn.getAttribute('data-disc-guide-link') === '1') return;
             if (btn.getAttribute('data-disc-nav-bound') === '1') return;
             btn.setAttribute('data-disc-nav-bound', '1');
             btn.addEventListener('click', function (e) {
@@ -1375,6 +1374,11 @@
                 if (!tab) return;
                 e.preventDefault();
                 switchDiscoveryGuideTab(tab);
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('guide_tab', tab);
+                    window.history.replaceState({}, '', url.toString());
+                } catch (urlErr) { /* ignore */ }
                 if (typeof global.showAgentGuideTab === 'function') {
                     global.showAgentGuideTab(tab);
                 } else if (typeof global.initAiPresence === 'function') {
@@ -1382,6 +1386,9 @@
                     if (typeof global.showAgentGuideTab === 'function') {
                         global.showAgentGuideTab(tab);
                     }
+                }
+                if (typeof global.repairDiscoveryEmbedHandlers === 'function') {
+                    global.repairDiscoveryEmbedHandlers();
                 }
             });
         });

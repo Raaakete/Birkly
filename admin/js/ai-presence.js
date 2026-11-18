@@ -113,6 +113,11 @@
     function toast(msg, type) {
         if (global.BirklyFeedback && global.BirklyFeedback.toast) {
             global.BirklyFeedback.toast(msg, type || 'info');
+            return;
+        }
+        var level = type === 'error' ? 'error' : (type === 'warning' ? 'warn' : 'log');
+        if (typeof console[level] === 'function') {
+            console[level]('[Agent Guide] ' + msg);
         }
     }
 
@@ -497,12 +502,11 @@
     }
 
     function apFormEl(id) {
+        var el = document.getElementById(id);
+        if (el) return el;
         var embed = document.getElementById('disc-ap-embed');
-        if (embed) {
-            var scoped = apQuerySelector(embed, id);
-            if (scoped) return scoped;
-        }
-        return document.getElementById(id);
+        if (embed) return apQuerySelector(embed, id);
+        return null;
     }
 
     function apModalEl(id) {
@@ -523,10 +527,37 @@
         return true;
     }
 
+    var DISCOVERY_MODAL_IDS = [
+        'ap-about-modal',
+        'ap-publish-success-modal',
+        'ap-product-modal',
+        'ap-relationship-modal',
+        'ap-claim-modal',
+        'ap-evidence-modal',
+        'ap-cms-evidence-modal',
+        'ap-media-modal'
+    ];
+
     function ensureDiscoveryModalsMounted() {
         var embed = document.getElementById('disc-ap-embed');
         if (!embed) return;
-        var modals = embed.querySelectorAll('.ap-modal[id]');
+        var seen = {};
+        var modals = [];
+        embed.querySelectorAll('.ap-modal[id]').forEach(function (modal) {
+            var mid = modal.id;
+            if (!mid || seen[mid]) return;
+            seen[mid] = true;
+            modals.push(modal);
+        });
+        if (!modals.length) {
+            DISCOVERY_MODAL_IDS.forEach(function (mid) {
+                var modal = document.getElementById(mid);
+                if (modal && modal.classList.contains('ap-modal') && !seen[mid]) {
+                    seen[mid] = true;
+                    modals.push(modal);
+                }
+            });
+        }
         modals.forEach(function (modal) {
             if (modal.parentNode === document.body) return;
             document.body.appendChild(modal);
@@ -537,7 +568,9 @@
     }
 
     function agentGuideModalsReady() {
-        return !!apFormEl('ap-claim-statement') && !!apFormEl('ap-evidence-title');
+        ensureDiscoveryModalsMounted();
+        return !!document.getElementById('ap-claim-statement')
+            && !!document.getElementById('ap-evidence-title');
     }
 
     function toastAgentGuideModalIncomplete() {
@@ -585,8 +618,9 @@
     function discoveryEmbedAllowsModals() {
         if (!inDiscoveryEmbed()) return true;
         var embed = document.getElementById('disc-ap-embed');
-        if (!embed || embed.hidden) return false;
-        return agentGuideVisible();
+        // Embed is only unhidden on Discovery Agent Guide / WebMCP tabs; do not
+        // re-check data-disc-tab here — it can lag one tick behind syncApEmbed.
+        return !!(embed && !embed.hidden);
     }
 
     function openApModal(id) {
@@ -1389,6 +1423,44 @@
         });
     }
 
+    function handleDiscoveryEmbedActionButton(btn) {
+        if (!btn || !btn.id) return false;
+        if (btn.id === 'ap-add-claim') {
+            openClaimModal(null);
+            return true;
+        }
+        if (btn.id === 'ap-add-evidence') {
+            openEvidenceModal(null);
+            return true;
+        }
+        if (btn.id === 'ap-add-cms-evidence') {
+            addCmsEvidence();
+            return true;
+        }
+        if (btn.id === 'ap-pick-media') {
+            openMediaPicker();
+            return true;
+        }
+        return false;
+    }
+
+    function bindDiscoveryEmbedDocumentCapture() {
+        if (global.__DISCOVERY_EMBED_DOC_CAPTURE__) return;
+        global.__DISCOVERY_EMBED_DOC_CAPTURE__ = true;
+        document.addEventListener('click', function (e) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (!embed || embed.hidden) return;
+            var target = e.target;
+            if (!target || !target.closest) return;
+            if (!embed.contains(target)) return;
+            var btn = target.closest('button[id]');
+            if (!btn || !embed.contains(btn)) return;
+            if (!handleDiscoveryEmbedActionButton(btn)) return;
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+    }
+
     function repairDiscoveryEmbedHandlers() {
         if (!document.getElementById('disc-ap-embed')) return;
         discoveryEmbed = true;
@@ -1402,6 +1474,7 @@
             embed.removeAttribute('data-ap-embed-capture');
         }
         bindDiscoveryEmbedCaptureClicks();
+        bindDiscoveryEmbedDocumentCapture();
         bindDiscoveryAgentGuideBarClicks();
         global.__AI_PRESENCE_EMBED_REPAIRED__ = true;
         if (!agentGuideModalsReady()) {
@@ -2526,6 +2599,8 @@
         var embed = document.getElementById('disc-ap-embed');
         if (!embed) return true;
         if (embed.hidden) return false;
+        var page = document.querySelector('.discovery-page[data-disc-tab]');
+        if (page && page.getAttribute('data-disc-tab') === 'agent-guide') return true;
         var zone = document.documentElement.getAttribute('data-disc-tab');
         if (!zone && document.body) {
             zone = document.body.getAttribute('data-admin-tab');
@@ -3186,7 +3261,7 @@
     function openClaimModal(idx) {
         if (!state.draft) state.draft = {};
         ensureDiscoveryModalsMounted();
-        if (!agentGuideModalsReady()) {
+        if (!apModalEl('ap-claim-modal')) {
             toastAgentGuideModalIncomplete();
             return;
         }
@@ -3242,7 +3317,7 @@
     function openEvidenceModal(idx) {
         if (!state.draft) state.draft = {};
         ensureDiscoveryModalsMounted();
-        if (!agentGuideModalsReady()) {
+        if (!apModalEl('ap-evidence-modal')) {
             toastAgentGuideModalIncomplete();
             return;
         }
@@ -4615,6 +4690,7 @@
         global.__AI_PRESENCE_INIT_COMPLETE__ = true;
         if (discoveryEmbed || document.getElementById('disc-ap-embed')) {
             bindDiscoveryEmbedCaptureClicks();
+            bindDiscoveryEmbedDocumentCapture();
             bindDiscoveryAgentGuideBarClicks();
         }
         if (discoveryEmbed) {
