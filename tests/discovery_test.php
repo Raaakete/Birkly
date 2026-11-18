@@ -163,6 +163,8 @@ assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery em
 $_GET['tab'] = 'agent-guide';
 $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(strpos($discoveryAg, 'data-tab="essentials"') !== false, 'agent guide embed has side nav tabs');
+assert_true(strpos($discoveryAg, 'data-disc-guide-link="1"') !== false, 'discovery embed guide nav uses real links');
+assert_true(strpos($discoveryAg, 'guide_tab=essentials') !== false, 'discovery guide nav links include guide_tab');
 $_GET['guide_tab'] = 'essentials';
 $discoveryAgEssentials = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(

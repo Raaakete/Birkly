@@ -1319,6 +1319,7 @@
         var nav = embed.querySelector('.ap-guide-nav');
         if (!nav) return;
         nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
+            if (btn.tagName === 'A' || btn.getAttribute('data-disc-guide-link') === '1') return;
             if (btn.getAttribute('data-disc-nav-bound') === '1') return;
             btn.setAttribute('data-disc-nav-bound', '1');
             btn.addEventListener('click', function (e) {
