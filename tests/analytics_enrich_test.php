@@ -188,4 +188,48 @@ $tokenVisitors = birkly_analytics_aggregate_events([
 ]);
 assert_true($tokenVisitors['unique_visitors'] === 2, 'visitor_token_hash dedupes across sessions');
 
+$rawQuality = [];
+for ($i = 0; $i < 8; $i++) {
+    $rawQuality[] = array_merge($event, [
+        'session_id' => 'sess_q_' . $i,
+        'timestamp' => time() + $i,
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+        'schema_version' => 2,
+        'consent_state' => 'granted',
+        'visitor_token_hash' => hash('sha256', 'example.com:vid_' . ($i % 3)),
+    ]);
+}
+$aggregated = birkly_analytics_aggregate_events($rawQuality);
+$finalized = birkly_analytics_finalize_report($rawQuality, $aggregated);
+assert_true(is_array($finalized['quality']), 'quality block present');
+assert_true(($finalized['quality']['confidence'] ?? '') === 'low', 'small sample stays low confidence');
+
+$manySessions = [];
+for ($j = 0; $j < 12; $j++) {
+    $manySessions[] = array_merge($event, [
+        'session_id' => 'sess_many_' . $j,
+        'timestamp' => time() + $j,
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
+    ]);
+}
+$aggMany = birkly_analytics_aggregate_events($manySessions);
+assert_true($aggMany['unique_visitors'] === 12, 'twelve sessions yield twelve visitors');
+$finMany = birkly_analytics_finalize_report($manySessions, $aggMany);
+assert_true(empty($finMany['pages_per_visitor_suppressed']), 'many sessions allow pages per visitor');
+
+$oneVisitorManySessions = [];
+for ($k = 0; $k < 6; $k++) {
+    $oneVisitorManySessions[] = array_merge($event, [
+        'session_id' => 'sess_dup_' . $k,
+        'timestamp' => time() + $k,
+        'user_agent' => '',
+        'browser' => 'Unknown',
+        'os' => 'Unknown',
+        'device_type' => 'unknown',
+    ]);
+}
+$aggOne = birkly_analytics_aggregate_events($oneVisitorManySessions);
+$finOne = birkly_analytics_finalize_report($oneVisitorManySessions, $aggOne);
+assert_true(!empty($finOne['pages_per_visitor_suppressed']), 'contradictory visitor math suppresses ratio');
+
 echo "analytics_enrich_test: OK\n";

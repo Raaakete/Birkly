@@ -39,6 +39,9 @@ adb_assert(is_array($row), 'row readable');
 adb_assert(($row['session_id'] ?? '') === 'sess_sqlite', 'session id persisted');
 adb_assert(in_array($row['traffic_class'] ?? '', ['human', 'suspected', 'bot'], true), 'traffic class stored');
 
+$rebuild = birkly_analytics_db_replace_scope('example.com', date('Y-m-d'), date('Y-m-d'), [$event]);
+adb_assert($rebuild === 1, 'replace scope inserts one row');
+
 @unlink($dbPath);
 putenv('BIRKLY_ANALYTICS_DB_PATH');
 

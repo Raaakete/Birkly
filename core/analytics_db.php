@@ -152,7 +152,7 @@ function birkly_analytics_db_insert_event(string $trackingId, array $event): boo
             ':quality_json' => $qualityJson,
             ':event_json' => $json,
         ]);
-        birkly_analytics_db_touch_rollup($pdo, $trackingId, $eventDay);
+        birkly_analytics_db_touch_rollup($pdo, $trackingId, $eventDay, $eventType, $trafficClass);
         $pdo->commit();
 
         return true;
@@ -165,9 +165,15 @@ function birkly_analytics_db_insert_event(string $trackingId, array $event): boo
     }
 }
 
-function birkly_analytics_db_touch_rollup(PDO $pdo, string $trackingId, string $eventDay): void
-{
-    // Coarse counters; full rebuild script may reconcile later.
+function birkly_analytics_db_touch_rollup(
+    PDO $pdo,
+    string $trackingId,
+    string $eventDay,
+    string $eventType = 'page_view',
+    string $trafficClass = 'human'
+): void {
+    $isPageView = $eventType === 'page_view' || $eventType === 'not_found';
+
     $stmt = $pdo->prepare(
         'SELECT page_views, bot_page_views, suspected_page_views FROM analytics_daily_rollup
          WHERE tracking_id = :tid AND event_day = :day'
@@ -178,7 +184,14 @@ function birkly_analytics_db_touch_rollup(PDO $pdo, string $trackingId, string $
     $pv = (int) ($row['page_views'] ?? 0);
     $bot = (int) ($row['bot_page_views'] ?? 0);
     $sus = (int) ($row['suspected_page_views'] ?? 0);
-    $pv++;
+    if ($isPageView) {
+        $pv++;
+        if ($trafficClass === 'bot') {
+            $bot++;
+        } elseif ($trafficClass === 'suspected') {
+            $sus++;
+        }
+    }
 
     $upsert = $pdo->prepare(
         'INSERT INTO analytics_daily_rollup (
@@ -196,4 +209,148 @@ function birkly_analytics_db_touch_rollup(PDO $pdo, string $trackingId, string $
         ':bot' => $bot,
         ':sus' => $sus,
     ]);
+}
+
+function birkly_analytics_db_count_events(string $trackingId, string $startDate, string $endDate): int
+{
+    $pdo = birkly_analytics_db_connect();
+    if ($pdo === null) {
+        return 0;
+    }
+
+    if ($trackingId === 'all' || $trackingId === '*' || $trackingId === '') {
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM analytics_events WHERE event_day >= :start AND event_day <= :end'
+        );
+        $stmt->execute([':start' => $startDate, ':end' => $endDate]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM analytics_events
+         WHERE tracking_id = :tid AND event_day >= :start AND event_day <= :end'
+    );
+    $stmt->execute([':tid' => $trackingId, ':start' => $startDate, ':end' => $endDate]);
+
+    return (int) $stmt->fetchColumn();
+}
+
+/**
+ * Replace SQLite rows for a scope from in-memory events (idempotent rebuild).
+ *
+ * @param list<array<string, mixed>> $events
+ */
+function birkly_analytics_db_replace_scope(string $trackingId, string $startDate, string $endDate, array $events): int
+{
+    $pdo = birkly_analytics_db_connect();
+    if ($pdo === null) {
+        return 0;
+    }
+
+    $inserted = 0;
+    try {
+        if ($trackingId === 'all' || $trackingId === '*' || $trackingId === '') {
+            $pdo->prepare(
+                'DELETE FROM analytics_events WHERE event_day >= :start AND event_day <= :end'
+            )->execute([':start' => $startDate, ':end' => $endDate]);
+        } else {
+            $pdo->prepare(
+                'DELETE FROM analytics_events
+                 WHERE tracking_id = :tid AND event_day >= :start AND event_day <= :end'
+            )->execute([':tid' => $trackingId, ':start' => $startDate, ':end' => $endDate]);
+        }
+    } catch (Throwable $e) {
+        return 0;
+    }
+
+    foreach ($events as $event) {
+        if (!is_array($event)) {
+            continue;
+        }
+        $tid = $trackingId;
+        if ($tid === 'all' || $tid === '*' || $tid === '') {
+            $tid = (string) ($event['domain'] ?? $event['tracking_id'] ?? '');
+            if ($tid === '') {
+                continue;
+            }
+        }
+        $event = birkly_analytics_normalize_stored_event($event);
+        if (birkly_analytics_db_insert_event($tid, $event)) {
+            $inserted++;
+        }
+    }
+
+    return $inserted;
+}
+
+/**
+ * Backfill SQLite from JSON when the index lags the raw log.
+ */
+function birkly_analytics_db_ensure_scope_index(string $trackingId, string $startDate, string $endDate): void
+{
+    if (!function_exists('birkly_analytics_load_events')) {
+        return;
+    }
+
+    if ($trackingId === 'all' || $trackingId === '*' || $trackingId === '') {
+        require_once __DIR__ . '/analytics_config.php';
+        foreach (birkly_analytics_list_enabled_tracking_ids() as $enabledId) {
+            birkly_analytics_db_ensure_scope_index($enabledId, $startDate, $endDate);
+        }
+
+        return;
+    }
+
+    $jsonEvents = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+    if ($jsonEvents === []) {
+        return;
+    }
+
+    $dbCount = birkly_analytics_db_count_events($trackingId, $startDate, $endDate);
+    if ($dbCount >= count($jsonEvents)) {
+        return;
+    }
+
+    birkly_analytics_db_replace_scope($trackingId, $startDate, $endDate, $jsonEvents);
+}
+
+/**
+ * Rebuild the SQLite index from JSON daily files.
+ *
+ * @return array{tracking_ids:list<string>,events_indexed:int,domains:list<string>}
+ */
+function birkly_analytics_db_rebuild_all(?string $trackingId, string $startDate, string $endDate): array
+{
+    require_once __DIR__ . '/analytics_config.php';
+
+    $targets = [];
+    if ($trackingId !== null && $trackingId !== '' && $trackingId !== 'all') {
+        $targets = [$trackingId];
+    } else {
+        $targets = birkly_analytics_list_enabled_tracking_ids();
+        $dataRoot = birkly_analytics_dir() . '/data';
+        if (is_dir($dataRoot)) {
+            foreach (scandir($dataRoot) ?: [] as $dirName) {
+                if ($dirName === '.' || $dirName === '..') {
+                    continue;
+                }
+                if (is_dir($dataRoot . '/' . $dirName) && !in_array($dirName, $targets, true)) {
+                    $targets[] = $dirName;
+                }
+            }
+        }
+    }
+
+    $indexed = 0;
+    foreach ($targets as $tid) {
+        $events = birkly_analytics_load_events($tid, $startDate, $endDate);
+        $indexed += birkly_analytics_db_replace_scope($tid, $startDate, $endDate, $events);
+    }
+
+    return [
+        'tracking_ids' => array_values(array_unique($targets)),
+        'events_indexed' => $indexed,
+        'domains' => array_values(array_unique($targets)),
+    ];
 }

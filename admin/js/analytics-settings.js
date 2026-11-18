@@ -224,6 +224,59 @@
             '</div>';
     }
 
+    function trustConfidenceLabel(confidence) {
+        if (confidence === 'high') {
+            return t('analytics_trust_confidence_high', 'High confidence');
+        }
+        if (confidence === 'medium') {
+            return t('analytics_trust_confidence_medium', 'Medium confidence');
+        }
+        return t('analytics_trust_confidence_low', 'Low confidence — treat visitor ratios carefully');
+    }
+
+    function renderTrustStrip(report) {
+        var quality = (report && report.quality) || null;
+        if (!quality) {
+            return '';
+        }
+        var confidence = quality.confidence || 'low';
+        var coverage = quality.coverage || {};
+        var lines = [
+            trustConfidenceLabel(confidence),
+            t('analytics_trust_coverage_line', 'Payload coverage: {session}% sessions · {ua}% user-agent · {token}% visitor token', {
+                session: coverage.has_session_pct != null ? coverage.has_session_pct : '0',
+                ua: coverage.has_ua_pct != null ? coverage.has_ua_pct : '0',
+                token: coverage.has_visitor_token_pct != null ? coverage.has_visitor_token_pct : '0'
+            })
+        ];
+        var indexed = Number(quality.indexed_event_count) || 0;
+        var raw = Number(quality.event_count) || 0;
+        if (raw > 0 && indexed < raw) {
+            lines.push(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — reloading may backfill remaining JSON.' , { indexed: indexed, raw: raw }));
+        }
+        var defs = quality.definitions || {};
+        var defBits = [];
+        if (defs.session) {
+            defBits.push(t('analytics_trust_def_session', 'Sessions: {text}', { text: defs.session }));
+        }
+        if (defs.visitor) {
+            defBits.push(t('analytics_trust_def_visitor', 'Visitors: {text}', { text: defs.visitor }));
+        }
+
+        return '<section class="analytics-trust" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
+            '<div class="analytics-trust__head u-cluster u-justify-between u-gap-3">' +
+            '<span class="analytics-trust__badge analytics-trust__badge--' + escapeHtml(confidence) + '">' + escapeHtml(trustConfidenceLabel(confidence)) + '</span>' +
+            '<button type="button" class="btn btn-ghost btn-sm" id="analytics-rebuild-index" hidden>' + escapeHtml(t('analytics_rebuild_index', 'Rebuild index')) + '</button>' +
+            '</div>' +
+            '<ul class="analytics-trust__list">' +
+            lines.map(function (line) {
+                return '<li>' + escapeHtml(line) + '</li>';
+            }).join('') +
+            '</ul>' +
+            (defBits.length ? '<p class="form-help analytics-trust__defs">' + defBits.map(function (d) { return escapeHtml(d); }).join(' ') + '</p>' : '') +
+            '</section>';
+    }
+
     function renderBarList(title, rows, labelKey, valueKey) {
         rows = Array.isArray(rows) ? rows : [];
         if (!rows.length) {
@@ -296,7 +349,7 @@
 
         return '<section class="analytics-panel analytics-panel--wide analytics-panel--interactive">' +
             '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_traffic_quality_title', 'Traffic quality')) + '</h4>' +
-            '<p class="form-help">' + escapeHtml(t('analytics_traffic_quality_help', 'Human KPIs exclude confirmed and suspected automation. Enable “Include bot traffic” to count everything.')) + '</p>' +
+            '<p class="form-help">' + escapeHtml(t('analytics_traffic_quality_help', 'Tags on page views. Default totals exclude confirmed bots only. Suspected hits stay in sessions and visitors.')) + '</p>' +
             '<ul class="analytics-bar-list analytics-quality-list">' +
             qualityBar(t('analytics_kpi_human_views', 'Human page views'), humanViews, 'human') +
             qualityBar(t('analytics_kpi_suspected_views', 'Suspected automation'), suspected, 'suspected') +
@@ -489,18 +542,25 @@
         var tab = state.reportTab;
 
         if (tab === 'overview') {
-            var overviewKpis = '<div class="analytics-kpi-grid">' +
-                kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Human-focused totals')) +
-                kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
+            var overviewKpis = '<div class="analytics-kpi-grid">';
             if (preset !== 'minimal' && preset !== 'off') {
-                overviewKpis += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')) +
-                    kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
+                overviewKpis += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_primary_hint', 'Primary identity anchor'));
+            }
+            overviewKpis += kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Excludes confirmed bots by default')) +
+                kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Token or session/day identity'));
+            if (preset !== 'minimal' && preset !== 'off') {
+                if (report.pages_per_visitor_suppressed) {
+                    overviewKpis += kpi('—', t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_pages_per_visitor_suppressed', 'Hidden until visitor estimate is reliable'));
+                } else if (report.pages_per_visitor != null) {
+                    overviewKpis += kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
+                }
             }
             if (isAdvanced()) {
                 overviewKpis += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions'));
             }
             overviewKpis += '</div>';
-            return sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
+            return renderTrustStrip(report) +
+                sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
                 overviewKpis + renderTrafficQuality(report.bot_traffic) + renderTrends(report.daily_stats);
         }
 
@@ -589,6 +649,44 @@
     function bindReportChrome(container) {
         if (!container) return;
         bindSessionRowToggle(container);
+
+        var rebuildBtn = container.querySelector('#analytics-rebuild-index');
+        if (rebuildBtn) {
+            rebuildBtn.hidden = false;
+            rebuildBtn.addEventListener('click', function () {
+                var trackingId = selectedScope() || 'all';
+                var periodDays = selectedPeriodDays();
+                var end = new Date();
+                var start = new Date(end.getTime() - periodDays * 86400000);
+                rebuildBtn.disabled = true;
+                fetch(apiUrl('/api/analytics.php?action=rebuild_index'), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        _csrf: getCsrf(),
+                        tracking_id: trackingId,
+                        start_date: start.toISOString().slice(0, 10),
+                        end_date: end.toISOString().slice(0, 10)
+                    })
+                }).then(function (r) { return r.json(); })
+                    .then(function (payload) {
+                        if (payload.status !== 'ok') {
+                            throw new Error(payload.message || t('analytics_rebuild_failed', 'Rebuild failed'));
+                        }
+                        toast(t('analytics_rebuild_ok', 'Analytics index rebuilt ({count} events)', {
+                            count: (payload.data && payload.data.events_indexed) || 0
+                        }), 'success');
+                        return loadReport();
+                    })
+                    .catch(function (err) {
+                        toast(err.message, 'error');
+                    })
+                    .finally(function () {
+                        rebuildBtn.disabled = false;
+                    });
+            });
+        }
 
         container.querySelectorAll('[data-report-tab]').forEach(function (btn) {
             btn.addEventListener('click', function () {
