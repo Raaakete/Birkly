@@ -1,6 +1,11 @@
 (function (global) {
     'use strict';
 
+    if (global.__AI_PRESENCE_JS_EXECUTED__) {
+        return;
+    }
+    global.__AI_PRESENCE_JS_EXECUTED__ = true;
+
     var LS_AI_CONN = 'ap_ai_connection';
     var CLAIM_STATUSES = ['pending_review', 'supported', 'unsupported', 'conflicting', 'expired'];
     var ABOUT_MODAL_ID = 'ap-about-modal';
@@ -1256,11 +1261,21 @@
         try {
             var payload = readDiscoveryHydratePayload();
             if (!payload) return false;
-            return hydrateAgentGuidePayload(payload);
+            var ok = hydrateAgentGuidePayload(payload);
+            ensureDiscoveryEmbedActionsBound();
+            return ok;
         } catch (err) {
             console.error('Discovery agent guide bootstrap hydrate failed', err);
             return false;
         }
+    }
+
+    function ensureDiscoveryEmbedActionsBound() {
+        if (!document.getElementById('disc-ap-embed')) return;
+        if (global.__AI_PRESENCE_ACTIONS_BOUND__) return;
+        if (!isAiPresencePage()) return;
+        bindActions();
+        global.__AI_PRESENCE_ACTIONS_BOUND__ = true;
     }
 
     function resetAgentGuideUiChrome() {
@@ -4220,6 +4235,10 @@
             }
             return;
         }
+        if (global.__AI_PRESENCE_INIT_COMPLETE__) {
+            ensureDiscoveryEmbedActionsBound();
+            return;
+        }
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();
@@ -4232,6 +4251,8 @@
         initPublishFeedback();
         initAssistTabs();
         bindActions();
+        global.__AI_PRESENCE_ACTIONS_BOUND__ = true;
+        global.__AI_PRESENCE_INIT_COMPLETE__ = true;
         if (discoveryEmbed) {
             document.addEventListener('birkly:discovery-zone', function (event) {
                 if (!event.detail || !event.detail.embedVisible) return;

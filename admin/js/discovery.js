@@ -4,6 +4,10 @@
 (function (global) {
     'use strict';
 
+    if (global.__DISCOVERY_JS_EXECUTED__) {
+        return;
+    }
+    global.__DISCOVERY_JS_EXECUTED__ = true;
     global.__DISCOVERY_JS_LOADED__ = true;
 
     var DISC_ZONES = ['seo', 'agent-guide', 'webmcp'];
