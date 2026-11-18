@@ -1268,12 +1268,20 @@
         if (state.wizard && typeof state.wizard.close === 'function') {
             state.wizard.close();
         }
-        var bodyWizard = document.getElementById('ag-wizard-modal');
-        if (bodyWizard) {
-            bodyWizard.classList.remove('is-open', 'active', 'show');
-            bodyWizard.style.display = 'none';
-            bodyWizard.setAttribute('aria-hidden', 'true');
-        }
+        document.querySelectorAll('#ag-wizard-modal, body > #ag-wizard-modal').forEach(function (wiz) {
+            wiz.classList.remove('is-open', 'active', 'show');
+            wiz.style.display = 'none';
+            wiz.setAttribute('aria-hidden', 'true');
+        });
+        document.querySelectorAll('body > .modal.active, body > .modal.is-open, body > .modal.show').forEach(function (modal) {
+            if (modal.id) {
+                closeApModal(modal.id);
+            } else {
+                modal.classList.remove('is-open', 'active', 'show');
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+            }
+        });
         document.querySelectorAll('#disc-ap-embed .modal[id]').forEach(function (modal) {
             closeApModal(modal.id);
         });

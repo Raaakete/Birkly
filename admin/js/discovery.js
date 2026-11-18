@@ -251,7 +251,7 @@
         var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
 
         embed.hidden = !showEmbed;
-        if (!showEmbed && typeof global.resetAgentGuideUiChrome === 'function') {
+        if ((zone !== 'agent-guide' || !showEmbed) && typeof global.resetAgentGuideUiChrome === 'function') {
             global.resetAgentGuideUiChrome();
         }
         // Agent Guide publish bar only on the Agent Guide tab — WebMCP saves inline via its own API.
@@ -303,6 +303,10 @@
         setZoneInUrl(zone);
         var pageRoot = document.querySelector('.discovery-page[data-disc-tab]');
         if (pageRoot) pageRoot.setAttribute('data-disc-tab', zone);
+        document.documentElement.setAttribute('data-disc-tab', zone);
+        if (document.body) {
+            document.body.setAttribute('data-admin-tab', zone);
+        }
         syncApEmbed(zone);
     }
 
@@ -1196,9 +1200,18 @@
         });
     }
 
+    function bindDiscoveryControls() {
+        bindPackToggles();
+        bindSeoActions();
+        bindUrlMapActions();
+        bindVerify();
+        bindGuideSubnavBridge();
+    }
+
     function bindSeoActions() {
         var save = $('#disc-seo-save');
-        if (save) {
+        if (save && save.getAttribute('data-disc-bound-click') !== '1') {
+            save.setAttribute('data-disc-bound-click', '1');
             save.addEventListener('click', function () {
                 postJson({ action: 'save_seo', config: collectSeoPayload() }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
@@ -1243,7 +1256,8 @@
 
         var pub = $('#disc-seo-publish-btn');
         var unpub = $('#disc-seo-unpublish');
-        if (pub) {
+        if (pub && pub.getAttribute('data-disc-bound-click') !== '1') {
+            pub.setAttribute('data-disc-bound-click', '1');
             pub.addEventListener('click', function () {
                 var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
                 publishSeoFlow(live
@@ -1252,7 +1266,8 @@
                     .catch(function (e) { showMessage(e.message, true); });
             });
         }
-        if (unpub) {
+        if (unpub && unpub.getAttribute('data-disc-bound-click') !== '1') {
+            unpub.setAttribute('data-disc-bound-click', '1');
             unpub.addEventListener('click', function () {
                 postJson({ action: 'unpublish_seo' }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
@@ -1379,27 +1394,37 @@
     }
 
     function init() {
-        if (!document.querySelector('.disc-hub')) return;
+        var hub = document.querySelector('.disc-hub');
+        if (!hub) {
+            console.error('Discovery init aborted: missing .disc-hub');
+            return;
+        }
         if (typeof global.resetAgentGuideUiChrome === 'function') {
             global.resetAgentGuideUiChrome();
         }
         ensureDiscoveryPageChrome();
         mountPageBars();
         state.activeZone = getInitialZone();
+        document.documentElement.setAttribute('data-disc-tab', state.activeZone);
+        if (document.body) {
+            document.body.setAttribute('data-admin-tab', state.activeZone);
+        }
         try {
             applyBootstrap(readBootstrap());
         } catch (bootstrapErr) {
             console.error('Discovery bootstrap render failed', bootstrapErr);
             showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
         }
-        initApEmbed();
-        applyAgentGuideHydrate(state.status);
-        initHubZones();
-        bindPackToggles();
-        bindSeoActions();
-        bindUrlMapActions();
-        bindVerify();
-        bindGuideSubnavBridge();
+        try {
+            initApEmbed();
+            applyAgentGuideHydrate(state.status);
+        } catch (embedErr) {
+            console.error('Discovery embed init failed', embedErr);
+            showMessage(embedErr.message || t('discovery_js_load_failed', 'Load failed'), true);
+        } finally {
+            initHubZones();
+            bindDiscoveryControls();
+        }
         renderSeoPreviews();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
