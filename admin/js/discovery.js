@@ -1405,6 +1405,8 @@
             return;
         }
         global.__DISCOVERY_INIT_DONE__ = true;
+        var jsGuard = document.getElementById('disc-js-guard');
+        if (jsGuard) jsGuard.hidden = true;
         if (typeof global.resetAgentGuideUiChrome === 'function') {
             global.resetAgentGuideUiChrome();
         }

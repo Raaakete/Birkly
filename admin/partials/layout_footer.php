@@ -73,11 +73,13 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
         function hasScript(name) {
             return !!document.querySelector('script[src*="' + name + '"]');
         }
+        var discScriptNonce = <?= json_encode(function_exists('birkly_csp_nonce') ? birkly_csp_nonce() : '', JSON_UNESCAPED_UNICODE) ?>;
         function loadScript(path, next) {
             var file = path.split('/').pop();
             if (hasScript(file)) { next(); return; }
             var el = document.createElement('script');
             el.src = discUrl(path);
+            if (discScriptNonce) el.setAttribute('nonce', discScriptNonce);
             el.onload = next;
             el.onerror = function () {
                 console.error('[Discovery] Failed to load script:', path);
