@@ -223,8 +223,10 @@
     function syncDiscoveryHubPanels(zone) {
         var apZone = mapDiscZoneToAp(zone);
         if (!apZone) return;
+        var embed = document.getElementById('disc-ap-embed');
+        var scope = embed || document;
         ['guide', 'tools', 'publish'].forEach(function (hubZone) {
-            var panel = document.querySelector('[data-hub-panel="' + hubZone + '"]');
+            var panel = scope.querySelector('[data-hub-panel="' + hubZone + '"]');
             if (!panel) return;
             var active = hubZone === apZone;
             panel.classList.toggle('active', active);
@@ -373,13 +375,20 @@
         if (socialSite) socialSite.textContent = siteHost;
         if (socialTitle) socialTitle.textContent = title;
         if (socialDesc) socialDesc.textContent = desc;
+        var socialCard = socialImage ? socialImage.closest('.social-preview') : null;
+        var twitterCard = (($('#disc-seo-twitter-card') || {}).value || 'summary_large_image').trim();
+        if (socialCard) {
+            socialCard.classList.toggle('social-preview--large', twitterCard === 'summary_large_image');
+        }
         if (socialImage) {
             if (image) {
                 socialImage.hidden = false;
                 socialImage.style.backgroundImage = 'url("' + image.replace(/"/g, '\\"') + '")';
+                socialImage.setAttribute('aria-hidden', 'true');
             } else {
                 socialImage.hidden = true;
                 socialImage.style.backgroundImage = '';
+                socialImage.removeAttribute('aria-hidden');
             }
         }
     }
@@ -463,6 +472,7 @@
     function renderSeoForm(data) {
         var seo = data && data.seo;
         if (!seo || typeof seo !== 'object') {
+            renderSeoPreviews();
             return;
         }
         state.seo = seo;
@@ -1250,6 +1260,32 @@
         }
     }
 
+    function bindGuideSubnavBridge() {
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed || embed.getAttribute('data-disc-guide-nav') === '1') return;
+        embed.setAttribute('data-disc-guide-nav', '1');
+        embed.addEventListener('click', function (e) {
+            var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
+            if (!btn || !embed.contains(btn)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var tab = btn.getAttribute('data-tab');
+            if (typeof global.showAgentGuideTab === 'function') {
+                global.showAgentGuideTab(tab);
+                return;
+            }
+            if (typeof global.initAiPresence === 'function') {
+                global.initAiPresence({
+                    discoveryEmbed: true,
+                    initialHubZone: 'guide',
+                });
+            }
+            if (typeof global.showAgentGuideTab === 'function') {
+                global.showAgentGuideTab(tab);
+            }
+        }, true);
+    }
+
     function initApEmbed() {
         if (!document.getElementById('disc-ap-embed')) return;
         if (typeof global.initAiPresence === 'function') {
@@ -1280,6 +1316,8 @@
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
+        bindGuideSubnavBridge();
+        renderSeoPreviews();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
