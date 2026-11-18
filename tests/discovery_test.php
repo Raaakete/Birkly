@@ -294,6 +294,11 @@ assert_true(strpos($discJs, '__DISCOVERY_JS_EXECUTED__') !== false, 'discovery.j
 assert_true(strpos($aiJs, '__AI_PRESENCE_JS_EXECUTED__') !== false, 'ai-presence.js guards double execution');
 assert_true(strpos($aiJs, 'scheduleDiscoveryEmbedInit') !== false, 'ai-presence schedules full embed init after hydrate');
 assert_true(strpos($aiJs, 'bindDiscoveryEmbedCaptureClicks') !== false, 'ai-presence capture-binds discovery embed clicks');
+assert_true(strpos($aiJs, 'bindDiscoveryEmbedDocumentCapture') !== false, 'ai-presence document capture for embed actions');
+assert_true(strpos($aiJs, 'DISCOVERY_MODAL_IDS') !== false, 'ai-presence discovery modal mount fallback ids');
+assert_true(strpos($aiJs, 'var el = document.getElementById(id)') !== false, 'apFormEl prefers document getElementById');
+assert_true(strpos($aiJs, 'return !!(embed && !embed.hidden)') !== false, 'embed modals gated on embed visibility only');
+assert_true(strpos($discJs, "url.searchParams.set('guide_tab'") !== false, 'discovery guide nav updates guide_tab without reload');
 assert_true(strpos($aiJs, 'ensureDiscoveryModalsMounted') !== false, 'ai-presence mounts discovery modals on body');
 assert_true(strpos($aiJs, 'bindApModalForms') !== false, 'ai-presence binds modal forms on discovery repair');
 assert_true(strpos($discJs, 'repairDiscoveryEmbedHandlers') !== false, 'discovery re-binds embed when tab shows');
