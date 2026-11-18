@@ -230,6 +230,8 @@ assert_true(strpos($discoveryAg, 'data-disc-guide-link="1"') !== false, 'discove
 assert_true(strpos($discoveryAg, 'guide_tab=essentials') !== false, 'discovery guide nav links include guide_tab');
 $_GET['guide_tab'] = 'claims';
 $discoveryAgClaims = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(strpos($discoveryAgClaims, 'id="ap-claim-statement"') !== false, 'discovery embed ships claim modal fields');
+assert_true(strpos($discoveryAgClaims, 'id="ap-evidence-title"') !== false, 'discovery embed ships evidence modal fields');
 $claimRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['claims'] ?? []);
 $evidenceRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['evidence'] ?? []);
 assert_true(strpos($discoveryAgClaims, 'id="ap-claims-list"') !== false, 'discovery claims tab list chrome');
@@ -292,6 +294,7 @@ assert_true(strpos($discJs, '__DISCOVERY_JS_EXECUTED__') !== false, 'discovery.j
 assert_true(strpos($aiJs, '__AI_PRESENCE_JS_EXECUTED__') !== false, 'ai-presence.js guards double execution');
 assert_true(strpos($aiJs, 'scheduleDiscoveryEmbedInit') !== false, 'ai-presence schedules full embed init after hydrate');
 assert_true(strpos($aiJs, 'bindDiscoveryEmbedCaptureClicks') !== false, 'ai-presence capture-binds discovery embed clicks');
+assert_true(strpos($aiJs, 'ensureDiscoveryModalsMounted') !== false, 'ai-presence mounts discovery modals on body');
 assert_true(strpos($discJs, 'bindSeoPreviewFields') !== false, 'discovery binds SEO preview field listeners');
 assert_true(strpos($discJs, 'bindDiscoveryGuideNavClicks') !== false, 'discovery binds agent guide sub-nav clicks');
 assert_true(strpos($aiJs, 'inDiscoveryEmbed') !== false, 'ai-presence detects discovery embed context');

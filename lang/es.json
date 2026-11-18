@@ -145,6 +145,7 @@
         "ag_js_link_check_complete": "Comprobación de enlaces completada",
         "ag_js_link_suggestions_ready": "Link suggestions ready — rever in AI Assist",
         "ag_js_media_picker_unavailable": "Seleccioneor de medios no disponible — recargue la página",
+        "ag_js_modal_dom_missing": "Los diálogos de Agent Guide no se cargaron por completo: actualice tras el despliegue.",
         "ag_js_no_collections": "No CMS collections found — crear content collections primero",
         "ag_js_no_collections_match": "Ninguna colección coincide con su búsqueda",
         "ag_js_no_proposals": "No se generaron propuestas",

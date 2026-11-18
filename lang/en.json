@@ -145,6 +145,7 @@
         "ag_js_link_check_complete": "Link check complete",
         "ag_js_link_suggestions_ready": "Link suggestions ready — review in AI Assist",
         "ag_js_media_picker_unavailable": "Media picker unavailable — reload the page",
+        "ag_js_modal_dom_missing": "Agent Guide dialogs did not load completely — hard-refresh this page after your deploy finishes.",
         "ag_js_no_collections": "No CMS collections found — create content collections first",
         "ag_js_no_collections_match": "No collections match your search",
         "ag_js_no_proposals": "No proposals generated",

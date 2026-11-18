@@ -145,6 +145,7 @@
         "ag_js_link_check_complete": "Linkprüfung abgeschlossen",
         "ag_js_link_suggestions_ready": "Linkvorschläge bereit — in KI-Assist prüfen",
         "ag_js_media_picker_unavailable": "Medienauswahl nicht verfügbar — Seite neu laden",
+        "ag_js_modal_dom_missing": "Agent-Guide-Dialoge wurden nicht vollständig geladen — harte Aktualisierung nach Deploy.",
         "ag_js_no_collections": "Keine CMS-Collections — zuerst Content-Collections anlegen",
         "ag_js_no_collections_match": "Keine Collections passen zur Suche",
         "ag_js_no_proposals": "Keine Vorschläge erzeugt",
