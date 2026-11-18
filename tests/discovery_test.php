@@ -220,6 +220,9 @@ assert_true(
     'discovery template emits discovery.js script tag'
 );
 assert_true(strpos((string) file_get_contents($root . '/admin/partials/layout_footer.php'), "\$page === 'discovery'") !== false, 'layout footer also loads discovery script stack');
+assert_true(is_file($root . '/core/discovery_admin_assets.php'), 'discovery admin assets helper exists');
+assert_true(strpos((string) file_get_contents($root . '/admin/index.php'), 'birkly_echo_discovery_admin_script_tags') !== false, 'admin index emits discovery scripts');
+assert_true(strpos((string) file_get_contents($root . '/admin/partials/layout_footer.php'), '__DISCOVERY_JS_LOADED__') !== false, 'layout footer self-heals missing discovery.js');
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
 $_GET['tab'] = 'agent-guide';
 $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);

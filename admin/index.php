@@ -666,6 +666,12 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                 echo '</div>';
             }
             ?>
+            <?php
+            if ($page === 'discovery') {
+                require_once __DIR__ . '/../core/discovery_admin_assets.php';
+                birkly_echo_discovery_admin_script_tags();
+            }
+            ?>
         <?php include __DIR__ . '/partials/layout_footer.php'; ?>
 <?php endif; ?>
 <?php
