@@ -243,6 +243,7 @@ function getDiscoveryPageData(): array
     require_once __DIR__ . '/../core/discovery.php';
     require_once __DIR__ . '/../core/site_seo_url_map.php';
     require_once __DIR__ . '/../core/ai_presence.php';
+    require_once __DIR__ . '/../core/ai_presence_pro.php';
     require_once __DIR__ . '/../core/webmcp.php';
 
     $status = birkly_discovery_status();
