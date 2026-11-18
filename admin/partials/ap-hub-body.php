@@ -60,7 +60,7 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
 
 <div class="tab-panel<?= $__ap_hub_zone === 'guide' ? ' active' : '' ?>" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide"<?= $__ap_hub_zone === 'guide' ? '' : ' hidden' ?>>
 <div class="ap-guide-layout">
-    <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
+    <div class="ai-presence-tabs ap-guide-tabs">
     <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_essentials'}</p>

@@ -158,6 +158,10 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
 }
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
+$_GET['tab'] = 'agent-guide';
+$discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(strpos($discoveryAg, 'data-tab="essentials"') !== false, 'agent guide embed has side nav tabs');
+assert_true(strpos($discoveryAg, 'tabs-v2-root') === false, 'guide layout is not a tabs-v2 horizontal root');
 $_GET['tab'] = 'webmcp';
 $discoveryWebmcp = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(

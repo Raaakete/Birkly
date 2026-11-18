@@ -261,6 +261,9 @@
         if (zone === 'webmcp' && typeof global.hydrateWebmcpTools === 'function') {
             global.hydrateWebmcpTools();
         }
+        if (zone === 'agent-guide' && typeof global.ensureAgentGuideSubnav === 'function') {
+            global.ensureAgentGuideSubnav();
+        }
     }
 
     function switchZone(zone) {
