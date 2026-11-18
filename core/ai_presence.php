@@ -245,6 +245,55 @@ function birkly_ai_presence_draft_has_meaningful_content(array $draft): bool
     return false;
 }
 
+/**
+ * @param array<string, mixed> $row
+ */
+function birkly_ai_presence_record_id(array $row): string
+{
+    return trim((string) ($row['id'] ?? ''));
+}
+
+/**
+ * Union list records by id; overlay fields merge with non-empty overlay semantics per row.
+ *
+ * @param list<array<string, mixed>> $base
+ * @param list<array<string, mixed>> $overlay
+ * @return list<array<string, mixed>>
+ */
+function birkly_ai_presence_merge_records_by_id(array $base, array $overlay): array
+{
+    $byId = [];
+    $anon = 0;
+    foreach ($base as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = birkly_ai_presence_record_id($row);
+        if ($id === '') {
+            $byId['__base_' . $anon++] = $row;
+            continue;
+        }
+        $byId[$id] = $row;
+    }
+    foreach ($overlay as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = birkly_ai_presence_record_id($row);
+        if ($id === '') {
+            $byId['__overlay_' . $anon++] = $row;
+            continue;
+        }
+        if (isset($byId[$id]) && is_array($byId[$id])) {
+            $byId[$id] = birkly_ai_presence_merge_nonempty_overlay($byId[$id], $row);
+            continue;
+        }
+        $byId[$id] = $row;
+    }
+
+    return array_values($byId);
+}
+
 function birkly_ai_presence_scalar_is_empty_for_overlay(mixed $value): bool
 {
     if ($value === null) {
@@ -284,8 +333,24 @@ function birkly_ai_presence_merge_nonempty_overlay(array $base, array $overlay):
             continue;
         }
         if (birkly_ai_presence_is_draft_list_key($key)) {
-            if (is_array($value) && $value !== []) {
+            if (!is_array($value)) {
+                continue;
+            }
+            $baseList = is_array($result[$key] ?? null) ? $result[$key] : [];
+            if ($value === [] && $baseList !== []) {
+                continue;
+            }
+            if ($baseList === [] && $value !== []) {
                 $result[$key] = array_values($value);
+                continue;
+            }
+            if ($value !== []) {
+                if (array_is_list($baseList) && array_is_list($value)
+                    && !is_array($baseList[0] ?? null) && !is_array($value[0] ?? null)) {
+                    $result[$key] = array_values(array_unique(array_merge($baseList, $value)));
+                } else {
+                    $result[$key] = birkly_ai_presence_merge_records_by_id($baseList, $value);
+                }
             }
             continue;
         }
