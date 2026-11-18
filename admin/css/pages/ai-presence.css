@@ -375,6 +375,11 @@
   justify-content: center;
 }
 
+.ap-ai-loading[hidden] {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 .ap-ai-loading-backdrop {
   position: absolute;
   inset: 0;

@@ -19,6 +19,19 @@
   pointer-events: none !important;
 }
 
+#disc-ap-embed[hidden] .ap-ai-loading,
+#disc-ap-embed[hidden] .modal.active,
+#disc-ap-embed[hidden] .modal.is-open {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+.discovery-page:not([data-disc-tab="agent-guide"]) #ag-wizard-modal {
+  display: none !important;
+  pointer-events: none !important;
+}
+
 #disc-ap-embed {
   position: relative;
 }
