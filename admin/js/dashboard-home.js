@@ -388,10 +388,14 @@
         return y + '-' + m + '-' + d;
     }
 
-    function trafficWindow(days) {
+    function trafficWindow(days, offsetDays) {
+        offsetDays = offsetDays || 0;
         const byDate = new Map((analytics?.daily || []).map((row) => [String(row.date || ''), row]));
         const end = new Date();
         end.setHours(12, 0, 0, 0);
+        if (offsetDays > 0) {
+            end.setDate(end.getDate() - offsetDays);
+        }
         const rows = [];
         for (let i = days - 1; i >= 0; i -= 1) {
             const date = new Date(end);
@@ -402,18 +406,116 @@
                 date: key,
                 views: Number(row.views || 0),
                 interactions: Number(row.interactions || 0),
+                visitors: Number(row.visitors || 0),
             });
         }
         return rows;
     }
 
-    function chartPoints(values, max, width, height) {
-        const step = values.length <= 1 ? 0 : width / (values.length - 1);
+    function chartPoints(values, max, width, height, padX, innerWidth) {
+        if (!values.length) {
+            return [];
+        }
+        padX = padX || 0;
+        innerWidth = innerWidth || width;
+        const step = values.length > 1 ? innerWidth / (values.length - 1) : innerWidth;
         return values.map((value, index) => {
-            const x = index * step;
-            const y = height - (max > 0 ? (value / max) * height : 0);
-            return { x, y };
+            const ratio = (Number(value) || 0) / Math.max(1, max);
+            return { x: padX + step * index, y: height - ratio * height };
         });
+    }
+
+    function chartSmoothPath(points) {
+        if (!points.length) {
+            return '';
+        }
+        if (points.length === 1) {
+            return 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+        }
+        let d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+        for (let i = 0; i < points.length - 1; i += 1) {
+            const p0 = points[i - 1] || points[i];
+            const p1 = points[i];
+            const p2 = points[i + 1];
+            const p3 = points[i + 2] || p2;
+            const cp1x = p1.x + (p2.x - p0.x) / 6;
+            const cp1y = p1.y + (p2.y - p0.y) / 6;
+            const cp2x = p2.x - (p3.x - p1.x) / 6;
+            const cp2y = p2.y - (p3.y - p1.y) / 6;
+            d += ' C ' + cp1x.toFixed(2) + ' ' + cp1y.toFixed(2) + ', ' + cp2x.toFixed(2) + ' ' + cp2y.toFixed(2) + ', ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
+        }
+        return d;
+    }
+
+    function chartAreaPath(points, height) {
+        if (!points.length) {
+            return '';
+        }
+        const line = chartSmoothPath(points);
+        const last = points[points.length - 1];
+        const first = points[0];
+        return line + ' L ' + last.x.toFixed(2) + ' ' + height + ' L ' + first.x.toFixed(2) + ' ' + height + ' Z';
+    }
+
+    function bindDashboardTrafficChart(container) {
+        if (!container) {
+            return;
+        }
+        const hover = container.querySelector('#dashboard-chart-hover');
+        const vline = container.querySelector('.analytics-chart-vline');
+        const selectColumn = (col) => {
+            if (!col) {
+                if (vline) {
+                    vline.setAttribute('hidden', '');
+                }
+                if (hover) {
+                    hover.hidden = true;
+                }
+                container.querySelectorAll('.analytics-chart-column').forEach((c) => c.classList.remove('is-active'));
+                return;
+            }
+            const date = col.getAttribute('data-date') || '';
+            const views = col.getAttribute('data-views') || '0';
+            const interactions = col.getAttribute('data-interactions') || '0';
+            const colBox = col.getBBox();
+            if (vline) {
+                const midX = colBox.x + colBox.width / 2;
+                vline.setAttribute('x1', String(midX));
+                vline.setAttribute('x2', String(midX));
+                vline.removeAttribute('hidden');
+            }
+            container.querySelectorAll('.analytics-chart-column').forEach((c) => {
+                c.classList.toggle('is-active', c === col);
+            });
+            if (hover) {
+                hover.hidden = false;
+                hover.innerHTML = '<strong>' + esc(date) + '</strong>' +
+                    '<span>' + esc(t('analytics_flyout_views', '{count} page views', { count: number(views) })) + '</span>' +
+                    '<span>' + esc(t('dash_interactions', 'Interactions') + ': ' + number(interactions)) + '</span>';
+                const wrap = container.querySelector('.dashboard-traffic-chart-wrap');
+                const rect = col.getBoundingClientRect();
+                if (wrap) {
+                    const wrapRect = wrap.getBoundingClientRect();
+                    const tipLeft = rect.left - wrapRect.left + rect.width / 2;
+                    hover.style.left = Math.max(12, Math.min(tipLeft, wrapRect.width - 12)) + 'px';
+                }
+            }
+        };
+        container.querySelectorAll('.analytics-chart-column').forEach((col) => {
+            col.addEventListener('mouseenter', () => selectColumn(col));
+            col.addEventListener('focus', () => selectColumn(col));
+            col.addEventListener('click', () => selectColumn(col));
+            col.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    selectColumn(col);
+                }
+            });
+        });
+        const wrap = container.querySelector('.dashboard-traffic-chart-wrap');
+        if (wrap) {
+            wrap.addEventListener('mouseleave', () => selectColumn(null));
+        }
     }
 
     function renderTrafficChart() {
@@ -426,29 +528,51 @@
         }
         host.hidden = false;
         const rows = trafficWindow(trafficDays);
+        const ghostRows = trafficWindow(trafficDays, trafficDays);
         const visits = rows.reduce((sum, row) => sum + row.views, 0);
         const interactions = rows.reduce((sum, row) => sum + row.interactions, 0);
-        const max = Math.max(1, ...rows.map((row) => Math.max(row.views, row.interactions)));
-        const width = 600;
-        const height = 112;
-        const visitPts = chartPoints(rows.map((row) => row.views), max, width, height);
-        const interactionPts = chartPoints(rows.map((row) => row.interactions), max, width, height);
-        const line = (pts) => pts.map((pt) => pt.x.toFixed(1) + ',' + pt.y.toFixed(1)).join(' ');
-        const area = line(visitPts) + ' ' + width + ',' + height + ' 0,' + height;
+        const ghostViews = ghostRows.map((row) => row.views);
+        const max = Math.max(1, ...rows.map((row) => Math.max(row.views, row.interactions)), ...ghostViews);
+        const width = 1000;
+        const height = 160;
+        const padX = 8;
+        const innerWidth = width - padX * 2;
+        const colW = rows.length > 0 ? innerWidth / rows.length : innerWidth;
+        const visitPts = chartPoints(rows.map((row) => row.views), max, width, height, padX, innerWidth);
+        const interactionPts = chartPoints(rows.map((row) => row.interactions), max, width, height, padX, innerWidth);
+        const ghostPts = ghostViews.length ? chartPoints(ghostViews, max, width, height, padX, innerWidth) : [];
+        const visitPath = chartSmoothPath(visitPts);
+        const interactionPath = chartSmoothPath(interactionPts);
+        const ghostPath = ghostPts.length ? chartSmoothPath(ghostPts) : '';
+        const areaPath = chartAreaPath(visitPts, height);
         const first = rows[0]?.date?.slice(5) || '';
         const last = rows[rows.length - 1]?.date?.slice(5) || '';
         const label = t('dash_visits', 'Visits') + ' ' + number(visits) + ', ' + t('dash_interactions', 'Interactions') + ' ' + number(interactions);
-        host.innerHTML = '<div class="traffic-totals">' +
-            '<span><i class="traffic-swatch is-visits"></i>' + esc(t('dash_visits', 'Visits')) + ' <strong>' + number(visits) + '</strong></span>' +
-            '<span><i class="traffic-swatch is-interactions"></i>' + esc(t('dash_interactions', 'Interactions')) + ' <strong>' + number(interactions) + '</strong></span>' +
+        const columns = rows.map((row, i) => {
+            const gx = padX + colW * i;
+            return '<rect class="analytics-chart-column" tabindex="0" role="button" x="' + gx.toFixed(2) + '" y="0"' +
+                ' width="' + colW.toFixed(2) + '" height="' + height + '"' +
+                ' data-date="' + esc(row.date) + '" data-views="' + row.views + '" data-interactions="' + row.interactions + '"' +
+                ' aria-label="' + esc(row.date + ': ' + row.views + ' ' + t('dash_visits', 'Visits')) + '"></rect>';
+        }).join('');
+        host.innerHTML = '<div class="traffic-totals dashboard-traffic-chart-totals">' +
+            '<span><i class="traffic-swatch is-visits" aria-hidden="true"></i>' + esc(t('dash_visits', 'Visits')) + ' <strong>' + number(visits) + '</strong></span>' +
+            (ghostPath ? '<span><i class="traffic-swatch is-ghost" aria-hidden="true"></i>' + esc(t('analytics_legend_previous_period', 'Previous period')) + '</span>' : '') +
+            '<span><i class="traffic-swatch is-interactions" aria-hidden="true"></i>' + esc(t('dash_interactions', 'Interactions')) + ' <strong>' + number(interactions) + '</strong></span>' +
             '</div>' +
-            '<svg class="traffic-chart" viewBox="0 0 ' + width + ' ' + (height + 16) + '" role="img" aria-label="' + esc(label) + '">' +
-            '<polygon class="traffic-area" points="' + area + '"></polygon>' +
-            '<polyline class="traffic-line is-visits" points="' + line(visitPts) + '"></polyline>' +
-            '<polyline class="traffic-line is-interactions" points="' + line(interactionPts) + '"></polyline>' +
-            '<text class="traffic-axis" x="0" y="' + (height + 14) + '">' + esc(first) + '</text>' +
-            '<text class="traffic-axis" x="' + width + '" y="' + (height + 14) + '" text-anchor="end">' + esc(last) + '</text>' +
-            '</svg>';
+            '<div class="dashboard-traffic-chart-wrap">' +
+            '<div class="dashboard-chart-hover" id="dashboard-chart-hover" hidden></div>' +
+            '<svg class="traffic-chart dashboard-traffic-svg" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 ' + width + ' ' + (height + 24) + '" role="img" aria-label="' + esc(label) + '">' +
+            '<g class="analytics-chart-columns">' + columns + '</g>' +
+            '<line class="analytics-chart-vline" x1="0" y1="0" x2="0" y2="' + height + '" hidden></line>' +
+            (ghostPath ? '<path class="traffic-line is-ghost" d="' + ghostPath + '" pathLength="1"></path>' : '') +
+            (areaPath ? '<path class="traffic-area" d="' + areaPath + '"></path>' : '') +
+            (visitPath ? '<path class="traffic-line is-visits" d="' + visitPath + '" pathLength="1"></path>' : '') +
+            (interactionPath ? '<path class="traffic-line is-interactions" d="' + interactionPath + '" pathLength="1"></path>' : '') +
+            '<text class="traffic-axis" x="' + padX + '" y="' + (height + 16) + '">' + esc(first) + '</text>' +
+            '<text class="traffic-axis" x="' + (width - padX) + '" y="' + (height + 16) + '" text-anchor="end">' + esc(last) + '</text>' +
+            '</svg></div>';
+        bindDashboardTrafficChart(host);
     }
 
     function renderTraffic(kind) {
