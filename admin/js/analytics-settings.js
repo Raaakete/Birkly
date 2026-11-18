@@ -17,7 +17,8 @@
         periodDays: 30,
         includeBots: false,
         reportTab: 'overview',
-        selectedTrendDate: null
+        selectedTrendDate: null,
+        comparisonDaily: null
     };
 
     function apiUrl(path) {
@@ -210,12 +211,16 @@
         updateConsentFieldsVisibility();
     }
 
-    function kpiStat(value, label, hint, modifier) {
+    function kpiStat(value, label, tip, modifier) {
         modifier = modifier || '';
+        var tipBtn = tip
+            ? '<button type="button" class="analytics-metric-info" data-tooltip="' + escapeHtml(tip) + '"' +
+            ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this metric means')) + '">' +
+            '<span aria-hidden="true">?</span></button>'
+            : '';
         return '<article class="stat analytics-stat ' + modifier + '">' +
-            '<span class="stat-label">' + escapeHtml(label) + '</span>' +
+            '<span class="stat-label analytics-stat__label">' + escapeHtml(label) + tipBtn + '</span>' +
             '<span class="stat-value u-numeric">' + escapeHtml(String(value)) + '</span>' +
-            (hint ? '<span class="stat-meta">' + escapeHtml(hint) + '</span>' : '') +
             '</article>';
     }
 
@@ -256,60 +261,37 @@
         var raw = Number(quality.event_count) || 0;
         var tokenPct = Number(coverage.has_visitor_token_pct) || 0;
 
-        function coverageRow(title, help, pct) {
+        function coverageCompact(title, tip, pct) {
             var p = Math.max(0, Math.min(100, Number(pct) || 0));
-            return '<div class="analytics-data-health__row">' +
-                '<div class="analytics-data-health__row-head">' +
-                '<span class="analytics-data-health__row-title">' + escapeHtml(title) + '</span>' +
-                '<span class="analytics-data-health__row-value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
-                '</div>' +
-                '<p class="form-help analytics-data-health__row-help u-m-0">' + escapeHtml(help) + '</p>' +
-                '<div class="meter analytics-data-health__meter" style="--value:' + Math.max(2, Math.round(p)) + '%"><span></span></div>' +
+            return '<div class="analytics-data-health__chip">' +
+                '<span class="analytics-data-health__chip-label">' + escapeHtml(title) +
+                '<button type="button" class="analytics-metric-info is-tiny" data-tooltip="' + escapeHtml(tip) + '"' +
+                ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this means')) + '"><span aria-hidden="true">?</span></button></span>' +
+                '<span class="analytics-data-health__chip-value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
+                '<div class="meter analytics-data-health__chip-meter" style="--value:' + Math.max(2, Math.round(p)) + '%"><span></span></div>' +
                 '</div>';
         }
 
         var defs = quality.definitions || {};
-        var footnotes = [];
-        if (defs.session) {
-            footnotes.push(t('analytics_trust_def_session', 'Sessions — {text}', { text: defs.session }));
-        }
-        if (defs.visitor) {
-            footnotes.push(t('analytics_trust_def_visitor', 'Visitors — {text}', { text: defs.visitor }));
+        var defSummary = '';
+        if (defs.session && defs.visitor) {
+            defSummary = t('analytics_trust_defs_summary', 'Sessions group pages in one tab; visitors count people using tokens or session/day rules.');
         }
 
-        return '<aside class="callout analytics-data-health" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
-            '<div class="analytics-data-health__head u-cluster u-justify-between u-gap-3 u-wrap">' +
-            '<div class="analytics-data-health__intro">' +
-            '<p class="callout-title u-m-0">' + escapeHtml(t('analytics_trust_title', 'How complete is your data?')) + '</p>' +
-            '<p class="callout-body u-m-0">' + escapeHtml(t('analytics_trust_lede', 'Higher coverage means sessions, visitors, and device stats are easier to trust.')) + '</p>' +
+        return '<aside class="analytics-data-health analytics-data-health--compact" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
+            '<div class="analytics-data-health__bar u-cluster u-justify-between u-gap-2 u-wrap">' +
+            '<span class="analytics-data-health__bar-title">' + escapeHtml(t('analytics_trust_title', 'How complete is your data?')) + '</span>' +
             '<span class="analytics-trust__badge analytics-trust__badge--' + escapeHtml(confidence) + '">' + escapeHtml(trustConfidenceLabel(confidence)) + '</span>' +
+            '<div class="analytics-data-health__chips">' +
+            coverageCompact(t('analytics_cov_sessions', 'Session ids'), t('analytics_cov_sessions_help', 'How often each hit includes a session id so visits can be grouped.'), coverage.has_session_pct) +
+            coverageCompact(t('analytics_cov_ua', 'Browser & device'), t('analytics_cov_ua_help', 'How often we received enough browser data to show OS, browser, and screen size.'), coverage.has_ua_pct) +
+            coverageCompact(t('analytics_cov_token', 'Visitor tokens'), t('analytics_cov_token_help', 'How often someone accepted analytics and received a privacy-safe token.'), coverage.has_visitor_token_pct) +
             '</div>' +
             '<button type="button" class="button is-small is-secondary" id="analytics-rebuild-index">' + escapeHtml(t('analytics_rebuild_index', 'Rebuild index')) + '</button>' +
             '</div>' +
-            '<div class="analytics-data-health__grid">' +
-            coverageRow(
-                t('analytics_cov_sessions', 'Session ids'),
-                t('analytics_cov_sessions_help', 'How often each hit includes a session id so visits can be grouped.'),
-                coverage.has_session_pct
-            ) +
-            coverageRow(
-                t('analytics_cov_ua', 'Browser & device labels'),
-                t('analytics_cov_ua_help', 'How often we received enough browser data to show OS, browser, and screen size.'),
-                coverage.has_ua_pct
-            ) +
-            coverageRow(
-                t('analytics_cov_token', 'Returning visitor tokens'),
-                t('analytics_cov_token_help', 'How often someone accepted analytics and received a privacy-safe token.'),
-                coverage.has_visitor_token_pct
-            ) +
-            '</div>' +
-            (tokenPct < 5
-                ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_cov_token_zero_hint', 'Tokens appear after visitors accept the analytics banner on your public site (Standard or Advanced preset).')) + '</p>'
-                : '') +
-            (raw > 0 && indexed < raw
-                ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })) + '</p>'
-                : '') +
-            (footnotes.length ? '<div class="analytics-data-health__footnotes">' + footnotes.map(function (d) { return '<p class="form-help u-m-0">' + escapeHtml(d) + '</p>'; }).join('') + '</div>' : '') +
+            (tokenPct < 5 ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_cov_token_zero_hint', 'Tokens appear after visitors accept the analytics banner on your public site (Standard or Advanced preset).')) + '</p>' : '') +
+            (raw > 0 && indexed < raw ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })) + '</p>' : '') +
+            (defSummary ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(defSummary) + '</p>' : '') +
             '</aside>';
     }
 
@@ -324,19 +306,23 @@
         rows.forEach(function (row) {
             max = Math.max(max, Number(row[valueKey]) || 0);
         });
-        var items = rows.slice(0, isAdvanced() ? 12 : 8).map(function (row) {
+        var items = rows.slice(0, isAdvanced() ? 12 : 8).map(function (row, index) {
             var count = Number(row[valueKey]) || 0;
             var pct = Math.max(4, Math.round((count / max) * 100));
             var label = String(row[labelKey] || '—');
-            return '<li class="analytics-bar-row analytics-bar-row--interactive" tabindex="0" data-label="' + escapeHtml(label) + '" data-value="' + count + '" data-pct="' + pct + '">' +
+            var tier = pct >= 66 ? 'high' : (pct >= 33 ? 'mid' : 'low');
+            return '<li class="analytics-bar-row analytics-bar-row--interactive analytics-bar-row--' + tier + '"' +
+                ' tabindex="0" data-label="' + escapeHtml(label) + '" data-value="' + count + '" data-pct="' + pct + '">' +
+                '<span class="analytics-bar-rank u-numeric" aria-hidden="true">' + String(index + 1) + '</span>' +
                 '<span class="ranked-label" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span>' +
                 '<span class="ranked-value u-numeric">' + escapeHtml(formatCount(count)) + '</span>' +
-                '<div class="meter" style="--value:' + pct + '%" aria-hidden="true"><span></span></div>' +
+                '<span class="analytics-bar-share u-numeric" aria-hidden="true">' + pct + '%</span>' +
+                '<div class="meter analytics-bar-meter analytics-bar-meter--' + tier + '" style="--value:' + pct + '%" aria-hidden="true"><span></span></div>' +
                 '</li>';
         }).join('');
-        return '<section class="card analytics-panel analytics-panel--interactive">' +
-            '<div class="card-header analytics-panel__head"><h4 class="analytics-panel__title section-title">' + escapeHtml(title) + '</h4></div>' +
-            '<div class="card-body"><ul class="ranked analytics-ranked">' + items + '</ul></div></section>';
+        return '<section class="analytics-ranked-panel analytics-panel--interactive">' +
+            '<h4 class="analytics-panel__title section-title">' + escapeHtml(title) + '</h4>' +
+            '<ul class="ranked analytics-ranked analytics-ranked--bars">' + items + '</ul></section>';
     }
 
     function selectedPeriodDays() {
@@ -525,78 +511,138 @@
         });
     }
 
-    function chartPoints(values, max, width, height) {
+    function chartPoints(values, max, width, height, padX, innerWidth) {
         if (!values.length) {
             return [];
         }
-        var step = values.length > 1 ? width / (values.length - 1) : width;
+        padX = padX || 0;
+        innerWidth = innerWidth || width;
+        var step = values.length > 1 ? innerWidth / (values.length - 1) : innerWidth;
         return values.map(function (v, i) {
             var ratio = (Number(v) || 0) / Math.max(1, max);
-            return { x: step * i, y: height - ratio * height };
+            return { x: padX + step * i, y: height - ratio * height };
         });
     }
 
-    function renderTrendChart(daily) {
-        daily = Array.isArray(daily) ? daily.slice() : [];
-        if (!daily.length) {
-            return '<section class="card analytics-chart-card">' +
-                '<div class="card-body"><p class="form-help u-m-0">' + escapeHtml(t('analytics_no_daily_data', 'No daily data yet.')) + '</p></div></section>';
+    function chartSmoothPath(points) {
+        if (!points.length) {
+            return '';
         }
+        if (points.length === 1) {
+            return 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+        }
+        var d = 'M ' + points[0].x.toFixed(2) + ' ' + points[0].y.toFixed(2);
+        for (var i = 0; i < points.length - 1; i++) {
+            var p0 = points[i - 1] || points[i];
+            var p1 = points[i];
+            var p2 = points[i + 1];
+            var p3 = points[i + 2] || p2;
+            var cp1x = p1.x + (p2.x - p0.x) / 6;
+            var cp1y = p1.y + (p2.y - p0.y) / 6;
+            var cp2x = p2.x - (p3.x - p1.x) / 6;
+            var cp2y = p2.y - (p3.y - p1.y) / 6;
+            d += ' C ' + cp1x.toFixed(2) + ' ' + cp1y.toFixed(2) + ', ' + cp2x.toFixed(2) + ' ' + cp2y.toFixed(2) + ', ' + p2.x.toFixed(2) + ' ' + p2.y.toFixed(2);
+        }
+        return d;
+    }
+
+    function chartAreaPath(points, height) {
+        if (!points.length) {
+            return '';
+        }
+        var line = chartSmoothPath(points);
+        var last = points[points.length - 1];
+        var first = points[0];
+        return line + ' L ' + last.x.toFixed(2) + ' ' + height + ' L ' + first.x.toFixed(2) + ' ' + height + ' Z';
+    }
+
+    function normalizeDailyRows(daily) {
+        daily = Array.isArray(daily) ? daily.slice() : [];
         daily.sort(function (a, b) {
             return String(a.date || '').localeCompare(String(b.date || ''));
         });
+        return daily;
+    }
+
+    function renderTrendChart(daily, comparisonDaily) {
+        daily = normalizeDailyRows(daily);
+        if (!daily.length) {
+            return '<section class="analytics-chart-card">' +
+                '<p class="form-help u-m-0">' + escapeHtml(t('analytics_no_daily_data', 'No daily data yet.')) + '</p></section>';
+        }
         var windowDays = Math.min(isAdvanced() ? 90 : 30, selectedPeriodDays());
         var slice = daily.slice(-windowDays);
+        comparisonDaily = normalizeDailyRows(comparisonDaily || []);
+        var prevSlice = comparisonDaily.length >= windowDays
+            ? comparisonDaily.slice(-windowDays)
+            : comparisonDaily.slice(0, windowDays);
+
         var views = slice.map(function (row) { return Number(row.views) || 0; });
         var visitors = slice.map(function (row) { return Number(row.visitors) || 0; });
+        var ghostViews = prevSlice.map(function (row) { return Number(row.views) || 0; });
+        while (ghostViews.length < slice.length) {
+            ghostViews.unshift(0);
+        }
+        if (ghostViews.length > slice.length) {
+            ghostViews = ghostViews.slice(-slice.length);
+        }
+
         var totalViews = views.reduce(function (a, b) { return a + b; }, 0);
         var totalVisitors = visitors.reduce(function (a, b) { return a + b; }, 0);
-        var max = Math.max(1, Math.max.apply(null, views.concat(visitors)));
+        var max = Math.max(1, Math.max.apply(null, views.concat(visitors, ghostViews)));
         var width = 640;
-        var height = 120;
-        var visitPts = chartPoints(views, max, width, height);
-        var visitorPts = isAdvanced() ? chartPoints(visitors, max, width, height) : [];
-        var line = function (pts) {
-            return pts.map(function (pt) { return pt.x.toFixed(1) + ',' + pt.y.toFixed(1); }).join(' ');
-        };
-        var area = visitPts.length ? line(visitPts) + ' ' + width + ',' + height + ' 0,' + height : '';
+        var height = 132;
+        var padX = 8;
+        var innerWidth = width - padX * 2;
+        var colW = slice.length > 0 ? innerWidth / slice.length : innerWidth;
+
+        var visitPts = chartPoints(views, max, width, height, padX, innerWidth);
+        var visitorPts = isAdvanced() ? chartPoints(visitors, max, width, height, padX, innerWidth) : [];
+        var ghostPts = ghostViews.length ? chartPoints(ghostViews, max, width, height, padX, innerWidth) : [];
+
         var first = String(slice[0].date || '').slice(5);
         var last = String(slice[slice.length - 1].date || '').slice(5);
-        var markers = slice.map(function (row, i) {
-            var x = visitPts[i] ? visitPts[i].x : 0;
+        var columns = slice.map(function (row, i) {
             var date = row.date || '';
             var v = Number(row.views) || 0;
             var vis = Number(row.visitors) || 0;
-            var selected = state.selectedTrendDate === date;
-            return '<circle class="analytics-chart-marker' + (selected ? ' is-active' : '') + '" tabindex="0" role="button"' +
-                ' cx="' + x.toFixed(1) + '" cy="' + (height + 8) + '" r="5"' +
+            var gx = padX + colW * i;
+            return '<rect class="analytics-chart-column" tabindex="0" role="button" x="' + gx.toFixed(2) + '" y="0"' +
+                ' width="' + colW.toFixed(2) + '" height="' + height + '"' +
                 ' data-date="' + escapeHtml(date) + '" data-views="' + v + '" data-visitors="' + vis + '"' +
-                ' aria-label="' + escapeHtml(t('analytics_trend_tooltip', '{date}: {views} page views, {visitors} visitors', { date: date, views: v, visitors: vis })) + '"></circle>';
+                ' aria-label="' + escapeHtml(t('analytics_trend_tooltip', '{date}: {views} page views, {visitors} visitors', { date: date, views: v, visitors: vis })) + '"></rect>';
         }).join('');
-        var label = t('analytics_trend_title', 'Daily page views (last {days} days)', { days: windowDays });
 
-        return '<section class="card analytics-chart-card">' +
-            '<div class="card-header analytics-chart-card__head">' +
+        var label = t('analytics_trend_title', 'Daily page views (last {days} days)', { days: windowDays });
+        var visitPath = chartSmoothPath(visitPts);
+        var visitorPath = visitorPts.length ? chartSmoothPath(visitorPts) : '';
+        var ghostPath = ghostPts.length ? chartSmoothPath(ghostPts) : '';
+        var areaPath = chartAreaPath(visitPts, height);
+
+        return '<section class="analytics-chart-card">' +
+            '<div class="analytics-chart-card__head">' +
             '<h4 class="section-title analytics-panel__title">' + escapeHtml(label) + '</h4>' +
             '<div class="traffic-totals analytics-chart-totals">' +
             '<span><i class="traffic-swatch" aria-hidden="true"></i>' + escapeHtml(t('analytics_legend_page_views', 'Page views')) +
             ' <strong class="u-numeric">' + formatCount(totalViews) + '</strong></span>' +
+            (ghostPath ? '<span><i class="traffic-swatch is-ghost" aria-hidden="true"></i>' + escapeHtml(t('analytics_legend_previous_period', 'Previous period')) + '</span>' : '') +
             (isAdvanced()
                 ? '<span><i class="traffic-swatch is-interactions" aria-hidden="true"></i>' + escapeHtml(t('analytics_legend_visitors', 'Visitors')) +
                 ' <strong class="u-numeric">' + formatCount(totalVisitors) + '</strong></span>'
                 : '') +
             '</div></div>' +
-            '<div class="card-body analytics-chart-card__body">' +
-            '<svg class="traffic-chart analytics-trend-svg" viewBox="0 0 ' + width + ' ' + (height + 22) + '" role="img" aria-label="' + escapeHtml(label) + '">' +
-            (area ? '<polygon class="traffic-area" points="' + area + '"></polygon>' : '') +
-            (visitPts.length ? '<polyline class="traffic-line is-visits" points="' + line(visitPts) + '"></polyline>' : '') +
-            (visitorPts.length ? '<polyline class="traffic-line is-interactions" points="' + line(visitorPts) + '"></polyline>' : '') +
-            markers +
-            '<text class="traffic-axis" x="0" y="' + (height + 18) + '">' + escapeHtml(first) + '</text>' +
-            '<text class="traffic-axis" x="' + width + '" y="' + (height + 18) + '" text-anchor="end">' + escapeHtml(last) + '</text>' +
-            '</svg>' +
-            '<div id="analytics-day-detail" class="analytics-day-detail" hidden></div>' +
-            '</div></section>';
+            '<div class="analytics-chart-wrap">' +
+            '<div class="analytics-chart-hover" id="analytics-chart-hover" hidden></div>' +
+            '<svg class="traffic-chart analytics-trend-svg" viewBox="0 0 ' + width + ' ' + (height + 20) + '" role="img" aria-label="' + escapeHtml(label) + '">' +
+            '<g class="analytics-chart-columns">' + columns + '</g>' +
+            '<line class="analytics-chart-vline" x1="0" y1="0" x2="0" y2="' + height + '" hidden></line>' +
+            (ghostPath ? '<path class="traffic-line is-ghost" d="' + ghostPath + '" pathLength="1"></path>' : '') +
+            (areaPath ? '<path class="traffic-area" d="' + areaPath + '"></path>' : '') +
+            (visitPath ? '<path class="traffic-line is-visits" d="' + visitPath + '" pathLength="1"></path>' : '') +
+            (visitorPath ? '<path class="traffic-line is-interactions" d="' + visitorPath + '" pathLength="1"></path>' : '') +
+            '<text class="traffic-axis" x="' + padX + '" y="' + (height + 16) + '">' + escapeHtml(first) + '</text>' +
+            '<text class="traffic-axis" x="' + (width - padX) + '" y="' + (height + 16) + '" text-anchor="end">' + escapeHtml(last) + '</text>' +
+            '</svg></div></section>';
     }
 
     function renderReportTabBody(report, preset) {
@@ -609,29 +655,31 @@
         if (tab === 'overview') {
             var metrics = '';
             if (preset !== 'minimal' && preset !== 'off') {
-                metrics += kpiStat(formatCount(report.sessions || 0), t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_primary_hint', 'Grouped visits in one browser tab'), '');
+                metrics += kpiStat(formatCount(report.sessions || 0), t('analytics_kpi_sessions', 'Sessions'), t('analytics_metric_tip_sessions', 'A session is one continuous visit in a browser tab until the visitor closes it or clears site data for your site.'), '');
             }
-            metrics += kpiStat(formatCount(report.page_views || 0), t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Excludes confirmed bots by default'), '') +
-                kpiStat(formatCount(report.unique_visitors || 0), t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Token or session/day identity'), '');
+            metrics += kpiStat(formatCount(report.page_views || 0), t('analytics_kpi_page_views', 'Page views'), t('analytics_metric_tip_page_views', 'Count of page loads (and allowed 404s) in this period. Confirmed bots are excluded from this total unless you enable Include bots.'), '') +
+                kpiStat(formatCount(report.unique_visitors || 0), t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal'
+                    ? t('analytics_metric_tip_visitors_minimal', 'Privacy-safe daily estimate without cross-session tracking.')
+                    : t('analytics_metric_tip_visitors', 'Distinct people in this period: returning visitors with a consent token when available, otherwise at most one visitor per session per day.'), '');
             if (preset !== 'minimal' && preset !== 'off') {
                 if (report.pages_per_visitor_suppressed) {
                     metrics += kpiStat('—', t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_pages_per_visitor_suppressed', 'Hidden until visitor estimate is reliable'), 'analytics-stat--muted');
                 } else if (report.pages_per_visitor != null) {
-                    metrics += kpiStat(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'), '');
+                    metrics += kpiStat(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_metric_tip_pages_per_visitor', 'Average page views divided by unique visitors — higher usually means more exploration.'), '');
                 }
             }
             if (isAdvanced()) {
-                metrics += kpiStat((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions'), '');
+                metrics += kpiStat((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_metric_tip_bounce', 'Share of sessions that viewed only one page before leaving.'), '');
             }
-            return renderTrustStrip(report) +
-                sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
+            return sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
+                '<div class="analytics-metrics-row">' + metrics + '</div>' +
                 '<div class="analytics-overview-layout">' +
                 '<div class="analytics-overview-main u-stack-4">' +
-                '<div class="analytics-metrics-row">' + metrics + '</div>' +
-                renderTrendChart(report.daily_stats) +
+                renderTrendChart(report.daily_stats, report.comparison_daily_stats || state.comparisonDaily) +
                 '</div>' +
                 '<aside class="analytics-overview-aside u-stack-4">' + renderTrafficQuality(report.bot_traffic) + '</aside>' +
-                '</div>';
+                '</div>' +
+                renderTrustStrip(report);
         }
 
         if (tab === 'acquisition') {
@@ -779,51 +827,116 @@
                     bindSessionRowToggle(container);
                     bindHoverFlyout(container);
                     bindTrendChart(container);
+                    bindMetricTips(container);
                 }
             });
         });
 
         bindHoverFlyout(container);
         bindTrendChart(container);
+        bindMetricTips(container);
     }
 
-    function updateDayDetail(container, date, views, visitors) {
-        var host = container.querySelector('#analytics-day-detail');
-        if (!host) return;
-        if (!date) {
-            host.hidden = true;
-            host.innerHTML = '';
+    function bindMetricTips(container) {
+        if (!container) {
             return;
         }
-        host.hidden = false;
-        host.innerHTML = '<div class="analytics-day-detail__inner">' +
-            '<strong>' + escapeHtml(date) + '</strong>' +
-            '<span>' + escapeHtml(t('analytics_flyout_views', '{count} page views', { count: formatCount(views) })) + '</span>' +
-            (isAdvanced() ? '<span>' + escapeHtml(t('analytics_flyout_visitors', '{count} visitors', { count: formatCount(visitors) })) + '</span>' : '') +
-            '</div>';
+        if (window.__birklyAnalyticsMetricTips) {
+            return;
+        }
+        window.__birklyAnalyticsMetricTips = true;
+        var tip = document.getElementById('analytics-metric-tip');
+        if (!tip) {
+            tip = document.createElement('div');
+            tip.id = 'analytics-metric-tip';
+            tip.className = 'analytics-metric-tip';
+            tip.hidden = true;
+            tip.setAttribute('role', 'tooltip');
+            document.body.appendChild(tip);
+        }
+        function show(el) {
+            var text = el.getAttribute('data-tooltip');
+            if (!text) return;
+            tip.textContent = text;
+            tip.hidden = false;
+            var rect = el.getBoundingClientRect();
+            var top = rect.bottom + 8 + window.scrollY;
+            var left = Math.min(rect.left + window.scrollX, window.scrollX + window.innerWidth - tip.offsetWidth - 12);
+            tip.style.top = top + 'px';
+            tip.style.left = Math.max(8, left) + 'px';
+        }
+        function hide() {
+            tip.hidden = true;
+        }
+        var root = document.getElementById('analytics-report-panel') || container;
+        root.addEventListener('mouseover', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest('#analytics-report-panel [data-tooltip]') : null;
+            if (el) show(el);
+        });
+        root.addEventListener('mouseout', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest('[data-tooltip]') : null;
+            if (el && (!e.relatedTarget || !el.contains(e.relatedTarget))) hide();
+        });
+        root.addEventListener('focusin', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest('[data-tooltip]') : null;
+            if (el && root.contains(el)) show(el);
+        });
+        root.addEventListener('focusout', hide);
     }
 
     function bindTrendChart(container) {
         if (!container) return;
-        container.querySelectorAll('.analytics-chart-marker').forEach(function (marker) {
-            function select() {
-                var date = marker.getAttribute('data-date') || '';
-                var views = marker.getAttribute('data-views') || '0';
-                var visitors = marker.getAttribute('data-visitors') || '0';
-                state.selectedTrendDate = date;
-                container.querySelectorAll('.analytics-chart-marker').forEach(function (m) {
-                    m.classList.toggle('is-active', m === marker);
-                });
-                updateDayDetail(container, date, views, visitors);
+        var hover = container.querySelector('#analytics-chart-hover');
+        var vline = container.querySelector('.analytics-chart-vline');
+        function selectColumn(col) {
+            if (!col) {
+                if (vline) vline.setAttribute('hidden', '');
+                if (hover) hover.hidden = true;
+                return;
             }
-            marker.addEventListener('click', select);
-            marker.addEventListener('keydown', function (e) {
+            var date = col.getAttribute('data-date') || '';
+            var views = col.getAttribute('data-views') || '0';
+            var visitors = col.getAttribute('data-visitors') || '0';
+            var rect = col.getBoundingClientRect();
+            var svg = col.ownerSVGElement;
+            var colBox = col.getBBox();
+            if (vline) {
+                var midX = colBox.x + colBox.width / 2;
+                vline.setAttribute('x1', String(midX));
+                vline.setAttribute('x2', String(midX));
+                vline.removeAttribute('hidden');
+            }
+            container.querySelectorAll('.analytics-chart-column').forEach(function (c) {
+                c.classList.toggle('is-active', c === col);
+            });
+            if (hover) {
+                hover.hidden = false;
+                hover.innerHTML = '<strong>' + escapeHtml(date) + '</strong>' +
+                    '<span>' + escapeHtml(t('analytics_flyout_views', '{count} page views', { count: formatCount(views) })) + '</span>' +
+                    (isAdvanced() ? '<span>' + escapeHtml(t('analytics_flyout_visitors', '{count} visitors', { count: formatCount(visitors) })) + '</span>' : '');
+                var wrap = container.querySelector('.analytics-chart-wrap');
+                if (wrap && svg) {
+                    var wrapRect = wrap.getBoundingClientRect();
+                    var tipLeft = rect.left - wrapRect.left + rect.width / 2;
+                    hover.style.left = Math.max(12, Math.min(tipLeft, wrapRect.width - 12)) + 'px';
+                }
+            }
+        }
+        container.querySelectorAll('.analytics-chart-column').forEach(function (col) {
+            col.addEventListener('mouseenter', function () { selectColumn(col); });
+            col.addEventListener('focus', function () { selectColumn(col); });
+            col.addEventListener('click', function () { selectColumn(col); });
+            col.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    select();
+                    selectColumn(col);
                 }
             });
         });
+        var wrap = container.querySelector('.analytics-chart-wrap');
+        if (wrap) {
+            wrap.addEventListener('mouseleave', function () { selectColumn(null); });
+        }
     }
 
     function bindHoverFlyout(container) {
@@ -916,9 +1029,19 @@
             '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
             '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10)) +
             '&include_bots=' + (state.includeBots ? '1' : '0');
-        return fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (payload) {
+        var prevEnd = new Date(start.getTime() - 86400000);
+        var prevStart = new Date(prevEnd.getTime() - periodDays * 86400000);
+        var prevQs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
+            '&start_date=' + encodeURIComponent(prevStart.toISOString().slice(0, 10)) +
+            '&end_date=' + encodeURIComponent(prevEnd.toISOString().slice(0, 10)) +
+            '&include_bots=' + (state.includeBots ? '1' : '0');
+
+        return Promise.all([
+            fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+            fetch(apiUrl('/api/analytics.php?' + prevQs), { credentials: 'same-origin' }).then(function (r) { return r.json(); }).catch(function () { return null; })
+        ]).then(function (results) {
+                var payload = results[0];
+                var prevPayload = results[1];
                 if (payload.status !== 'ok') {
                     throw new Error(payload.message || t('analytics_report_failed', 'Report failed'));
                 }
@@ -927,6 +1050,10 @@
                     renderHealthBanner();
                 }
                 state.lastReport = payload.data || {};
+                state.comparisonDaily = (prevPayload && prevPayload.status === 'ok' && prevPayload.data)
+                    ? (prevPayload.data.daily_stats || [])
+                    : [];
+                state.lastReport.comparison_daily_stats = state.comparisonDaily;
                 panel.innerHTML = renderReport(state.lastReport);
                 bindReportChrome(panel);
             })

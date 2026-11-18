@@ -406,6 +406,16 @@ a.data-list-item:focus-visible .dash-row-arrow {
 }
 
 [data-birch] .traffic-line.is-interactions { stroke: var(--text); }
+[data-birch] .traffic-line.is-ghost {
+  stroke: var(--text-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  opacity: 0.65;
+  fill: none;
+}
+[data-birch] .traffic-swatch.is-ghost {
+  background: repeating-linear-gradient(90deg, var(--text-3) 0 4px, transparent 4px 7px);
+}
 
 [data-birch] .traffic-axis {
   fill: var(--text-3);
