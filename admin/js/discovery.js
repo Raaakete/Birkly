@@ -126,12 +126,21 @@
 
     function readBootstrap() {
         var el = document.getElementById('disc-bootstrap-data');
-        if (!el || !el.textContent) return null;
+        if (!el) return null;
+        var raw = (el.value !== undefined && el.value !== '') ? el.value : (el.textContent || '');
+        raw = String(raw).trim();
+        if (!raw) return null;
         try {
-            var data = JSON.parse(el.textContent);
+            var data = JSON.parse(raw);
             return data && data.packs ? data : null;
         } catch (e) {
             return null;
+        }
+    }
+
+    function ensureDiscoveryPageChrome() {
+        if (global.Birkly && typeof global.Birkly.moveBreadcrumbsToTopbar === 'function') {
+            global.Birkly.moveBreadcrumbsToTopbar();
         }
     }
 
@@ -1227,6 +1236,7 @@
 
     function init() {
         if (!document.querySelector('.disc-hub')) return;
+        ensureDiscoveryPageChrome();
         mountPageBars();
         state.activeZone = getInitialZone();
         try {
@@ -1240,7 +1250,6 @@
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
-        // Agent Guide / WebMCP editor loads via ai_presence.php — do not gate on discovery.get.
         initApEmbed();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
@@ -1248,6 +1257,9 @@
         load().catch(function (e) {
             showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
         });
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(ensureDiscoveryPageChrome);
+        }
     }
 
     if (document.readyState === 'loading') {
