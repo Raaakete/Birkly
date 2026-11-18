@@ -83,8 +83,12 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     <!-- Plugin UI System -->
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/birkly-paths.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/plugin-ui.js')) ?>" defer<?= $__birklyScriptNonceAttr ?>></script>
-    
-    <!-- Page uses no per-page JS here; global JS loaded in footer -->
+    <?php if (isset($page) && $page === 'discovery'): ?>
+    <?php
+    require_once __DIR__ . '/../../core/discovery_admin_assets.php';
+    birkly_echo_discovery_admin_script_tags();
+    ?>
+    <?php endif; ?>
 </head>
 <?php
 $__birklyDeveloperModeOn = false;

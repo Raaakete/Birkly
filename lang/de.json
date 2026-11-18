@@ -1346,6 +1346,7 @@
         "discovery_js_last_run": "Letzter Lauf: {at}",
         "discovery_js_load_discovery_failed": "Discovery konnte nicht geladen werden",
         "discovery_js_load_failed": "Laden fehlgeschlagen",
+        "discovery_js_missing_hint": "Discovery-JavaScript wurde nicht geladen — Speichern und Pack-Umschalter funktionieren nicht. Seite hart neu laden und im Network-Tab nach discovery.js suchen (/admin/js/discovery.js in neuem Tab öffnen). Bleibt das Banner, /admin/deploy-check.php öffnen — discovery_admin_js sollte nach Deploy-Sync von GitHub main alle true sein.",
         "discovery_js_proposals_applied_review": "Vorschläge übernommen — prüfen und veröffentlichen",
         "discovery_js_proposals_applied_warns": "Vorschläge übernommen — {warns}",
         "discovery_js_proposed_defaults": "Vorgeschlagene Standardwerte — prüfen und speichern",

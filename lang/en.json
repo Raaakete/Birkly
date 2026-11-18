@@ -1346,7 +1346,7 @@
         "discovery_js_last_run": "Last run: {at}",
         "discovery_js_load_discovery_failed": "Could not load Discovery",
         "discovery_js_load_failed": "Load failed",
-        "discovery_js_missing_hint": "Discovery JavaScript did not load — Save and pack toggles will not work. Run Hub → Update for the Birkly core, hard-refresh this page, and check the Network tab for discovery.js. Open /admin/deploy-check.php and confirm discovery_admin_js.index_emits_discovery_scripts is true.",
+        "discovery_js_missing_hint": "Discovery JavaScript did not load — Save and pack toggles will not work. Hard-refresh this page and check the Network tab for discovery.js (open /admin/js/discovery.js in a new tab to confirm the file exists). If this banner stays, open /admin/deploy-check.php — discovery_admin_js should all be true after your deploy synced from GitHub main.",
         "discovery_js_proposals_applied_review": "Proposals applied — review and publish",
         "discovery_js_proposals_applied_warns": "Proposals applied — {warns}",
         "discovery_js_proposed_defaults": "Proposed defaults — review and save",
