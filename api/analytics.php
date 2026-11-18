@@ -24,6 +24,7 @@ set_cors_headers('public');
     require_once __DIR__ . '/../core/analytics_enrich.php';
     require_once __DIR__ . '/../core/analytics_presets.php';
     require_once __DIR__ . '/../core/analytics_config.php';
+    require_once __DIR__ . '/../core/analytics_db.php';
 
 $action = $_GET['action'] ?? '';
 
@@ -247,6 +248,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     }
     
     file_put_contents($eventFile, json_encode($events, JSON_PRETTY_PRINT), LOCK_EX);
+    birkly_analytics_db_insert_event($trackingId, $event);
     birkly_analytics_mark_event_meta($trackingId, $timestamp, $capped);
     birkly_analytics_purge_expired();
     
