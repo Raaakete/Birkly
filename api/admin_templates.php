@@ -212,7 +212,7 @@ function getPageData($page) {
         case 'agent-guide':
             return getAiPresenceData();
         case 'discovery':
-            return getAiPresenceData();
+            return getDiscoveryPageData();
         default:
             require_once __DIR__ . '/../core/plugins/admin_page_data.php';
             try {
@@ -234,6 +234,18 @@ function getAiPresenceData() {
     return [
         'page' => 'ai-presence',
         'csrf_token' => get_csrf_token(),
+    ];
+}
+
+function getDiscoveryPageData(): array
+{
+    require_once __DIR__ . '/../core/csrf.php';
+    require_once __DIR__ . '/../core/discovery.php';
+
+    return [
+        'page' => 'discovery',
+        'csrf_token' => get_csrf_token(),
+        'discovery_status' => birkly_discovery_status(),
     ];
 }
 

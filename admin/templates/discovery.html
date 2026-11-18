@@ -1,11 +1,5 @@
 <?php
-$__disc_bootstrap = null;
-try {
-    require_once dirname(__DIR__) . '/../core/discovery.php';
-    $__disc_bootstrap = birkly_discovery_status();
-} catch (Throwable $e) {
-    error_log('Discovery page bootstrap: ' . $e->getMessage());
-}
+$__disc_bootstrap = is_array($discovery_status ?? null) ? $discovery_status : null;
 $__disc_packs = is_array($__disc_bootstrap['packs'] ?? null) ? $__disc_bootstrap['packs'] : [];
 $__disc_seo_on = !empty($__disc_packs['seo']['enabled']);
 $__disc_ag_on = !empty($__disc_packs['agent_guide']['enabled']);
