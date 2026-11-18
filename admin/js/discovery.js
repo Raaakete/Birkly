@@ -4,6 +4,8 @@
 (function (global) {
     'use strict';
 
+    global.__DISCOVERY_JS_LOADED__ = true;
+
     var DISC_ZONES = ['seo', 'agent-guide', 'webmcp'];
     var LEGACY_ZONE_MAP = { tools: 'webmcp', publish: 'agent-guide', guide: 'agent-guide' };
     var SEO_SURFACE_GROUPS = [
@@ -1394,11 +1396,15 @@
     }
 
     function init() {
+        if (global.__DISCOVERY_INIT_DONE__) {
+            return;
+        }
         var hub = document.querySelector('.disc-hub');
         if (!hub) {
             console.error('Discovery init aborted: missing .disc-hub');
             return;
         }
+        global.__DISCOVERY_INIT_DONE__ = true;
         if (typeof global.resetAgentGuideUiChrome === 'function') {
             global.resetAgentGuideUiChrome();
         }
