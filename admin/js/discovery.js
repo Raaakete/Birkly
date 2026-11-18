@@ -263,8 +263,11 @@
         if (zone === 'webmcp' && typeof global.hydrateWebmcpTools === 'function') {
             global.hydrateWebmcpTools();
         }
-        if (zone === 'agent-guide' && typeof global.ensureAgentGuideSubnav === 'function') {
-            global.ensureAgentGuideSubnav();
+        if (zone === 'agent-guide') {
+            bindDiscoveryGuideNavClicks();
+            if (typeof global.ensureAgentGuideSubnav === 'function') {
+                global.ensureAgentGuideSubnav();
+            }
         }
     }
 
@@ -1310,10 +1313,36 @@
         return true;
     }
 
-    function bindGuideSubnavBridge() {
+    function bindDiscoveryGuideNavClicks() {
         var embed = document.getElementById('disc-ap-embed');
-        if (!embed || embed.getAttribute('data-disc-guide-nav') === '1') return;
-        embed.setAttribute('data-disc-guide-nav', '1');
+        if (!embed) return;
+        var nav = embed.querySelector('.ap-guide-nav');
+        if (!nav) return;
+        nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
+            if (btn.getAttribute('data-disc-nav-bound') === '1') return;
+            btn.setAttribute('data-disc-nav-bound', '1');
+            btn.addEventListener('click', function (e) {
+                var tab = btn.getAttribute('data-tab');
+                if (!tab) return;
+                e.preventDefault();
+                switchDiscoveryGuideTab(tab);
+                if (typeof global.showAgentGuideTab === 'function') {
+                    global.showAgentGuideTab(tab);
+                } else if (typeof global.initAiPresence === 'function') {
+                    global.initAiPresence({ discoveryEmbed: true, initialHubZone: 'guide' });
+                    if (typeof global.showAgentGuideTab === 'function') {
+                        global.showAgentGuideTab(tab);
+                    }
+                }
+            });
+        });
+        if (typeof global.syncAgentGuideSubnavPanels === 'function') {
+            global.syncAgentGuideSubnavPanels();
+        }
+    }
+
+    function bindGuideSubnavBridge() {
+        bindDiscoveryGuideNavClicks();
     }
 
     function initApEmbed() {
