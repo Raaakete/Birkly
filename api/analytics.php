@@ -269,6 +269,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     exit;
 }
 
+// Rebuild SQLite index from JSON (admin)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'rebuild_index') {
+    require_once 'auth.php';
+    require_once __DIR__ . '/../core/csrf.php';
+    requireAuth('manage_settings');
+
+    $input = json_decode((string) file_get_contents('php://input'), true) ?? [];
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../core/analytics_db.php';
+
+    $trackingId = isset($input['tracking_id']) ? (string) $input['tracking_id'] : null;
+    if ($trackingId === '' || $trackingId === 'all') {
+        $trackingId = null;
+    }
+    $startDate = (string) ($input['start_date'] ?? date('Y-m-d', strtotime('-180 days')));
+    $endDate = (string) ($input['end_date'] ?? date('Y-m-d'));
+
+    $result = birkly_analytics_db_rebuild_all($trackingId, $startDate, $endDate);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Analytics index rebuilt',
+        'data' => [
+            'events_indexed' => $result['events_indexed'],
+            'domains' => $result['domains'],
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ],
+    ]);
+    exit;
+}
+
 // Get analytics data (for dashboard)
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
     require_once 'auth.php';

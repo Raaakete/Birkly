@@ -394,6 +394,128 @@ function birkly_analytics_event_traffic_class(array $event): string
     return birkly_analytics_traffic_class($event);
 }
 
+/**
+ * Backfill missing schema v2 fields on stored JSON events.
+ *
+ * @param array<string, mixed> $event
+ * @return array<string, mixed>
+ */
+function birkly_analytics_normalize_stored_event(array $event): array
+{
+    if (!isset($event['schema_version'])) {
+        $event['schema_version'] = 1;
+    }
+    if (!isset($event['consent_state']) || !is_string($event['consent_state'])) {
+        $event['consent_state'] = 'not_required';
+    }
+    if (!isset($event['traffic_class'])) {
+        $event['traffic_class'] = birkly_analytics_traffic_class($event);
+    }
+    if (!isset($event['quality']) || !is_array($event['quality'])) {
+        $event['quality'] = birkly_analytics_event_quality($event);
+    }
+
+    return $event;
+}
+
+/**
+ * @param list<array<string, mixed>> $rawEvents
+ * @param array<string, mixed> $report
+ * @return array<string, mixed>
+ */
+function birkly_analytics_build_report_quality(array $rawEvents, array $report): array
+{
+    $total = count($rawEvents);
+    $withUa = 0;
+    $withSession = 0;
+    $withToken = 0;
+    $consentGranted = 0;
+    $consentAnonymous = 0;
+    $schemaV2 = 0;
+
+    foreach ($rawEvents as $event) {
+        if (!is_array($event)) {
+            continue;
+        }
+        $event = birkly_analytics_normalize_stored_event($event);
+        $quality = $event['quality'];
+        if (!empty($quality['has_ua'])) {
+            $withUa++;
+        }
+        if (!empty($quality['has_session'])) {
+            $withSession++;
+        }
+        if (!empty($quality['has_visitor_token'])) {
+            $withToken++;
+        }
+        $consent = (string) ($event['consent_state'] ?? '');
+        if ($consent === 'granted') {
+            $consentGranted++;
+        } elseif ($consent === 'anonymous') {
+            $consentAnonymous++;
+        }
+        if ((int) ($event['schema_version'] ?? 0) >= 2) {
+            $schemaV2++;
+        }
+    }
+
+    $den = max(1, $total);
+    $sessionPct = $withSession / $den;
+    $uaPct = $withUa / $den;
+
+    $confidence = 'low';
+    if ($total >= 10 && $sessionPct >= 0.35) {
+        $confidence = 'medium';
+    }
+    if ($total >= 25 && $sessionPct >= 0.5 && $uaPct >= 0.4) {
+        $confidence = 'high';
+    }
+
+    $visitors = (int) ($report['unique_visitors'] ?? 0);
+    $sessions = (int) ($report['sessions'] ?? 0);
+    $suppressPagesPerVisitor = $confidence === 'low' || $visitors < 2 || ($sessions > 0 && $visitors === 1 && $sessions >= 5);
+
+    return [
+        'confidence' => $confidence,
+        'event_count' => $total,
+        'indexed_event_count' => 0,
+        'coverage' => [
+            'has_ua_pct' => round(100 * $withUa / $den, 1),
+            'has_session_pct' => round(100 * $withSession / $den, 1),
+            'has_visitor_token_pct' => round(100 * $withToken / $den, 1),
+            'consent_granted_pct' => round(100 * $consentGranted / $den, 1),
+            'consent_anonymous_pct' => round(100 * $consentAnonymous / $den, 1),
+            'schema_v2_pct' => round(100 * $schemaV2 / $den, 1),
+        ],
+        'suppress_pages_per_visitor' => $suppressPagesPerVisitor,
+        'definitions' => [
+            'session' => 'A browser session id (resets when the tab session storage clears).',
+            'visitor' => 'Consent-granted visitor token when present; otherwise one visitor per session per day.',
+            'page_view' => 'Recorded page loads and 404 paths allowed by your preset.',
+            'traffic_tags' => 'Confirmed bots are excluded from default totals. Suspected hits stay in totals and are tagged separately.',
+        ],
+    ];
+}
+
+/**
+ * @param list<array<string, mixed>> $rawEvents
+ * @param array<string, mixed> $report
+ * @return array<string, mixed>
+ */
+function birkly_analytics_finalize_report(array $rawEvents, array $report): array
+{
+    $quality = birkly_analytics_build_report_quality($rawEvents, $report);
+    $report['quality'] = $quality;
+    if (!empty($quality['suppress_pages_per_visitor'])) {
+        $report['pages_per_visitor'] = null;
+        $report['pages_per_visitor_suppressed'] = true;
+    } else {
+        $report['pages_per_visitor_suppressed'] = false;
+    }
+
+    return $report;
+}
+
 function birkly_analytics_visitor_key(array $event): string
 {
     $visitorToken = trim((string) ($event['visitor_token_hash'] ?? ''));
@@ -772,7 +894,7 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
             $unknownDeviceViews++;
         }
 
-        $class = birkly_analytics_traffic_class($event);
+        $class = birkly_analytics_event_traffic_class($event);
         if ($class === 'bot') {
             $botPageViews++;
             $sid = (string) ($event['session_id'] ?? '');
@@ -1046,6 +1168,16 @@ function birkly_analytics_get_combined_report(string $startDate, string $endDate
 {
     require_once __DIR__ . '/analytics_config.php';
 
+    if (!function_exists('birkly_analytics_db_ensure_scope_index')) {
+        $dbPath = __DIR__ . '/analytics_db.php';
+        if (is_file($dbPath)) {
+            require_once $dbPath;
+        }
+    }
+    if (function_exists('birkly_analytics_db_ensure_scope_index')) {
+        birkly_analytics_db_ensure_scope_index('all', $startDate, $endDate);
+    }
+
     $trackingIds = birkly_analytics_list_enabled_tracking_ids();
     $rawEvents = birkly_analytics_load_events_for_scope('all', $startDate, $endDate);
     $events = !empty($options['include_bots']) ? $rawEvents : birkly_analytics_exclude_bot_events($rawEvents);
@@ -1071,6 +1203,11 @@ function birkly_analytics_get_combined_report(string $startDate, string $endDate
     if (!empty($options['include_journey'])) {
         $combined['journey'] = birkly_analytics_build_journey_index($events);
         $combined['top_paths'] = $combined['journey']['paths'] ?? [];
+    }
+
+    $combined = birkly_analytics_finalize_report($rawEvents, $combined);
+    if (function_exists('birkly_analytics_db_count_events') && isset($combined['quality']) && is_array($combined['quality'])) {
+        $combined['quality']['indexed_event_count'] = birkly_analytics_db_count_events('all', $startDate, $endDate);
     }
 
     return $combined;
@@ -1135,6 +1272,25 @@ function birkly_analytics_purge_expired(?int $retentionDays = null): int
             if ($fileTs !== false && $fileTs < $cutoffTs) {
                 if (@unlink($dir . '/' . $file)) {
                     $deleted++;
+                }
+            }
+        }
+    }
+
+    if ($deleted > 0 && function_exists('birkly_analytics_db_connect')) {
+        $dbPath = __DIR__ . '/analytics_db.php';
+        if (is_file($dbPath)) {
+            require_once $dbPath;
+            $cutoffDay = date('Y-m-d', $cutoffTs);
+            $pdo = birkly_analytics_db_connect();
+            if ($pdo instanceof PDO) {
+                try {
+                    $pdo->prepare('DELETE FROM analytics_events WHERE event_day < :cutoff')
+                        ->execute([':cutoff' => $cutoffDay]);
+                    $pdo->prepare('DELETE FROM analytics_daily_rollup WHERE event_day < :cutoff')
+                        ->execute([':cutoff' => $cutoffDay]);
+                } catch (Throwable $e) {
+                    // Best-effort — JSON retention is source of truth.
                 }
             }
         }
@@ -1249,6 +1405,16 @@ function birkly_analytics_mark_event_meta(string $trackingId, int $timestamp, bo
  */
 function birkly_analytics_get_report(string $trackingId, string $startDate, string $endDate, array $options = []): array
 {
+    if (!function_exists('birkly_analytics_db_ensure_scope_index')) {
+        $dbPath = __DIR__ . '/analytics_db.php';
+        if (is_file($dbPath)) {
+            require_once $dbPath;
+        }
+    }
+    if (function_exists('birkly_analytics_db_ensure_scope_index')) {
+        birkly_analytics_db_ensure_scope_index($trackingId, $startDate, $endDate);
+    }
+
     $empty = [
         'page_views' => 0,
         'unique_visitors' => 0,
@@ -1291,6 +1457,8 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
             'paths' => [],
         ],
         'top_paths' => [],
+        'quality' => null,
+        'pages_per_visitor_suppressed' => false,
     ];
 
     if ($trackingId === '' || $trackingId === 'all' || $trackingId === '*') {
@@ -1308,6 +1476,11 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
     if (!empty($options['include_journey'])) {
         $report['journey'] = birkly_analytics_build_journey_index($events);
         $report['top_paths'] = $report['journey']['paths'] ?? [];
+    }
+
+    $report = birkly_analytics_finalize_report($rawEvents, $report);
+    if (function_exists('birkly_analytics_db_count_events') && isset($report['quality']) && is_array($report['quality'])) {
+        $report['quality']['indexed_event_count'] = birkly_analytics_db_count_events($trackingId, $startDate, $endDate);
     }
 
     return array_merge($empty, $report);

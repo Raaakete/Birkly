@@ -220,6 +220,16 @@
             return sessionId;
         }
 
+        function getVisitorToken() {
+            const key = 'birkly_vid_' + trackingId;
+            let token = localStorage.getItem(key);
+            if (!token) {
+                token = 'vid_' + Date.now() + '_' + Math.random().toString(36).substr(2, 12);
+                localStorage.setItem(key, token);
+            }
+            return token;
+        }
+
         function getEntrancePath() {
             const key = 'birkly_entrance_' + trackingId;
             let entrance = sessionStorage.getItem(key);
@@ -376,7 +386,8 @@
                 event_type: 'pageview',
                 domain: window.location.hostname,
                 path: window.location.pathname + window.location.search,
-                consent: 'anonymous'
+                consent: 'anonymous',
+                consent_state: 'anonymous'
             }, extra || {});
         }
 
@@ -404,6 +415,14 @@
             if (consent) {
                 payload.consent = consent;
             }
+            if (consentRequired()) {
+                payload.consent_state = consentGranted() ? 'granted' : 'anonymous';
+            } else {
+                payload.consent_state = 'not_required';
+            }
+            if (consentGranted() || !consentRequired()) {
+                payload.visitor_token = getVisitorToken();
+            }
             return payload;
         }
 
@@ -413,7 +432,7 @@
                 return;
             }
             const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payloadData);
-            const payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(payloadData);
+            const payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(Object.assign({}, payloadData));
             const url = cmsUrl + birklyCollectApiPath('track');
             const body = JSON.stringify(payload);
 
