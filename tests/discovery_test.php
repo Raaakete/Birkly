@@ -147,6 +147,12 @@ assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery 
 assert_true(strpos($discoveryHtml, '<textarea id="disc-bootstrap-data"') !== false, 'discovery bootstrap textarea present');
 assert_true(strpos($discoveryHtml, 'page-header-left') === false, 'discovery has no duplicate in-page breadcrumb row');
 assert_true(strpos($discoveryHtml, '"packs"') !== false, 'discovery bootstrap includes pack data');
+if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $discoveryHtml, $bootMatch)) {
+    $bootRaw = $bootMatch[1];
+    assert_true(strpos($bootRaw, '&quot;') === false, 'discovery bootstrap is raw JSON (no HTML entity quotes)');
+    $bootJson = json_decode($bootRaw, true);
+    assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
+}
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);

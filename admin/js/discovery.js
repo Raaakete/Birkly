@@ -134,6 +134,7 @@
             var data = JSON.parse(raw);
             return data && data.packs ? data : null;
         } catch (e) {
+            console.error('Discovery bootstrap JSON.parse failed', e);
             return null;
         }
     }
@@ -1228,7 +1229,11 @@
     function initApEmbed() {
         if (!document.getElementById('disc-ap-embed')) return;
         if (typeof global.initAiPresence === 'function') {
-            global.initAiPresence({ discoveryEmbed: true });
+            var apZone = mapDiscZoneToAp(state.activeZone);
+            global.initAiPresence({
+                discoveryEmbed: true,
+                initialHubZone: apZone || 'guide',
+            });
             state.apReady = true;
             syncApEmbed(state.activeZone);
         }

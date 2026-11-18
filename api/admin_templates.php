@@ -241,11 +241,16 @@ function getDiscoveryPageData(): array
 {
     require_once __DIR__ . '/../core/csrf.php';
     require_once __DIR__ . '/../core/discovery.php';
+    require_once __DIR__ . '/../core/site_seo_url_map.php';
+
+    $status = birkly_discovery_status();
+    $seo = is_array($status['seo'] ?? null) ? $status['seo'] : [];
 
     return [
         'page' => 'discovery',
         'csrf_token' => get_csrf_token(),
-        'discovery_status' => birkly_discovery_status(),
+        'discovery_status' => $status,
+        'discovery_seo_url_rows' => $seo !== [] ? birkly_seo_url_map_admin_rows($seo) : [],
     ];
 }
 
