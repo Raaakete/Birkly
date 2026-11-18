@@ -155,6 +155,9 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
 }
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
+$discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
+assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
+assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);

@@ -220,6 +220,18 @@
         if (agBar) agBar.hidden = !(zone === 'agent-guide' && packs.agent_guide && packs.agent_guide.enabled);
     }
 
+    function syncDiscoveryHubPanels(zone) {
+        var apZone = mapDiscZoneToAp(zone);
+        if (!apZone) return;
+        ['guide', 'tools', 'publish'].forEach(function (hubZone) {
+            var panel = document.querySelector('[data-hub-panel="' + hubZone + '"]');
+            if (!panel) return;
+            var active = hubZone === apZone;
+            panel.classList.toggle('active', active);
+            panel.hidden = !active;
+        });
+    }
+
     function syncApEmbed(zone) {
         var embed = $('#disc-ap-embed');
         if (!embed) return;
@@ -234,24 +246,17 @@
         syncPageBars(zone);
         document.dispatchEvent(new CustomEvent('birkly:discovery-zone', { detail: { zone: zone, embedVisible: showEmbed } }));
 
+        if (showEmbed) {
+            // Always sync hub panels (active + hidden). [hidden] alone is not enough when
+            // tabs.css keeps .tab-panel.active { display: block }.
+            syncDiscoveryHubPanels(zone);
+        }
+
         if (!showEmbed || !state.apReady) return;
 
         var apZone = mapDiscZoneToAp(zone);
         if (apZone && typeof global.switchApZone === 'function') {
             global.switchApZone(apZone, { updateUrl: false });
-        }
-
-        var guidePanel = $('#ap-panel-guide');
-        var toolsPanel = $('#ap-panel-tools');
-        var publishPanel = $('#ap-panel-publish');
-        if (zone === 'agent-guide') {
-            if (guidePanel) guidePanel.hidden = false;
-            if (publishPanel) publishPanel.hidden = true;
-            if (toolsPanel) toolsPanel.hidden = true;
-        } else if (zone === 'webmcp') {
-            if (toolsPanel) toolsPanel.hidden = false;
-            if (guidePanel) guidePanel.hidden = true;
-            if (publishPanel) publishPanel.hidden = true;
         }
     }
 
