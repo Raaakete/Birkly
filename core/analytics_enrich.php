@@ -50,11 +50,21 @@ function birkly_analytics_traffic_class(array $event): string
         return 'bot';
     }
 
+    $consent = strtolower(trim((string) ($event['consent_state'] ?? '')));
+    if ($consent === 'anonymous') {
+        return 'limited';
+    }
+
     $browser = (string) ($event['browser'] ?? '');
     $os = (string) ($event['os'] ?? '');
     $deviceType = (string) ($event['device_type'] ?? '');
+    $sessionId = trim((string) ($event['session_id'] ?? ''));
 
     if ($userAgent === '' || strlen(trim($userAgent)) < 16) {
+        if ($sessionId !== '') {
+            return 'limited';
+        }
+
         return 'suspected';
     }
 
@@ -62,6 +72,10 @@ function birkly_analytics_traffic_class(array $event): string
         $screenW = (int) ($event['screen_width'] ?? 0);
         $screenH = (int) ($event['screen_height'] ?? 0);
         if ($screenW <= 0 && $screenH <= 0) {
+            if ($sessionId !== '') {
+                return 'limited';
+            }
+
             return 'suspected';
         }
     }
@@ -321,7 +335,7 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         $eventData['href'] = $referrer;
     }
 
-    return [
+    $event = [
         'timestamp' => $timestamp,
         'event_type' => $eventType,
         'domain' => (string) ($input['domain'] ?? ''),
@@ -387,7 +401,7 @@ function birkly_analytics_event_quality(array $event): array
 function birkly_analytics_event_traffic_class(array $event): string
 {
     $stored = strtolower(trim((string) ($event['traffic_class'] ?? '')));
-    if (in_array($stored, ['human', 'bot', 'suspected', 'unknown'], true)) {
+    if (in_array($stored, ['human', 'bot', 'suspected', 'limited', 'unknown'], true)) {
         return $stored;
     }
 
@@ -489,10 +503,10 @@ function birkly_analytics_build_report_quality(array $rawEvents, array $report):
         ],
         'suppress_pages_per_visitor' => $suppressPagesPerVisitor,
         'definitions' => [
-            'session' => 'A browser session id (resets when the tab session storage clears).',
-            'visitor' => 'Consent-granted visitor token when present; otherwise one visitor per session per day.',
-            'page_view' => 'Recorded page loads and 404 paths allowed by your preset.',
-            'traffic_tags' => 'Confirmed bots are excluded from default totals. Suspected hits stay in totals and are tagged separately.',
+            'session' => 'One continuous visit in a browser tab until the visitor closes it or clears site data.',
+            'visitor' => 'One person we could count: a returning token after they accept analytics, otherwise at most once per session per day.',
+            'page_view' => 'A page load or 404 hit your preset allows.',
+            'traffic_tags' => 'Confirmed bots are dropped from headline totals. Privacy-limited hits are real visitors without full browser detail.',
         ],
     ];
 }
@@ -872,6 +886,7 @@ function birkly_analytics_trail_label(array $event): string
 function birkly_analytics_summarize_bot_traffic(array $events): array
 {
     $botPageViews = 0;
+    $limitedPageViews = 0;
     $suspectedPageViews = 0;
     $humanPageViews = 0;
     $unknownDeviceViews = 0;
@@ -905,6 +920,8 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
             if ($agent !== '') {
                 $botAgents[$agent] = ($botAgents[$agent] ?? 0) + 1;
             }
+        } elseif ($class === 'limited') {
+            $limitedPageViews++;
         } elseif ($class === 'suspected') {
             $suspectedPageViews++;
         } else {
@@ -916,6 +933,7 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
 
     return [
         'bot_page_views' => $botPageViews,
+        'limited_page_views' => $limitedPageViews,
         'suspected_bot_page_views' => $suspectedPageViews,
         'human_page_views' => $humanPageViews,
         'unknown_device_views' => $unknownDeviceViews,
@@ -962,7 +980,7 @@ function birkly_analytics_build_journey_index(array $events, int $sessionLimit =
                 'os' => (string) ($event['os'] ?? ''),
                 'country' => (string) ($event['country'] ?? ''),
                 'location_source' => (string) ($event['location_source'] ?? ''),
-                'is_bot' => birkly_analytics_traffic_class($event) !== 'human',
+                'is_bot' => birkly_analytics_event_traffic_class($event) === 'bot',
                 'traffic_class' => birkly_analytics_traffic_class($event),
                 'source' => birkly_analytics_session_source_label($event),
                 'page_views' => 0,

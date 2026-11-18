@@ -169,7 +169,26 @@ $suspected = birkly_analytics_traffic_class([
     'device_type' => 'unknown',
     'screen_width' => 0,
 ]);
-assert_true($suspected === 'suspected', 'empty UA classified suspected');
+assert_true($suspected === 'suspected', 'empty UA without session classified suspected');
+
+$limited = birkly_analytics_traffic_class([
+    'event_type' => 'page_view',
+    'user_agent' => '',
+    'session_id' => 'sess_privacy',
+    'consent_state' => 'not_required',
+    'browser' => 'Unknown',
+    'os' => 'Unknown',
+    'device_type' => 'unknown',
+    'screen_width' => 0,
+]);
+assert_true($limited === 'limited', 'empty UA with session classified limited');
+
+$anonLimited = birkly_analytics_traffic_class([
+    'event_type' => 'page_view',
+    'user_agent' => 'Mozilla/5.0',
+    'consent_state' => 'anonymous',
+]);
+assert_true($anonLimited === 'limited', 'anonymous consent classified limited');
 
 $sameIpMultiSession = birkly_analytics_aggregate_events([
     array_merge($event, ['session_id' => 'sess_a', 'path' => '/a', 'timestamp' => time()]),
