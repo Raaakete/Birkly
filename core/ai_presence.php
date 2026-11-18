@@ -221,6 +221,57 @@ function birkly_ai_presence_load_draft(): array
     return birkly_ai_presence_normalize_draft($data);
 }
 
+/**
+ * Whether the draft carries enough editor/list content to render the admin UI.
+ *
+ * @param array<string, mixed> $draft
+ */
+function birkly_ai_presence_draft_has_meaningful_content(array $draft): bool
+{
+    $name = trim((string) ($draft['identity']['official_name'] ?? ''));
+    if ($name !== '') {
+        return true;
+    }
+    if (trim((string) ($draft['identity']['short_description'] ?? '')) !== '') {
+        return true;
+    }
+    foreach (['sources_of_truth', 'products_services', 'claims', 'media_context', 'connected_content'] as $listKey) {
+        $list = $draft[$listKey] ?? [];
+        if (is_array($list) && $list !== []) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Draft for admin editing/hydration — falls back to published when on-disk draft is still default-empty.
+ *
+ * @return array<string, mixed>
+ */
+function birkly_ai_presence_effective_editor_draft(): array
+{
+    $draft = birkly_ai_presence_load_draft();
+    if (birkly_ai_presence_draft_has_meaningful_content($draft)) {
+        return $draft;
+    }
+    $published = birkly_ai_presence_load_published();
+    if ($published !== null && birkly_ai_presence_draft_has_meaningful_content($published)) {
+        $merged = birkly_ai_presence_normalize_draft($published);
+        if (is_array($merged['publication_settings'] ?? null) && is_array($draft['publication_settings'] ?? null)) {
+            $merged['publication_settings'] = array_replace_recursive(
+                $merged['publication_settings'],
+                $draft['publication_settings']
+            );
+        }
+
+        return $merged;
+    }
+
+    return $draft;
+}
+
 function birkly_ai_presence_save_draft(array $draft): bool
 {
     birkly_ai_presence_ensure_dir();

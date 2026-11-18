@@ -33,6 +33,38 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
     && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
         || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
 $__ap_discovery_embed = !empty($discovery_embed_shell) || isset($discovery_embed_hub_zone);
+$__ap_embed_draft = is_array($discovery_embed_draft ?? null) ? $discovery_embed_draft : null;
+$__ap_embed_sources = is_array($__ap_embed_draft['sources_of_truth'] ?? null) ? $__ap_embed_draft['sources_of_truth'] : [];
+$__ap_embed_source_count = count($__ap_embed_sources);
+if (!function_exists('birkly_ap_draft_field')) {
+    /**
+     * @param array<string, mixed> $draft
+     */
+    function birkly_ap_draft_field(array $draft, string $path, string $format = 'text'): string
+    {
+        $cur = $draft;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($cur) || !array_key_exists($segment, $cur)) {
+                return '';
+            }
+            $cur = $cur[$segment];
+        }
+        if ($format === 'lines' && is_array($cur)) {
+            return implode("\n", array_map(static fn ($v): string => (string) $v, $cur));
+        }
+
+        return is_scalar($cur) ? (string) $cur : '';
+    }
+}
+if (!function_exists('birkly_ap_draft_field_attr')) {
+    function birkly_ap_draft_field_attr(?array $draft, string $path, string $format = 'text'): string
+    {
+        if (!$draft) {
+            return '';
+        }
+        return htmlspecialchars(birkly_ap_draft_field($draft, $path, $format), ENT_QUOTES, 'UTF-8');
+    }
+}
 if (!function_exists('birkly_ap_guide_nav_open')) {
     function birkly_ap_guide_nav_open(string $tabId, string $activeTab, bool $discoveryEmbed): void
     {
@@ -134,15 +166,15 @@ if (!function_exists('birkly_ap_guide_nav_open')) {
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                            <div class="ap-field-row"><input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name" value="<?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.official_name') ?>"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.short_description') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-website">{translate 'admin.ai_presence_website'}</label>
-                            <div class="ap-field-row"><input type="url" id="ap-essentials-website" class="input" data-field="identity.website"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><input type="url" id="ap-essentials-website" class="input" data-field="identity.website" value="<?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.website') ?>"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
@@ -393,10 +425,29 @@ if ($__ap_show_public_urls) {
                                     <h3>{translate 'admin.ai_presence_sources_of_truth'}</h3>
                                     <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ai_presence_sources_list_help'}</p>
                                 </div>
-                                <span class="badge badge-neutral" id="ap-sources-count">0</span>
+                                <span class="badge badge-neutral" id="ap-sources-count"><?= (int) $__ap_embed_source_count ?></span>
                             </header>
-                            <ul id="ap-sources-list" class="ap-card-list"></ul>
-                            <p id="ap-sources-empty" class="empty-state empty-state--compact">{translate 'admin.ai_presence_sources_empty'}</p>
+                            <ul id="ap-sources-list" class="ap-card-list"<?= $__ap_embed_source_count > 0 ? '' : ' hidden' ?>>
+<?php if ($__ap_embed_source_count > 0) {
+    foreach ($__ap_embed_sources as $source) {
+        if (!is_array($source)) {
+            continue;
+        }
+        $label = (string) ($source['label'] ?? $source['type'] ?? 'Source');
+        $type = (string) ($source['type'] ?? '');
+        $role = (string) ($source['role'] ?? 'reference');
+        $detail = (string) ($source['url'] ?? '');
+        if ($detail === '' && !empty($source['media_id'])) {
+            $detail = 'Media: ' . (string) $source['media_id'];
+        }
+        echo '<li class="card card--sunken u-row-3 u-p-3" data-ssr-source="1">';
+        echo '<p class="u-truncate u-text-sm u-weight-semibold u-m-0">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</p>';
+        echo '<p class="u-truncate u-text-xs u-fg-secondary u-m-0">' . htmlspecialchars($type . ' · ' . $role . ($detail !== '' ? ' · ' . $detail : ''), ENT_QUOTES, 'UTF-8') . '</p>';
+        echo '</li>';
+    }
+} ?>
+                            </ul>
+                            <p id="ap-sources-empty" class="empty-state empty-state--compact"<?= $__ap_embed_source_count > 0 ? ' hidden' : '' ?>>{translate 'admin.ai_presence_sources_empty'}</p>
                         </section>
                         <section class="card u-p-6 u-stack-4">
                             <h3>{translate 'admin.ai_presence_add_source'}</h3>
@@ -470,19 +521,19 @@ if ($__ap_show_public_urls) {
                         <div class="ap-context-grid">
                             <div class="form-group ap-span-full">
                                 <label for="ap-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                                <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name" value="<?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.official_name') ?>"><button type="button" class="button is-small ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                                <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.short_description') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-full-desc">{translate 'admin.ai_presence_full_description'}</label>
-                                <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.full_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.full_description') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.full_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-what-we-do">{translate 'admin.ai_presence_what_we_do'}</label>
-                                <div class="ap-field-row"><textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.what_we_do" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.what_we_do') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.what_we_do" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-industry">{translate 'admin.ai_presence_industry'}</label>
