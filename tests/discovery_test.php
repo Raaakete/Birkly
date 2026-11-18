@@ -215,10 +215,8 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     );
 }
 assert_true(strpos($discoveryHtml, 'window.__DISC_AG_HYDRATE__=') !== false, 'discovery inline agent guide hydrate script');
-assert_true(
-    preg_match('/<script[^>]+src="[^"]*\\/discovery\\.js/', $discoveryHtml) === 1,
-    'discovery template emits discovery.js script tag'
-);
+preg_match_all('/<script[^>]+src="[^"]*\\/discovery\\.js/', $discoveryHtml, $discJsTags);
+assert_true(count($discJsTags[0]) === 0, 'discovery template does not duplicate discovery.js (layout head emits scripts)');
 assert_true(strpos((string) file_get_contents($root . '/admin/partials/layout_footer.php'), "\$page === 'discovery'") !== false, 'layout footer also loads discovery script stack');
 assert_true(is_file($root . '/core/discovery_admin_assets.php'), 'discovery admin assets helper exists');
 assert_true(strpos((string) file_get_contents($root . '/admin/index.php'), 'birkly_echo_discovery_admin_script_tags') !== false, 'admin index emits discovery scripts');
@@ -290,6 +288,9 @@ if ($wmBackup !== null) {
 birkly_webmcp_reset_cache();
 $discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
 $aiJs = (string) file_get_contents($root . '/admin/js/ai-presence.js');
+assert_true(strpos($discJs, '__DISCOVERY_JS_EXECUTED__') !== false, 'discovery.js guards double execution');
+assert_true(strpos($aiJs, '__AI_PRESENCE_JS_EXECUTED__') !== false, 'ai-presence.js guards double execution');
+assert_true(strpos($aiJs, 'ensureDiscoveryEmbedActionsBound') !== false, 'ai-presence binds actions after bootstrap hydrate');
 assert_true(strpos($discJs, 'bindSeoPreviewFields') !== false, 'discovery binds SEO preview field listeners');
 assert_true(strpos($discJs, 'bindDiscoveryGuideNavClicks') !== false, 'discovery binds agent guide sub-nav clicks');
 assert_true(strpos($aiJs, 'inDiscoveryEmbed') !== false, 'ai-presence detects discovery embed context');
