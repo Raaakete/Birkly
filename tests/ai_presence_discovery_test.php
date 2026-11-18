@@ -118,7 +118,7 @@ assert_true(isset($routes['/for-agents.json']), 'for-agents.json route registere
 
 echo "==> SSR signature\n";
 require_once $root . '/core/project_ssr.php';
-assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc8'), 'SSR inject signature bumped to dsc8');
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc9'), 'SSR inject signature bumped to dsc9');
 assert_true(isset($routes['/.well-known/agent.json']), 'agent.json manifest route registered');
 assert_true(isset($routes['/agent-guide.json']), 'agent-guide.json shortcut route registered');
 $manifest = birkly_ai_presence_discovery_manifest_body();

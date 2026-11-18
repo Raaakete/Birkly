@@ -1475,9 +1475,12 @@ function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html)
 }
 
 /**
- * Crawlable body landmark so non-JS clients (search agents, simple fetchers) find /for-agents.
+ * Crawlable landmark in raw HTML — hidden for JS-enabled browsers, still in the response for fetchers.
+ *
+ * Uses `<noscript>` so typical visitors never see a discovery strip; agents and crawlers
+ * still receive `<a href>` targets in the document (plus head discovery tags).
  */
-function birkly_ai_presence_discovery_body_nav_snippet(?array $published = null, ?array $meta = null): string
+function birkly_ai_presence_discovery_body_landmark_snippet(?array $published = null, ?array $meta = null): string
 {
     $meta = $meta ?? birkly_ai_presence_load_meta();
     $published = $published ?? birkly_ai_presence_load_published();
@@ -1501,27 +1504,28 @@ function birkly_ai_presence_discovery_body_nav_snippet(?array $published = null,
         $parts[] = '<a href="' . $esc($map['llms_txt']) . '">llms.txt</a>';
     }
 
-    return '<nav class="birkly-agent-guide-discovery" data-birkly-agent-guide="body-nav" aria-label="Agent Guide for AI systems" '
-        . 'style="margin:0;padding:0.35rem 1rem;font-size:13px;line-height:1.4;background:#f0f2ee;color:#5f6577;">'
-        . implode(' · ', $parts)
-        . '</nav>' . "\n";
+    return '<noscript class="birkly-agent-guide-discovery" data-birkly-agent-guide="body-landmark" '
+        . 'data-birkly-agent-guide-visibility="noscript">'
+        . '<p>' . implode(' · ', $parts) . '</p>'
+        . '</noscript>' . "\n";
 }
 
-function birkly_ai_presence_inject_discovery_body_nav_into_html(string $html): string
+function birkly_ai_presence_inject_discovery_body_landmark_into_html(string $html): string
 {
-    if (stripos($html, 'data-birkly-agent-guide="body-nav"') !== false) {
+    if (stripos($html, 'data-birkly-agent-guide="body-landmark"') !== false
+        || stripos($html, 'data-birkly-agent-guide="body-nav"') !== false) {
         return $html;
     }
 
-    $nav = birkly_ai_presence_discovery_body_nav_snippet();
-    if ($nav === '') {
+    $landmark = birkly_ai_presence_discovery_body_landmark_snippet();
+    if ($landmark === '') {
         return $html;
     }
 
     if (preg_match('/<body[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
         $pos = $m[0][1] + strlen($m[0][0]);
 
-        return substr($html, 0, $pos) . "\n" . $nav . substr($html, $pos);
+        return substr($html, 0, $pos) . "\n" . $landmark . substr($html, $pos);
     }
 
     return $html;
@@ -1569,7 +1573,7 @@ function birkly_ai_presence_inject_discovery_footer_line_into_html(string $html)
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
     $html = birkly_ai_presence_inject_discovery_head_into_html($html);
-    $html = birkly_ai_presence_inject_discovery_body_nav_into_html($html);
+    $html = birkly_ai_presence_inject_discovery_body_landmark_into_html($html);
     $html = birkly_ai_presence_inject_discovery_footer_link_into_html($html);
 
     return birkly_ai_presence_inject_discovery_footer_line_into_html($html);
