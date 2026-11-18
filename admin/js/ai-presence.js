@@ -1099,6 +1099,73 @@
         });
     }
 
+    var DRAFT_LIST_KEYS = {
+        connected_content: 1,
+        sources_of_truth: 1,
+        claims: 1,
+        evidence: 1,
+        media_context: 1,
+        products_services: 1,
+        relationships: 1,
+        industry: 1,
+        categories: 1,
+        locations: 1,
+        social_profiles: 1,
+        best_known_for: 1,
+        differentiators: 1,
+        best_suited_for: 1,
+        not_ideal_for: 1,
+        preferred_terms: 1,
+        avoided_terms: 1,
+        required_qualifications: 1,
+        tone: 1
+    };
+
+    function scalarIsEmptyForOverlay(value) {
+        if (value === null || value === undefined) return true;
+        if (typeof value === 'boolean' || typeof value === 'number') return false;
+        if (typeof value === 'string') return value.trim() === '';
+        return false;
+    }
+
+    function mergeEditorOverlay(base, overlay) {
+        base = base && typeof base === 'object' ? base : {};
+        overlay = overlay && typeof overlay === 'object' ? overlay : {};
+        if (Array.isArray(overlay) && overlay.length && !Array.isArray(base)) {
+            return overlay.slice();
+        }
+        var result = Object.assign({}, base);
+        Object.keys(overlay).forEach(function (key) {
+            var value = overlay[key];
+            if (key === 'publication_settings' && value && typeof value === 'object') {
+                result[key] = Object.assign({}, result[key] || {}, value);
+                return;
+            }
+            if (DRAFT_LIST_KEYS[key]) {
+                if (Array.isArray(value) && value.length) {
+                    result[key] = value.slice();
+                }
+                return;
+            }
+            if (value && typeof value === 'object' && !Array.isArray(value)
+                && result[key] && typeof result[key] === 'object' && !Array.isArray(result[key])) {
+                result[key] = mergeEditorOverlay(result[key], value);
+                return;
+            }
+            if (typeof value === 'boolean' || !scalarIsEmptyForOverlay(value)) {
+                result[key] = value;
+            }
+        });
+        return result;
+    }
+
+    function buildEditorDraftFromApi(data) {
+        var base = (data.published && draftHasMeaningfulContent(data.published))
+            ? JSON.parse(JSON.stringify(data.published))
+            : {};
+        return mergeEditorOverlay(base, data.draft || {});
+    }
+
     function draftHasMeaningfulContent(draft) {
         if (!draft || typeof draft !== 'object') return false;
         if (String(draft.identity && draft.identity.official_name || '').trim()) return true;
@@ -1196,6 +1263,9 @@
                     window.history.replaceState({}, '', url.toString());
                 }
             } catch (e) { /* ignore */ }
+            if (state.draft) {
+                bindFields();
+            }
         }
     }
 
@@ -2073,13 +2143,10 @@
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
                 var data = res.data;
-                var prevDraft = state.draft;
-                var incomingDraft = data.draft;
-                if (prevDraft && draftHasMeaningfulContent(prevDraft) && !draftHasMeaningfulContent(incomingDraft)) {
-                    incomingDraft = prevDraft;
-                } else if (!draftHasMeaningfulContent(incomingDraft) && data.published
-                    && draftHasMeaningfulContent(data.published)) {
-                    incomingDraft = JSON.parse(JSON.stringify(data.published));
+                var incomingDraft = buildEditorDraftFromApi(data);
+                if (state.draft && draftHasMeaningfulContent(state.draft)
+                    && !draftHasMeaningfulContent(incomingDraft)) {
+                    incomingDraft = state.draft;
                 }
                 state.draft = incomingDraft;
                 state.published = data.published;
