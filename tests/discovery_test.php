@@ -145,6 +145,7 @@ assert_true(
 assert_true(strpos($discoveryHtml, 'Template not found') === false, 'discovery embed has no missing partial');
 assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery embed includes agent guide hub');
 assert_true(strpos($discoveryHtml, '<textarea id="disc-bootstrap-data"') !== false, 'discovery bootstrap textarea present');
+assert_true(strpos($discoveryHtml, 'page-header-left') === false, 'discovery has no duplicate in-page breadcrumb row');
 assert_true(strpos($discoveryHtml, '"packs"') !== false, 'discovery bootstrap includes pack data');
 
 echo "==> API syntax\n";
