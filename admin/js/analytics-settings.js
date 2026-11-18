@@ -132,11 +132,14 @@
             categories.map(function (cat) {
                 return '<label class="analytics-consent-preview__row"><input type="checkbox" disabled checked> <span>' + escapeHtml(cat.label) + '</span></label>';
             }).join('') +
-            '</div>' +
             '<div class="analytics-consent-preview__actions">' +
+            '<span class="button is-primary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_save', 'Save choices')) + '</span>' +
+            '<span class="button is-secondary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_decline', 'Decline all optional')) + '</span>' +
+            '</div>' +
+            '</div>' +
+            '<div class="analytics-consent-preview__actions analytics-consent-preview__actions--top">' +
             '<span class="button is-primary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_accept_all', 'Accept all')) + '</span>' +
             '<span class="button is-secondary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_customize', 'Customize')) + '</span>' +
-            '<span class="button is-secondary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_decline', 'Decline optional')) + '</span>' +
             '</div>' +
             '<p class="form-help u-m-0">' + escapeHtml(t('analytics_consent_preview_site_note', 'Interactive banner appears on your public site for visitors who have not chosen yet.')) + '</p>' +
             '</div>';
