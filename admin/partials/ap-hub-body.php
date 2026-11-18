@@ -109,6 +109,21 @@ if (!function_exists('birkly_ap_guide_nav_open')) {
         }
         echo '<button type="button" class="' . $class . '" role="tab" data-tab="' . $tabEsc . '" aria-selected="' . $aria . '">';
     }
+    function birkly_ap_source_type_icon(string $type): string
+    {
+        $map = [
+            'cms_entry' => 'E',
+            'cms_collection' => 'C',
+            'website' => 'W',
+            'document' => 'D',
+            'media_asset' => 'M',
+            'marketplace' => '$',
+            'review_platform' => '★',
+            'other' => '•',
+        ];
+        return $map[$type] ?? '•';
+    }
+
     function birkly_ap_guide_nav_close(bool $discoveryEmbed): void
     {
         echo ($discoveryEmbed && function_exists('admin_url')) ? '</a>' : '</button>';
@@ -469,10 +484,13 @@ if ($__ap_show_public_urls) {
         if ($detail === '' && !empty($source['media_id'])) {
             $detail = 'Media: ' . (string) $source['media_id'];
         }
-        echo '<li class="card card--sunken u-row-3 u-p-3" data-ssr-source="1">';
+        $icon = birkly_ap_source_type_icon($type);
+        echo '<li class="ap-source-row" data-ssr-source="1">';
+        echo '<div class="ap-source-card-icon" aria-hidden="true">' . htmlspecialchars($icon, ENT_QUOTES, 'UTF-8') . '</div>';
+        echo '<div class="u-fill u-min-w-0">';
         echo '<p class="u-truncate u-text-sm u-weight-semibold u-m-0">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</p>';
         echo '<p class="u-truncate u-text-xs u-fg-secondary u-m-0">' . htmlspecialchars($type . ' · ' . $role . ($detail !== '' ? ' · ' . $detail : ''), ENT_QUOTES, 'UTF-8') . '</p>';
-        echo '</li>';
+        echo '</div></li>';
     }
 } ?>
                             </ul>

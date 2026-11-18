@@ -1484,6 +1484,7 @@
                 }
                 if (btn.id === 'ap-add-media-context') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     if (!state.draft) state.draft = {};
                     var mediaIdEl = document.getElementById('ap-media-id');
                     var repEl = document.getElementById('ap-media-represents');
@@ -1605,6 +1606,10 @@
             publish_state: state.publishState,
             cms_diff: state.cmsDiff,
         });
+        if (inDiscoveryEmbed()) {
+            ensureDiscoveryModalsMounted();
+            repairDiscoveryEmbedHandlers();
+        }
         return true;
     }
 
@@ -1789,25 +1794,31 @@
         }
     }
 
+    function ensureSourcesHydratedFromBootstrap() {
+        ensureSourcesArray();
+        if ((state.draft.sources_of_truth || []).length) return;
+        var hydrate = readDiscoveryHydratePayload();
+        if (hydrate && hydrate.draft && Array.isArray(hydrate.draft.sources_of_truth)
+            && hydrate.draft.sources_of_truth.length) {
+            state.draft.sources_of_truth = hydrate.draft.sources_of_truth;
+        }
+    }
+
     function renderSources() {
         ensureSourcesArray();
+        ensureSourcesHydratedFromBootstrap();
         var list = document.getElementById('ap-sources-list');
         var empty = document.getElementById('ap-sources-empty');
         var countEl = document.getElementById('ap-sources-count');
         if (!list) return;
-        var sources = (state.draft && state.draft.sources_of_truth) || [];
-        if (!sources.length && list.querySelector('[data-ssr-source]')) {
-            if (countEl) countEl.textContent = String(list.querySelectorAll('[data-ssr-source]').length);
-            return;
-        }
         list.innerHTML = '';
-        sources = state.draft.sources_of_truth || [];
+        var sources = state.draft.sources_of_truth || [];
         if (countEl) countEl.textContent = String(sources.length);
         if (empty) empty.hidden = sources.length > 0;
         list.hidden = sources.length === 0;
         sources.forEach(function (source, idx) {
             var li = document.createElement('li');
-            li.className = 'card card--sunken u-row-3 u-p-3';
+            li.className = 'ap-source-row';
             var detail = source.url || '';
             if (!detail && source.media_id) detail = 'Media: ' + source.media_id;
             if (!detail && source.ref) {
@@ -3439,6 +3450,9 @@
     }
 
     function bindActions() {
+        if (global.__AI_PRESENCE_ACTIONS_BOUND__) {
+            return;
+        }
         bindEl('ai-presence-save-draft', 'click', function () {
             saveDraft().catch(function (e) { toast(e.message, 'error'); });
         });
@@ -4647,6 +4661,7 @@
     global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
     global.tryDiscoveryBootstrapHydrate = tryDiscoveryBootstrapHydrate;
     global.resetAgentGuideUiChrome = resetAgentGuideUiChrome;
+    global.repairDiscoveryEmbedHandlers = repairDiscoveryEmbedHandlers;
     global.scheduleDiscoveryEmbedInit = scheduleDiscoveryEmbedInit;
     global.ensureDiscoveryAgentGuideReady = scheduleDiscoveryEmbedInit;
 
