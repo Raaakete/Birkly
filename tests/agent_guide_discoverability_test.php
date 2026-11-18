@@ -74,6 +74,7 @@ $injected = birkly_ai_presence_inject_discovery_into_html($html);
 ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide="body-landmark"'), 'body landmark injected');
 ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide-visibility="noscript"'), 'landmark is noscript-only for browsers');
 ag_disc_assert(str_contains($injected, 'JavaScript is disabled'), 'landmark explains noscript visibility');
+ag_disc_assert(!str_contains($injected, 'background:#f0f2ee'), 'no legacy visible discovery strip');
 $draftOff = birkly_ai_presence_load_draft();
 $draftOff['publication_settings']['discovery_body_landmark'] = false;
 birkly_ai_presence_save_draft($draftOff);
