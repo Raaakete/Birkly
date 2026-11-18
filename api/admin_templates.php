@@ -242,15 +242,23 @@ function getDiscoveryPageData(): array
     require_once __DIR__ . '/../core/csrf.php';
     require_once __DIR__ . '/../core/discovery.php';
     require_once __DIR__ . '/../core/site_seo_url_map.php';
+    require_once __DIR__ . '/../core/ai_presence.php';
 
     $status = birkly_discovery_status();
     $seo = is_array($status['seo'] ?? null) ? $status['seo'] : [];
+    $agDraft = birkly_ai_presence_load_draft();
 
     return [
         'page' => 'discovery',
         'csrf_token' => get_csrf_token(),
         'discovery_status' => $status,
         'discovery_seo_url_rows' => $seo !== [] ? birkly_seo_url_map_admin_rows($seo) : [],
+        'discovery_embed_overview' => [
+            'completeness' => birkly_ai_presence_completeness($agDraft),
+            'public_urls' => birkly_ai_presence_public_urls(),
+            'meta' => birkly_ai_presence_load_meta(),
+            'cms_diff' => birkly_ai_presence_cms_sync_diff($agDraft),
+        ],
     ];
 }
 

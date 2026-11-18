@@ -1,3 +1,13 @@
+<?php
+$__ap_embed_overview = is_array($discovery_embed_overview ?? null) ? $discovery_embed_overview : null;
+$__ap_completeness = is_array($__ap_embed_overview['completeness'] ?? null) ? $__ap_embed_overview['completeness'] : null;
+$__ap_public_urls = is_array($__ap_embed_overview['public_urls'] ?? null) ? $__ap_embed_overview['public_urls'] : null;
+$__ap_meta = is_array($__ap_embed_overview['meta'] ?? null) ? $__ap_embed_overview['meta'] : null;
+$__ap_pct = $__ap_completeness ? (int) ($__ap_completeness['percent'] ?? 0) : 0;
+$__ap_show_public_urls = is_array($__ap_public_urls)
+    && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
+        || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
+?>
 <div id="ap-publish-banner" class="callout callout-success u-mb-4" hidden role="status" aria-live="polite">
     <span class="u-text-xl" aria-hidden="true">✓</span>
     <div class="callout-body u-cluster-4">
@@ -242,14 +252,37 @@
                             <div class="card u-p-6 u-stack-2">
                                 <h3>{translate 'admin.ai_presence_completeness'}</h3>
                                 <div class="u-my-4" aria-hidden="true">
-                                    <div class="progress"><div class="progress-bar" id="ai-presence-progress" style="width:0%"></div></div>
+                                    <div class="progress"><div class="progress-bar" id="ai-presence-progress" data-ssr-overview="1" style="width:<?php echo $__ap_pct; ?>%"></div></div>
                                 </div>
-                                <p id="ai-presence-completeness-label" class="u-text-base u-weight-medium u-m-0"></p>
+                                <p id="ai-presence-completeness-label" class="u-text-base u-weight-medium u-m-0"><?php
+if ($__ap_completeness) {
+    echo htmlspecialchars($__ap_pct . '% complete', ENT_QUOTES, 'UTF-8');
+}
+?></p>
                                 <ul id="ai-presence-next-steps" class="ai-presence-item-list u-text-sm"></ul>
                             </div>
                             <div class="card u-p-6 u-stack-3">
                                 <h3>{translate 'admin.ai_presence_status'}</h3>
-                                <div class="u-grid-2" id="ai-presence-status-cards"></div>
+                                <div class="u-grid-2" id="ai-presence-status-cards">
+<?php
+if ($__ap_completeness && is_array($__ap_completeness['items'] ?? null)) {
+    foreach ($__ap_completeness['items'] as $__ap_stat) {
+        if (!is_array($__ap_stat)) {
+            continue;
+        }
+        $complete = !empty($__ap_stat['complete']);
+        $label = htmlspecialchars((string) ($__ap_stat['label'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $score = (int) ($__ap_stat['score'] ?? 0);
+        $max = (int) ($__ap_stat['max'] ?? 0);
+        $statClass = $complete ? ' ap-stat-complete' : '';
+        echo '<div class="stat' . $statClass . '" data-ssr-stat="1">'
+            . '<span class="stat-label">' . $label . '</span>'
+            . '<span class="stat-value u-text-lg u-numeric">' . $score . '/' . $max . '</span>'
+            . '</div>';
+    }
+}
+?>
+                                </div>
                             </div>
                         </div>
                         <section class="card u-p-6 u-stack-3 u-mt-4" id="ap-cms-sync-panel"
@@ -276,7 +309,28 @@
                             <h3>{translate 'admin.ai_presence_public_urls'}</h3>
                             <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ai_presence_public_urls_help'}</p>
                             <p id="ap-public-urls-empty" class="empty-state empty-state--inline" hidden></p>
-                            <dl id="ai-presence-public-urls" class="ai-presence-urls"></dl>
+                            <dl id="ai-presence-public-urls" class="ai-presence-urls" data-ssr-overview="1">
+<?php
+if ($__ap_show_public_urls) {
+    $wk = htmlspecialchars((string) ($__ap_public_urls['well_known_url'] ?? '—'), ENT_QUOTES, 'UTF-8');
+    $api = htmlspecialchars((string) ($__ap_public_urls['api_url'] ?? '—'), ENT_QUOTES, 'UTF-8');
+    $pubAt = htmlspecialchars((string) ($__ap_meta['last_published_at'] ?? 'Never'), ENT_QUOTES, 'UTF-8');
+    echo '<dt>Agent Guide</dt><dd><code>' . $wk . '</code></dd>';
+    if (!empty($__ap_public_urls['legacy_well_known_url'])) {
+        echo '<dt>Legacy well-known</dt><dd><code>'
+            . htmlspecialchars((string) $__ap_public_urls['legacy_well_known_url'], ENT_QUOTES, 'UTF-8')
+            . '</code></dd>';
+    }
+    echo '<dt>Public API</dt><dd><code>' . $api . '</code></dd>';
+    if (!empty($__ap_public_urls['legacy_api_url'])) {
+        echo '<dt>Legacy API</dt><dd><code>'
+            . htmlspecialchars((string) $__ap_public_urls['legacy_api_url'], ENT_QUOTES, 'UTF-8')
+            . '</code></dd>';
+    }
+    echo '<dt>Last published</dt><dd>' . $pubAt . '</dd>';
+}
+?>
+                            </dl>
                         </section>
                     </div>
                 </div>
