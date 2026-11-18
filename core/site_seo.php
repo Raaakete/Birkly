@@ -307,7 +307,7 @@ function birkly_site_seo_unpublish(): array
  * Resolve SEO meta from site defaults + optional Agent Guide identity + entry context.
  *
  * @param array<string, mixed> $context page_title, entry_meta, collection, slug
- * @return array{title:string,description:string,canonical:string,og_image:string,site_name:string}
+ * @return array{title:string,description:string,canonical:string,og_image:string,site_name:string,site_description:string,default_og_image:string}
  */
 function birkly_site_seo_resolve_meta(array $context = []): array
 {
@@ -316,6 +316,8 @@ function birkly_site_seo_resolve_meta(array $context = []): array
     $description = trim((string) ($context['meta_description'] ?? ''));
     $canonical = trim((string) ($context['canonical'] ?? ''));
     $ogImage = trim((string) ($context['og_image'] ?? ''));
+    $siteDescription = trim((string) ($seo['defaults']['description'] ?? ''));
+    $defaultOgImage = trim((string) ($seo['defaults']['og_image'] ?? ''));
 
     $entryMeta = is_array($context['entry_meta'] ?? null) ? $context['entry_meta'] : [];
     if ($title === '' && !empty($entryMeta['meta_title'])) {
@@ -332,10 +334,10 @@ function birkly_site_seo_resolve_meta(array $context = []): array
     }
 
     if ($description === '') {
-        $description = trim((string) ($seo['defaults']['description'] ?? ''));
+        $description = $siteDescription;
     }
     if ($ogImage === '') {
-        $ogImage = trim((string) ($seo['defaults']['og_image'] ?? ''));
+        $ogImage = $defaultOgImage;
     }
 
     $siteName = '';
@@ -347,6 +349,9 @@ function birkly_site_seo_resolve_meta(array $context = []): array
             $siteName = trim((string) ($identity['official_name'] ?? ''));
             if ($description === '') {
                 $description = trim((string) ($identity['short_description'] ?? ''));
+            }
+            if ($siteDescription === '') {
+                $siteDescription = trim((string) ($identity['short_description'] ?? ''));
             }
         }
     }
@@ -362,6 +367,8 @@ function birkly_site_seo_resolve_meta(array $context = []): array
         'canonical' => $canonical,
         'og_image' => $ogImage,
         'site_name' => $siteName,
+        'site_description' => $siteDescription,
+        'default_og_image' => $defaultOgImage,
     ];
 }
 
@@ -408,7 +415,18 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
             $parts[] = '<meta property="og:url" content="' . $esc($meta['canonical']) . '">';
         }
         if (stripos($html, 'property="og:type"') === false) {
-            $parts[] = '<meta property="og:type" content="website">';
+            $ogType = !empty($context['is_detail']) ? 'article' : 'website';
+            $parts[] = '<meta property="og:type" content="' . $esc($ogType) . '">';
+        }
+        if (!empty($context['is_detail'])) {
+            $publishedTime = trim((string) ($context['entry_date_published'] ?? ''));
+            if ($publishedTime !== '' && stripos($html, 'article:published_time') === false) {
+                $parts[] = '<meta property="article:published_time" content="' . $esc($publishedTime) . '">';
+            }
+            $modifiedTime = trim((string) ($context['entry_date_modified'] ?? ''));
+            if ($modifiedTime !== '' && stripos($html, 'article:modified_time') === false) {
+                $parts[] = '<meta property="article:modified_time" content="' . $esc($modifiedTime) . '">';
+            }
         }
     }
 
@@ -442,85 +460,12 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         $parts[] = '<meta name="msvalidate.01" content="' . $esc($bingVerify) . '">';
     }
 
-    if (!empty($surfaces['json_ld_website']) && stripos($html, '"@type":"WebSite"') === false
-        && stripos($html, '"@type": "WebSite"') === false) {
-        $ld = [
-            '@context' => 'https://schema.org',
-            '@type' => 'WebSite',
-        ];
-        if ($meta['site_name'] !== '') {
-            $ld['name'] = $meta['site_name'];
-        }
-        if ($meta['description'] !== '') {
-            $ld['description'] = $meta['description'];
-        }
-        $siteBase = '';
-        if (function_exists('birkly_hosting_public_base_url')) {
-            require_once __DIR__ . '/hosting_urls.php';
-            $siteBase = trim((string) birkly_hosting_public_base_url());
-        }
-        if ($siteBase !== '') {
-            $ld['url'] = $siteBase;
-        } elseif ($meta['canonical'] !== '') {
-            $ld['url'] = $meta['canonical'];
-        }
-        $json = json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json !== false) {
-            $json = str_replace('</', '<\/', $json);
-            $parts[] = '<script type="application/ld+json">' . $json . '</script>';
-        }
-    }
-
-    if (!empty($surfaces['json_ld_organization']) && stripos($html, '"@type":"Organization"') === false
-        && stripos($html, '"@type": "Organization"') === false) {
-        $org = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Organization',
-        ];
-        if ($meta['site_name'] !== '') {
-            $org['name'] = $meta['site_name'];
-        }
-        if ($meta['description'] !== '') {
-            $org['description'] = $meta['description'];
-        }
-        $siteBase = '';
-        if (function_exists('birkly_hosting_public_base_url')) {
-            require_once __DIR__ . '/hosting_urls.php';
-            $siteBase = trim((string) birkly_hosting_public_base_url());
-        }
-        if ($siteBase !== '') {
-            $org['url'] = $siteBase;
-        } elseif ($meta['canonical'] !== '') {
-            $org['url'] = $meta['canonical'];
-        }
-        if ($meta['og_image'] !== '') {
-            $org['logo'] = $meta['og_image'];
-        }
-        if (count($org) > 2) {
-            $json = json_encode($org, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            if ($json !== false) {
-                $json = str_replace('</', '<\/', $json);
-                $parts[] = '<script type="application/ld+json">' . $json . '</script>';
-            }
-        }
-    }
-
-    if (!empty($surfaces['json_ld_article']) && !empty($context['entry_title'])) {
-        $article = [
-            '@context' => 'https://schema.org',
-            '@type' => 'Article',
-            'headline' => (string) $context['entry_title'],
-        ];
-        if ($meta['description'] !== '') {
-            $article['description'] = $meta['description'];
-        }
-        if ($meta['canonical'] !== '') {
-            $article['url'] = $meta['canonical'];
-        }
-        $json = json_encode($article, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json !== false && stripos($html, '"@type":"Article"') === false && stripos($html, '"@type": "Article"') === false) {
-            $json = str_replace('</', '<\/', $json);
-            $parts[] = '<script type="application/ld+json">' . $json . '</script>';
+    $hasJsonLd = stripos($html, 'application/ld+json') !== false;
+    if (!$hasJsonLd || stripos($html, '#organization') === false) {
+        require_once __DIR__ . '/site_seo_json_ld.php';
+        $jsonLd = birkly_site_seo_build_json_ld_script($context, $meta, $surfaces);
+        if ($jsonLd !== null) {
+            $parts[] = $jsonLd;
         }
     }
 
