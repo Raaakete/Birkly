@@ -513,6 +513,7 @@
     }
 
     function openApModal(id) {
+        if (inDiscoveryEmbed() && !agentGuideVisible()) return;
         var modal = document.getElementById(id);
         if (!modal) return;
         modalPreviousFocus = document.activeElement;
@@ -896,6 +897,7 @@
     }
 
     function openSetupWizard() {
+        if (!agentGuideVisible()) return;
         if (state.wizard) state.wizard.open();
     }
 
@@ -975,6 +977,7 @@
     }
 
     function showAiLoading(message) {
+        if (inDiscoveryEmbed() && !agentGuideVisible()) return null;
         state.aiAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
         var el = document.getElementById('ap-ai-loading');
         var msgEl = document.getElementById('ap-ai-loading-msg');
@@ -1262,12 +1265,17 @@
 
     function resetAgentGuideUiChrome() {
         hideAiLoading();
-        [ABOUT_MODAL_ID, 'ap-publish-success-modal'].forEach(function (id) {
-            closeApModal(id);
-        });
-        document.querySelectorAll('#disc-ap-embed .modal.is-open, #disc-ap-embed .modal.active').forEach(function (modal) {
-            modal.classList.remove('is-open', 'active', 'show');
-            modal.setAttribute('aria-hidden', 'true');
+        if (state.wizard && typeof state.wizard.close === 'function') {
+            state.wizard.close();
+        }
+        var bodyWizard = document.getElementById('ag-wizard-modal');
+        if (bodyWizard) {
+            bodyWizard.classList.remove('is-open', 'active', 'show');
+            bodyWizard.style.display = 'none';
+            bodyWizard.setAttribute('aria-hidden', 'true');
+        }
+        document.querySelectorAll('#disc-ap-embed .modal[id]').forEach(function (modal) {
+            closeApModal(modal.id);
         });
     }
 
@@ -2154,7 +2162,7 @@
 
     // First visit: show the explainer modal; guided setup opens after it closes.
     function maybeAutoShowAboutModal() {
-        if (aboutModalSeen()) return;
+        if (aboutModalSeen() || !agentGuideVisible()) return;
         openApModal(ABOUT_MODAL_ID);
     }
 

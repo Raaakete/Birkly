@@ -301,6 +301,8 @@
             }
         });
         setZoneInUrl(zone);
+        var pageRoot = document.querySelector('.discovery-page[data-disc-tab]');
+        if (pageRoot) pageRoot.setAttribute('data-disc-tab', zone);
         syncApEmbed(zone);
     }
 
@@ -1378,6 +1380,9 @@
 
     function init() {
         if (!document.querySelector('.disc-hub')) return;
+        if (typeof global.resetAgentGuideUiChrome === 'function') {
+            global.resetAgentGuideUiChrome();
+        }
         ensureDiscoveryPageChrome();
         mountPageBars();
         state.activeZone = getInitialZone();
