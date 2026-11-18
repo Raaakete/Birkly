@@ -794,9 +794,25 @@
     // P60 IA: the Essentials/Advanced split is gone. The Guide is a single
     // experience with a vertical sub-nav (Overview, Essentials, Sources, …).
     // showGuideTab() ensures the Guide zone is active and selects a sub-tab.
+    function getGuideTabsRoot() {
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed) {
+                var inEmbed = embed.querySelector('.ai-presence-tabs.ap-guide-tabs');
+                if (inEmbed) return inEmbed;
+            }
+        }
+        return document.querySelector('.ai-presence-tabs.ap-guide-tabs')
+            || document.querySelector('.ai-presence-tabs');
+    }
+
     function showGuideTab(tab) {
-        if (!discoveryEmbed || state.hubZone !== 'guide') {
+        var hub = getHubRoot();
+        var guidePanel = hub && hub.querySelector('[data-hub-panel="guide"]');
+        if (!discoveryEmbed) {
             switchZone('guide');
+        } else if (!guidePanel || guidePanel.hidden || state.hubZone !== 'guide') {
+            switchZone('guide', { updateUrl: false });
         }
         switchTab(tab || 'overview');
     }
@@ -1073,17 +1089,20 @@
 
     function switchTab(tab) {
         if (!tab) return;
-        document.querySelectorAll('.ap-guide-nav [data-tab]').forEach(function (btn) {
-            var active = btn.getAttribute('data-tab') === tab;
-            btn.classList.toggle('active', active);
-            btn.setAttribute('aria-selected', active ? 'true' : 'false');
-            if (global.Birkly && global.Birkly.TabsA11y && typeof global.Birkly.TabsA11y.syncTabButton === 'function') {
-                global.Birkly.TabsA11y.syncTabButton(btn, active);
-            }
-        });
-        var tabsRoot = document.querySelector('.ai-presence-tabs');
+        var tabsRoot = getGuideTabsRoot();
         if (!tabsRoot) return;
-        tabsRoot.querySelectorAll('.tab-content').forEach(function (pane) {
+        var nav = tabsRoot.querySelector('.ap-guide-nav');
+        if (nav) {
+            nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
+                var active = btn.getAttribute('data-tab') === tab;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                if (global.Birkly && global.Birkly.TabsA11y && typeof global.Birkly.TabsA11y.syncTabButton === 'function') {
+                    global.Birkly.TabsA11y.syncTabButton(btn, active);
+                }
+            });
+        }
+        tabsRoot.querySelectorAll('.tab-content[data-tab-content]').forEach(function (pane) {
             var active = pane.getAttribute('data-tab-content') === tab;
             pane.classList.toggle('active', active);
             pane.hidden = !active;
@@ -1091,24 +1110,55 @@
                 global.Birkly.TabsA11y.syncTabPanel(pane, active);
             }
         });
+        if (discoveryEmbed) {
+            try {
+                var url = new URL(window.location.href);
+                if (url.searchParams.get('tab') === 'agent-guide' || url.searchParams.get('tab') === 'guide') {
+                    url.searchParams.set('guide_tab', tab);
+                    window.history.replaceState({}, '', url.toString());
+                }
+            } catch (e) { /* ignore */ }
+        }
+    }
+
+    function syncGuideSubnavPanels() {
+        var tabsRoot = getGuideTabsRoot();
+        if (!tabsRoot) return;
+        tabsRoot.querySelectorAll('.tab-content[data-tab-content]').forEach(function (pane) {
+            pane.hidden = !pane.classList.contains('active');
+        });
     }
 
     function initTabs() {
-        var root = document.querySelector('.ai-presence-tabs');
+        var root = getGuideTabsRoot();
         if (!root) return;
         var nav = root.querySelector('.ap-guide-nav');
         if (nav) {
             nav.setAttribute('role', 'tablist');
-            nav.addEventListener('click', function (e) {
-                var btn = e.target.closest('[data-tab]');
-                if (!btn || !nav.contains(btn)) return;
-                e.preventDefault();
-                showGuideTab(btn.getAttribute('data-tab'));
-            });
+            if (nav.getAttribute('data-guide-nav-bound') !== '1') {
+                nav.setAttribute('data-guide-nav-bound', '1');
+                nav.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.side-nav-item[data-tab]');
+                    if (!btn || !nav.contains(btn)) return;
+                    e.preventDefault();
+                    showGuideTab(btn.getAttribute('data-tab'));
+                });
+            }
         }
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
-            pane.hidden = !pane.classList.contains('active');
-        });
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed && embed.getAttribute('data-guide-subnav-delegate') !== '1') {
+                embed.setAttribute('data-guide-subnav-delegate', '1');
+                embed.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showGuideTab(btn.getAttribute('data-tab'));
+                }, true);
+            }
+        }
+        syncGuideSubnavPanels();
     }
 
     function renderOverview(data) {
@@ -3303,10 +3353,15 @@
             hub.classList.add('ap-hub--discovery-embed');
         }
 
-        document.addEventListener('click', function (e) {
-            var zoneBtn = e.target.closest('[data-hub-zone]');
-            if (zoneBtn && (zoneBtn.classList.contains('tab') ||
-                zoneBtn.classList.contains('ap-goto-zone'))) {
+        if (!state.hubZoneClickBound) {
+            state.hubZoneClickBound = true;
+            hub.addEventListener('click', function (e) {
+                var zoneBtn = e.target.closest('[data-hub-zone]');
+                if (!zoneBtn || !hub.contains(zoneBtn)) return;
+                if (!zoneBtn.classList.contains('tab') &&
+                    !zoneBtn.classList.contains('ap-goto-zone')) {
+                    return;
+                }
                 e.preventDefault();
                 var z = zoneBtn.getAttribute('data-hub-zone');
                 // Legacy Connections navigation → Settings → AI (P62-D2).
@@ -3315,8 +3370,8 @@
                     return;
                 }
                 switchZone(z);
-            }
-        });
+            });
+        }
 
         var tablist = document.getElementById('ap-hub-tablist');
         if (tablist) {
@@ -3945,7 +4000,8 @@
         window.addEventListener('load', function () {
             if (state.meta && state.draft) return;
             load().catch(function () { /* SSR overview remains visible */ });
-            var guideNav = document.querySelector('.ap-guide-nav');
+            var tabsRoot = getGuideTabsRoot();
+            var guideNav = tabsRoot && tabsRoot.querySelector('.ap-guide-nav');
             if (guideNav && global.Birkly && global.Birkly.TabsA11y
                 && typeof global.Birkly.TabsA11y.enhance === 'function'
                 && guideNav.getAttribute('data-tabs-a11y') !== '1') {
@@ -3960,6 +4016,17 @@
 
     global.switchApZone = switchZone;
     global.hydrateWebmcpTools = ensureToolsZoneReady;
+    global.showAgentGuideTab = showGuideTab;
+    global.ensureAgentGuideSubnav = function () {
+        initTabs();
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var guideTab = params.get('guide_tab');
+            if (guideTab) {
+                showGuideTab(guideTab);
+            }
+        } catch (e) { /* ignore */ }
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
