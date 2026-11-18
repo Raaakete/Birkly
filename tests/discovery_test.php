@@ -232,6 +232,15 @@ $_GET['guide_tab'] = 'claims';
 $discoveryAgClaims = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(strpos($discoveryAgClaims, 'id="ap-claim-statement"') !== false, 'discovery embed ships claim modal fields');
 assert_true(strpos($discoveryAgClaims, 'id="ap-evidence-title"') !== false, 'discovery embed ships evidence modal fields');
+assert_true(
+    preg_match('/<div id="ap-claim-modal" class="modal ap-modal"/', $discoveryAgClaims) === 1,
+    'claim modal is a real element in SSR HTML'
+);
+assert_true(
+    preg_match('/<p class="form-help[^"]*">[\s\S]*?<noscript>/i', $discoveryAgClaims) !== 1,
+    'publish help must not open a literal noscript that swallows modal markup'
+);
+assert_true(str_contains($discoveryAgClaims, '&lt;noscript&gt;'), 'landmark help shows escaped noscript tag name');
 $claimRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['claims'] ?? []);
 $evidenceRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['evidence'] ?? []);
 assert_true(strpos($discoveryAgClaims, 'id="ap-claims-list"') !== false, 'discovery claims tab list chrome');

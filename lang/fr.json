@@ -90,7 +90,7 @@
         "ag_discovery_footer_line_help": "Phrase explorable facultative dans le pied de page avec un lien vers votre Guide de l'agent.",
         "ag_discovery_footer_line_placeholder": "Informations officielles sur l'IA pour les assistants de chat et de recherche :",
         "ag_discovery_body_landmark": "Barre de découverte sans JavaScript",
-        "ag_discovery_body_landmark_help": "Insère une barre stylée en haut de chaque page dans <noscript>. Masquée si JavaScript est actif ; sans JS, les visiteurs voient une note sur la découverte IA et des liens vers le guide.",
+        "ag_discovery_body_landmark_help": "Insère une barre stylée en haut de chaque page dans &lt;noscript&gt;. Masquée si JavaScript est actif ; sans JS, les visiteurs voient une note sur la découverte IA et des liens vers le guide.",
         "ag_discovery_footer_link": "Lien « Pour les agents » du pied de page",
         "ag_discovery_footer_link_help": "Ajoute un petit lien de pied de page à /for-agents lorsque le pied de page est détecté (activé par défaut).",
         "ag_discovery_help": "Liste de contrôle sur la façon dont les IA de chat et de recherche peuvent trouver votre guide publié via des pages indexées, un plan du site et robots.txt.",

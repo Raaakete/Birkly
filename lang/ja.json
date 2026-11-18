@@ -90,7 +90,7 @@
         "ag_discovery_footer_line_help": "エージェント ガイドへのリンクを含むフッター内のオプションのクロール可能な文。",
         "ag_discovery_footer_line_placeholder": "チャットおよび検索アシスタントに関する AI の公式事実:",
         "ag_discovery_body_landmark": "JavaScript 無効時のディスカバリ バー",
-        "ag_discovery_body_landmark_help": "各ページの先頭に <noscript> 内のスタイル付きバーを挿入します。JavaScript 有効時は非表示。JS 無効時は、訪問者に AI 向けディスカバリの説明とガイドへのリンクが表示されます。",
+        "ag_discovery_body_landmark_help": "各ページの先頭に &lt;noscript&gt; 内のスタイル付きバーを挿入します。JavaScript 有効時は非表示。JS 無効時は、訪問者に AI 向けディスカバリの説明とガイドへのリンクが表示されます。",
         "ag_discovery_footer_link": "フッターの「エージェント向け」リンク",
         "ag_discovery_footer_link_help": "ページ フッターが検出されたときに、小さなフッター リンクを /for-agents に追加します (デフォルトはオン)。",
         "ag_discovery_help": "チャットと検索 AI がインデックス付きページ、サイトマップ、robots.txt を通じて公開ガイドを見つける方法のチェックリスト。",

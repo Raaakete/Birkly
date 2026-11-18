@@ -90,7 +90,7 @@
         "ag_discovery_footer_line_help": "Frase opcional rastreable en el pie, con un enlace a su Agent Guide.",
         "ag_discovery_footer_line_placeholder": "Datos oficiales de IA para asistentes de chat y búsqueda:",
         "ag_discovery_body_landmark": "Barra de descubrimiento sin JavaScript",
-        "ag_discovery_body_landmark_help": "Inserta una barra estilizada al inicio de cada página dentro de <noscript>. Oculta con JavaScript activo; sin JS, los visitantes ven una nota sobre descubrimiento para IA y enlaces al guide.",
+        "ag_discovery_body_landmark_help": "Inserta una barra estilizada al inicio de cada página dentro de &lt;noscript&gt;. Oculta con JavaScript activo; sin JS, los visitantes ven una nota sobre descubrimiento para IA y enlaces al guide.",
         "ag_discovery_footer_link": "Enlace «Para agentes» en el pie de página",
         "ag_discovery_footer_link_help": "Añade un enlace pequeño en el pie de página hacia /for-agents cuando se detecta el pie (activado de forma predeterminada).",
         "ag_discovery_help": "Lista de comprobación de cómo las IA de chat y de búsqueda pueden encontrar su guía publicada mediante páginas indexadas, sitemap y robots.txt.",
