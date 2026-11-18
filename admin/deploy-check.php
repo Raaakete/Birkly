@@ -11,6 +11,7 @@ requireAdminPermission('read_settings');
 require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../core/build_info.php';
 require_once __DIR__ . '/../core/deploy_diagnostics.php';
+require_once __DIR__ . '/../core/discovery_admin_assets.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -20,6 +21,7 @@ echo json_encode([
     'build' => birkly_build_info(),
     'deploy' => birkly_deploy_verbose_payload(),
     'plugins' => birkly_deploy_plugin_diagnostics()['plugins'],
+    'discovery_admin_js' => birkly_discovery_deploy_signals(),
     'api' => [
         'diagnostics' => birkly_url('/api/admin_deploy_diagnostics.php'),
         'public_health' => birkly_url('/api/deploy_revision.php'),
