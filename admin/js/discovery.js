@@ -113,7 +113,41 @@
 
     function getJson() {
         return fetch(apiUrl('/api/discovery.php?action=get'), { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); });
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.text().then(function (body) {
+                        var hint = body ? String(body).trim().slice(0, 160) : '';
+                        throw new Error('HTTP ' + r.status + (hint ? ': ' + hint : ''));
+                    });
+                }
+                return r.json();
+            });
+    }
+
+    function readBootstrap() {
+        var el = document.getElementById('disc-bootstrap-data');
+        if (!el || !el.textContent) return null;
+        try {
+            var data = JSON.parse(el.textContent);
+            return data && data.packs ? data : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function applyBootstrap(data) {
+        if (!data) return;
+        state.status = data;
+        updatePackTabDots(data);
+        renderPackToggles(data);
+        renderVerifyChecks(data.verify_checks, data.verify_last_run);
+    }
+
+    function normalizeOverrides(overrides) {
+        if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+            return overrides;
+        }
+        return {};
     }
 
     function getInitialZone() {
@@ -737,7 +771,7 @@
         var pages = seo.url_map.pages || {};
         Object.keys(pages).forEach(function (path) {
             var page = pages[path] || {};
-            var overrides = page.overrides || {};
+            var overrides = normalizeOverrides(page.overrides);
             rows.push({
                 key: path,
                 type: 'page',
@@ -753,7 +787,7 @@
         var details = seo.url_map.details || {};
         Object.keys(details).forEach(function (key) {
             var detail = details[key] || {};
-            var overrides = detail.overrides || {};
+            var overrides = normalizeOverrides(detail.overrides);
             var template = detail.template_path || '';
             var collection = detail.collection || '';
             var slug = detail.slug || '';
@@ -1160,6 +1194,7 @@
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
+        applyBootstrap(readBootstrap());
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });

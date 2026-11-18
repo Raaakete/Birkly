@@ -1,3 +1,19 @@
+<?php
+$__disc_bootstrap = null;
+try {
+    require_once dirname(__DIR__) . '/../core/discovery.php';
+    $__disc_bootstrap = birkly_discovery_status();
+} catch (Throwable $e) {
+    error_log('Discovery page bootstrap: ' . $e->getMessage());
+}
+$__disc_packs = is_array($__disc_bootstrap['packs'] ?? null) ? $__disc_bootstrap['packs'] : [];
+$__disc_seo_on = !empty($__disc_packs['seo']['enabled']);
+$__disc_ag_on = !empty($__disc_packs['agent_guide']['enabled']);
+$__disc_wm_on = !empty($__disc_packs['webmcp']['enabled']);
+$__disc_seo_live = !empty($__disc_packs['seo']['live']);
+$__disc_ag_live = !empty($__disc_packs['agent_guide']['live']);
+$__disc_wm_live = !empty($__disc_packs['webmcp']['live']);
+?>
 <div class="discovery-page" data-birch>
 <div class="page-header">
     <div class="page-header-left">
@@ -9,7 +25,7 @@
 
 <!-- Page bar: the active pack's Publish / Save draft (discovery.js shows one) -->
 <div class="disc-page-bars" id="disc-page-bars">
-    <div class="disc-page-bar" id="disc-seo-bar" hidden>
+    <div class="disc-page-bar" id="disc-seo-bar"<?= $__disc_seo_on ? '' : ' hidden' ?>>
 <?php
 $stickySaveBarSaveId = 'disc-seo-publish-btn';
 $stickySaveBarSaveLabel = __('admin.discovery_publish');
@@ -28,15 +44,15 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     <div class="tabs" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
         <button type="button" class="tab active" role="tab" id="disc-tab-seo" data-disc-zone="seo" aria-controls="disc-panel-seo" aria-selected="true" tabindex="0">
             <span>{translate 'admin.discovery_tab_seo'}</span>
-            <span class="ap-tab-dot" id="disc-tab-dot-seo" data-ok="0" aria-hidden="true"></span>
+            <span class="ap-tab-dot" id="disc-tab-dot-seo" data-ok="<?= $__disc_seo_live ? '1' : '0' ?>" aria-hidden="true"></span>
         </button>
         <button type="button" class="tab" role="tab" id="disc-tab-agent-guide" data-disc-zone="agent-guide" aria-controls="disc-panel-agent-guide" aria-selected="false" tabindex="-1">
             <span>{translate 'admin.discovery_tab_agent_guide'}</span>
-            <span class="ap-tab-dot" id="disc-tab-dot-agent-guide" data-ok="0" aria-hidden="true"></span>
+            <span class="ap-tab-dot" id="disc-tab-dot-agent-guide" data-ok="<?= $__disc_ag_live ? '1' : '0' ?>" aria-hidden="true"></span>
         </button>
         <button type="button" class="tab" role="tab" id="disc-tab-webmcp" data-disc-zone="webmcp" aria-controls="disc-panel-webmcp" aria-selected="false" tabindex="-1">
             <span>{translate 'admin.discovery_tab_webmcp'}</span>
-            <span class="ap-tab-dot" id="disc-tab-dot-webmcp" data-ok="0" aria-hidden="true"></span>
+            <span class="ap-tab-dot" id="disc-tab-dot-webmcp" data-ok="<?= $__disc_wm_live ? '1' : '0' ?>" aria-hidden="true"></span>
         </button>
     </div>
 
@@ -49,11 +65,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <p class="module-header-text">{translate 'admin.discovery_seo_intro'}</p>
             </div>
             <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
-                <input type="checkbox" id="disc-seo-enabled" data-pack="seo">
+                <input type="checkbox" id="disc-seo-enabled" data-pack="seo"<?= $__disc_seo_on ? ' checked' : '' ?>>
                 <span class="switch__slider"></span>
             </label>
         </section>
-        <div id="disc-seo-config" class="disc-seo-layout" hidden>
+        <div id="disc-seo-config" class="disc-seo-layout"<?= $__disc_seo_on ? '' : ' hidden' ?>>
           <div class="disc-seo-main">
             <section class="frame">
                 <div class="frame-head">
@@ -290,12 +306,16 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <p class="module-header-text">{translate 'admin.discovery_agent_guide_intro'}</p>
             </div>
             <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
-                <input type="checkbox" id="disc-agent-guide-enabled" data-pack="agent_guide">
+                <input type="checkbox" id="disc-agent-guide-enabled" data-pack="agent_guide"<?= $__disc_ag_on ? ' checked' : '' ?>>
                 <span class="switch__slider"></span>
             </label>
         </section>
-        <div id="disc-agent-guide-config" class="disc-pack-status" hidden>
-            <p class="field-help" id="disc-agent-guide-status"></p>
+        <div id="disc-agent-guide-config" class="disc-pack-status"<?= $__disc_ag_on ? '' : ' hidden' ?>>
+            <p class="field-help" id="disc-agent-guide-status"><?php
+                if ($__disc_ag_on && !empty($__disc_packs['agent_guide']['status_detail'])) {
+                    echo htmlspecialchars((string) $__disc_packs['agent_guide']['status_detail'], ENT_QUOTES, 'UTF-8');
+                }
+            ?></p>
         </div>
     </div>
 
@@ -308,11 +328,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <p class="module-header-text">{translate 'admin.discovery_webmcp_intro'}</p>
             </div>
             <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
-                <input type="checkbox" id="disc-webmcp-enabled" data-pack="webmcp">
+                <input type="checkbox" id="disc-webmcp-enabled" data-pack="webmcp"<?= $__disc_wm_on ? ' checked' : '' ?>>
                 <span class="switch__slider"></span>
             </label>
         </section>
-        <div id="disc-webmcp-config" class="disc-pack-status" hidden></div>
+        <div id="disc-webmcp-config" class="disc-pack-status"<?= $__disc_wm_on ? '' : ' hidden' ?>></div>
     </div>
 </div>
 
@@ -352,6 +372,15 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
 </details>
 </div>
 
+<?php if ($__disc_bootstrap !== null) {
+    $discBootstrapJson = json_encode(
+        $__disc_bootstrap,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_AMP
+    );
+    if ($discBootstrapJson !== false) {
+        echo '<script type="application/json" id="disc-bootstrap-data">' . $discBootstrapJson . '</script>';
+    }
+} ?>
 {include_style 'pages/discovery.css'}
 {include_style 'components/agent-guide-wizard.css'}
 {include_script 'agent-guide-wizard.js'}
