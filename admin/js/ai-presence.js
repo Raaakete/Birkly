@@ -3944,7 +3944,13 @@
         config = config || {};
         discoveryEmbed = !!config.discoveryEmbed;
         discoveryEmbedInitialZone = discoveryEmbed ? (config.initialHubZone || 'guide') : null;
-        if (!isAiPresencePage()) return;
+        if (!isAiPresencePage()) {
+            if (discoveryEmbed) {
+                initTabs();
+                syncGuideSubnavPanels();
+            }
+            return;
+        }
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();

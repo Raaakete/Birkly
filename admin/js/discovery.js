@@ -359,6 +359,10 @@
             try {
                 siteHost = new URL(state.status.hosting.public_site_url).host || siteHost;
             } catch (e) { /* ignore */ }
+        } else if (image) {
+            try {
+                siteHost = new URL(image, window.location.href).host || siteHost;
+            } catch (e) { /* ignore */ }
         }
 
         var serpTitle = $('#disc-seo-serp-title');
@@ -383,11 +387,14 @@
         if (socialImage) {
             if (image) {
                 socialImage.hidden = false;
-                socialImage.style.backgroundImage = 'url("' + image.replace(/"/g, '\\"') + '")';
+                socialImage.style.backgroundImage = '';
                 socialImage.setAttribute('aria-hidden', 'true');
+                var safeSrc = escapeHtml(image);
+                socialImage.innerHTML = '<img src="' + safeSrc + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
             } else {
                 socialImage.hidden = true;
                 socialImage.style.backgroundImage = '';
+                socialImage.innerHTML = '';
                 socialImage.removeAttribute('aria-hidden');
             }
         }
@@ -1260,6 +1267,36 @@
         }
     }
 
+    function switchDiscoveryGuideTab(tab) {
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed || !tab) return false;
+        var hub = embed.querySelector('.ap-hub');
+        if (hub) {
+            hub.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
+                var zone = panel.getAttribute('data-hub-panel');
+                var showGuide = zone === 'guide';
+                panel.classList.toggle('active', showGuide);
+                panel.hidden = !showGuide;
+            });
+        }
+        var tabsRoot = embed.querySelector('.ai-presence-tabs.ap-guide-tabs');
+        if (!tabsRoot) return false;
+        var nav = tabsRoot.querySelector('.ap-guide-nav');
+        if (nav) {
+            nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
+                var active = btn.getAttribute('data-tab') === tab;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
+        }
+        tabsRoot.querySelectorAll('.tab-content[data-tab-content]').forEach(function (pane) {
+            var active = pane.getAttribute('data-tab-content') === tab;
+            pane.classList.toggle('active', active);
+            pane.hidden = !active;
+        });
+        return true;
+    }
+
     function bindGuideSubnavBridge() {
         var embed = document.getElementById('disc-ap-embed');
         if (!embed || embed.getAttribute('data-disc-guide-nav') === '1') return;
@@ -1270,6 +1307,7 @@
             e.preventDefault();
             e.stopPropagation();
             var tab = btn.getAttribute('data-tab');
+            switchDiscoveryGuideTab(tab);
             if (typeof global.showAgentGuideTab === 'function') {
                 global.showAgentGuideTab(tab);
                 return;
@@ -1331,8 +1369,14 @@
             load().catch(function () { /* keep SSR fallback */ });
         });
         if (typeof requestAnimationFrame === 'function') {
-            requestAnimationFrame(ensureDiscoveryPageChrome);
+            requestAnimationFrame(function () {
+                ensureDiscoveryPageChrome();
+                renderSeoPreviews();
+            });
         }
+        window.addEventListener('load', function () {
+            renderSeoPreviews();
+        });
     }
 
     if (document.readyState === 'loading') {
@@ -1342,4 +1386,5 @@
     }
 
     global.initDiscovery = init;
+    global.switchDiscoveryGuideTab = switchDiscoveryGuideTab;
 })(window);

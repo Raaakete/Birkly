@@ -1806,7 +1806,22 @@ function birkly_ai_presence_for_agents_html(): ?string
     $head .= '</head><body style="font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#f8f9f7;color:#3d4250;">'
         . '<main style="max-width:720px;margin:0 auto;">'
         . '<p style="font-size:14px;color:#5f6577;margin:0 0 1rem;">Public Agent Guide summary for AI assistants visiting '
-        . $esc($name) . ' (published version ' . (int) ($meta['published_version'] ?? 0) . ').</p>';
+        . $esc($name) . ' (published version ' . (int) ($meta['published_version'] ?? 0) . ').';
+    $mdUrl = (string) ($map['for_agents_md'] ?? '');
+    if ($mdUrl !== '' || $llmsUrl !== '') {
+        $head .= ' If your reader cannot ingest <code>application/json</code>, use ';
+        if ($mdUrl !== '') {
+            $head .= '<a href="' . $esc($mdUrl) . '">for-agents.md</a>';
+            if ($llmsUrl !== '') {
+                $head .= ' or ';
+            }
+        }
+        if ($llmsUrl !== '') {
+            $head .= '<a href="' . $esc($llmsUrl) . '">llms.txt</a>';
+        }
+        $head .= ' for the same canonical facts.';
+    }
+    $head .= '</p>';
 
     return $head . $bodyBlock . '</main></body></html>';
 }
