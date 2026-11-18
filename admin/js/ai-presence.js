@@ -1089,6 +1089,17 @@
 
     function switchTab(tab) {
         if (!tab) return;
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            var hub = embed && embed.querySelector('.ap-hub');
+            if (hub) {
+                hub.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
+                    var showGuide = panel.getAttribute('data-hub-panel') === 'guide';
+                    panel.classList.toggle('active', showGuide);
+                    panel.hidden = !showGuide;
+                });
+            }
+        }
         var tabsRoot = getGuideTabsRoot();
         if (!tabsRoot) return;
         var nav = tabsRoot.querySelector('.ap-guide-nav');
@@ -1143,19 +1154,6 @@
                     e.preventDefault();
                     showGuideTab(btn.getAttribute('data-tab'));
                 });
-            }
-        }
-        if (discoveryEmbed) {
-            var embed = document.getElementById('disc-ap-embed');
-            if (embed && embed.getAttribute('data-guide-subnav-delegate') !== '1') {
-                embed.setAttribute('data-guide-subnav-delegate', '1');
-                embed.addEventListener('click', function (e) {
-                    var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
-                    if (!btn) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    showGuideTab(btn.getAttribute('data-tab'));
-                }, true);
             }
         }
         syncGuideSubnavPanels();

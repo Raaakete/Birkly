@@ -148,6 +148,8 @@ assert_true(
 );
 assert_true(strpos($discoveryHtml, 'Template not found') === false, 'discovery embed has no missing partial');
 assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery embed includes agent guide hub');
+assert_true(strpos($discoveryHtml, 'id="disc-seo-serp-title"') !== false, 'discovery SEO SERP preview SSR');
+assert_true(strpos($discoveryHtml, 'disc-seo-previews') !== false, 'discovery SEO preview chrome');
 assert_true(strpos($discoveryHtml, '<textarea id="disc-bootstrap-data"') !== false, 'discovery bootstrap textarea present');
 assert_true(strpos($discoveryHtml, 'page-header-left') === false, 'discovery has no duplicate in-page breadcrumb row');
 assert_true(strpos($discoveryHtml, '"packs"') !== false, 'discovery bootstrap includes pack data');
@@ -196,7 +198,10 @@ if ($wmBackup !== null) {
 }
 birkly_webmcp_reset_cache();
 $discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
+assert_true(strpos($discJs, 'bindSeoPreviewFields') !== false, 'discovery binds SEO preview field listeners');
 assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
+$aiJs = (string) file_get_contents($root . '/admin/js/ai-presence.js');
+assert_true(strpos($aiJs, "data-hub-panel') === 'guide'") !== false, 'agent guide switchTab keeps guide hub panel visible in embed');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
 
 echo "==> API syntax\n";

@@ -476,6 +476,15 @@
         }
     }
 
+    function setSeoFieldValue(el, next) {
+        if (!el) return;
+        var incoming = next == null ? '' : String(next);
+        if (incoming === '' && String(el.value || '').trim() !== '') {
+            return;
+        }
+        el.value = incoming;
+    }
+
     function renderSeoForm(data) {
         var seo = data && data.seo;
         if (!seo || typeof seo !== 'object') {
@@ -483,24 +492,22 @@
             return;
         }
         state.seo = seo;
-        var siteTitle = $('#disc-seo-site-title');
-        var desc = $('#disc-seo-description');
-        var suffix = $('#disc-seo-title-suffix');
-        var ogImage = $('#disc-seo-og-image');
+        var defs = seo.defaults || {};
+        var advanced = seo.advanced || {};
+        var delivery = seo.delivery || {};
+        setSeoFieldValue($('#disc-seo-site-title'), defs.site_title);
+        setSeoFieldValue($('#disc-seo-description'), defs.description);
+        setSeoFieldValue($('#disc-seo-title-suffix'), defs.title_suffix);
+        setSeoFieldValue($('#disc-seo-og-image'), defs.og_image);
         var twitterCard = $('#disc-seo-twitter-card');
-        var robots = $('#disc-seo-robots');
-        var googleVerify = $('#disc-seo-google-verify');
-        var bingVerify = $('#disc-seo-bing-verify');
+        if (twitterCard) {
+            twitterCard.value = defs.twitter_card || twitterCard.value || 'summary_large_image';
+        }
+        setSeoFieldValue($('#disc-seo-robots'), advanced.robots || 'index,follow');
+        setSeoFieldValue($('#disc-seo-google-verify'), advanced.google_site_verification);
+        setSeoFieldValue($('#disc-seo-bing-verify'), advanced.bing_site_verification);
         var mode = $('#disc-seo-delivery-mode');
-        if (siteTitle) siteTitle.value = (seo.defaults && seo.defaults.site_title) || '';
-        if (desc) desc.value = (seo.defaults && seo.defaults.description) || '';
-        if (suffix) suffix.value = (seo.defaults && seo.defaults.title_suffix) || '';
-        if (ogImage) ogImage.value = (seo.defaults && seo.defaults.og_image) || '';
-        if (twitterCard) twitterCard.value = (seo.defaults && seo.defaults.twitter_card) || 'summary_large_image';
-        if (robots) robots.value = (seo.advanced && seo.advanced.robots) || 'index,follow';
-        if (googleVerify) googleVerify.value = (seo.advanced && seo.advanced.google_site_verification) || '';
-        if (bingVerify) bingVerify.value = (seo.advanced && seo.advanced.bing_site_verification) || '';
-        if (mode) mode.value = (seo.delivery && seo.delivery.mode) || 'auto_inject';
+        if (mode) mode.value = delivery.mode || mode.value || 'auto_inject';
         renderSeoSurfaces(seo);
         renderSeoPreviews();
         markSeoBaseline();
@@ -1235,22 +1242,28 @@
             });
         }
 
-        var seoConfig = $('#disc-seo-config');
-        var seoFields = '#disc-seo-site-title, #disc-seo-description, #disc-seo-title-suffix, #disc-seo-og-image, #disc-seo-twitter-card, #disc-seo-robots, #disc-seo-google-verify, #disc-seo-bing-verify, #disc-seo-delivery-mode, [data-seo-surface]';
-        if (seoConfig) {
-            seoConfig.addEventListener('input', function (e) {
-                if (e.target.matches(seoFields)) {
-                    renderSeoPreviews();
-                    updateSeoStickyBar();
-                }
-            });
-            seoConfig.addEventListener('change', function (e) {
-                if (e.target.matches(seoFields)) {
-                    renderSeoPreviews();
-                    updateSeoStickyBar();
-                }
-            });
-        }
+        bindSeoPreviewFields();
+    }
+
+    function bindSeoPreviewFields() {
+        if (document.documentElement.getAttribute('data-disc-seo-preview-bound') === '1') return;
+        document.documentElement.setAttribute('data-disc-seo-preview-bound', '1');
+        var onSeoField = function () {
+            renderSeoPreviews();
+            updateSeoStickyBar();
+        };
+        ['disc-seo-site-title', 'disc-seo-description', 'disc-seo-title-suffix', 'disc-seo-og-image', 'disc-seo-twitter-card'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el || el.getAttribute('data-disc-preview-bound') === '1') return;
+            el.setAttribute('data-disc-preview-bound', '1');
+            el.addEventListener('input', onSeoField);
+            el.addEventListener('change', onSeoField);
+        });
+        document.querySelectorAll('[data-seo-surface]').forEach(function (input) {
+            if (input.getAttribute('data-disc-preview-bound') === '1') return;
+            input.setAttribute('data-disc-preview-bound', '1');
+            input.addEventListener('change', onSeoField);
+        });
     }
 
     function bindVerify() {
@@ -1301,27 +1314,6 @@
         var embed = document.getElementById('disc-ap-embed');
         if (!embed || embed.getAttribute('data-disc-guide-nav') === '1') return;
         embed.setAttribute('data-disc-guide-nav', '1');
-        embed.addEventListener('click', function (e) {
-            var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
-            if (!btn || !embed.contains(btn)) return;
-            e.preventDefault();
-            e.stopPropagation();
-            var tab = btn.getAttribute('data-tab');
-            switchDiscoveryGuideTab(tab);
-            if (typeof global.showAgentGuideTab === 'function') {
-                global.showAgentGuideTab(tab);
-                return;
-            }
-            if (typeof global.initAiPresence === 'function') {
-                global.initAiPresence({
-                    discoveryEmbed: true,
-                    initialHubZone: 'guide',
-                });
-            }
-            if (typeof global.showAgentGuideTab === 'function') {
-                global.showAgentGuideTab(tab);
-            }
-        }, true);
     }
 
     function initApEmbed() {
@@ -1386,5 +1378,6 @@
     }
 
     global.initDiscovery = init;
+    global.renderDiscoverySeoPreviews = renderSeoPreviews;
     global.switchDiscoveryGuideTab = switchDiscoveryGuideTab;
 })(window);
