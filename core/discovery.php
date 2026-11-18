@@ -388,7 +388,7 @@ function birkly_discovery_agent_guide_hydrate(): array
     require_once __DIR__ . '/ai_presence.php';
     require_once __DIR__ . '/ai_presence_pro.php';
 
-    $draft = birkly_ai_presence_load_draft();
+    $draft = birkly_ai_presence_effective_editor_draft();
 
     return [
         'draft' => $draft,

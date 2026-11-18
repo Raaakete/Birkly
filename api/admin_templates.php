@@ -250,7 +250,7 @@ function getDiscoveryPageData(): array
     $seo = is_array($status['seo'] ?? null) ? $status['seo'] : [];
     $agDraft = is_array($status['agent_guide_hydrate']['draft'] ?? null)
         ? $status['agent_guide_hydrate']['draft']
-        : birkly_ai_presence_load_draft();
+        : birkly_ai_presence_effective_editor_draft();
 
     return [
         'page' => 'discovery',

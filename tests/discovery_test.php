@@ -68,6 +68,19 @@ assert_true(isset($status['packs']['agent_guide']), 'status has agent_guide pack
 assert_true(isset($status['packs']['webmcp']), 'status has webmcp pack');
 assert_true(isset($status['hosting']['public_site_mode']), 'status has hosting mode');
 
+echo "==> Agent Guide effective editor draft\n";
+$pubDraft = birkly_ai_presence_default_draft();
+$pubDraft['identity']['official_name'] = 'Published Only Co';
+$pubDraft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($pubDraft);
+birkly_ai_presence_publish();
+birkly_ai_presence_save_draft(birkly_ai_presence_default_draft());
+$effective = birkly_ai_presence_effective_editor_draft();
+assert_true(
+    ($effective['identity']['official_name'] ?? '') === 'Published Only Co',
+    'effective editor draft falls back to published content'
+);
+
 echo "==> Discovery verify + url map\n";
 require_once $root . '/core/ai_presence.php';
 $draft = birkly_ai_presence_default_draft();
@@ -163,6 +176,7 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
         'discovery bootstrap embeds agent guide draft hydrate'
     );
 }
+assert_true(strpos($discoveryHtml, 'window.__DISC_AG_HYDRATE__=') !== false, 'discovery inline agent guide hydrate script');
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
 $_GET['tab'] = 'agent-guide';
 $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
@@ -174,6 +188,11 @@ $discoveryAgEssentials = (string) render_template_file($root . '/admin/templates
 assert_true(
     preg_match('/class="tab-content active" data-tab-content="essentials"(?!\s+hidden)/', $discoveryAgEssentials) === 1,
     'guide_tab=essentials SSR activates essentials panel'
+);
+$expectedAgName = (string) ($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['identity']['official_name'] ?? '');
+assert_true(
+    $expectedAgName !== '' && strpos($discoveryAgEssentials, 'value="' . $expectedAgName . '"') !== false,
+    'discovery essentials SSR shows official name from effective draft'
 );
 unset($_GET['guide_tab']);
 assert_true(strpos($discoveryAg, 'tabs-v2-root') === false, 'guide layout is not a tabs-v2 horizontal root');

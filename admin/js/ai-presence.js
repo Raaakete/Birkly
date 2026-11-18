@@ -1099,6 +1099,42 @@
         });
     }
 
+    function draftHasMeaningfulContent(draft) {
+        if (!draft || typeof draft !== 'object') return false;
+        if (String(draft.identity && draft.identity.official_name || '').trim()) return true;
+        if (String(draft.identity && draft.identity.short_description || '').trim()) return true;
+        var lists = ['sources_of_truth', 'products_services', 'claims', 'media_context', 'connected_content'];
+        for (var i = 0; i < lists.length; i++) {
+            var list = draft[lists[i]];
+            if (Array.isArray(list) && list.length) return true;
+        }
+        return false;
+    }
+
+    function readDiscoveryHydratePayload() {
+        if (global.__DISC_AG_HYDRATE__ && typeof global.__DISC_AG_HYDRATE__ === 'object') {
+            return global.__DISC_AG_HYDRATE__;
+        }
+        var boot = document.getElementById('disc-bootstrap-data');
+        if (!boot) return null;
+        var raw = (boot.value !== undefined && boot.value !== '') ? boot.value : (boot.textContent || '');
+        raw = String(raw).trim();
+        if (!raw) return null;
+        try {
+            var parsed = JSON.parse(raw);
+            return parsed && parsed.agent_guide_hydrate ? parsed.agent_guide_hydrate : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function tryDiscoveryBootstrapHydrate() {
+        if (!document.getElementById('disc-ap-embed')) return false;
+        var payload = readDiscoveryHydratePayload();
+        if (!payload) return false;
+        return hydrateAgentGuidePayload(payload);
+    }
+
     function hydrateAgentGuidePayload(payload) {
         if (!payload || !payload.draft || typeof payload.draft !== 'object') return false;
         state.draft = payload.draft;
@@ -1294,8 +1330,13 @@
         var empty = document.getElementById('ap-sources-empty');
         var countEl = document.getElementById('ap-sources-count');
         if (!list) return;
+        var sources = (state.draft && state.draft.sources_of_truth) || [];
+        if (!sources.length && list.querySelector('[data-ssr-source]')) {
+            if (countEl) countEl.textContent = String(list.querySelectorAll('[data-ssr-source]').length);
+            return;
+        }
         list.innerHTML = '';
-        var sources = state.draft.sources_of_truth || [];
+        sources = state.draft.sources_of_truth || [];
         if (countEl) countEl.textContent = String(sources.length);
         if (empty) empty.hidden = sources.length > 0;
         list.hidden = sources.length === 0;
@@ -2032,7 +2073,15 @@
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
                 var data = res.data;
-                state.draft = data.draft;
+                var prevDraft = state.draft;
+                var incomingDraft = data.draft;
+                if (prevDraft && draftHasMeaningfulContent(prevDraft) && !draftHasMeaningfulContent(incomingDraft)) {
+                    incomingDraft = prevDraft;
+                } else if (!draftHasMeaningfulContent(incomingDraft) && data.published
+                    && draftHasMeaningfulContent(data.published)) {
+                    incomingDraft = JSON.parse(JSON.stringify(data.published));
+                }
+                state.draft = incomingDraft;
                 state.published = data.published;
                 state.meta = data.meta;
                 state.canEdit = !!data.can_edit;
@@ -4078,6 +4127,15 @@
 
     global.hydrateAgentGuideFromBootstrap = hydrateAgentGuidePayload;
     global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
+    global.tryDiscoveryBootstrapHydrate = tryDiscoveryBootstrapHydrate;
+
+    if (document.getElementById('disc-ap-embed')) {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', tryDiscoveryBootstrapHydrate);
+        } else {
+            tryDiscoveryBootstrapHydrate();
+        }
+    }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
