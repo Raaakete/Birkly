@@ -3959,6 +3959,11 @@
         if (discoveryEmbed) {
             document.addEventListener('birkly:discovery-zone', function (event) {
                 if (!event.detail || !event.detail.embedVisible) return;
+                initTabs();
+                syncGuideSubnavPanels();
+                if (event.detail.zone === 'agent-guide') {
+                    global.ensureAgentGuideSubnav();
+                }
                 if (state.meta) return;
                 load().catch(function (err) {
                     toast(err.message || t('ag_js_failed_load_presence', 'Failed to load AI Presence'), 'error');
@@ -4019,6 +4024,7 @@
     global.showAgentGuideTab = showGuideTab;
     global.ensureAgentGuideSubnav = function () {
         initTabs();
+        syncGuideSubnavPanels();
         try {
             var params = new URLSearchParams(window.location.search);
             var guideTab = params.get('guide_tab');
@@ -4027,6 +4033,8 @@
             }
         } catch (e) { /* ignore */ }
     };
+
+    global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
