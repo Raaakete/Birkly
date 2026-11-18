@@ -102,6 +102,29 @@ assert_true(($advanced['event_counts']['outbound_click'] ?? 0) === 1, 'outbound 
 assert_true(($advanced['event_counts']['plugin_event'] ?? 0) === 1, 'plugin event counted');
 assert_true(!empty($advanced['forms']), 'forms ranking present');
 assert_true(!empty($advanced['outbound_targets']), 'outbound ranking present');
+
+$outboundReferrer = birkly_analytics_aggregate_events([
+    [
+        'event_type' => 'outbound_click',
+        'path' => '/',
+        'referrer' => 'https://partner.example/docs',
+        'session_id' => 'sess_ref',
+        'timestamp' => time(),
+    ],
+]);
+assert_true(
+    ($outboundReferrer['outbound_targets'][0]['url'] ?? '') === 'https://partner.example/docs',
+    'outbound ranking uses referrer href fallback'
+);
+
+$journey = birkly_analytics_build_journey_index([
+    array_merge($event, ['event_type' => 'page_view', 'path' => '/']),
+    array_merge($event, ['timestamp' => time() + 2, 'event_type' => 'page_view', 'path' => '/about']),
+    array_merge($event, ['timestamp' => time() + 4, 'event_type' => 'form_submit', 'path' => '/about', 'event_data' => ['form_id' => 'contact']]),
+]);
+assert_true(!empty($journey['sessions']), 'journey sessions built');
+assert_true(!empty($journey['paths']), 'journey paths built');
+assert_true(count($journey['sessions'][0]['trail'] ?? []) >= 3, 'session trail has steps');
 assert_true(!empty($advanced['plugin_events']), 'plugin events ranking present');
 
 $minimalEvent = [
