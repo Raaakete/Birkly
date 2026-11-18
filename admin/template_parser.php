@@ -168,7 +168,7 @@ class TemplateParser {
                     $filename .= '.js';
                 }
                 $jsPath = '/admin/js/' . $filename;
-                return '<?= \'<script src="\' . htmlspecialchars(birkly_url(\'' . addslashes($jsPath) . '\')) . \'"></script>\' ?>';
+                return '<?= \'<script src="\' . htmlspecialchars(birkly_url(\'' . addslashes($jsPath) . '\')) . \'"\' . (function_exists(\'birkly_csp_nonce_attr\') ? birkly_csp_nonce_attr() : \'\') . \'></script>\' ?>';
             },
             $parsed
         );
