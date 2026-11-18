@@ -395,6 +395,9 @@ if (is_array($discovery_embed_overview ?? null)) {
 }
 if ($__disc_tab === 'webmcp') {
     $__ap_embed_vars['discovery_embed_hub_zone'] = 'tools';
+    if (is_array($discovery_embed_webmcp ?? null)) {
+        $__ap_embed_vars['discovery_embed_webmcp'] = $discovery_embed_webmcp;
+    }
 } elseif ($__disc_tab === 'agent-guide') {
     $__ap_embed_vars['discovery_embed_hub_zone'] = 'guide';
 }

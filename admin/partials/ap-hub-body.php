@@ -12,6 +12,8 @@ if (isset($discovery_embed_hub_zone)) {
     }
 }
 $__ap_hub_zones = ['guide', 'tools', 'publish'];
+$__ap_webmcp = is_array($discovery_embed_webmcp ?? null) ? $discovery_embed_webmcp : null;
+$__ap_webmcp_on = $__ap_webmcp ? !empty($__ap_webmcp['enabled']) : false;
 $__ap_show_public_urls = is_array($__ap_public_urls)
     && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
         || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
@@ -600,14 +602,14 @@ if ($__ap_show_public_urls) {
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
                 </div>
                 <label class="switch switch--lg" title="{translate 'admin.ag_tools_master_title'}">
-                    <input type="checkbox" id="ap-webmcp-enabled">
+                    <input type="checkbox" id="ap-webmcp-enabled"<?= $__ap_webmcp_on ? ' checked' : '' ?>>
                     <span class="switch__slider"></span>
                 </label>
             </div>
             <p id="ap-webmcp-support-note" class="u-text-xs u-fg-secondary u-m-0" hidden>{translate 'admin.ag_tools_browser_note'}</p>
         </section>
 
-        <div id="ap-webmcp-config" class="u-stack-6" hidden>
+        <div id="ap-webmcp-config" class="u-stack-6"<?= $__ap_webmcp_on ? '' : ' hidden' ?>>
             <section class="card u-p-6 u-stack-4">
                 <header class="u-stack-1">
                     <h3 class="u-m-0">{translate 'admin.ag_tools_catalog_title'}</h3>
