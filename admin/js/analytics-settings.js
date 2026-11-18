@@ -99,6 +99,47 @@
         var active = state.presets.find(function (p) { return p.id === preset; });
         var needsConsent = !!(active && active.consent_required) || preset === 'standard' || preset === 'advanced';
         wrap.hidden = !needsConsent;
+        renderConsentBannerPreview();
+    }
+
+    function renderConsentBannerPreview() {
+        var wrap = document.getElementById('analytics-consent-preview-wrap');
+        var host = document.getElementById('analytics-consent-preview');
+        if (!wrap || !host) return;
+        var fields = document.getElementById('analytics-consent-fields');
+        var show = selectedPreset() === 'advanced' && fields && !fields.hidden;
+        wrap.hidden = !show;
+        if (!show) {
+            host.innerHTML = '';
+            host.setAttribute('aria-hidden', 'true');
+            return;
+        }
+        var textInput = document.getElementById('analytics-consent-text');
+        var text = (textInput && textInput.value.trim()) ||
+            t('analytics_consent_preview_default_text', 'We use privacy-friendly analytics to understand how the site is used. You can accept all, customize categories, or decline optional metrics.');
+        var categories = [
+            { id: 'sessions', label: t('analytics_consent_cat_sessions', 'Sessions and return visits') },
+            { id: 'devices', label: t('analytics_consent_cat_devices', 'Device, browser, and screen size') },
+            { id: 'campaigns', label: t('analytics_consent_cat_campaigns', 'Campaign tags and referring site') },
+            { id: 'events', label: t('analytics_consent_cat_events', 'Clicks, forms, and other events') }
+        ];
+        host.setAttribute('aria-hidden', 'false');
+        host.innerHTML =
+            '<div class="analytics-consent-preview__banner" role="presentation">' +
+            '<p class="analytics-consent-preview__text">' + escapeHtml(text) + '</p>' +
+            '<div class="analytics-consent-preview__panel">' +
+            '<p class="analytics-consent-preview__essential">' + escapeHtml(t('analytics_consent_preview_essential', 'Essential page counts always run so we can measure traffic volume. Declining optional categories keeps reports privacy-limited.')) + '</p>' +
+            categories.map(function (cat) {
+                return '<label class="analytics-consent-preview__row"><input type="checkbox" disabled checked> <span>' + escapeHtml(cat.label) + '</span></label>';
+            }).join('') +
+            '</div>' +
+            '<div class="analytics-consent-preview__actions">' +
+            '<span class="button is-primary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_accept_all', 'Accept all')) + '</span>' +
+            '<span class="button is-secondary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_customize', 'Customize')) + '</span>' +
+            '<span class="button is-secondary is-small" tabindex="-1">' + escapeHtml(t('analytics_consent_preview_decline', 'Decline optional')) + '</span>' +
+            '</div>' +
+            '<p class="form-help u-m-0">' + escapeHtml(t('analytics_consent_preview_site_note', 'Interactive banner appears on your public site for visitors who have not chosen yet.')) + '</p>' +
+            '</div>';
     }
 
     function renderDomainScopeOptions() {
@@ -196,6 +237,7 @@
                 if (card) card.classList.add('is-selected');
                 updateExportVisibility();
                 updateConsentFieldsVisibility();
+                renderConsentBannerPreview();
                 markDirty();
                 if (state.lastReport) {
                     var panel = document.getElementById('analytics-report-panel');
@@ -1216,6 +1258,10 @@
                 form.addEventListener('submit', function (e) { e.preventDefault(); });
                 form.addEventListener('input', markDirty);
                 form.addEventListener('change', markDirty);
+            }
+            var consentText = document.getElementById('analytics-consent-text');
+            if (consentText) {
+                consentText.addEventListener('input', renderConsentBannerPreview);
             }
         }
         load();

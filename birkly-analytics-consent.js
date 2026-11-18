@@ -272,6 +272,10 @@
     function init() {
         hydrateFromCookies();
 
+        if (window.__BIRKLY_CONSENT_DELEGATE_TO_CLIENT) {
+            return;
+        }
+
         var cmsUrl = resolveCmsUrl();
         if (!cmsUrl) {
             applyConfig({ collecting: true, consent_required: true, consent_text: '', events: false });
