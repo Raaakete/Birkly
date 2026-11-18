@@ -186,6 +186,9 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
             }
         }
 
+        window.Birkly = window.Birkly || {};
+        window.Birkly.moveBreadcrumbsToTopbar = moveBreadcrumbsToTopbar;
+
         function moveUserMenuToHeader() {
             if (document.getElementById('admin-topbar')) {
                 return;

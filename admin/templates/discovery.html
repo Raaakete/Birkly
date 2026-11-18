@@ -31,6 +31,7 @@ $__disc_ap_embed_visible = ($__disc_tab === 'agent-guide' && $__disc_ag_on) || (
             <span class="current">{translate 'admin.discovery'}</span>
         </div>
     </div>
+    <div class="page-header-actions"></div>
 </div>
 
 <!-- Page bar: the active pack's Publish / Save draft (discovery.js shows one) -->
@@ -392,8 +393,9 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_AMP
     );
     if ($discBootstrapJson !== false) {
-        $discBootstrapNonce = function_exists('birkly_csp_nonce_attr') ? birkly_csp_nonce_attr() : '';
-        echo '<script type="application/json" id="disc-bootstrap-data"' . $discBootstrapNonce . '>' . $discBootstrapJson . '</script>';
+        echo '<textarea id="disc-bootstrap-data" hidden readonly>'
+            . htmlspecialchars($discBootstrapJson, ENT_NOQUOTES, 'UTF-8')
+            . '</textarea>';
     }
 } ?>
 {include_style 'pages/discovery.css'}
