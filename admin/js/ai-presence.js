@@ -102,7 +102,7 @@
     }
 
     function bindEl(id, event, handler) {
-        var el = document.getElementById(id);
+        var el = apFormEl(id) || document.getElementById(id);
         if (!el) return;
         var flag = 'data-ap-bound-' + event;
         if (el.getAttribute(flag) === '1') return;
@@ -582,9 +582,16 @@
         document.addEventListener('keydown', modalFocusTrap);
     }
 
+    function discoveryEmbedAllowsModals() {
+        if (!inDiscoveryEmbed()) return true;
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed || embed.hidden) return false;
+        return agentGuideVisible();
+    }
+
     function openApModal(id) {
         ensureDiscoveryModalsMounted();
-        if (inDiscoveryEmbed() && !agentGuideVisible()) return;
+        if (!discoveryEmbedAllowsModals()) return;
         var modal = apModalEl(id);
         if (!modal) {
             console.error('[Agent Guide] Missing modal #' + id);
@@ -1360,11 +1367,26 @@
                 initialHubZone: discoveryEmbedInitialHubZone(),
             });
         };
-        if (typeof queueMicrotask === 'function') {
-            queueMicrotask(run);
-        } else {
-            setTimeout(run, 0);
-        }
+        // Let discovery.js finish its DOMContentLoaded init first (defer script order).
+        setTimeout(run, 0);
+    }
+
+    function bindApModalForms() {
+        var forms = [
+            ['ap-product-form', saveProductFromModal],
+            ['ap-relationship-form', saveRelationshipFromModal],
+            ['ap-claim-form', saveClaimFromModal],
+            ['ap-evidence-form', saveEvidenceFromModal],
+            ['ap-cms-evidence-form', saveCmsEvidenceFromModal],
+            ['ap-media-form', saveMediaFromModal]
+        ];
+        forms.forEach(function (pair) {
+            var form = apFormEl(pair[0]);
+            if (!form) return;
+            if (form.getAttribute('data-ap-form-bound') === '1') return;
+            form.setAttribute('data-ap-form-bound', '1');
+            form.addEventListener('submit', pair[1]);
+        });
     }
 
     function repairDiscoveryEmbedHandlers() {
@@ -1373,9 +1395,15 @@
         ensureDiscoveryModalsMounted();
         initAssistTabs();
         initFieldAiButtons();
-        bindActions();
+        bindApModals();
+        bindApModalForms();
+        var embed = document.getElementById('disc-ap-embed');
+        if (embed) {
+            embed.removeAttribute('data-ap-embed-capture');
+        }
         bindDiscoveryEmbedCaptureClicks();
         bindDiscoveryAgentGuideBarClicks();
+        global.__AI_PRESENCE_EMBED_REPAIRED__ = true;
         if (!agentGuideModalsReady()) {
             console.error('[Agent Guide] Modal markup incomplete in Discovery embed');
         }
@@ -3177,26 +3205,33 @@
 
     function saveClaimFromModal(e) {
         e.preventDefault();
-        var statement = document.getElementById('ap-claim-statement').value.trim();
+        var statementEl = apFormEl('ap-claim-statement');
+        var statusEl = apFormEl('ap-claim-status');
+        var notesEl = apFormEl('ap-claim-notes');
+        if (!statementEl) {
+            toastAgentGuideModalIncomplete();
+            return;
+        }
+        var statement = statementEl.value.trim();
         if (!statement) return;
         state.draft.claims = state.draft.claims || [];
         if (modalState.claimIdx != null) {
             var existing = state.draft.claims[modalState.claimIdx];
             existing.statement = statement;
-            existing.status = document.getElementById('ap-claim-status').value;
-            existing.notes = document.getElementById('ap-claim-notes').value.trim();
+            existing.status = statusEl ? statusEl.value : 'pending_review';
+            existing.notes = notesEl ? notesEl.value.trim() : '';
             existing.sources = modalState.claimSources || [];
         } else {
             state.draft.claims.push({
                 id: uid('claim'),
                 statement: statement,
-                status: document.getElementById('ap-claim-status').value,
+                status: statusEl ? statusEl.value : 'pending_review',
                 evidence_ids: [],
                 related_content: [],
                 sources: modalState.claimSources || [],
                 last_reviewed_at: '',
                 expires_at: '',
-                notes: document.getElementById('ap-claim-notes').value.trim()
+                notes: notesEl ? notesEl.value.trim() : ''
             });
         }
         closeApModal('ap-claim-modal');
@@ -3226,18 +3261,28 @@
 
     function saveEvidenceFromModal(e) {
         e.preventDefault();
-        var title = document.getElementById('ap-evidence-title').value.trim();
+        var titleEl = apFormEl('ap-evidence-title');
+        if (!titleEl) {
+            toastAgentGuideModalIncomplete();
+            return;
+        }
+        var title = titleEl.value.trim();
         if (!title) return;
-        var url = document.getElementById('ap-evidence-url').value.trim();
+        var urlEl = apFormEl('ap-evidence-url');
+        var typeEl = apFormEl('ap-evidence-type');
+        var notesEl = apFormEl('ap-evidence-notes');
+        var ratingEl = apFormEl('ap-evidence-rating');
+        var reviewEl = apFormEl('ap-evidence-review-count');
+        var url = urlEl ? urlEl.value.trim() : '';
         var item;
         if (modalState.evidenceIdx != null) {
             item = state.draft.evidence[modalState.evidenceIdx];
             item.title = title;
             item.url = url;
-            item.type = document.getElementById('ap-evidence-type').value;
-            item.notes = document.getElementById('ap-evidence-notes').value.trim();
-            var ratingVal = document.getElementById('ap-evidence-rating').value.trim();
-            var reviewVal = document.getElementById('ap-evidence-review-count').value.trim();
+            item.type = typeEl ? typeEl.value : 'external_url';
+            item.notes = notesEl ? notesEl.value.trim() : '';
+            var ratingVal = ratingEl ? ratingEl.value.trim() : '';
+            var reviewVal = reviewEl ? reviewEl.value.trim() : '';
             item.rating = ratingVal !== '' ? parseFloat(ratingVal) : undefined;
             item.review_count = reviewVal !== '' ? parseInt(reviewVal, 10) : undefined;
             closeApModal('ap-evidence-modal');
@@ -3248,7 +3293,7 @@
         }
         item = {
             id: uid('evidence'),
-            type: url ? document.getElementById('ap-evidence-type').value : 'other',
+            type: url ? (typeEl ? typeEl.value : 'external_url') : 'other',
             title: title,
             url: url,
             media_id: '',
@@ -3257,12 +3302,12 @@
             reviewed_at: '',
             verification_status: 'unverified',
             claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
-            notes: document.getElementById('ap-evidence-notes').value.trim(),
+            notes: notesEl ? notesEl.value.trim() : '',
             link_status: 'unknown',
             last_verified_at: ''
         };
-        var ratingVal = document.getElementById('ap-evidence-rating').value.trim();
-        var reviewVal = document.getElementById('ap-evidence-review-count').value.trim();
+        var ratingVal = ratingEl ? ratingEl.value.trim() : '';
+        var reviewVal = reviewEl ? reviewEl.value.trim() : '';
         if (ratingVal !== '') item.rating = parseFloat(ratingVal);
         if (reviewVal !== '') item.review_count = parseInt(reviewVal, 10);
         var finish = function () {
@@ -3381,11 +3426,16 @@
         if (nameEl) nameEl.textContent = media.name || media.id || '';
     }
 
-    function openMediaPicker() {
-        if (global.Birkly && global.Birkly.MediaModal) {
+    function openMediaPicker(attempt) {
+        attempt = attempt || 0;
+        if (global.Birkly && global.Birkly.MediaModal && typeof global.Birkly.MediaModal.open === 'function') {
             global.Birkly.MediaModal.open(function (media) {
                 if (media) setPickedMedia(media);
             });
+            return;
+        }
+        if (attempt < 8) {
+            setTimeout(function () { openMediaPicker(attempt + 1); }, 75);
             return;
         }
         console.error('[Agent Guide] Birkly.MediaModal missing');
@@ -3547,20 +3597,9 @@
         });
 
         bindApModals();
-        var productForm = document.getElementById('ap-product-form');
-        if (productForm) productForm.addEventListener('submit', saveProductFromModal);
+        bindApModalForms();
         bindEl('ap-product-pick-media', 'click', openProductMediaPicker);
         bindEl('ap-product-clear-media', 'click', function () { setProductMediaPreview(null); });
-        var relForm = document.getElementById('ap-relationship-form');
-        if (relForm) relForm.addEventListener('submit', saveRelationshipFromModal);
-        var claimForm = document.getElementById('ap-claim-form');
-        if (claimForm) claimForm.addEventListener('submit', saveClaimFromModal);
-        var evidenceForm = document.getElementById('ap-evidence-form');
-        if (evidenceForm) evidenceForm.addEventListener('submit', saveEvidenceFromModal);
-        var cmsEvidenceForm = document.getElementById('ap-cms-evidence-form');
-        if (cmsEvidenceForm) cmsEvidenceForm.addEventListener('submit', saveCmsEvidenceFromModal);
-        var mediaForm = document.getElementById('ap-media-form');
-        if (mediaForm) mediaForm.addEventListener('submit', saveMediaFromModal);
 
         bindEl('ap-add-product', 'click', addProduct);
 
@@ -4537,7 +4576,7 @@
     }
 
     function isAiPresencePage() {
-        return !!document.querySelector('.ap-hub');
+        return !!document.querySelector('.ap-hub') || !!document.getElementById('disc-ap-embed');
     }
 
     global.initAiPresence = function (config) {
@@ -4549,10 +4588,6 @@
         }
         discoveryEmbedInitialZone = discoveryEmbed ? (config.initialHubZone || 'guide') : null;
         if (!isAiPresencePage()) {
-            if (discoveryEmbed) {
-                initTabs();
-                syncGuideSubnavPanels();
-            }
             return;
         }
         if (global.__AI_PRESENCE_INIT_COMPLETE__) {
@@ -4662,6 +4697,7 @@
     global.tryDiscoveryBootstrapHydrate = tryDiscoveryBootstrapHydrate;
     global.resetAgentGuideUiChrome = resetAgentGuideUiChrome;
     global.repairDiscoveryEmbedHandlers = repairDiscoveryEmbedHandlers;
+    global.ensureDiscoveryModalsMounted = ensureDiscoveryModalsMounted;
     global.scheduleDiscoveryEmbedInit = scheduleDiscoveryEmbedInit;
     global.ensureDiscoveryAgentGuideReady = scheduleDiscoveryEmbedInit;
 

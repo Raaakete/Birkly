@@ -271,6 +271,11 @@
             // Always sync hub panels (active + hidden). [hidden] alone is not enough when
             // tabs.css keeps .tab-panel.active { display: block }.
             syncDiscoveryHubPanels(zone);
+            if (typeof global.repairDiscoveryEmbedHandlers === 'function') {
+                global.repairDiscoveryEmbedHandlers();
+            } else if (typeof global.ensureDiscoveryModalsMounted === 'function') {
+                global.ensureDiscoveryModalsMounted();
+            }
         }
 
         if (!showEmbed || !state.apReady) return;
