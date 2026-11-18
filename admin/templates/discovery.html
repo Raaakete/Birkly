@@ -368,7 +368,7 @@ $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 if (!function_exists('render_template_file')) {
     require_once dirname($stickyTplDir) . '/template_parser.php';
 }
-echo render_template_file($stickyTplDir . '/partials/ap-hub-body.php', []);
+echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', []);
 ?>
 </div>
 
