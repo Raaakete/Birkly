@@ -27,9 +27,18 @@
   visibility: hidden !important;
 }
 
+html[data-disc-tab]:not([data-disc-tab="agent-guide"]) #ag-wizard-modal,
+body[data-admin-page="discovery"]:not([data-admin-tab="agent-guide"]) #ag-wizard-modal,
 .discovery-page:not([data-disc-tab="agent-guide"]) #ag-wizard-modal {
   display: none !important;
   pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+#disc-ap-embed .ag-wizard-modal--discovery-embed {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-modal);
 }
 
 #disc-ap-embed {

@@ -290,6 +290,9 @@ assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discover
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), '#disc-ap-embed[hidden]') !== false, 'discovery embed hidden blocks pointer events');
 assert_true(strpos($discJs, 'resetAgentGuideUiChrome') !== false || strpos($aiJs, 'resetAgentGuideUiChrome') !== false, 'discovery can reset agent guide overlays');
 assert_true(strpos($aiJs, 'ag-wizard-modal') !== false, 'discovery reset dismisses body wizard modal');
+assert_true(strpos($discJs, 'bindDiscoveryControls') !== false, 'discovery binds controls in finally block');
+assert_true(strpos((string) file_get_contents($root . '/admin/js/agent-guide-wizard.js'), 'disc-ap-embed') !== false, 'wizard mounts in discovery embed when present');
+assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'html[data-disc-tab]') !== false, 'wizard hidden via html disc tab attr');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/ai-presence.css'), '.ap-ai-loading[hidden]') !== false, 'ai loading honors hidden attribute');
 
 echo "==> API syntax\n";

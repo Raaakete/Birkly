@@ -155,7 +155,11 @@
         var wrap = document.createElement('div');
         wrap.innerHTML = this.renderShell();
         this.modal = wrap.firstElementChild;
-        document.body.appendChild(this.modal);
+        var host = document.getElementById('disc-ap-embed') || document.body;
+        if (host.id === 'disc-ap-embed') {
+            this.modal.classList.add('ag-wizard-modal--discovery-embed');
+        }
+        host.appendChild(this.modal);
         var panels = this.panelHtml();
         var container = this.modal.querySelector('#ag-wizard-panels');
         container.innerHTML = panels.welcome + panels.identity + panels.sources + panels.enrich + panels.claims + panels.publish + panels.success;
