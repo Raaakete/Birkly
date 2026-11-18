@@ -36,6 +36,10 @@ $__ap_discovery_embed = !empty($discovery_embed_shell) || isset($discovery_embed
 $__ap_embed_draft = is_array($discovery_embed_draft ?? null) ? $discovery_embed_draft : null;
 $__ap_embed_sources = is_array($__ap_embed_draft['sources_of_truth'] ?? null) ? $__ap_embed_draft['sources_of_truth'] : [];
 $__ap_embed_source_count = count($__ap_embed_sources);
+$__ap_embed_claims = is_array($__ap_embed_draft['claims'] ?? null) ? $__ap_embed_draft['claims'] : [];
+$__ap_embed_claim_count = count($__ap_embed_claims);
+$__ap_embed_evidence = is_array($__ap_embed_draft['evidence'] ?? null) ? $__ap_embed_draft['evidence'] : [];
+$__ap_embed_evidence_count = count($__ap_embed_evidence);
 if (!function_exists('birkly_ap_draft_field')) {
     /**
      * @param array<string, mixed> $draft
@@ -656,12 +660,36 @@ if ($__ap_show_public_urls) {
                     <div class="u-grid-2 u-mt-6">
                         <div class="card u-p-6 u-stack-3">
                             <h3>{translate 'admin.ai_presence_claims'}</h3>
-                            <ul id="ap-claims-list" class="ai-presence-item-list ap-item-list--interactive"></ul>
+                            <ul id="ap-claims-list" class="ai-presence-item-list ap-item-list--interactive"<?= $__ap_embed_claim_count > 0 ? '' : ' hidden' ?>>
+<?php foreach ($__ap_embed_claims as $claim) {
+    if (!is_array($claim)) {
+        continue;
+    }
+    $statement = (string) ($claim['statement'] ?? 'Untitled');
+    $status = (string) ($claim['status'] ?? 'pending_review');
+    echo '<li data-ssr-claim="1"><strong>' . htmlspecialchars($statement, ENT_QUOTES, 'UTF-8') . '</strong> ';
+    echo '<span class="badge">' . htmlspecialchars($status, ENT_QUOTES, 'UTF-8') . '</span></li>';
+} ?>
+                            </ul>
+                            <p id="ap-claims-empty" class="empty-state empty-state--compact"<?= $__ap_embed_claim_count > 0 ? ' hidden' : '' ?>>{translate 'admin.ai_presence_select_claim'}</p>
                         </div>
                         <div class="card u-p-6 u-stack-3">
                             <h3>{translate 'admin.ai_presence_evidence'}</h3>
                             <div id="ap-claim-detail" class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_select_claim'}</div>
-                            <ul id="ap-evidence-list" class="ai-presence-item-list ap-item-list--interactive"></ul>
+                            <ul id="ap-evidence-list" class="ai-presence-item-list ap-item-list--interactive"<?= $__ap_embed_evidence_count > 0 ? '' : ' hidden' ?>>
+<?php foreach ($__ap_embed_evidence as $evidence) {
+    if (!is_array($evidence)) {
+        continue;
+    }
+    $title = (string) ($evidence['title'] ?? $evidence['url'] ?? $evidence['id'] ?? 'Evidence');
+    $type = (string) ($evidence['type'] ?? 'other');
+    $status = (string) ($evidence['verification_status'] ?? 'unverified');
+    echo '<li data-ssr-evidence="1">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . ' ';
+    echo '<span class="badge">' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . '</span> ';
+    echo '<span class="badge">' . htmlspecialchars($status, ENT_QUOTES, 'UTF-8') . '</span></li>';
+} ?>
+                            </ul>
+                            <p id="ap-evidence-empty" class="empty-state empty-state--compact"<?= $__ap_embed_evidence_count > 0 ? ' hidden' : '' ?>>{translate 'admin.ai_presence_add_evidence'}</p>
                         </div>
                     </div>
                 </div>

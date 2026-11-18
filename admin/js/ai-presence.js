@@ -1128,6 +1128,39 @@
         return false;
     }
 
+    function recordId(row) {
+        if (!row || typeof row !== 'object') return '';
+        return String(row.id || '').trim();
+    }
+
+    function mergeRecordsById(base, overlay) {
+        var byId = {};
+        var anon = 0;
+        (base || []).forEach(function (row) {
+            if (!row || typeof row !== 'object') return;
+            var id = recordId(row);
+            if (!id) {
+                byId['__b' + anon++] = row;
+                return;
+            }
+            byId[id] = row;
+        });
+        (overlay || []).forEach(function (row) {
+            if (!row || typeof row !== 'object') return;
+            var id = recordId(row);
+            if (!id) {
+                byId['__o' + anon++] = row;
+                return;
+            }
+            if (byId[id] && typeof byId[id] === 'object') {
+                byId[id] = mergeEditorOverlay(byId[id], row);
+                return;
+            }
+            byId[id] = row;
+        });
+        return Object.keys(byId).map(function (k) { return byId[k]; });
+    }
+
     function mergeEditorOverlay(base, overlay) {
         base = base && typeof base === 'object' ? base : {};
         overlay = overlay && typeof overlay === 'object' ? overlay : {};
@@ -1142,9 +1175,27 @@
                 return;
             }
             if (DRAFT_LIST_KEYS[key]) {
-                if (Array.isArray(value) && value.length) {
+                if (!Array.isArray(value)) return;
+                var baseList = Array.isArray(result[key]) ? result[key] : [];
+                if (!value.length && baseList.length) return;
+                if (!baseList.length && value.length) {
                     result[key] = value.slice();
+                    return;
                 }
+                if (!value.length) return;
+                if (baseList.length && value.length
+                    && typeof baseList[0] !== 'object' && typeof value[0] !== 'object') {
+                    var merged = baseList.concat(value);
+                    var seen = {};
+                    result[key] = merged.filter(function (item) {
+                        var k = String(item);
+                        if (seen[k]) return false;
+                        seen[k] = true;
+                        return true;
+                    });
+                    return;
+                }
+                result[key] = mergeRecordsById(baseList, value);
                 return;
             }
             if (value && typeof value === 'object' && !Array.isArray(value)
@@ -1205,6 +1256,9 @@
     function hydrateAgentGuidePayload(payload) {
         if (!payload || !payload.draft || typeof payload.draft !== 'object') return false;
         state.draft = payload.draft;
+        if (inDiscoveryEmbed()) {
+            state.selectedClaimId = null;
+        }
         if (payload.meta) state.meta = payload.meta;
         if (payload.public_urls) state.publicUrls = payload.public_urls;
         if (payload.cms_diff) state.cmsDiff = payload.cms_diff;
@@ -1265,6 +1319,14 @@
             } catch (e) { /* ignore */ }
             if (state.draft) {
                 bindFields();
+                if (tab === 'claims') {
+                    renderClaims();
+                    renderEvidence();
+                } else if (tab === 'products') {
+                    renderProducts();
+                } else if (tab === 'media') {
+                    renderMedia();
+                }
             }
         }
     }
@@ -1494,8 +1556,17 @@
     function renderClaims() {
         var list = document.getElementById('ap-claims-list');
         if (!list) return;
+        var claims = (state.draft && state.draft.claims) || [];
+        var emptyEl = document.getElementById('ap-claims-empty');
+        if (!claims.length && list.querySelector('[data-ssr-claim]')) {
+            if (emptyEl) emptyEl.hidden = true;
+            list.hidden = false;
+            return;
+        }
         list.innerHTML = '';
-        (state.draft.claims || []).forEach(function (claim, idx) {
+        if (emptyEl) emptyEl.hidden = claims.length > 0;
+        list.hidden = claims.length === 0;
+        claims.forEach(function (claim, idx) {
             var li = document.createElement('li');
             li.className = state.selectedClaimId === claim.id ? 'selected' : '';
             li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong> ' +
@@ -1519,13 +1590,25 @@
     function renderEvidence() {
         var list = document.getElementById('ap-evidence-list');
         if (!list) return;
+        var allEvidence = (state.draft && state.draft.evidence) || [];
+        var emptyEl = document.getElementById('ap-evidence-empty');
+        if (!allEvidence.length && list.querySelector('[data-ssr-evidence]')) {
+            if (emptyEl) emptyEl.hidden = true;
+            list.hidden = false;
+            return;
+        }
         list.innerHTML = '';
-        var items = state.draft.evidence || [];
+        var items = allEvidence;
         if (state.selectedClaimId) {
-            items = items.filter(function (ev) {
+            var filtered = items.filter(function (ev) {
                 return (ev.claim_ids || []).indexOf(state.selectedClaimId) !== -1;
             });
+            if (filtered.length || !(list.querySelector('[data-ssr-evidence]'))) {
+                items = filtered;
+            }
         }
+        if (emptyEl) emptyEl.hidden = items.length > 0;
+        list.hidden = items.length === 0;
         items.forEach(function (ev) {
             var idx = (state.draft.evidence || []).indexOf(ev);
             var li = document.createElement('li');

@@ -97,6 +97,27 @@ assert_true(
     ($merged['identity']['full_description'] ?? '') === 'Published full description body',
     'effective draft keeps published fields when draft value is empty'
 );
+$withClaims = birkly_ai_presence_load_published();
+if (is_array($withClaims)) {
+    $withClaims['claims'] = [
+        ['id' => 'claim_pub', 'statement' => 'Published claim', 'status' => 'supported'],
+    ];
+    $withClaims['evidence'] = [
+        ['id' => 'ev_pub', 'title' => 'Published evidence', 'type' => 'url', 'verification_status' => 'verified'],
+    ];
+    birkly_ai_presence_write_json(birkly_ai_presence_dir() . '/published.json', $withClaims);
+}
+birkly_ai_presence_save_draft(birkly_ai_presence_default_draft());
+$withMergedLists = birkly_ai_presence_effective_editor_draft();
+assert_true(
+    count($withMergedLists['claims'] ?? []) === 1
+    && ($withMergedLists['claims'][0]['statement'] ?? '') === 'Published claim',
+    'effective draft keeps published claims when draft list is empty'
+);
+assert_true(
+    count($withMergedLists['evidence'] ?? []) === 1,
+    'effective draft keeps published evidence when draft list is empty'
+);
 
 echo "==> Discovery verify + url map\n";
 require_once $root . '/core/ai_presence.php';
@@ -200,6 +221,18 @@ $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery
 assert_true(strpos($discoveryAg, 'data-tab="essentials"') !== false, 'agent guide embed has side nav tabs');
 assert_true(strpos($discoveryAg, 'data-disc-guide-link="1"') !== false, 'discovery embed guide nav uses real links');
 assert_true(strpos($discoveryAg, 'guide_tab=essentials') !== false, 'discovery guide nav links include guide_tab');
+$_GET['guide_tab'] = 'claims';
+$discoveryAgClaims = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+$claimRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['claims'] ?? []);
+$evidenceRows = count($discoveryPage['discovery_status']['agent_guide_hydrate']['draft']['evidence'] ?? []);
+assert_true(strpos($discoveryAgClaims, 'id="ap-claims-list"') !== false, 'discovery claims tab list chrome');
+assert_true(strpos($discoveryAgClaims, 'id="ap-evidence-list"') !== false, 'discovery evidence list chrome');
+if ($claimRows > 0) {
+    assert_true(strpos($discoveryAgClaims, 'data-ssr-claim') !== false, 'discovery claims tab SSR claim rows');
+}
+if ($evidenceRows > 0) {
+    assert_true(strpos($discoveryAgClaims, 'data-ssr-evidence') !== false, 'discovery claims tab SSR evidence rows');
+}
 $_GET['guide_tab'] = 'essentials';
 $discoveryAgEssentials = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(
