@@ -1125,8 +1125,8 @@ function birkly_project_ssr_inject_signature(): string
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     $ver = (int) ($meta['published_version'] ?? 0);
     $seo = birkly_site_seo_signature_part();
-    // dsc7 = P67 Discovery packs (SEO inject + pack masters).
-    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . $seo . 'dsc7';
+    // dsc8 = Agent Guide body-nav + manifest + alternate discovery URLs.
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . $seo . 'dsc8';
 }
 
 /**

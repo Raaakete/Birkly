@@ -1061,6 +1061,12 @@ function birkly_ai_presence_llms_txt_body(): ?string
     if (!empty($map['for_agents'])) {
         $lines[] = '- [Agent Guide (HTML)](' . $map['for_agents'] . ')';
     }
+    if (!empty($map['for_agents_md'])) {
+        $lines[] = '- [Agent Guide (Markdown)](' . $map['for_agents_md'] . ')';
+    }
+    if (!empty($map['agent_manifest'])) {
+        $lines[] = '- [Agent Guide discovery manifest](' . $map['agent_manifest'] . ')';
+    }
     if (!empty($map['agent_guide_json'])) {
         $lines[] = '- [Agent Guide (JSON)](' . $map['agent_guide_json'] . ')';
     }
@@ -1075,6 +1081,7 @@ function birkly_ai_presence_llms_txt_body(): ?string
     }
     $lines[] = '';
     $lines[] = 'Prefer the Agent Guide JSON for authoritative brand facts, claims, and product names.';
+    $lines[] = 'If your client rejects `application/json`, fetch the HTML or Markdown Agent Guide instead.';
     $lines[] = 'Do not invent capabilities not listed there.';
     $lines[] = '';
 
@@ -1225,7 +1232,7 @@ function birkly_ai_presence_discovery_json_ld(?array $published = null, ?array $
     require_once __DIR__ . '/ai_presence_discovery.php';
     $map = birkly_ai_presence_discovery_url_map($published, $meta);
     $seeAlso = [];
-    foreach (['agent_guide_json', 'llms_txt', 'for_agents', 'sitemap', 'robots'] as $key) {
+    foreach (['agent_guide_json', 'agent_manifest', 'for_agents', 'for_agents_md', 'for_agents_json', 'agent_guide_shortcut', 'llms_txt', 'sitemap', 'robots'] as $key) {
         $url = $map[$key] ?? null;
         if ($url !== null && $url !== '' && !in_array($url, $seeAlso, true)) {
             $seeAlso[] = $url;
@@ -1299,6 +1306,20 @@ function birkly_ai_presence_discovery_head_snippet(?array $published = null, ?ar
         $parts[] = '<link rel="help" type="text/html" title="Agent Guide for AI systems" href="'
             . htmlspecialchars($forAgentsUrl, ENT_QUOTES, 'UTF-8') . '">';
     }
+    if (!empty($map['for_agents_md'])) {
+        $parts[] = '<link rel="alternate" type="text/markdown" title="Agent Guide (Markdown)" href="'
+            . htmlspecialchars($map['for_agents_md'], ENT_QUOTES, 'UTF-8') . '">';
+    }
+    if (!empty($map['for_agents_json'])) {
+        $parts[] = '<link rel="alternate" type="application/json" title="Agent Guide (short path)" href="'
+            . htmlspecialchars($map['for_agents_json'], ENT_QUOTES, 'UTF-8') . '">';
+    }
+    if (!empty($map['agent_manifest'])) {
+        $parts[] = '<link rel="describedby" type="application/json" title="Agent Guide discovery" href="'
+            . htmlspecialchars($map['agent_manifest'], ENT_QUOTES, 'UTF-8') . '">';
+        $parts[] = '<meta name="agent-guide-manifest" content="'
+            . htmlspecialchars($map['agent_manifest'], ENT_QUOTES, 'UTF-8') . '">';
+    }
     if (!empty($map['sitemap'])) {
         $parts[] = '<link rel="sitemap" type="application/xml" title="Sitemap" href="'
             . htmlspecialchars($map['sitemap'], ENT_QUOTES, 'UTF-8') . '">';
@@ -1348,6 +1369,22 @@ function birkly_ai_presence_inject_discovery_head_into_html(string $html): strin
             $additions .= "\n    " . '<link rel="help" type="text/html" title="Agent Guide for AI systems" href="'
                 . htmlspecialchars($forAgentsUrl, ENT_QUOTES, 'UTF-8') . '">';
         }
+    }
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $map = birkly_ai_presence_discovery_url_map();
+    if (stripos($html, 'for-agents.md') === false && !empty($map['for_agents_md'])) {
+        $additions .= "\n    " . '<link rel="alternate" type="text/markdown" title="Agent Guide (Markdown)" href="'
+            . htmlspecialchars($map['for_agents_md'], ENT_QUOTES, 'UTF-8') . '">';
+    }
+    if (stripos($html, 'for-agents.json') === false && !empty($map['for_agents_json'])) {
+        $additions .= "\n    " . '<link rel="alternate" type="application/json" title="Agent Guide (short path)" href="'
+            . htmlspecialchars($map['for_agents_json'], ENT_QUOTES, 'UTF-8') . '">';
+    }
+    if (stripos($html, 'agent-guide-manifest') === false && !empty($map['agent_manifest'])) {
+        $additions .= "\n    " . '<link rel="describedby" type="application/json" title="Agent Guide discovery" href="'
+            . htmlspecialchars($map['agent_manifest'], ENT_QUOTES, 'UTF-8') . '">';
+        $additions .= "\n    " . '<meta name="agent-guide-manifest" content="'
+            . htmlspecialchars($map['agent_manifest'], ENT_QUOTES, 'UTF-8') . '">';
     }
     if (stripos($html, 'application/ld+json') === false || stripos($html, '"Agent Guide"') === false) {
         $jsonLd = birkly_ai_presence_discovery_json_ld();
@@ -1427,6 +1464,66 @@ function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html)
         return preg_replace('/(<birkly-footer[\s>])/i', $noscript . '$1', $html, 1) ?? $html;
     }
 
+    if (preg_match('/<div[^>]+data-part=["\']footer["\'][^>]*>/i', $html)
+        && stripos($html, 'birkly-agent-guide-noscript') === false) {
+        $noscript = '<noscript class="birkly-agent-guide-noscript">' . $link . '</noscript>' . "\n";
+
+        return preg_replace('/(<div[^>]+data-part=["\']footer["\'][^>]*>)/i', $noscript . '$1', $html, 1) ?? $html;
+    }
+
+    return $html;
+}
+
+/**
+ * Crawlable body landmark so non-JS clients (search agents, simple fetchers) find /for-agents.
+ */
+function birkly_ai_presence_discovery_body_nav_snippet(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return '';
+    }
+
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $map = birkly_ai_presence_discovery_url_map($published, $meta);
+    $forAgentsUrl = $map['for_agents'] ?? '';
+    if ($forAgentsUrl === '') {
+        return '';
+    }
+
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+    $parts = ['<a href="' . $esc($forAgentsUrl) . '" rel="help">For agents</a>'];
+    if (!empty($map['agent_guide_json'])) {
+        $parts[] = '<a href="' . $esc($map['agent_guide_json']) . '">Agent Guide JSON</a>';
+    }
+    if (!empty($map['llms_txt'])) {
+        $parts[] = '<a href="' . $esc($map['llms_txt']) . '">llms.txt</a>';
+    }
+
+    return '<nav class="birkly-agent-guide-discovery" data-birkly-agent-guide="body-nav" aria-label="Agent Guide for AI systems" '
+        . 'style="margin:0;padding:0.35rem 1rem;font-size:13px;line-height:1.4;background:#f0f2ee;color:#5f6577;">'
+        . implode(' · ', $parts)
+        . '</nav>' . "\n";
+}
+
+function birkly_ai_presence_inject_discovery_body_nav_into_html(string $html): string
+{
+    if (stripos($html, 'data-birkly-agent-guide="body-nav"') !== false) {
+        return $html;
+    }
+
+    $nav = birkly_ai_presence_discovery_body_nav_snippet();
+    if ($nav === '') {
+        return $html;
+    }
+
+    if (preg_match('/<body[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+
+        return substr($html, 0, $pos) . "\n" . $nav . substr($html, $pos);
+    }
+
     return $html;
 }
 
@@ -1472,6 +1569,7 @@ function birkly_ai_presence_inject_discovery_footer_line_into_html(string $html)
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
     $html = birkly_ai_presence_inject_discovery_head_into_html($html);
+    $html = birkly_ai_presence_inject_discovery_body_nav_into_html($html);
     $html = birkly_ai_presence_inject_discovery_footer_link_into_html($html);
 
     return birkly_ai_presence_inject_discovery_footer_line_into_html($html);
@@ -1649,6 +1747,15 @@ function birkly_ai_presence_for_agents_html(): ?string
     if ($guideUrl !== '') {
         $head .= '<link rel="alternate" type="application/json" title="Agent Guide" href="' . $esc($guideUrl) . '">';
         $head .= '<meta name="agent-guide" content="' . $esc($guideUrl) . '">';
+    }
+    if (!empty($map['for_agents_json'])) {
+        $head .= '<link rel="alternate" type="application/json" title="Agent Guide (short path)" href="' . $esc($map['for_agents_json']) . '">';
+    }
+    if (!empty($map['for_agents_md'])) {
+        $head .= '<link rel="alternate" type="text/markdown" title="Agent Guide (Markdown)" href="' . $esc($map['for_agents_md']) . '">';
+    }
+    if (!empty($map['agent_manifest'])) {
+        $head .= '<link rel="describedby" type="application/json" title="Agent Guide discovery" href="' . $esc($map['agent_manifest']) . '">';
     }
     if ($llmsUrl !== '') {
         $head .= '<link rel="describedby" type="text/markdown" title="llms.txt" href="' . $esc($llmsUrl) . '">';

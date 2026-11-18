@@ -205,7 +205,11 @@ try {
         '/sitemap.xml',
         '/llms.txt',
         '/for-agents',
+        '/for-agents.md',
+        '/for-agents.json',
+        '/agent-guide.json',
         '/.well-known/agent-guide.json',
+        '/.well-known/agent.json',
     ];
     $indexnowKey = birkly_ai_presence_discovery_indexnow_key();
     if ($indexnowKey !== '') {
