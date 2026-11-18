@@ -3144,7 +3144,7 @@
         "analytics_trust_confidence_low": "Geringe Zuverlässigkeit — Besucherverhältnisse vorsichtig interpretieren",
         "analytics_trust_coverage_line": "Payload-Abdeckung: {session}% Sitzungen · {ua}% User-Agent · {token}% Besuchertoken",
         "analytics_cov_sessions": "Sitzungen",
-        "analytics_cov_ua": "User-Agent",
+        "analytics_cov_ua": "Browser-Kennung",
         "analytics_cov_token": "Besuchertoken",
         "analytics_trust_index_lag": "SQLite-Index: {indexed} von {raw} Ereignissen indexiert — bei Bedarf Index neu aufbauen.",
         "analytics_trust_def_session": "Sitzungen: {text}",

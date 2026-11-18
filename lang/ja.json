@@ -3144,7 +3144,7 @@
         "analytics_trust_confidence_low": "信頼度：低 — 訪問者比率は慎重に解釈",
         "analytics_trust_coverage_line": "ペイロード充足率: セッション {session}% · UA {ua}% · 訪問者トークン {token}%",
         "analytics_cov_sessions": "セッション",
-        "analytics_cov_ua": "User-Agent",
+        "analytics_cov_ua": "ユーザーエージェント",
         "analytics_cov_token": "訪問者トークン",
         "analytics_trust_index_lag": "SQLite 索引: {raw} 件中 {indexed} 件 — 低いままなら索引を再構築してください。",
         "analytics_trust_def_session": "セッション: {text}",
