@@ -120,6 +120,7 @@ $discoveryPage = getDiscoveryPageData();
 assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
 assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
 assert_true(is_array($discoveryPage['discovery_embed_overview']['completeness'] ?? null), 'discovery embed overview completeness');
+assert_true(is_array($discoveryPage['discovery_embed_webmcp'] ?? null), 'discovery embed includes webmcp config');
 
 echo "==> Discovery template render\n";
 require_once $root . '/admin/template_parser.php';
@@ -169,6 +170,24 @@ assert_true(
     strpos($discoveryWebmcp, 'data-discovery-initial-hub-zone="tools"') !== false,
     'webmcp embed marks initial hub zone'
 );
+require_once $root . '/core/webmcp.php';
+$wmPath = birkly_webmcp_settings_path();
+$wmBackup = is_file($wmPath) ? file_get_contents($wmPath) : null;
+$wmEnabled = birkly_webmcp_load();
+$wmEnabled['enabled'] = true;
+file_put_contents($wmPath, json_encode($wmEnabled, JSON_THROW_ON_ERROR));
+birkly_webmcp_reset_cache();
+$discoveryWebmcpOn = (string) render_template_file($root . '/admin/templates/discovery.html', getDiscoveryPageData());
+assert_true(
+    preg_match('/id="ap-webmcp-config" class="u-stack-6"(?!\s+hidden)/', $discoveryWebmcpOn) === 1,
+    'enabled webmcp SSR shows tools catalog chrome'
+);
+if ($wmBackup !== null) {
+    file_put_contents($wmPath, $wmBackup);
+} elseif (is_file($wmPath)) {
+    @unlink($wmPath);
+}
+birkly_webmcp_reset_cache();
 $discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
 assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');

@@ -243,6 +243,7 @@ function getDiscoveryPageData(): array
     require_once __DIR__ . '/../core/discovery.php';
     require_once __DIR__ . '/../core/site_seo_url_map.php';
     require_once __DIR__ . '/../core/ai_presence.php';
+    require_once __DIR__ . '/../core/webmcp.php';
 
     $status = birkly_discovery_status();
     $seo = is_array($status['seo'] ?? null) ? $status['seo'] : [];
@@ -259,6 +260,7 @@ function getDiscoveryPageData(): array
             'meta' => birkly_ai_presence_load_meta(),
             'cms_diff' => birkly_ai_presence_cms_sync_diff($agDraft),
         ],
+        'discovery_embed_webmcp' => birkly_webmcp_load(),
     ];
 }
 

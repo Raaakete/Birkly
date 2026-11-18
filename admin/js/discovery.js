@@ -258,6 +258,9 @@
         if (apZone && typeof global.switchApZone === 'function') {
             global.switchApZone(apZone, { updateUrl: false });
         }
+        if (zone === 'webmcp' && typeof global.hydrateWebmcpTools === 'function') {
+            global.hydrateWebmcpTools();
+        }
     }
 
     function switchZone(zone) {

@@ -3365,6 +3365,9 @@
             }
             if (ssrMatches) {
                 state.hubZone = embedZone;
+                if (embedZone === 'tools') {
+                    ensureToolsZoneReady();
+                }
             } else {
                 switchZone(embedZone, { updateUrl: false });
             }
@@ -3430,6 +3433,14 @@
         return state.webmcpSupported;
     }
 
+    function ensureToolsZoneReady() {
+        if (!state.webmcpLoaded) {
+            return loadWebmcpConfig();
+        }
+        renderTools();
+        return Promise.resolve();
+    }
+
     function loadWebmcpConfig() {
         return fetch(webmcpApiUrl() + '?action=get', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -3478,8 +3489,7 @@
         var master = document.getElementById('ap-webmcp-enabled');
         if (master) master.checked = !!cfg.enabled;
 
-        var config = document.getElementById('ap-webmcp-config');
-        if (config) config.hidden = !cfg.enabled;
+        syncWebmcpConfigVisibility();
 
         var supportNote = document.getElementById('ap-webmcp-support-note');
         if (supportNote) supportNote.hidden = webmcpSupportedInThisBrowser();
@@ -3620,16 +3630,34 @@
         });
     }
 
+    function syncWebmcpConfigVisibility() {
+        var master = document.getElementById('ap-webmcp-enabled');
+        var config = document.getElementById('ap-webmcp-config');
+        if (!config) return;
+        var enabled = !!(master && master.checked);
+        if (!enabled && state.webmcpConfig) {
+            enabled = !!state.webmcpConfig.enabled;
+        }
+        config.hidden = !enabled;
+    }
+
     function initTools() {
         var master = document.getElementById('ap-webmcp-enabled');
         if (master) {
             master.addEventListener('change', function () {
                 if (!state.webmcpConfig) state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
                 state.webmcpConfig.enabled = master.checked;
-                var config = document.getElementById('ap-webmcp-config');
-                if (config) config.hidden = !master.checked;
+                syncWebmcpConfigVisibility();
                 saveWebmcp();
             });
+        }
+        if (discoveryEmbed) {
+            var hub = getHubRoot();
+            var toolsPanel = hub && hub.querySelector('[data-hub-panel="tools"]');
+            if (toolsPanel && !toolsPanel.hidden) {
+                syncWebmcpConfigVisibility();
+                ensureToolsZoneReady();
+            }
         }
     }
 
@@ -3886,6 +3914,7 @@
     };
 
     global.switchApZone = switchZone;
+    global.hydrateWebmcpTools = ensureToolsZoneReady;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
