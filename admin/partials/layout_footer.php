@@ -65,32 +65,43 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
     <?php endif; ?>
     <script<?= $__birklyScriptNonceAttr ?>>
     (function () {
-        if (!document.querySelector('.discovery-page')) return;
-        if (window.__DISCOVERY_JS_LOADED__) return;
-        function discUrl(path) {
-            return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
-        }
-        function hasScript(name) {
-            return !!document.querySelector('script[src*="' + name + '"]');
-        }
-        var discScriptNonce = <?= json_encode(function_exists('birkly_csp_nonce') ? birkly_csp_nonce() : '', JSON_UNESCAPED_UNICODE) ?>;
-        function loadScript(path, next) {
-            var file = path.split('/').pop();
-            if (hasScript(file)) { next(); return; }
-            var el = document.createElement('script');
-            el.src = discUrl(path);
-            if (discScriptNonce) el.setAttribute('nonce', discScriptNonce);
-            el.onload = next;
-            el.onerror = function () {
-                console.error('[Discovery] Failed to load script:', path);
-                next();
-            };
-            (document.head || document.documentElement).appendChild(el);
-        }
-        loadScript('/admin/js/agent-guide-wizard.js', function () {
-            loadScript('/admin/js/ai-presence.js', function () {
-                loadScript('/admin/js/discovery.js', function () {});
+        function runDiscoveryScriptLoader() {
+            if (!document.querySelector('.discovery-page')) return;
+            if (window.__DISCOVERY_JS_LOADED__) {
+                var guard = document.getElementById('disc-js-guard');
+                if (guard) guard.hidden = true;
+                return;
+            }
+            function discUrl(path) {
+                return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
+            }
+            var discScriptNonce = <?= json_encode(function_exists('birkly_csp_nonce') ? birkly_csp_nonce() : '', JSON_UNESCAPED_UNICODE) ?>;
+            function loadScript(path, next) {
+                var el = document.createElement('script');
+                el.src = discUrl(path);
+                if (discScriptNonce) el.setAttribute('nonce', discScriptNonce);
+                el.onload = next;
+                el.onerror = function () {
+                    console.error('[Discovery] Failed to load script:', path);
+                    next();
+                };
+                (document.head || document.documentElement).appendChild(el);
+            }
+            loadScript('/admin/js/agent-guide-wizard.js', function () {
+                loadScript('/admin/js/ai-presence.js', function () {
+                    loadScript('/admin/js/discovery.js', function () {});
+                });
             });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runDiscoveryScriptLoader);
+        } else {
+            runDiscoveryScriptLoader();
+        }
+        window.addEventListener('load', function () {
+            if (!window.__DISCOVERY_JS_LOADED__) {
+                runDiscoveryScriptLoader();
+            }
         });
     })();
     </script>

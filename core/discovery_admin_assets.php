@@ -43,6 +43,6 @@ function birkly_echo_discovery_admin_script_tags(): void
     foreach (['agent-guide-wizard.js', 'ai-presence.js', 'discovery.js'] as $file) {
         $v = htmlspecialchars(birkly_admin_asset_version('admin/js/' . $file), ENT_QUOTES, 'UTF-8');
         $src = htmlspecialchars(birkly_url('/admin/js/' . $file), ENT_QUOTES, 'UTF-8');
-        echo '<script src="' . $src . '?v=' . $v . '"' . $nonce . '></script>' . "\n";
+        echo '<script defer src="' . $src . '?v=' . $v . '"' . $nonce . '></script>' . "\n";
     }
 }
