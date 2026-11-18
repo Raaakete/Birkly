@@ -73,7 +73,14 @@ $html = '<!DOCTYPE html><html><head></head><body><div data-part="footer"></div><
 $injected = birkly_ai_presence_inject_discovery_into_html($html);
 ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide="body-landmark"'), 'body landmark injected');
 ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide-visibility="noscript"'), 'landmark is noscript-only for browsers');
-ag_disc_assert(!str_contains($injected, 'background:#f0f2ee'), 'no visible discovery strip styles');
+ag_disc_assert(str_contains($injected, 'JavaScript is disabled'), 'landmark explains noscript visibility');
+$draftOff = birkly_ai_presence_load_draft();
+$draftOff['publication_settings']['discovery_body_landmark'] = false;
+birkly_ai_presence_save_draft($draftOff);
+birkly_ai_presence_publish();
+$htmlOff = '<!DOCTYPE html><html><head></head><body><div data-part="footer"></div></body></html>';
+$injectedOff = birkly_ai_presence_inject_discovery_into_html($htmlOff);
+ag_disc_assert(!str_contains($injectedOff, 'body-landmark'), 'landmark off when setting disabled');
 ag_disc_assert(str_contains($injected, 'agent-guide-manifest'), 'manifest meta injected');
 ag_disc_assert(str_contains($injected, 'for-agents.md'), 'markdown alternate in head');
 ag_disc_assert(str_contains($injected, 'birkly-agent-guide-noscript'), 'noscript for data-part footer');

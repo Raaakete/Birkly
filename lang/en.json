@@ -89,6 +89,8 @@
         "ag_discovery_footer_line": "Footer one-liner",
         "ag_discovery_footer_line_help": "Optional crawlable sentence in the footer with a link to your Agent Guide.",
         "ag_discovery_footer_line_placeholder": "Official AI facts for chat and search assistants:",
+        "ag_discovery_body_landmark": "No-JS discovery bar",
+        "ag_discovery_body_landmark_help": "Inserts a styled bar at the top of each page inside <noscript>. Hidden when JavaScript runs; if JS is off, visitors see a short note that the bar is for AI discovery plus links to your guide.",
         "ag_discovery_footer_link": "Footer “For agents” link",
         "ag_discovery_footer_link_help": "Adds a small footer link to /for-agents when the page footer is detected (default on).",
         "ag_discovery_help": "Checklist for how chat and search AIs can find your published guide via indexed pages, sitemap, and robots.txt.",
