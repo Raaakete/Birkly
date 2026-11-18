@@ -71,7 +71,9 @@ ag_disc_assert(str_contains($link, 'rel="alternate"'), 'Link header has alternat
 echo "==> HTML injection\n";
 $html = '<!DOCTYPE html><html><head></head><body><div data-part="footer"></div></body></html>';
 $injected = birkly_ai_presence_inject_discovery_into_html($html);
-ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide="body-nav"'), 'body nav injected');
+ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide="body-landmark"'), 'body landmark injected');
+ag_disc_assert(str_contains($injected, 'data-birkly-agent-guide-visibility="noscript"'), 'landmark is noscript-only for browsers');
+ag_disc_assert(!str_contains($injected, 'background:#f0f2ee'), 'no visible discovery strip styles');
 ag_disc_assert(str_contains($injected, 'agent-guide-manifest'), 'manifest meta injected');
 ag_disc_assert(str_contains($injected, 'for-agents.md'), 'markdown alternate in head');
 ag_disc_assert(str_contains($injected, 'birkly-agent-guide-noscript'), 'noscript for data-part footer');
