@@ -127,8 +127,12 @@
     );
   }
 
-  function loadManifest() {
-    if (manifestCache) return Promise.resolve(manifestCache);
+  function invalidateManifestCache() {
+    manifestCache = null;
+  }
+
+  function loadManifest(forceRefresh) {
+    if (manifestCache && !forceRefresh) return Promise.resolve(manifestCache);
     return fetch(apiUrl('/api/help_manifest.php'), { credentials: 'same-origin' })
       .then(function (res) {
         return res.text().then(function (text) {
@@ -144,8 +148,8 @@
       });
   }
 
-  function topicsForPlugin(pluginId) {
-    return loadManifest().then(function (manifest) {
+  function topicsForPlugin(pluginId, forceRefresh) {
+    return loadManifest(!!forceRefresh).then(function (manifest) {
       var topics = (manifest.topics || []).filter(function (t) {
         return t.plugin_id === pluginId;
       });
@@ -226,8 +230,10 @@
     return html;
   }
 
-  function renderPanel(panelEl, pluginId) {
-    if (!panelEl || loadedPanels[pluginId]) return Promise.resolve();
+  function renderPanel(panelEl, pluginId, forceRefresh) {
+    if (!panelEl) return Promise.resolve();
+    if (loadedPanels[pluginId] && !forceRefresh) return Promise.resolve();
+    if (forceRefresh) delete loadedPanels[pluginId];
     loadedPanels[pluginId] = true;
 
     panelEl.innerHTML =
@@ -242,7 +248,7 @@
     var navHost = panelEl.querySelector('[data-docs-nav-host]');
     var content = panelEl.querySelector('.plugin-docs-content');
 
-    return topicsForPlugin(pluginId).then(function (topics) {
+    return topicsForPlugin(pluginId, !!forceRefresh).then(function (topics) {
       topics = topics.map(function (topic) {
         if (topic && topic.snapshot) topic.snapshot = apiUrl(topic.snapshot);
         return topic;
@@ -286,16 +292,27 @@
     });
   }
 
-  function activate(pluginId, panelId) {
+  function activate(pluginId, panelId, options) {
+    options = options || {};
+    var forceRefresh = !!options.forceRefresh;
+    if (forceRefresh) {
+      invalidateManifestCache();
+    }
     var panelEl = panelId
       ? document.getElementById(panelId)
       : document.querySelector('.plugin-docs-panel[data-plugin-id="' + pluginId + '"]');
+    if (!panelEl && panelId) {
+      var wrapper = document.getElementById(panelId);
+      if (wrapper) {
+        panelEl = wrapper.querySelector('.plugin-docs-panel[data-plugin-id="' + pluginId + '"]');
+      }
+    }
     if (!panelEl) return;
     // Allow re-activate into a moved host (e.g. Settings → Docs tab)
     if (loadedPanels[pluginId] && !panelEl.querySelector('.plugin-docs-layout')) {
       delete loadedPanels[pluginId];
     }
-    renderPanel(panelEl, pluginId);
+    renderPanel(panelEl, pluginId, forceRefresh);
   }
 
   function initPanels() {
@@ -308,7 +325,12 @@
     });
   }
 
-  window.BirklyPluginDocs = { activate: activate, init: initPanels, renderMarkdown: renderMarkdown };
+  window.BirklyPluginDocs = {
+    activate: activate,
+    init: initPanels,
+    renderMarkdown: renderMarkdown,
+    invalidateManifestCache: invalidateManifestCache,
+  };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initPanels);
