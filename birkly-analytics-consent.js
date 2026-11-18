@@ -181,7 +181,6 @@
             removeBanner();
         });
         var saveCustom = actionButton('Save choices', true);
-        saveCustom.style.display = 'none';
         saveCustom.addEventListener('click', function () {
             var chosen = { sessions: false, devices: false, campaigns: false, events: false };
             Object.keys(inputs).forEach(function (k) {
@@ -190,21 +189,23 @@
             setConsent('custom', chosen);
             removeBanner();
         });
-        var customize = actionButton('Customize', false);
-        customize.addEventListener('click', function () {
-            panel.hidden = !panel.hidden;
-            saveCustom.style.display = panel.hidden ? 'none' : 'inline-block';
-            customize.textContent = panel.hidden ? 'Customize' : 'Hide options';
-        });
-        var decline = actionButton('Decline optional', false);
+        var decline = actionButton('Decline all optional', false);
         decline.addEventListener('click', function () {
             setConsent('denied');
             removeBanner();
         });
+        var panelActions = document.createElement('div');
+        panelActions.style.cssText = 'display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.65rem';
+        panelActions.appendChild(saveCustom);
+        panelActions.appendChild(decline);
+        panel.appendChild(panelActions);
+        var customize = actionButton('Customize', false);
+        customize.addEventListener('click', function () {
+            panel.hidden = !panel.hidden;
+            customize.textContent = panel.hidden ? 'Customize' : 'Hide options';
+        });
         actions.appendChild(acceptAll);
         actions.appendChild(customize);
-        actions.appendChild(saveCustom);
-        actions.appendChild(decline);
         wrap.appendChild(panel);
         wrap.appendChild(actions);
         (document.body || document.documentElement).appendChild(wrap);
