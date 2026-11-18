@@ -1319,6 +1319,7 @@
         "discovery_js_last_run": "最後の実行： {at}",
         "discovery_js_load_discovery_failed": "ディスカバリーを読み込めませんでした",
         "discovery_js_load_failed": "読み込み失敗",
+        "discovery_js_missing_hint": "Discovery の JavaScript が読み込まれませんでした。保存とパックの切り替えは動作しません。ハード更新して Network タブで discovery.js を確認してください（新しいタブで /admin/js/discovery.js を開いてファイルの存在を確認）。バナーが残る場合は /admin/deploy-check.php を開き、GitHub main からのデプロイ同期後に discovery_admin_js がすべて true であることを確認してください。",
         "discovery_js_proposals_applied_review": "適用された提案—レビューと公開",
         "discovery_js_proposals_applied_warns": "適用された提案— {warns}",
         "discovery_js_proposed_defaults": "提案されたデフォルト—確認して保存",

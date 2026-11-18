@@ -1319,6 +1319,7 @@
         "discovery_js_last_run": "Dernière exécution : {at}",
         "discovery_js_load_discovery_failed": "Impossible de charger Découverte",
         "discovery_js_load_failed": "Échec du chargement",
+        "discovery_js_missing_hint": "Le JavaScript Discovery ne s’est pas chargé — Enregistrer et les bascules de pack ne fonctionneront pas. Actualisez la page (rechargement complet) et vérifiez l’onglet Réseau pour discovery.js (ouvrez /admin/js/discovery.js dans un nouvel onglet). Si la bannière reste, ouvrez /admin/deploy-check.php — discovery_admin_js doit être entièrement à true après synchronisation du déploiement depuis GitHub main.",
         "discovery_js_proposals_applied_review": "Propositions appliquées — vérifiez et publiez",
         "discovery_js_proposals_applied_warns": "Propositions appliquées — {warns}",
         "discovery_js_proposed_defaults": "Valeurs par défaut proposées — vérifiez et enregistrez",

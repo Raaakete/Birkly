@@ -1319,6 +1319,7 @@
         "discovery_js_last_run": "Último run: {at}",
         "discovery_js_load_discovery_failed": "No se puede load Discovery",
         "discovery_js_load_failed": "Error en Load",
+        "discovery_js_missing_hint": "No se cargó el JavaScript de Discovery: Guardar y los interruptores de pack no funcionarán. Actualice la página por completo y compruebe en Network discovery.js (abra /admin/js/discovery.js en otra pestaña). Si el aviso sigue, abra /admin/deploy-check.php: discovery_admin_js debería ser todo true tras el despliegue sincronizado desde GitHub main.",
         "discovery_js_proposals_applied_review": "Propuestas aplicadas — revise y publique",
         "discovery_js_proposals_applied_warns": "Propuestas aplicadas — {warns}",
         "discovery_js_proposed_defaults": "Valores predeterminados propuestos — revise y guarde",
