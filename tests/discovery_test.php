@@ -215,6 +215,11 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     );
 }
 assert_true(strpos($discoveryHtml, 'window.__DISC_AG_HYDRATE__=') !== false, 'discovery inline agent guide hydrate script');
+assert_true(
+    preg_match('/<script[^>]+src="[^"]*\\/discovery\\.js/', $discoveryHtml) !== 1,
+    'discovery JS is not inlined in template (layout_footer loads it)'
+);
+assert_true(strpos((string) file_get_contents($root . '/admin/partials/layout_footer.php'), "\$page === 'discovery'") !== false, 'layout footer loads discovery script stack');
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
 $_GET['tab'] = 'agent-guide';
 $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
