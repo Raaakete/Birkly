@@ -37,6 +37,50 @@
         return sessionId;
     }
 
+    function getEntrancePath() {
+        const key = 'birkly_entrance_' + trackingId;
+        let entrance = sessionStorage.getItem(key);
+        if (!entrance) {
+            entrance = window.location.pathname + window.location.search;
+            sessionStorage.setItem(key, entrance);
+        }
+        return entrance;
+    }
+
+    function getTimezone() {
+        try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        } catch (err) {
+            return '';
+        }
+    }
+
+    function bindSpaNavigation(onNavigate) {
+        let lastUrl = location.href;
+        function notify() {
+            const url = location.href;
+            if (url !== lastUrl) {
+                lastUrl = url;
+                onNavigate();
+            }
+        }
+        ['pushState', 'replaceState'].forEach(function (method) {
+            const original = history[method];
+            if (typeof original !== 'function') {
+                return;
+            }
+            history[method] = function () {
+                const result = original.apply(this, arguments);
+                notify();
+                return result;
+            };
+        });
+        window.addEventListener('popstate', function () {
+            setTimeout(notify, 0);
+        });
+        window.addEventListener('hashchange', notify);
+    }
+
     function readConsentCookie() {
         const parts = (document.cookie || '').split(';');
         for (let i = 0; i < parts.length; i++) {
@@ -134,14 +178,39 @@
 
     function trackPageView() {
         const utm = getUtmParams();
+        const nfMeta = document.querySelector('meta[name="birkly-not-found"]');
+        if (nfMeta) {
+            const requested = nfMeta.getAttribute('content') || '';
+            sendTrack({
+                tracking_id: trackingId,
+                domain: window.location.hostname,
+                path: requested || (window.location.pathname + window.location.search),
+                entrance_path: getEntrancePath(),
+                referrer: document.referrer || '',
+                screen_width: window.screen.width || 0,
+                screen_height: window.screen.height || 0,
+                viewport_width: window.innerWidth || 0,
+                viewport_height: window.innerHeight || 0,
+                language: navigator.language || navigator.userLanguage || '',
+                timezone: getTimezone(),
+                session_id: getSessionId(),
+                event_type: 'not_found',
+                requested_path: requested
+            });
+            return;
+        }
         sendTrack({
             tracking_id: trackingId,
             domain: window.location.hostname,
             path: window.location.pathname + window.location.search,
+            entrance_path: getEntrancePath(),
             referrer: document.referrer || '',
             screen_width: window.screen.width || 0,
             screen_height: window.screen.height || 0,
+            viewport_width: window.innerWidth || 0,
+            viewport_height: window.innerHeight || 0,
             language: navigator.language || navigator.userLanguage || '',
+            timezone: getTimezone(),
             session_id: getSessionId(),
             event_type: 'page_view',
             utm_source: utm.utm_source,
@@ -149,6 +218,16 @@
             utm_campaign: utm.utm_campaign,
             utm_term: utm.utm_term,
             utm_content: utm.utm_content
+        });
+    }
+
+    function trackPageExit() {
+        sendTrack({
+            tracking_id: trackingId,
+            domain: window.location.hostname,
+            path: window.location.pathname + window.location.search,
+            session_id: getSessionId(),
+            event_type: 'page_exit'
         });
     }
 
@@ -167,10 +246,11 @@
                     sendTrack({
                         tracking_id: trackingId,
                         domain: window.location.hostname,
-                        path: window.location.pathname,
+                        path: window.location.pathname + window.location.search,
                         event_type: 'outbound_click',
                         referrer: url.href,
-                        session_id: getSessionId()
+                        session_id: getSessionId(),
+                        event_data: { href: url.href }
                     });
                 }
             } catch (err) { /* ignore */ }
@@ -202,17 +282,13 @@
             window.addEventListener('load', trackPageView);
         }
 
-        let lastUrl = location.href;
-        new MutationObserver(function() {
-            const url = location.href;
-            if (url !== lastUrl) {
-                lastUrl = url;
-                trackPageView();
-            }
-        }).observe(document, { subtree: true, childList: true });
+        bindSpaNavigation(trackPageView);
 
-        window.addEventListener('popstate', function() {
-            setTimeout(trackPageView, 100);
+        window.addEventListener('pagehide', trackPageExit);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') {
+                trackPageExit();
+            }
         });
 
         document.addEventListener('birkly:analytics-consent', function (e) {

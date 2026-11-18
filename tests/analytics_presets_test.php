@@ -67,6 +67,7 @@ try {
     ap_assert('save advanced', birkly_analytics_save_settings(['preset' => 'advanced']));
     ap_assert('advanced allows outbound', birkly_analytics_allows_event('outbound_click') === true);
     ap_assert('advanced allows form', birkly_analytics_allows_event('form_submit') === true);
+    ap_assert('advanced allows not_found', birkly_analytics_allows_event('not_found') === true);
 
     require_once dirname(__DIR__) . '/core/analytics_enrich.php';
     $built = birkly_analytics_build_event(

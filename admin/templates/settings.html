@@ -1044,11 +1044,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2 class="section-title"><?= __('admin.settings_analytics_report_title') ?></h2>
                   <p class="settings-help" id="analytics-report-help"><?= __('admin.settings_analytics_report_help') ?></p>
                 </div>
-                <div class="u-cluster u-gap-2">
+                <div class="u-cluster u-gap-2 u-flex-wrap">
                   <label class="u-sr-only" for="analytics-domain-scope"><?= __('admin.settings_analytics_report_scope') ?></label>
                   <select id="analytics-domain-scope" class="input input-sm" aria-label="<?= htmlspecialchars(__('admin.settings_analytics_report_scope')) ?>">
                     <option value="all"><?= __('admin.settings_analytics_scope_all_domains') ?></option>
                   </select>
+                  <label class="u-sr-only" for="analytics-period-range"><?= __('admin.analytics_period_label') ?></label>
+                  <select id="analytics-period-range" class="input input-sm" aria-label="<?= htmlspecialchars(__('admin.analytics_period_label')) ?>">
+                    <option value="7"><?= __('admin.analytics_period_7d') ?></option>
+                    <option value="30" selected><?= __('admin.analytics_period_30d') ?></option>
+                    <option value="90"><?= __('admin.analytics_period_90d') ?></option>
+                  </select>
+                  <label class="analytics-toggle-label" for="analytics-include-bots">
+                    <input type="checkbox" id="analytics-include-bots" value="1">
+                    <span><?= __('admin.analytics_include_bots') ?></span>
+                  </label>
                 </div>
               </div>
               <div id="analytics-health-banner" class="card-body" hidden></div>

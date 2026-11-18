@@ -200,6 +200,7 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'form_submit',
         'outbound_click',
         'plugin_event',
+        'not_found',
     ];
     if (!in_array($eventType, $allowedTypes, true)) {
         $eventType = 'page_view';
@@ -223,6 +224,11 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
 
     $ipHash = hash('sha256', $ip . $trackingId);
     $visitorDayKey = hash('sha256', 'vd:' . $trackingId . ':' . date('Y-m-d', $timestamp) . ':' . $ip);
+
+    $eventData = is_array($input['event_data'] ?? null) ? $input['event_data'] : [];
+    if ($eventType === 'outbound_click' && ($eventData['href'] ?? '') === '' && $referrer !== '') {
+        $eventData['href'] = $referrer;
+    }
 
     return [
         'timestamp' => $timestamp,
@@ -254,7 +260,7 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'location_source' => $location['source'],
         'session_id' => (string) ($input['session_id'] ?? ''),
         'event_name' => (string) ($input['event_name'] ?? ''),
-        'event_data' => is_array($input['event_data'] ?? null) ? $input['event_data'] : [],
+        'event_data' => $eventData,
     ];
 }
 
@@ -296,6 +302,7 @@ function birkly_analytics_aggregate_events(array $events): array
         'outbound_click' => 0,
         'plugin_event' => 0,
         'page_exit' => 0,
+        'not_found' => 0,
     ];
     $outboundTargets = [];
     $formIds = [];
@@ -320,7 +327,7 @@ function birkly_analytics_aggregate_events(array $events): array
         }
 
         $visitorKey = birkly_analytics_visitor_key($event);
-        $isPageView = $eventType === 'page_view';
+        $isPageView = $eventType === 'page_view' || $eventType === 'not_found';
 
         if ($visitorKey !== '' && $isPageView) {
             $uniqueVisitors[$visitorKey] = true;
@@ -334,6 +341,9 @@ function birkly_analytics_aggregate_events(array $events): array
             $href = '';
             if (is_array($event['event_data'] ?? null)) {
                 $href = (string) ($event['event_data']['href'] ?? $event['event_data']['url'] ?? '');
+            }
+            if ($href === '') {
+                $href = (string) ($event['referrer'] ?? '');
             }
             if ($href === '') {
                 $href = (string) ($event['event_name'] ?? $path);
@@ -503,6 +513,321 @@ function birkly_analytics_rank_counts(array $counts, string $labelKey, string $v
 }
 
 /**
+ * Pseudonymous label for admin session/visitor lists (never raw IP).
+ */
+function birkly_analytics_visitor_label(array $event): string
+{
+    $key = birkly_analytics_visitor_key($event);
+    if ($key === '') {
+        return 'visitor_unknown';
+    }
+
+    return 'vis_' . substr(hash('sha256', 'vl:' . $key), 0, 10);
+}
+
+/**
+ * Derive acquisition source from the first event in a session.
+ *
+ * @param array<string, mixed> $event
+ */
+function birkly_analytics_session_source_label(array $event): string
+{
+    $utmSource = trim((string) ($event['utm_source'] ?? ''));
+    if ($utmSource !== '') {
+        $medium = trim((string) ($event['utm_medium'] ?? ''));
+        return $medium !== '' ? ('campaign:' . $utmSource . '/' . $medium) : ('campaign:' . $utmSource);
+    }
+
+    $referrerHost = (string) ($event['referrer_host'] ?? '');
+    if ($referrerHost === '' && !empty($event['referrer'])) {
+        $referrerHost = (string) (parse_url((string) $event['referrer'], PHP_URL_HOST) ?? '');
+    }
+    $domain = (string) ($event['domain'] ?? '');
+    if ($referrerHost !== '' && $referrerHost !== $domain) {
+        return 'referral:' . $referrerHost;
+    }
+
+    return 'direct';
+}
+
+/**
+ * Human-readable trail step label.
+ *
+ * @param array<string, mixed> $event
+ */
+function birkly_analytics_trail_label(array $event): string
+{
+    $type = strtolower((string) ($event['event_type'] ?? 'page_view'));
+    if ($type === 'pageview' || $type === '') {
+        $type = 'page_view';
+    }
+
+    if ($type === 'outbound_click') {
+        $href = '';
+        if (is_array($event['event_data'] ?? null)) {
+            $href = (string) ($event['event_data']['href'] ?? $event['event_data']['url'] ?? '');
+        }
+        if ($href === '') {
+            $href = (string) ($event['referrer'] ?? '');
+        }
+
+        return $href !== '' ? ('Outbound → ' . $href) : 'Outbound click';
+    }
+    if ($type === 'form_submit') {
+        $formId = '';
+        if (is_array($event['event_data'] ?? null)) {
+            $formId = (string) ($event['event_data']['form_id'] ?? '');
+        }
+
+        return $formId !== '' ? ('Form · ' . $formId) : 'Form submit';
+    }
+    if ($type === 'plugin_event') {
+        $name = trim((string) ($event['event_name'] ?? ''));
+
+        return $name !== '' ? ('Plugin · ' . $name) : 'Plugin event';
+    }
+    if ($type === 'not_found') {
+        return '404 · ' . (string) ($event['path'] ?? '/');
+    }
+    if ($type === 'page_exit') {
+        return 'Exit · ' . (string) ($event['path'] ?? '/');
+    }
+
+    return (string) ($event['path'] ?? '/');
+}
+
+/**
+ * @param list<array<string, mixed>> $events
+ * @return array{bot_page_views: int, human_page_views: int, bot_sessions: int}
+ */
+function birkly_analytics_summarize_bot_traffic(array $events): array
+{
+    $botPageViews = 0;
+    $humanPageViews = 0;
+    $botSessions = [];
+
+    foreach ($events as $event) {
+        if (!is_array($event)) {
+            continue;
+        }
+        $type = strtolower((string) ($event['event_type'] ?? 'page_view'));
+        if ($type === 'pageview' || $type === '') {
+            $type = 'page_view';
+        }
+        if ($type !== 'page_view' && $type !== 'not_found') {
+            continue;
+        }
+        $isBot = (($event['device_type'] ?? '') === 'bot');
+        if ($isBot) {
+            $botPageViews++;
+            $sid = (string) ($event['session_id'] ?? '');
+            if ($sid !== '') {
+                $botSessions[$sid] = true;
+            }
+        } else {
+            $humanPageViews++;
+        }
+    }
+
+    return [
+        'bot_page_views' => $botPageViews,
+        'human_page_views' => $humanPageViews,
+        'bot_sessions' => count($botSessions),
+    ];
+}
+
+/**
+ * Build session footprints, visitor rollups, and top paths for Advanced reporting.
+ *
+ * @param list<array<string, mixed>> $events
+ * @return array<string, mixed>
+ */
+function birkly_analytics_build_journey_index(array $events, int $sessionLimit = 60, int $visitorLimit = 40, int $pathLimit = 12): array
+{
+    usort($events, static function ($a, $b): int {
+        return ((int) ($a['timestamp'] ?? 0)) <=> ((int) ($b['timestamp'] ?? 0));
+    });
+
+    $sessions = [];
+    $pathCounts = [];
+
+    foreach ($events as $event) {
+        if (!is_array($event)) {
+            continue;
+        }
+        $sessionId = trim((string) ($event['session_id'] ?? ''));
+        if ($sessionId === '') {
+            continue;
+        }
+
+        $timestamp = (int) ($event['timestamp'] ?? 0);
+        if (!isset($sessions[$sessionId])) {
+            $sessions[$sessionId] = [
+                'session_id' => $sessionId,
+                'visitor_id' => birkly_analytics_visitor_label($event),
+                'started_at' => $timestamp,
+                'ended_at' => $timestamp,
+                'landing_path' => '',
+                'exit_path' => '',
+                'device_type' => (string) ($event['device_type'] ?? 'unknown'),
+                'browser' => (string) ($event['browser'] ?? ''),
+                'os' => (string) ($event['os'] ?? ''),
+                'country' => (string) ($event['country'] ?? ''),
+                'location_source' => (string) ($event['location_source'] ?? ''),
+                'is_bot' => (($event['device_type'] ?? '') === 'bot'),
+                'source' => birkly_analytics_session_source_label($event),
+                'page_views' => 0,
+                'trail' => [],
+                'page_path_sequence' => [],
+            ];
+        }
+
+        $session = &$sessions[$sessionId];
+        $session['ended_at'] = max($session['ended_at'], $timestamp);
+        if ($timestamp > 0 && ($session['started_at'] === 0 || $timestamp < $session['started_at'])) {
+            $session['started_at'] = $timestamp;
+        }
+
+        $eventType = strtolower((string) ($event['event_type'] ?? 'page_view'));
+        if ($eventType === 'pageview' || $eventType === '') {
+            $eventType = 'page_view';
+        }
+
+        $trailStep = [
+            'timestamp' => $timestamp,
+            'type' => $eventType,
+            'path' => (string) ($event['path'] ?? ''),
+            'label' => birkly_analytics_trail_label($event),
+        ];
+        $session['trail'][] = $trailStep;
+
+        if ($eventType === 'page_view' || $eventType === 'not_found') {
+            $path = (string) ($event['path'] ?? '/');
+            $session['page_views']++;
+            if ($session['landing_path'] === '') {
+                $session['landing_path'] = $path;
+            }
+            $session['exit_path'] = $path;
+            $session['page_path_sequence'][] = $path;
+        } elseif ($eventType === 'page_exit') {
+            $session['exit_path'] = (string) ($event['path'] ?? $session['exit_path']);
+        }
+        unset($session);
+    }
+
+    foreach ($sessions as $session) {
+        $seq = $session['page_path_sequence'] ?? [];
+        $count = count($seq);
+        for ($len = 2; $len <= 3; $len++) {
+            if ($count < $len) {
+                continue;
+            }
+            for ($i = 0; $i <= $count - $len; $i++) {
+                $slice = array_slice($seq, $i, $len);
+                $key = implode(' → ', $slice);
+                $pathCounts[$key] = ($pathCounts[$key] ?? 0) + 1;
+            }
+        }
+    }
+
+    $sessionList = array_values($sessions);
+    usort($sessionList, static function ($a, $b): int {
+        return ((int) ($b['ended_at'] ?? 0)) <=> ((int) ($a['ended_at'] ?? 0));
+    });
+    $sessionList = array_slice($sessionList, 0, max(1, $sessionLimit));
+
+    foreach ($sessionList as &$row) {
+        unset($row['page_path_sequence']);
+        if (isset($row['started_at']) && is_int($row['started_at']) && $row['started_at'] > 0) {
+            $row['started_at'] = date('c', $row['started_at']);
+        }
+        if (isset($row['ended_at']) && is_int($row['ended_at']) && $row['ended_at'] > 0) {
+            $row['ended_at'] = date('c', $row['ended_at']);
+        }
+        foreach ($row['trail'] as &$step) {
+            if (isset($step['timestamp']) && is_int($step['timestamp']) && $step['timestamp'] > 0) {
+                $step['timestamp'] = date('c', $step['timestamp']);
+            }
+        }
+        unset($step);
+    }
+    unset($row);
+
+    $visitors = [];
+    foreach ($sessionList as $sessionRow) {
+        $vid = (string) ($sessionRow['visitor_id'] ?? '');
+        if ($vid === '') {
+            continue;
+        }
+        if (!isset($visitors[$vid])) {
+            $visitors[$vid] = [
+                'visitor_id' => $vid,
+                'sessions' => 0,
+                'page_views' => 0,
+                'last_seen' => '',
+                'country' => (string) ($sessionRow['country'] ?? ''),
+                'device_type' => (string) ($sessionRow['device_type'] ?? ''),
+                'source' => (string) ($sessionRow['source'] ?? ''),
+                'is_bot' => !empty($sessionRow['is_bot']),
+            ];
+        }
+        $visitors[$vid]['sessions']++;
+        $visitors[$vid]['page_views'] += (int) ($sessionRow['page_views'] ?? 0);
+        $visitors[$vid]['last_seen'] = (string) ($sessionRow['ended_at'] ?? $visitors[$vid]['last_seen']);
+        if (($visitors[$vid]['country'] ?? '') === '' && ($sessionRow['country'] ?? '') !== '') {
+            $visitors[$vid]['country'] = (string) $sessionRow['country'];
+        }
+    }
+    $visitorList = array_values($visitors);
+    usort($visitorList, static function ($a, $b): int {
+        return strcmp((string) ($b['last_seen'] ?? ''), (string) ($a['last_seen'] ?? ''));
+    });
+    $visitorList = array_slice($visitorList, 0, max(1, $visitorLimit));
+
+    return [
+        'sessions' => $sessionList,
+        'visitors' => $visitorList,
+        'paths' => birkly_analytics_rank_counts($pathCounts, 'path', 'sessions', $pathLimit),
+    ];
+}
+
+/**
+ * Load raw events for one or all enabled tracking ids in a date range.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_analytics_load_events_for_scope(string $trackingId, string $startDate, string $endDate): array
+{
+    require_once __DIR__ . '/analytics_config.php';
+
+    $trackingId = trim($trackingId);
+    if ($trackingId === '' || $trackingId === 'all' || $trackingId === '*') {
+        $allEvents = [];
+        foreach (birkly_analytics_list_enabled_tracking_ids() as $enabledId) {
+            $allEvents = array_merge($allEvents, birkly_analytics_load_events($enabledId, $startDate, $endDate));
+        }
+        usort($allEvents, static function ($a, $b): int {
+            return ((int) ($a['timestamp'] ?? 0)) <=> ((int) ($b['timestamp'] ?? 0));
+        });
+
+        return $allEvents;
+    }
+
+    return birkly_analytics_load_events($trackingId, $startDate, $endDate);
+}
+
+/**
+ * @param list<array<string, mixed>> $events
+ * @return list<array<string, mixed>>
+ */
+function birkly_analytics_exclude_bot_events(array $events): array
+{
+    return array_values(array_filter($events, static function ($event): bool {
+        return is_array($event) && (($event['device_type'] ?? '') !== 'bot');
+    }));
+}
+
+/**
  * Load raw events for a tracking id and date range.
  *
  * @return list<array<string, mixed>>
@@ -541,29 +866,39 @@ function birkly_analytics_load_events(string $trackingId, string $startDate, str
 /**
  * Combined report across all enabled tracking ids (deduped visitors).
  *
+ * @param array{include_bots?: bool, include_journey?: bool} $options
  * @return array<string, mixed>
  */
-function birkly_analytics_get_combined_report(string $startDate, string $endDate): array
+function birkly_analytics_get_combined_report(string $startDate, string $endDate, array $options = []): array
 {
     require_once __DIR__ . '/analytics_config.php';
 
     $trackingIds = birkly_analytics_list_enabled_tracking_ids();
-    $allEvents = [];
-    $domains = [];
+    $rawEvents = birkly_analytics_load_events_for_scope('all', $startDate, $endDate);
+    $events = !empty($options['include_bots']) ? $rawEvents : birkly_analytics_exclude_bot_events($rawEvents);
 
+    $domains = [];
     foreach ($trackingIds as $trackingId) {
-        $events = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+        $domainEvents = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+        if (empty($options['include_bots'])) {
+            $domainEvents = birkly_analytics_exclude_bot_events($domainEvents);
+        }
         $domains[] = [
             'id' => $trackingId,
             'domain' => $trackingId,
-            'report' => birkly_analytics_aggregate_events($events),
+            'report' => birkly_analytics_aggregate_events($domainEvents),
         ];
-        $allEvents = array_merge($allEvents, $events);
     }
 
-    $combined = birkly_analytics_aggregate_events($allEvents);
+    $combined = birkly_analytics_aggregate_events($events);
     $combined['tracking_ids'] = $trackingIds;
     $combined['domains'] = $domains;
+    $combined['bot_traffic'] = birkly_analytics_summarize_bot_traffic($rawEvents);
+
+    if (!empty($options['include_journey'])) {
+        $combined['journey'] = birkly_analytics_build_journey_index($events);
+        $combined['top_paths'] = $combined['journey']['paths'] ?? [];
+    }
 
     return $combined;
 }
@@ -739,7 +1074,7 @@ function birkly_analytics_mark_event_meta(string $trackingId, int $timestamp, bo
 /**
  * Load and aggregate analytics for a tracking ID and date range.
  */
-function birkly_analytics_get_report(string $trackingId, string $startDate, string $endDate): array
+function birkly_analytics_get_report(string $trackingId, string $startDate, string $endDate, array $options = []): array
 {
     $empty = [
         'page_views' => 0,
@@ -753,6 +1088,7 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
             'outbound_click' => 0,
             'plugin_event' => 0,
             'page_exit' => 0,
+            'not_found' => 0,
         ],
         'top_pages' => [],
         'entrance_pages' => [],
@@ -768,16 +1104,35 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
         'forms' => [],
         'plugin_events' => [],
         'daily_stats' => [],
+        'bot_traffic' => [
+            'bot_page_views' => 0,
+            'human_page_views' => 0,
+            'bot_sessions' => 0,
+        ],
+        'journey' => [
+            'sessions' => [],
+            'visitors' => [],
+            'paths' => [],
+        ],
+        'top_paths' => [],
     ];
 
     if ($trackingId === '' || $trackingId === 'all' || $trackingId === '*') {
-        $combined = birkly_analytics_get_combined_report($startDate, $endDate);
+        $combined = birkly_analytics_get_combined_report($startDate, $endDate, $options);
         unset($combined['tracking_ids'], $combined['domains']);
 
         return array_merge($empty, $combined);
     }
 
-    return array_merge($empty, birkly_analytics_aggregate_events(
-        birkly_analytics_load_events($trackingId, $startDate, $endDate)
-    ));
+    $rawEvents = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+    $events = !empty($options['include_bots']) ? $rawEvents : birkly_analytics_exclude_bot_events($rawEvents);
+    $report = birkly_analytics_aggregate_events($events);
+    $report['bot_traffic'] = birkly_analytics_summarize_bot_traffic($rawEvents);
+
+    if (!empty($options['include_journey'])) {
+        $report['journey'] = birkly_analytics_build_journey_index($events);
+        $report['top_paths'] = $report['journey']['paths'] ?? [];
+    }
+
+    return array_merge($empty, $report);
 }

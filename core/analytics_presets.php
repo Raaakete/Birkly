@@ -78,7 +78,7 @@ function birkly_analytics_preset_definitions(): array
             'consent_required' => true,
             'anonymous_counts' => true,
             'retention_days' => 180,
-            'collect' => ['page_view', 'page_exit', 'form_submit', 'outbound_click', 'plugin_event'],
+            'collect' => ['page_view', 'page_exit', 'form_submit', 'outbound_click', 'plugin_event', 'not_found'],
             'store_ip' => false,
             'hash_ip' => true,
             'sessions' => true,

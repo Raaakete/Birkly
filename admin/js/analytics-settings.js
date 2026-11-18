@@ -13,7 +13,9 @@
         trackingDomains: [],
         health: null,
         initialized: false,
-        lastReport: null
+        lastReport: null,
+        periodDays: 30,
+        includeBots: false
     };
 
     function apiUrl(path) {
@@ -247,6 +249,131 @@
             '<ul class="analytics-bar-list">' + items + '</ul></section>';
     }
 
+    function selectedPeriodDays() {
+        var select = document.getElementById('analytics-period-range');
+        var days = select ? parseInt(select.value, 10) : state.periodDays;
+        if (!days || days < 1) {
+            days = 30;
+        }
+        return days;
+    }
+
+    function includeBotsInReport() {
+        var input = document.getElementById('analytics-include-bots');
+        return !!(input && input.checked);
+    }
+
+    function renderBotTraffic(bot) {
+        bot = bot || {};
+        var botViews = Number(bot.bot_page_views) || 0;
+        var humanViews = Number(bot.human_page_views) || 0;
+        if (botViews === 0 && humanViews === 0) {
+            return '';
+        }
+        return '<section class="analytics-panel analytics-panel--wide">' +
+            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_bot_traffic_title', 'Bot vs human traffic')) + '</h4>' +
+            '<div class="analytics-kpi-grid">' +
+            kpi(humanViews, t('analytics_kpi_human_views', 'Human page views'), t('analytics_kpi_human_views_hint', 'Excludes detected bots')) +
+            kpi(botViews, t('analytics_kpi_bot_views', 'Bot page views'), t('analytics_bot_sessions', 'Bot sessions: {count}', { count: Number(bot.bot_sessions) || 0 })) +
+            '</div></section>';
+    }
+
+    function renderTopPaths(paths) {
+        paths = Array.isArray(paths) ? paths : [];
+        if (!paths.length) {
+            return '';
+        }
+        return sectionHeading(t('analytics_section_paths', 'Top paths'), t('analytics_section_paths_sub', 'Common 2–3 step journeys')) +
+            '<div class="analytics-panel-grid">' +
+            renderBarList(t('analytics_bar_paths', 'Path sequences'), paths, 'path', 'sessions') +
+            '</div>';
+    }
+
+    function renderSessionTrail(trail) {
+        trail = Array.isArray(trail) ? trail : [];
+        if (!trail.length) {
+            return '<p class="form-help u-m-0">' + escapeHtml(t('analytics_session_empty_trail', 'No trail steps recorded.')) + '</p>';
+        }
+        var items = trail.map(function (step) {
+            var when = step.timestamp ? String(step.timestamp).replace('T', ' ').slice(0, 19) : '';
+            return '<li class="analytics-trail-step">' +
+                '<span class="analytics-trail-step__time">' + escapeHtml(when) + '</span>' +
+                '<span class="analytics-trail-step__label">' + escapeHtml(step.label || step.path || step.type || '—') + '</span>' +
+                '</li>';
+        }).join('');
+        return '<ol class="analytics-trail-list">' + items + '</ol>';
+    }
+
+    function renderJourney(journey) {
+        journey = journey || {};
+        var sessions = Array.isArray(journey.sessions) ? journey.sessions : [];
+        var visitors = Array.isArray(journey.visitors) ? journey.visitors : [];
+        if (!sessions.length && !visitors.length) {
+            return '';
+        }
+
+        var sessionRows = sessions.map(function (s) {
+            var id = escapeHtml(s.session_id || '');
+            var visitor = escapeHtml(s.visitor_id || '—');
+            var source = escapeHtml(s.source || 'direct');
+            var meta = [
+                escapeHtml(s.country || '—'),
+                escapeHtml(s.device_type || '—'),
+                escapeHtml(s.browser || '')
+            ].filter(Boolean).join(' · ');
+            return '<tr class="analytics-session-row" tabindex="0" role="button" data-session-id="' + id + '" aria-expanded="false">' +
+                '<td><code>' + visitor + '</code></td>' +
+                '<td>' + meta + (s.is_bot ? ' · bot' : '') + '</td>' +
+                '<td>' + source + '</td>' +
+                '<td>' + escapeHtml(String(s.page_views || 0)) + '</td>' +
+                '<td>' + escapeHtml(String(s.started_at || '').replace('T', ' ').slice(0, 16)) + '</td>' +
+                '</tr>' +
+                '<tr class="analytics-session-detail" data-session-detail="' + id + '" hidden><td colspan="5">' +
+                renderSessionTrail(s.trail) +
+                '</td></tr>';
+        }).join('');
+
+        var visitorRows = visitors.slice(0, 15).map(function (v) {
+            return '<tr><td><code>' + escapeHtml(v.visitor_id || '—') + '</code></td>' +
+                '<td>' + escapeHtml(String(v.sessions || 0)) + '</td>' +
+                '<td>' + escapeHtml(String(v.page_views || 0)) + '</td>' +
+                '<td>' + escapeHtml(v.country || '—') + '</td>' +
+                '<td>' + escapeHtml(v.source || 'direct') + '</td>' +
+                '<td>' + escapeHtml(String(v.last_seen || '').replace('T', ' ').slice(0, 16)) + '</td></tr>';
+        }).join('');
+
+        return sectionHeading(t('analytics_section_visitors', 'Visitors & sessions'), t('analytics_section_visitors_sub', 'Pseudonymous footprints (Advanced)')) +
+            '<div class="analytics-journey-grid">' +
+            '<section class="analytics-panel analytics-panel--table">' +
+            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_sessions_title', 'Recent sessions')) + '</h4>' +
+            '<div class="analytics-table-wrap"><table class="analytics-data-table">' +
+            '<thead><tr><th>' + escapeHtml(t('analytics_col_visitor', 'Visitor')) + '</th><th>' + escapeHtml(t('analytics_col_context', 'Context')) + '</th><th>' + escapeHtml(t('analytics_col_source', 'Source')) + '</th><th>' + escapeHtml(t('analytics_col_pages', 'Pages')) + '</th><th>' + escapeHtml(t('analytics_col_started', 'Started')) + '</th></tr></thead>' +
+            '<tbody>' + (sessionRows || '<tr><td colspan="5">' + escapeHtml(t('analytics_no_sessions', 'No sessions in this period yet.')) + '</td></tr>') + '</tbody></table></div>' +
+            '</section>' +
+            '<section class="analytics-panel analytics-panel--table">' +
+            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_visitors_title', 'Visitors')) + '</h4>' +
+            '<div class="analytics-table-wrap"><table class="analytics-data-table">' +
+            '<thead><tr><th>' + escapeHtml(t('analytics_col_visitor', 'Visitor')) + '</th><th>' + escapeHtml(t('analytics_col_sessions', 'Sessions')) + '</th><th>' + escapeHtml(t('analytics_col_pages', 'Pages')) + '</th><th>' + escapeHtml(t('analytics_col_country', 'Country')) + '</th><th>' + escapeHtml(t('analytics_col_source', 'Source')) + '</th><th>' + escapeHtml(t('analytics_col_last_seen', 'Last seen')) + '</th></tr></thead>' +
+            '<tbody>' + (visitorRows || '<tr><td colspan="6">' + escapeHtml(t('analytics_no_visitors', 'No visitors yet.')) + '</td></tr>') + '</tbody></table></div>' +
+            '</section></div>';
+    }
+
+    function bindSessionRowToggle(container) {
+        if (!container) return;
+        container.addEventListener('click', function (e) {
+            var row = e.target && e.target.closest ? e.target.closest('.analytics-session-row') : null;
+            if (!row) return;
+            var sessionId = row.getAttribute('data-session-id');
+            if (!sessionId) return;
+            var detail = container.querySelector('[data-session-detail="' + sessionId + '"]');
+            if (!detail) return;
+            var open = detail.hidden === false;
+            detail.hidden = open;
+            row.setAttribute('aria-expanded', open ? 'false' : 'true');
+            row.classList.toggle('is-open', !open);
+        });
+    }
+
     function renderTrends(daily) {
         daily = Array.isArray(daily) ? daily.slice() : [];
         if (!daily.length) {
@@ -257,7 +384,7 @@
         daily.sort(function (a, b) {
             return String(a.date || '').localeCompare(String(b.date || ''));
         });
-        var windowDays = isAdvanced() ? 30 : 14;
+        var windowDays = Math.min(isAdvanced() ? 90 : 14, selectedPeriodDays());
         var slice = daily.slice(-windowDays);
         var max = 1;
         slice.forEach(function (row) {
@@ -306,7 +433,8 @@
 
         var html = '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">';
 
-        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last 30 days · {scope}', { scope: scopeLabel })) +
+        var periodDays = selectedPeriodDays();
+        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last {days} days · {scope}', { days: periodDays, scope: scopeLabel })) +
             '<div class="analytics-kpi-grid">' +
             kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Page loads only')) +
             kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
@@ -319,10 +447,11 @@
             html += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions')) +
                 kpi((report.event_counts && report.event_counts.form_submit) || 0, t('analytics_kpi_form_submits', 'Form submits'), t('analytics_kpi_advanced_events', 'Advanced events')) +
                 kpi((report.event_counts && report.event_counts.outbound_click) || 0, t('analytics_kpi_outbound_clicks', 'Outbound clicks'), t('analytics_kpi_advanced_events', 'Advanced events')) +
-                kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events'));
+                kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events')) +
+                kpi((report.event_counts && report.event_counts.not_found) || 0, t('analytics_kpi_not_found', '404 views'), t('analytics_kpi_not_found_hint', 'Missing pages'));
         }
 
-        html += '</div>' + renderTrends(report.daily_stats);
+        html += '</div>' + renderBotTraffic(report.bot_traffic) + renderTrends(report.daily_stats);
 
         html += sectionHeading(t('analytics_section_content', 'Content & acquisition'), t('analytics_section_content_sub', 'Where traffic lands and comes from')) +
             '<div class="analytics-panel-grid">' +
@@ -348,6 +477,9 @@
                 renderBarList(t('analytics_bar_forms', 'Forms'), report.forms, 'form', 'submits') +
                 renderBarList(t('analytics_bar_plugin_events', 'Plugin events'), report.plugin_events, 'event', 'count') +
                 '</div>';
+
+            html += renderTopPaths(report.top_paths || (report.journey && report.journey.paths));
+            html += renderJourney(report.journey);
         }
 
         html += '</div>';
@@ -394,11 +526,15 @@
         state.trackingId = trackingId;
         updateExportVisibility();
 
+        var periodDays = selectedPeriodDays();
+        state.periodDays = periodDays;
+        state.includeBots = includeBotsInReport();
         var end = new Date();
-        var start = new Date(end.getTime() - 30 * 86400000);
+        var start = new Date(end.getTime() - periodDays * 86400000);
         var qs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
             '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
-            '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10));
+            '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10)) +
+            '&include_bots=' + (state.includeBots ? '1' : '0');
         return fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (payload) {
@@ -411,6 +547,7 @@
                 }
                 state.lastReport = payload.data || {};
                 panel.innerHTML = renderReport(state.lastReport);
+                bindSessionRowToggle(panel);
             })
             .catch(function (err) {
                 panel.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(err.message) + '</div>';
@@ -499,7 +636,7 @@
             return;
         }
         var end = new Date();
-        var start = new Date(end.getTime() - 30 * 86400000);
+        var start = new Date(end.getTime() - selectedPeriodDays() * 86400000);
         var qs = 'action=export_csv&tracking_id=' + encodeURIComponent(scope) +
             '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
             '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10));
@@ -517,6 +654,20 @@
                 scopeSelect.addEventListener('change', function () {
                     state.trackingId = scopeSelect.value || 'all';
                     updateExportVisibility();
+                    loadReport();
+                });
+            }
+            var periodSelect = document.getElementById('analytics-period-range');
+            if (periodSelect) {
+                periodSelect.addEventListener('change', function () {
+                    state.periodDays = selectedPeriodDays();
+                    loadReport();
+                });
+            }
+            var botsToggle = document.getElementById('analytics-include-bots');
+            if (botsToggle) {
+                botsToggle.addEventListener('change', function () {
+                    state.includeBots = includeBotsInReport();
                     loadReport();
                 });
             }

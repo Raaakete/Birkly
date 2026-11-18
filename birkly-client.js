@@ -238,6 +238,32 @@
             }
         }
 
+        function bindSpaNavigation(onNavigate) {
+            let lastUrl = location.href;
+            function notify() {
+                const url = location.href;
+                if (url !== lastUrl) {
+                    lastUrl = url;
+                    onNavigate();
+                }
+            }
+            ['pushState', 'replaceState'].forEach(function (method) {
+                const original = history[method];
+                if (typeof original !== 'function') {
+                    return;
+                }
+                history[method] = function () {
+                    const result = original.apply(this, arguments);
+                    notify();
+                    return result;
+                };
+            });
+            window.addEventListener('popstate', function () {
+                setTimeout(notify, 0);
+            });
+            window.addEventListener('hashchange', notify);
+        }
+
         function getUtmParams() {
             const params = new URLSearchParams(window.location.search);
             return {
@@ -455,7 +481,8 @@
                         sendTrackPayload(buildTrackPayload({
                             event_type: 'outbound_click',
                             referrer: url.href,
-                            path: window.location.pathname
+                            path: window.location.pathname + window.location.search,
+                            event_data: { href: url.href }
                         }));
                     }
                 } catch (_) { /* ignore */ }
@@ -481,18 +508,7 @@
                 window.addEventListener('load', trackPageView);
             }
 
-            let lastUrl = location.href;
-            new MutationObserver(function() {
-                const url = location.href;
-                if (url !== lastUrl) {
-                    lastUrl = url;
-                    trackPageView();
-                }
-            }).observe(document, { subtree: true, childList: true });
-
-            window.addEventListener('popstate', function() {
-                setTimeout(trackPageView, 100);
-            });
+            bindSpaNavigation(trackPageView);
 
             window.addEventListener('pagehide', trackPageExit);
             document.addEventListener('visibilitychange', function() {

@@ -278,6 +278,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
     $trackingId = trim((string) ($_GET['tracking_id'] ?? 'all'));
     $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $endDate = $_GET['end_date'] ?? date('Y-m-d');
+    $includeBots = filter_var($_GET['include_bots'] ?? '0', FILTER_VALIDATE_BOOLEAN);
+    $activePreset = birkly_analytics_active_preset();
+    $includeJourney = (($activePreset['id'] ?? '') === 'advanced');
     
     if ($trackingId === '') {
         $trackingId = 'all';
@@ -285,7 +288,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
 
     birkly_analytics_purge_expired();
     
-    $analytics = getAnalyticsData($trackingId, $startDate, $endDate);
+    $analytics = getAnalyticsData($trackingId, $startDate, $endDate, [
+        'include_bots' => $includeBots,
+        'include_journey' => $includeJourney,
+    ]);
     
     echo json_encode([
         'status' => 'ok',
@@ -624,8 +630,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'export_csv') {
 }
 
 // Helper function to get analytics data
-function getAnalyticsData($trackingId, $startDate, $endDate) {
-    return birkly_analytics_get_report((string) $trackingId, (string) $startDate, (string) $endDate);
+function getAnalyticsData($trackingId, $startDate, $endDate, array $options = []) {
+    return birkly_analytics_get_report((string) $trackingId, (string) $startDate, (string) $endDate, $options);
 }
 
 // Default response - only execute if called directly, not when included
