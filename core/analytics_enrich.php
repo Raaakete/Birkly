@@ -4,6 +4,72 @@
  */
 
 /**
+ * Detect automated clients from a user-agent string.
+ */
+function birkly_analytics_is_bot_user_agent(string $userAgent): bool
+{
+    $ua = strtolower(trim($userAgent));
+    if ($ua === '') {
+        return false;
+    }
+
+    $patterns = [
+        'bot', 'crawl', 'spider', 'slurp', 'mediapartners', 'facebookexternalhit',
+        'googlebot', 'google-inspectiontool', 'bingbot', 'yandexbot', 'baiduspider',
+        'duckduckbot', 'applebot', 'petalbot', 'bytespider', 'semrush', 'ahrefs',
+        'mj12bot', 'dotbot', 'rogerbot', 'screaming frog', 'linkedinbot',
+        'twitterbot', 'slackbot', 'discordbot', 'telegrambot', 'whatsapp',
+        'headlesschrome', 'phantomjs', 'puppeteer', 'playwright', 'lighthouse',
+        'wget/', 'curl/', 'python-requests', 'go-http-client', 'libwww-perl',
+        'gptbot', 'claudebot', 'anthropic-ai', 'ccbot', 'petal',
+        'scrapy', 'httpclient', 'java/', 'okhttp', 'node-fetch',
+    ];
+
+    foreach ($patterns as $needle) {
+        if (str_contains($ua, $needle)) {
+            return true;
+        }
+    }
+
+    return (bool) preg_match('/\b(bot|spider|crawler)\b/i', $userAgent);
+}
+
+/**
+ * Classify an event as human, confirmed bot, or suspected automation.
+ *
+ * @param array<string, mixed> $event
+ */
+function birkly_analytics_traffic_class(array $event): string
+{
+    if (($event['device_type'] ?? '') === 'bot') {
+        return 'bot';
+    }
+
+    $userAgent = (string) ($event['user_agent'] ?? '');
+    if ($userAgent !== '' && birkly_analytics_is_bot_user_agent($userAgent)) {
+        return 'bot';
+    }
+
+    $browser = (string) ($event['browser'] ?? '');
+    $os = (string) ($event['os'] ?? '');
+    $deviceType = (string) ($event['device_type'] ?? '');
+
+    if ($userAgent === '' || strlen(trim($userAgent)) < 16) {
+        return 'suspected';
+    }
+
+    if ($browser === 'Unknown' && $os === 'Unknown' && ($deviceType === 'unknown' || $deviceType === 'desktop')) {
+        $screenW = (int) ($event['screen_width'] ?? 0);
+        $screenH = (int) ($event['screen_height'] ?? 0);
+        if ($screenW <= 0 && $screenH <= 0) {
+            return 'suspected';
+        }
+    }
+
+    return 'human';
+}
+
+/**
  * Parse a user agent into device, browser, and OS labels.
  *
  * @return array{device_type:string,browser:string,os:string}
@@ -17,8 +83,15 @@ function birkly_analytics_parse_user_agent(string $userAgent): array
         return ['device_type' => 'unknown', 'browser' => 'Unknown', 'os' => 'Unknown'];
     }
 
-    if (preg_match('/bot|crawl|spider|slurp|mediapartners|facebookexternalhit/i', $userAgent)) {
-        return ['device_type' => 'bot', 'browser' => 'Bot', 'os' => 'Bot'];
+    if (birkly_analytics_is_bot_user_agent($userAgent)) {
+        $label = 'Bot';
+        if (preg_match('/googlebot|google-inspectiontool/i', $userAgent)) {
+            $label = 'Googlebot';
+        } elseif (preg_match('/bingbot/i', $userAgent)) {
+            $label = 'Bingbot';
+        }
+
+        return ['device_type' => 'bot', 'browser' => $label, 'os' => 'Bot'];
     }
 
     if (preg_match('/ipad|tablet|kindle|playbook/i', $userAgent)) {
@@ -603,8 +676,11 @@ function birkly_analytics_trail_label(array $event): string
 function birkly_analytics_summarize_bot_traffic(array $events): array
 {
     $botPageViews = 0;
+    $suspectedPageViews = 0;
     $humanPageViews = 0;
+    $unknownDeviceViews = 0;
     $botSessions = [];
+    $botAgents = [];
 
     foreach ($events as $event) {
         if (!is_array($event)) {
@@ -617,22 +693,38 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
         if ($type !== 'page_view' && $type !== 'not_found') {
             continue;
         }
-        $isBot = (($event['device_type'] ?? '') === 'bot');
-        if ($isBot) {
+
+        if (($event['device_type'] ?? '') === 'unknown') {
+            $unknownDeviceViews++;
+        }
+
+        $class = birkly_analytics_traffic_class($event);
+        if ($class === 'bot') {
             $botPageViews++;
             $sid = (string) ($event['session_id'] ?? '');
             if ($sid !== '') {
                 $botSessions[$sid] = true;
             }
+            $agent = (string) ($event['browser'] ?? 'Bot');
+            if ($agent !== '') {
+                $botAgents[$agent] = ($botAgents[$agent] ?? 0) + 1;
+            }
+        } elseif ($class === 'suspected') {
+            $suspectedPageViews++;
         } else {
             $humanPageViews++;
         }
     }
 
+    arsort($botAgents);
+
     return [
         'bot_page_views' => $botPageViews,
+        'suspected_bot_page_views' => $suspectedPageViews,
         'human_page_views' => $humanPageViews,
+        'unknown_device_views' => $unknownDeviceViews,
         'bot_sessions' => count($botSessions),
+        'top_bot_agents' => birkly_analytics_rank_counts($botAgents, 'agent', 'views', 8),
     ];
 }
 
@@ -674,7 +766,8 @@ function birkly_analytics_build_journey_index(array $events, int $sessionLimit =
                 'os' => (string) ($event['os'] ?? ''),
                 'country' => (string) ($event['country'] ?? ''),
                 'location_source' => (string) ($event['location_source'] ?? ''),
-                'is_bot' => (($event['device_type'] ?? '') === 'bot'),
+                'is_bot' => birkly_analytics_traffic_class($event) !== 'human',
+                'traffic_class' => birkly_analytics_traffic_class($event),
                 'source' => birkly_analytics_session_source_label($event),
                 'page_views' => 0,
                 'trail' => [],
@@ -820,10 +913,16 @@ function birkly_analytics_load_events_for_scope(string $trackingId, string $star
  * @param list<array<string, mixed>> $events
  * @return list<array<string, mixed>>
  */
-function birkly_analytics_exclude_bot_events(array $events): array
+function birkly_analytics_exclude_bot_events(array $events, bool $includeBots = false): array
 {
+    if ($includeBots) {
+        return array_values(array_filter($events, static function ($event): bool {
+            return is_array($event);
+        }));
+    }
+
     return array_values(array_filter($events, static function ($event): bool {
-        return is_array($event) && (($event['device_type'] ?? '') !== 'bot');
+        return is_array($event) && birkly_analytics_traffic_class($event) === 'human';
     }));
 }
 
@@ -1106,8 +1205,11 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
         'daily_stats' => [],
         'bot_traffic' => [
             'bot_page_views' => 0,
+            'suspected_bot_page_views' => 0,
             'human_page_views' => 0,
+            'unknown_device_views' => 0,
             'bot_sessions' => 0,
+            'top_bot_agents' => [],
         ],
         'journey' => [
             'sessions' => [],
