@@ -739,6 +739,10 @@
                 <p class="form-help">{translate 'admin.ag_discovery_footer_link_help'}</p>
             </div>
             <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
+                <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-discovery-body-landmark" data-field="publication_settings.discovery_body_landmark"> {translate 'admin.ag_discovery_body_landmark'}</label>
+                <p class="form-help">{translate 'admin.ag_discovery_body_landmark_help'}</p>
+            </div>
+            <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
                 <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-footer-line" data-field="publication_settings.footer_discovery_line"> {translate 'admin.ag_discovery_footer_line'}</label>
                 <p class="form-help">{translate 'admin.ag_discovery_footer_line_help'}</p>
                 <input type="text" id="ap-pub-footer-line-text" class="input u-mt-2" data-field="publication_settings.footer_discovery_line_text" placeholder="{translate 'admin.ag_discovery_footer_line_placeholder'}">

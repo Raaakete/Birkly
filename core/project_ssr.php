@@ -1125,8 +1125,8 @@ function birkly_project_ssr_inject_signature(): string
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     $ver = (int) ($meta['published_version'] ?? 0);
     $seo = birkly_site_seo_signature_part();
-    // dsc9 = Agent Guide body landmark via noscript (not visible with JS).
-    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . $seo . 'dsc9';
+    // dsc10 = optional styled noscript body landmark.
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . $seo . 'dsc10';
 }
 
 /**

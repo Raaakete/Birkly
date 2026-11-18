@@ -37,6 +37,7 @@ function birkly_ai_presence_discovery_publication_settings(?array $published = n
 
     return [
         'footer_discovery_link' => !array_key_exists('footer_discovery_link', $pub) || !empty($pub['footer_discovery_link']),
+        'discovery_body_landmark' => !array_key_exists('discovery_body_landmark', $pub) || !empty($pub['discovery_body_landmark']),
         'footer_discovery_line' => !empty($pub['footer_discovery_line']),
         'footer_discovery_line_text' => trim((string) ($pub['footer_discovery_line_text'] ?? '')),
         'discovery_sitemap' => !array_key_exists('discovery_sitemap', $pub) || !empty($pub['discovery_sitemap']),
@@ -591,6 +592,14 @@ function birkly_ai_presence_discovery_status(): array
             'detail' => $settings['footer_discovery_link']
                 ? '“For agents” link is injected in the page footer when possible.'
                 : 'Enable footer link in publication settings for internal discovery.',
+        ],
+        [
+            'id' => 'body_landmark',
+            'label' => 'No-JS discovery bar',
+            'status' => $settings['discovery_body_landmark'] ? 'pass' : 'neutral',
+            'detail' => $settings['discovery_body_landmark']
+                ? 'A styled <noscript> bar with guide links is injected after <body> (visible only when JS is off).'
+                : 'Disabled — crawlers rely on <head> tags, footer link, and sidecar URLs only.',
         ],
         [
             'id' => 'footer_line',

@@ -17,6 +17,8 @@
     "ag_discovery_footer_line": "Footer-Einzeiler",
     "ag_discovery_footer_line_help": "Optionaler, crawlbarer Satz im Footer mit Link zu Ihrem Agent Guide.",
     "ag_discovery_footer_line_placeholder": "Offizielle KI-Fakten für Chat- und Suchassistenten:",
+    "ag_discovery_body_landmark": "Discovery-Leiste ohne JavaScript",
+    "ag_discovery_body_landmark_help": "Fügt auf jeder Seite eine gestaltete Leiste in <noscript> ein. Bei aktivem JavaScript unsichtbar; ohne JS kurzer Hinweis zur KI-Entdeckung und Links zum Guide.",
     "ag_discovery_footer_link": "Footer-Link „Für Agenten“",
     "ag_discovery_footer_link_help": "Fügt einen kleinen Footer-Link zu /for-agents hinzu, wenn der Seitenfooter erkannt wird (standardmäßig aktiv).",
     "ag_discovery_help": "Checkliste, wie Chat- und Such-KIs Ihren veröffentlichten Guide über indexierte Seiten, Sitemap und robots.txt finden.",

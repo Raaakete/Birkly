@@ -130,6 +130,7 @@ function birkly_ai_presence_default_draft(): array
             'redact_public_fields' => [],
             'public_views_enabled' => true,
             'footer_discovery_link' => true,
+            'discovery_body_landmark' => true,
             'footer_discovery_line' => false,
             'footer_discovery_line_text' => '',
             'discovery_sitemap' => true,
@@ -1489,6 +1490,11 @@ function birkly_ai_presence_discovery_body_landmark_snippet(?array $published = 
     }
 
     require_once __DIR__ . '/ai_presence_discovery.php';
+    $settings = birkly_ai_presence_discovery_publication_settings($published);
+    if (!$settings['discovery_body_landmark']) {
+        return '';
+    }
+
     $map = birkly_ai_presence_discovery_url_map($published, $meta);
     $forAgentsUrl = $map['for_agents'] ?? '';
     if ($forAgentsUrl === '') {
@@ -1496,18 +1502,32 @@ function birkly_ai_presence_discovery_body_landmark_snippet(?array $published = 
     }
 
     $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-    $parts = ['<a href="' . $esc($forAgentsUrl) . '" rel="help">For agents</a>'];
+    $linkStyle = 'color:#1a857f;text-decoration:underline;text-underline-offset:2px;';
+    $links = ['<a href="' . $esc($forAgentsUrl) . '" rel="help" style="' . $linkStyle . '">For agents</a>'];
     if (!empty($map['agent_guide_json'])) {
-        $parts[] = '<a href="' . $esc($map['agent_guide_json']) . '">Agent Guide JSON</a>';
+        $links[] = '<a href="' . $esc($map['agent_guide_json']) . '" style="' . $linkStyle . '">Agent Guide (JSON)</a>';
     }
     if (!empty($map['llms_txt'])) {
-        $parts[] = '<a href="' . $esc($map['llms_txt']) . '">llms.txt</a>';
+        $links[] = '<a href="' . $esc($map['llms_txt']) . '" style="' . $linkStyle . '">llms.txt</a>';
     }
 
+    $boxStyle = 'margin:0;padding:0.85rem 1.25rem;font-family:system-ui,-apple-system,sans-serif;'
+        . 'font-size:14px;line-height:1.55;color:#3d4250;background:#f0f6f5;'
+        . 'border-bottom:1px solid #c5ddd9;box-sizing:border-box;';
+    $titleStyle = 'margin:0 0 0.35rem;font-size:13px;font-weight:600;letter-spacing:0.02em;color:#1a857f;';
+    $textStyle = 'margin:0 0 0.5rem;font-size:13px;color:#5f6577;';
+    $linkRowStyle = 'margin:0;font-size:13px;';
+
+    $inner = '<div style="' . $boxStyle . '" role="note" aria-label="Agent Guide discovery for AI systems">'
+        . '<p style="' . $titleStyle . '">Agent Guide — AI discovery</p>'
+        . '<p style="' . $textStyle . '">You see this bar because JavaScript is disabled in your browser. '
+        . 'For most visitors it stays hidden; it helps search engines and AI assistants find this site’s '
+        . 'published Agent Guide without guessing URLs.</p>'
+        . '<p style="' . $linkRowStyle . '">' . implode(' · ', $links) . '</p>'
+        . '</div>';
+
     return '<noscript class="birkly-agent-guide-discovery" data-birkly-agent-guide="body-landmark" '
-        . 'data-birkly-agent-guide-visibility="noscript">'
-        . '<p>' . implode(' · ', $parts) . '</p>'
-        . '</noscript>' . "\n";
+        . 'data-birkly-agent-guide-visibility="noscript">' . $inner . '</noscript>' . "\n";
 }
 
 function birkly_ai_presence_inject_discovery_body_landmark_into_html(string $html): string
