@@ -268,7 +268,7 @@
                 '<button type="button" class="analytics-metric-info is-tiny" data-tooltip="' + escapeHtml(tip) + '"' +
                 ' aria-label="' + escapeHtml(t('analytics_metric_info_label', 'What this means')) + '"><span aria-hidden="true">?</span></button></span>' +
                 '<span class="analytics-data-health__chip-value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
-                '<div class="meter analytics-data-health__chip-meter" style="--value:' + Math.max(2, Math.round(p)) + '%"><span></span></div>' +
+                '<div class="meter analytics-data-health__chip-meter" style="--value:' + Math.max(2, Math.round(p)) + '"><span></span></div>' +
                 '</div>';
         }
 
@@ -317,7 +317,7 @@
                 '<span class="ranked-label" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</span>' +
                 '<span class="ranked-value u-numeric">' + escapeHtml(formatCount(count)) + '</span>' +
                 '<span class="analytics-bar-share u-numeric" aria-hidden="true">' + pct + '%</span>' +
-                '<div class="meter analytics-bar-meter analytics-bar-meter--' + tier + '" style="--value:' + pct + '%" aria-hidden="true"><span></span></div>' +
+                '<div class="meter analytics-bar-meter analytics-bar-meter--' + tier + '" style="--value:' + pct + '" aria-hidden="true"><span></span></div>' +
                 '</li>';
         }).join('');
         return '<section class="analytics-ranked-panel analytics-panel--interactive">' +
@@ -359,7 +359,8 @@
             return '<li class="analytics-quality-row analytics-quality-row--' + modifier + '">' +
                 '<span class="ranked-label">' + escapeHtml(label) + '</span>' +
                 '<span class="ranked-value u-numeric">' + escapeHtml(formatCount(count)) + '</span>' +
-                '<div class="meter analytics-quality-meter analytics-quality-meter--' + modifier + '" style="--value:' + pct + '%"><span></span></div>' +
+                '<span class="analytics-bar-share u-numeric" aria-hidden="true">' + pct + '%</span>' +
+                '<div class="meter analytics-quality-meter analytics-quality-meter--' + modifier + '" style="--value:' + pct + '"><span></span></div>' +
                 '</li>';
         }
 
@@ -591,7 +592,7 @@
         var totalVisitors = visitors.reduce(function (a, b) { return a + b; }, 0);
         var max = Math.max(1, Math.max.apply(null, views.concat(visitors, ghostViews)));
         var width = 640;
-        var height = 132;
+        var height = 200;
         var padX = 8;
         var innerWidth = width - padX * 2;
         var colW = slice.length > 0 ? innerWidth / slice.length : innerWidth;
@@ -672,12 +673,12 @@
                 metrics += kpiStat((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_metric_tip_bounce', 'Share of sessions that viewed only one page before leaving.'), '');
             }
             return sectionHeading(t('analytics_section_overview', 'Overview'), sub) +
-                '<div class="analytics-metrics-row">' + metrics + '</div>' +
-                '<div class="analytics-overview-layout">' +
-                '<div class="analytics-overview-main u-stack-4">' +
+                '<div class="analytics-overview-hero">' +
+                '<div class="analytics-overview-metrics">' + metrics + '</div>' +
+                '<div class="analytics-overview-chart">' +
                 renderTrendChart(report.daily_stats, report.comparison_daily_stats || state.comparisonDaily) +
                 '</div>' +
-                '<aside class="analytics-overview-aside u-stack-4">' + renderTrafficQuality(report.bot_traffic) + '</aside>' +
+                '<aside class="analytics-overview-breakdown">' + renderTrafficQuality(report.bot_traffic) + '</aside>' +
                 '</div>' +
                 renderTrustStrip(report);
         }
