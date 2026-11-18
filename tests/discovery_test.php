@@ -163,6 +163,13 @@ assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery em
 $_GET['tab'] = 'agent-guide';
 $discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
 assert_true(strpos($discoveryAg, 'data-tab="essentials"') !== false, 'agent guide embed has side nav tabs');
+$_GET['guide_tab'] = 'essentials';
+$discoveryAgEssentials = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(
+    preg_match('/class="tab-content active" data-tab-content="essentials"(?!\s+hidden)/', $discoveryAgEssentials) === 1,
+    'guide_tab=essentials SSR activates essentials panel'
+);
+unset($_GET['guide_tab']);
 assert_true(strpos($discoveryAg, 'tabs-v2-root') === false, 'guide layout is not a tabs-v2 horizontal root');
 $_GET['tab'] = 'webmcp';
 $discoveryWebmcp = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
@@ -198,9 +205,11 @@ if ($wmBackup !== null) {
 }
 birkly_webmcp_reset_cache();
 $discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
-assert_true(strpos($discJs, 'bindSeoPreviewFields') !== false, 'discovery binds SEO preview field listeners');
-assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
 $aiJs = (string) file_get_contents($root . '/admin/js/ai-presence.js');
+assert_true(strpos($discJs, 'bindSeoPreviewFields') !== false, 'discovery binds SEO preview field listeners');
+assert_true(strpos($discJs, 'bindDiscoveryGuideNavClicks') !== false, 'discovery binds agent guide sub-nav clicks');
+assert_true(strpos($aiJs, 'inDiscoveryEmbed') !== false, 'ai-presence detects discovery embed context');
+assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
 assert_true(strpos($aiJs, "data-hub-panel') === 'guide'") !== false, 'agent guide switchTab keeps guide hub panel visible in embed');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
 

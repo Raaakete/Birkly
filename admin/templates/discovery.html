@@ -428,6 +428,8 @@ if ($__disc_tab === 'webmcp') {
     }
 } elseif ($__disc_tab === 'agent-guide') {
     $__ap_embed_vars['discovery_embed_hub_zone'] = 'guide';
+    $__ap_guide_tab_req = isset($_GET['guide_tab']) ? strtolower((string) $_GET['guide_tab']) : 'overview';
+    $__ap_embed_vars['discovery_embed_guide_tab'] = $__ap_guide_tab_req;
 }
 echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', $__ap_embed_vars);
 ?>

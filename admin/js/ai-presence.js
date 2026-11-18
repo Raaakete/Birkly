@@ -42,6 +42,10 @@
     var discoveryEmbed = false;
     var discoveryEmbedInitialZone = null;
 
+    function inDiscoveryEmbed() {
+        return discoveryEmbed || !!document.getElementById('disc-ap-embed');
+    }
+
     function settingsAiUrl() {
         if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
             return global.Birkly.adminUrl('settings', { tab: 'ai' });
@@ -795,7 +799,7 @@
     // experience with a vertical sub-nav (Overview, Essentials, Sources, …).
     // showGuideTab() ensures the Guide zone is active and selects a sub-tab.
     function getGuideTabsRoot() {
-        if (discoveryEmbed) {
+        if (inDiscoveryEmbed()) {
             var embed = document.getElementById('disc-ap-embed');
             if (embed) {
                 var inEmbed = embed.querySelector('.ai-presence-tabs.ap-guide-tabs');
@@ -809,10 +813,13 @@
     function showGuideTab(tab) {
         var hub = getHubRoot();
         var guidePanel = hub && hub.querySelector('[data-hub-panel="guide"]');
-        if (!discoveryEmbed) {
+        if (!inDiscoveryEmbed()) {
             switchZone('guide');
         } else if (!guidePanel || guidePanel.hidden || state.hubZone !== 'guide') {
             switchZone('guide', { updateUrl: false });
+        }
+        if (inDiscoveryEmbed() && typeof global.switchDiscoveryGuideTab === 'function') {
+            global.switchDiscoveryGuideTab(tab || 'overview');
         }
         switchTab(tab || 'overview');
     }
@@ -1089,7 +1096,7 @@
 
     function switchTab(tab) {
         if (!tab) return;
-        if (discoveryEmbed) {
+        if (inDiscoveryEmbed()) {
             var embed = document.getElementById('disc-ap-embed');
             var hub = embed && embed.querySelector('.ap-hub');
             if (hub) {
@@ -1121,7 +1128,7 @@
                 global.Birkly.TabsA11y.syncTabPanel(pane, active);
             }
         });
-        if (discoveryEmbed) {
+        if (inDiscoveryEmbed()) {
             try {
                 var url = new URL(window.location.href);
                 if (url.searchParams.get('tab') === 'agent-guide' || url.searchParams.get('tab') === 'guide') {
@@ -3269,7 +3276,7 @@
     // ===================================================================
 
     function getHubRoot() {
-        if (discoveryEmbed) {
+        if (inDiscoveryEmbed()) {
             var embed = document.getElementById('disc-ap-embed');
             if (embed) {
                 var scoped = embed.querySelector('.ap-hub');
@@ -3940,7 +3947,11 @@
 
     global.initAiPresence = function (config) {
         config = config || {};
-        discoveryEmbed = !!config.discoveryEmbed;
+        if (config.discoveryEmbed === true || (config.discoveryEmbed !== false && document.getElementById('disc-ap-embed'))) {
+            discoveryEmbed = true;
+        } else {
+            discoveryEmbed = !!config.discoveryEmbed;
+        }
         discoveryEmbedInitialZone = discoveryEmbed ? (config.initialHubZone || 'guide') : null;
         if (!isAiPresencePage()) {
             if (discoveryEmbed) {

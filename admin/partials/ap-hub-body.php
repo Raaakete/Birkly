@@ -5,6 +5,14 @@ $__ap_public_urls = is_array($__ap_embed_overview['public_urls'] ?? null) ? $__a
 $__ap_meta = is_array($__ap_embed_overview['meta'] ?? null) ? $__ap_embed_overview['meta'] : null;
 $__ap_pct = $__ap_completeness ? (int) ($__ap_completeness['percent'] ?? 0) : 0;
 $__ap_hub_zone = 'guide';
+$__ap_guide_tab_ids = ['overview', 'essentials', 'sources', 'context', 'products', 'claims', 'media'];
+$__ap_guide_tab = 'overview';
+if (isset($discovery_embed_guide_tab)) {
+    $guideTabCandidate = strtolower((string) $discovery_embed_guide_tab);
+    if (in_array($guideTabCandidate, $__ap_guide_tab_ids, true)) {
+        $__ap_guide_tab = $guideTabCandidate;
+    }
+}
 if (isset($discovery_embed_hub_zone)) {
     $zoneCandidate = strtolower((string) $discovery_embed_hub_zone);
     if (in_array($zoneCandidate, ['guide', 'tools', 'publish'], true)) {
@@ -64,37 +72,37 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
     <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_essentials'}</p>
-            <button type="button" class="side-nav-item active" role="tab" data-tab="overview" aria-selected="true">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'overview' ? ' active' : '' ?>" role="tab" data-tab="overview" aria-selected="<?= $__ap_guide_tab === 'overview' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_overview'}">{translate 'admin.ai_presence_tab_overview'}</span>
             </button>
-            <button type="button" class="side-nav-item" role="tab" data-tab="essentials" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'essentials' ? ' active' : '' ?>" role="tab" data-tab="essentials" aria-selected="<?= $__ap_guide_tab === 'essentials' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ag_view_essentials'}">{translate 'admin.ag_view_essentials'}</span>
             </button>
         </div>
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_offerings'}</p>
-            <button type="button" class="side-nav-item" role="tab" data-tab="sources" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'sources' ? ' active' : '' ?>" role="tab" data-tab="sources" aria-selected="<?= $__ap_guide_tab === 'sources' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_sources'}">{translate 'admin.ai_presence_tab_sources'}</span>
             </button>
-            <button type="button" class="side-nav-item" role="tab" data-tab="context" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'context' ? ' active' : '' ?>" role="tab" data-tab="context" aria-selected="<?= $__ap_guide_tab === 'context' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_context'}">{translate 'admin.ai_presence_tab_context'}</span>
             </button>
-            <button type="button" class="side-nav-item" role="tab" data-tab="products" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'products' ? ' active' : '' ?>" role="tab" data-tab="products" aria-selected="<?= $__ap_guide_tab === 'products' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_products'}">{translate 'admin.ai_presence_tab_products'}</span>
             </button>
-            <button type="button" class="side-nav-item" role="tab" data-tab="claims" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'claims' ? ' active' : '' ?>" role="tab" data-tab="claims" aria-selected="<?= $__ap_guide_tab === 'claims' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_claims'}">{translate 'admin.ai_presence_tab_claims'}</span>
             </button>
         </div>
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_advanced'}</p>
-            <button type="button" class="side-nav-item" role="tab" data-tab="media" aria-selected="false">
+            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'media' ? ' active' : '' ?>" role="tab" data-tab="media" aria-selected="<?= $__ap_guide_tab === 'media' ? 'true' : 'false' ?>">
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_media'}">{translate 'admin.ai_presence_tab_media'}</span>
             </button>
         </div>
     </nav>
     <div class="ap-guide-panels">
-            <div class="tab-content" data-tab-content="essentials">
+            <div class="tab-content<?= $__ap_guide_tab === 'essentials' ? ' active' : '' ?>" data-tab-content="essentials"<?= $__ap_guide_tab === 'essentials' ? '' : ' hidden' ?>>
                 <section class="card u-p-6 u-stack-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_who'}</h3>
@@ -165,7 +173,7 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
                     </div>
                 </div>
             </div>
-                <div class="tab-content active" data-tab-content="overview">
+                <div class="tab-content<?= $__ap_guide_tab === 'overview' ? ' active' : '' ?>" data-tab-content="overview"<?= $__ap_guide_tab === 'overview' ? '' : ' hidden' ?>>
                     <!-- Overview top row: AI Assist (first) + recommended workflow, equal size -->
                     <div class="ap-overview-top u-grid-2 u-gap-4">
                     <aside class="card u-p-6 u-stack-4 ap-assist-widget" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
@@ -351,7 +359,7 @@ if ($__ap_show_public_urls) {
                     </div>
                 </div>
 
-                <div class="tab-content" data-tab-content="sources">
+                <div class="tab-content<?= $__ap_guide_tab === 'sources' ? ' active' : '' ?>" data-tab-content="sources"<?= $__ap_guide_tab === 'sources' ? '' : ' hidden' ?>>
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_sources_lede'}</p>
                     <div class="callout callout-info callout--block u-mb-6" role="note">
                         <strong>{translate 'admin.ag_narrative_callout_title'}</strong>
@@ -433,7 +441,7 @@ if ($__ap_show_public_urls) {
                     </div>
                 </div>
 
-                <div class="tab-content" data-tab-content="context">
+                <div class="tab-content<?= $__ap_guide_tab === 'context' ? ' active' : '' ?>" data-tab-content="context"<?= $__ap_guide_tab === 'context' ? '' : ' hidden' ?>>
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_context_lede'}</p>
                     <div class="u-max-w-page">
                     <section class="card u-p-6 u-stack-4">
@@ -532,7 +540,7 @@ if ($__ap_show_public_urls) {
                     </div>
                 </div>
 
-                <div class="tab-content" data-tab-content="products">
+                <div class="tab-content<?= $__ap_guide_tab === 'products' ? ' active' : '' ?>" data-tab-content="products"<?= $__ap_guide_tab === 'products' ? '' : ' hidden' ?>>
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_products_lede'}</p>
                     <div class="main-actions-bar">
                         <button type="button" class="button is-small" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
@@ -541,7 +549,7 @@ if ($__ap_show_public_urls) {
                     <p id="ap-products-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_products_empty'}</p>
                 </div>
 
-                <div class="tab-content" data-tab-content="claims">
+                <div class="tab-content<?= $__ap_guide_tab === 'claims' ? ' active' : '' ?>" data-tab-content="claims"<?= $__ap_guide_tab === 'claims' ? '' : ' hidden' ?>>
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_claims_lede'}</p>
                     <div class="main-actions-bar">
                         <button type="button" class="button is-small" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
@@ -561,7 +569,7 @@ if ($__ap_show_public_urls) {
                     </div>
                 </div>
 
-                <div class="tab-content" data-tab-content="media">
+                <div class="tab-content<?= $__ap_guide_tab === 'media' ? ' active' : '' ?>" data-tab-content="media"<?= $__ap_guide_tab === 'media' ? '' : ' hidden' ?>>
                     <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_media_help'}</p>
                     <div class="card u-p-6 u-stack-4">
                         <div class="u-cluster-3">
