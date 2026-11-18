@@ -795,7 +795,9 @@
     // experience with a vertical sub-nav (Overview, Essentials, Sources, …).
     // showGuideTab() ensures the Guide zone is active and selects a sub-tab.
     function showGuideTab(tab) {
-        switchZone('guide');
+        if (!discoveryEmbed || state.hubZone !== 'guide') {
+            switchZone('guide');
+        }
         switchTab(tab || 'overview');
     }
 
@@ -1079,7 +1081,9 @@
                 global.Birkly.TabsA11y.syncTabButton(btn, active);
             }
         });
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+        var tabsRoot = document.querySelector('.ai-presence-tabs');
+        if (!tabsRoot) return;
+        tabsRoot.querySelectorAll('.tab-content').forEach(function (pane) {
             var active = pane.getAttribute('data-tab-content') === tab;
             pane.classList.toggle('active', active);
             pane.hidden = !active;
@@ -3216,6 +3220,17 @@
     // Hub shell — zones, status spine, deep-linking (P60-M2)
     // ===================================================================
 
+    function getHubRoot() {
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed) {
+                var scoped = embed.querySelector('.ap-hub');
+                if (scoped) return scoped;
+            }
+        }
+        return document.querySelector('.ap-hub');
+    }
+
     function getInitialZone() {
         try {
             var params = new URLSearchParams(window.location.search);
@@ -3248,13 +3263,16 @@
         opts = opts || {};
         state.hubZone = zone;
 
-        document.querySelectorAll('.ap-hub .tab[data-hub-zone]').forEach(function (btn) {
+        var hub = getHubRoot();
+        if (!hub) return;
+
+        hub.querySelectorAll('.tab[data-hub-zone]').forEach(function (btn) {
             var active = btn.getAttribute('data-hub-zone') === zone;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
             btn.tabIndex = active ? 0 : -1;
         });
-        document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
+        hub.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
             panel.classList.toggle('active', active);
             panel.hidden = !active;
@@ -3276,11 +3294,11 @@
     }
 
     function initHubZones() {
-        var hub = document.querySelector('.ap-hub');
+        var hub = getHubRoot();
         if (!hub) return;
 
         if (discoveryEmbed) {
-            var tablist = document.getElementById('ap-hub-tablist');
+            var tablist = hub.querySelector('#ap-hub-tablist');
             if (tablist) tablist.hidden = true;
             hub.classList.add('ap-hub--discovery-embed');
         }
@@ -3332,7 +3350,24 @@
         });
 
         if (discoveryEmbed) {
-            switchZone(discoveryEmbedInitialZone || 'guide', { updateUrl: false });
+            var embedZone = discoveryEmbedInitialZone || 'guide';
+            var ssrZone = hub.getAttribute('data-discovery-initial-hub-zone');
+            if (ssrZone && HUB_ZONES.indexOf(ssrZone) >= 0) {
+                embedZone = ssrZone;
+            }
+            var guidePanel = hub.querySelector('[data-hub-panel="guide"]');
+            var toolsPanel = hub.querySelector('[data-hub-panel="tools"]');
+            var ssrMatches = false;
+            if (embedZone === 'guide' && guidePanel && !guidePanel.hidden) {
+                ssrMatches = true;
+            } else if (embedZone === 'tools' && toolsPanel && !toolsPanel.hidden) {
+                ssrMatches = true;
+            }
+            if (ssrMatches) {
+                state.hubZone = embedZone;
+            } else {
+                switchZone(embedZone, { updateUrl: false });
+            }
         } else {
             switchZone(getInitialZone(), { updateUrl: false });
         }

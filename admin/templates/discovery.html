@@ -393,6 +393,11 @@ $__ap_embed_vars = [];
 if (is_array($discovery_embed_overview ?? null)) {
     $__ap_embed_vars['discovery_embed_overview'] = $discovery_embed_overview;
 }
+if ($__disc_tab === 'webmcp') {
+    $__ap_embed_vars['discovery_embed_hub_zone'] = 'tools';
+} elseif ($__disc_tab === 'agent-guide') {
+    $__ap_embed_vars['discovery_embed_hub_zone'] = 'guide';
+}
 echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', $__ap_embed_vars);
 ?>
 </div>

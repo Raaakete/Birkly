@@ -415,6 +415,10 @@
 .ap-hub--discovery-embed [data-hub-panel][hidden] {
   display: none !important;
 }
+.ap-hub--discovery-embed .ai-presence-tabs .tab-content:not(.active),
+.ap-hub--discovery-embed .ai-presence-tabs .tab-content[hidden] {
+  display: none !important;
+}
 .disc-modal-body { display: flex; flex-direction: column; gap: var(--s-4); }
 
 /* Embedded editor (partials/ap-hub-body.php): cards are frames on the canvas;

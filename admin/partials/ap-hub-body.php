@@ -4,6 +4,14 @@ $__ap_completeness = is_array($__ap_embed_overview['completeness'] ?? null) ? $_
 $__ap_public_urls = is_array($__ap_embed_overview['public_urls'] ?? null) ? $__ap_embed_overview['public_urls'] : null;
 $__ap_meta = is_array($__ap_embed_overview['meta'] ?? null) ? $__ap_embed_overview['meta'] : null;
 $__ap_pct = $__ap_completeness ? (int) ($__ap_completeness['percent'] ?? 0) : 0;
+$__ap_hub_zone = 'guide';
+if (isset($discovery_embed_hub_zone)) {
+    $zoneCandidate = strtolower((string) $discovery_embed_hub_zone);
+    if (in_array($zoneCandidate, ['guide', 'tools', 'publish'], true)) {
+        $__ap_hub_zone = $zoneCandidate;
+    }
+}
+$__ap_hub_zones = ['guide', 'tools', 'publish'];
 $__ap_show_public_urls = is_array($__ap_public_urls)
     && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
         || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
@@ -25,24 +33,23 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
 
 <!-- Hub: Guide | Tools | Publish — Connections home is Settings → AI (P62-D2).
      Status is a green/red dot on each main tab (no separate status sidebar). -->
-<div class="ap-hub">
+<div class="ap-hub"<?= isset($discovery_embed_hub_zone) ? ' data-discovery-initial-hub-zone="' . htmlspecialchars($__ap_hub_zone, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 <!-- Hub zones — Guide | Tools | Publish -->
 <div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">
-        <span>{translate 'admin.ag_hub_tab_guide'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-guide" data-ok="0" aria-hidden="true"></span>
+<?php foreach ($__ap_hub_zones as $__hz) {
+    $hubActive = $__hz === $__ap_hub_zone;
+    $hubTabId = 'ap-tab-' . $__hz;
+    $hubPanelId = 'ap-panel-' . $__hz;
+    $hubLabelKey = $__hz === 'guide' ? 'admin.ag_hub_tab_guide' : ($__hz === 'tools' ? 'admin.ag_hub_tab_tools' : 'admin.ag_hub_tab_publish');
+    ?>
+    <button type="button" class="tab<?= $hubActive ? ' active' : '' ?>" role="tab" id="<?= htmlspecialchars($hubTabId, ENT_QUOTES, 'UTF-8') ?>" data-hub-zone="<?= htmlspecialchars($__hz, ENT_QUOTES, 'UTF-8') ?>" aria-controls="<?= htmlspecialchars($hubPanelId, ENT_QUOTES, 'UTF-8') ?>" aria-selected="<?= $hubActive ? 'true' : 'false' ?>" tabindex="<?= $hubActive ? '0' : '-1' ?>">
+        <span><?= htmlspecialchars(__($hubLabelKey), ENT_QUOTES, 'UTF-8') ?></span>
+        <span class="ap-tab-dot" id="ap-tab-dot-<?= htmlspecialchars($__hz, ENT_QUOTES, 'UTF-8') ?>" data-ok="0" aria-hidden="true"></span>
     </button>
-    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">
-        <span>{translate 'admin.ag_hub_tab_tools'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-tools" data-ok="0" aria-hidden="true"></span>
-    </button>
-    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">
-        <span>{translate 'admin.ag_hub_tab_publish'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-publish" data-ok="0" aria-hidden="true"></span>
-    </button>
+<?php } ?>
 </div>
 
-<div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
+<div class="tab-panel<?= $__ap_hub_zone === 'guide' ? ' active' : '' ?>" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide"<?= $__ap_hub_zone === 'guide' ? '' : ' hidden' ?>>
 <div class="ap-guide-layout">
     <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
     <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
@@ -575,7 +582,7 @@ if ($__ap_show_public_urls) {
 </div><!-- .tab-panel guide -->
 
 <!-- ===================== TOOLS zone (WebMCP) — P60-M6 ===================== -->
-<div class="tab-panel" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools" hidden>
+<div class="tab-panel<?= $__ap_hub_zone === 'tools' ? ' active' : '' ?>" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools"<?= $__ap_hub_zone === 'tools' ? '' : ' hidden' ?>>
     <div class="u-max-w-page u-stack-6">
         <div class="u-stack-2">
             <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_tools_lede'}</p>
@@ -664,7 +671,7 @@ if ($__ap_show_public_urls) {
 </div>
 
 <!-- ===================== PUBLISH zone — P60-M7 ===================== -->
-<div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
+<div class="tab-panel<?= $__ap_hub_zone === 'publish' ? ' active' : '' ?>" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish"<?= $__ap_hub_zone === 'publish' ? '' : ' hidden' ?>>
     <div class="u-max-w-page u-stack-6">
         <div class="u-split u-align-start u-gap-3">
             <div class="u-stack-1">

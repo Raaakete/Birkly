@@ -1268,12 +1268,12 @@
             console.error('Discovery bootstrap render failed', bootstrapErr);
             showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
         }
+        initApEmbed();
         initHubZones();
         bindPackToggles();
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
-        initApEmbed();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });

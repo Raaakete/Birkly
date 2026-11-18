@@ -155,6 +155,20 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
 }
 assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
+$_GET['tab'] = 'webmcp';
+$discoveryWebmcp = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(
+    strpos($discoveryWebmcp, 'class="tab-panel active" id="ap-panel-tools"') !== false,
+    'webmcp discovery tab SSR activates tools hub panel'
+);
+assert_true(
+    preg_match('/id="ap-panel-guide"[^>]*hidden/', $discoveryWebmcp) === 1,
+    'webmcp discovery tab SSR hides guide hub panel'
+);
+assert_true(
+    strpos($discoveryWebmcp, 'data-discovery-initial-hub-zone="tools"') !== false,
+    'webmcp embed marks initial hub zone'
+);
 $discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
 assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
