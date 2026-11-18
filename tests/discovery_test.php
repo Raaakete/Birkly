@@ -120,7 +120,9 @@ $discoveryPage = getDiscoveryPageData();
 assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
 assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
 assert_true(is_array($discoveryPage['discovery_embed_overview']['completeness'] ?? null), 'discovery embed overview completeness');
-assert_true(is_array($discoveryPage['discovery_embed_webmcp'] ?? null), 'discovery embed includes webmcp config');
+assert_true(is_array($discoveryPage['discovery_embed_webmcp']['config'] ?? null), 'discovery embed includes webmcp config');
+assert_true(is_array($discoveryPage['discovery_embed_webmcp']['catalog'] ?? null), 'discovery embed includes webmcp catalog');
+assert_true(count($discoveryPage['discovery_embed_webmcp']['catalog']) >= 6, 'webmcp catalog has core tools');
 
 echo "==> Discovery template render\n";
 require_once $root . '/admin/template_parser.php';
@@ -182,6 +184,7 @@ assert_true(
     preg_match('/id="ap-webmcp-config" class="u-stack-6"(?!\s+hidden)/', $discoveryWebmcpOn) === 1,
     'enabled webmcp SSR shows tools catalog chrome'
 );
+assert_true(strpos($discoveryWebmcpOn, 'data-ssr-webmcp-tool=') !== false, 'enabled webmcp SSR lists tools');
 if ($wmBackup !== null) {
     file_put_contents($wmPath, $wmBackup);
 } elseif (is_file($wmPath)) {

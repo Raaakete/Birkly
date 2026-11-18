@@ -377,6 +377,41 @@ function birkly_webmcp_enabled_tool_ids(): array
     return $ids;
 }
 
+/**
+ * Admin UI catalog rows (same shape as api/webmcp.php get).
+ *
+ * @param array{enabled:bool,tools:array<string,bool>,form_allowlist:list<string>} $config
+ * @return list<array<string, mixed>>
+ */
+function birkly_webmcp_admin_catalog(array $config): array
+{
+    $out = [];
+    foreach (birkly_webmcp_tool_catalog() as $tool) {
+        $id = $tool['id'];
+        $entry = [
+            'id' => $id,
+            'pack' => $tool['pack'],
+            'kind' => $tool['kind'],
+            'mutating' => $tool['mutating'],
+            'consent' => $tool['consent'],
+            'default' => $tool['default'],
+            'enabled' => (bool) ($config['tools'][$id] ?? $tool['default']),
+        ];
+        if (!empty($tool['plugin_id'])) {
+            $entry['plugin_id'] = $tool['plugin_id'];
+        }
+        if (!empty($tool['label'])) {
+            $entry['label'] = $tool['label'];
+        }
+        if (!empty($tool['description'])) {
+            $entry['description'] = $tool['description'];
+        }
+        $out[] = $entry;
+    }
+
+    return $out;
+}
+
 function birkly_webmcp_is_enabled(): bool
 {
     if (!function_exists('birkly_discovery_pack_enabled')) {

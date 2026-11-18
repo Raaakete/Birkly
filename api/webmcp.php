@@ -39,37 +39,11 @@ $input = sanitize_input($input);
 $action = $input['action'] ?? $_GET['action'] ?? 'get';
 
 /**
- * Attach the catalog metadata so the admin UI can render the tool list without
- * hard-coding it in JS.
- *
- * @return array<int, array<string, mixed>>
+ * @deprecated Use birkly_webmcp_admin_catalog() in core/webmcp.php
  */
 function birkly_webmcp_api_catalog(array $config): array
 {
-    $out = [];
-    foreach (birkly_webmcp_tool_catalog() as $tool) {
-        $id = $tool['id'];
-        $entry = [
-            'id' => $id,
-            'pack' => $tool['pack'],
-            'kind' => $tool['kind'],
-            'mutating' => $tool['mutating'],
-            'consent' => $tool['consent'],
-            'default' => $tool['default'],
-            'enabled' => (bool) ($config['tools'][$id] ?? $tool['default']),
-        ];
-        if (!empty($tool['plugin_id'])) {
-            $entry['plugin_id'] = $tool['plugin_id'];
-        }
-        if (!empty($tool['label'])) {
-            $entry['label'] = $tool['label'];
-        }
-        if (!empty($tool['description'])) {
-            $entry['description'] = $tool['description'];
-        }
-        $out[] = $entry;
-    }
-    return $out;
+    return birkly_webmcp_admin_catalog($config);
 }
 
 if ($action === 'get') {

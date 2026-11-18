@@ -3453,6 +3453,8 @@
                 state.webmcpLoaded = true;
                 renderTools();
                 updateSpine();
+                bindWebmcpToolInputs(document.getElementById('ap-webmcp-catalog'));
+                bindWebmcpAllowInputs(document.getElementById('ap-webmcp-allowlist'));
                 renderPublishZone();
             })
             .catch(function (err) {
@@ -3484,6 +3486,56 @@
             .finally(function () { state.webmcpSaving = false; });
     }
 
+    function webmcpDetailsVisible() {
+        var config = document.getElementById('ap-webmcp-config');
+        return !!(config && !config.hidden);
+    }
+
+    function bindWebmcpToolInputs(root) {
+        (root || document).querySelectorAll('.ap-webmcp-tool').forEach(function (input) {
+            if (input.getAttribute('data-webmcp-bound') === '1') {
+                return;
+            }
+            input.setAttribute('data-webmcp-bound', '1');
+            input.addEventListener('change', function () {
+                var id = input.getAttribute('data-tool-id');
+                if (!state.webmcpConfig) {
+                    state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
+                }
+                if (!state.webmcpConfig.tools) {
+                    state.webmcpConfig.tools = {};
+                }
+                state.webmcpConfig.tools[id] = input.checked;
+                saveWebmcp();
+            });
+        });
+    }
+
+    function bindWebmcpAllowInputs(root) {
+        (root || document).querySelectorAll('.ap-webmcp-allow').forEach(function (input) {
+            if (input.getAttribute('data-webmcp-bound') === '1') {
+                return;
+            }
+            input.setAttribute('data-webmcp-bound', '1');
+            input.addEventListener('change', function () {
+                var slug = input.getAttribute('data-slug');
+                var list = (state.webmcpConfig && state.webmcpConfig.form_allowlist) || [];
+                var idx = list.indexOf(slug);
+                if (input.checked && idx < 0) {
+                    list.push(slug);
+                }
+                if (!input.checked && idx >= 0) {
+                    list.splice(idx, 1);
+                }
+                if (!state.webmcpConfig) {
+                    state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
+                }
+                state.webmcpConfig.form_allowlist = list;
+                saveWebmcp();
+            });
+        });
+    }
+
     function renderTools() {
         var cfg = state.webmcpConfig || { enabled: false, tools: {}, form_allowlist: [] };
         var master = document.getElementById('ap-webmcp-enabled');
@@ -3494,7 +3546,7 @@
         var supportNote = document.getElementById('ap-webmcp-support-note');
         if (supportNote) supportNote.hidden = webmcpSupportedInThisBrowser();
 
-        if (cfg.enabled) {
+        if (webmcpDetailsVisible() || cfg.enabled) {
             renderToolCatalog();
             renderAllowlist();
             renderToolsPreview();
@@ -3504,6 +3556,10 @@
     function renderToolCatalog() {
         var host = document.getElementById('ap-webmcp-catalog');
         if (!host) return;
+        if ((!state.webmcpCatalog || !state.webmcpCatalog.length) && host.getAttribute('data-ssr-webmcp-catalog') === '1') {
+            bindWebmcpToolInputs(host);
+            return;
+        }
         host.innerHTML = '';
         var cfg = state.webmcpConfig || { tools: {} };
         var byPack = {};
@@ -3555,14 +3611,7 @@
             host.appendChild(group);
         });
 
-        host.querySelectorAll('.ap-webmcp-tool').forEach(function (input) {
-            input.addEventListener('change', function () {
-                var id = input.getAttribute('data-tool-id');
-                if (!state.webmcpConfig.tools) state.webmcpConfig.tools = {};
-                state.webmcpConfig.tools[id] = input.checked;
-                saveWebmcp();
-            });
-        });
+        bindWebmcpToolInputs(host);
     }
 
     function renderAllowlist() {
@@ -3570,6 +3619,12 @@
         var empty = document.getElementById('ap-webmcp-allowlist-empty');
         var warn = document.getElementById('ap-webmcp-allowlist-warn');
         if (!host) return;
+        if (host.getAttribute('data-ssr-webmcp-allowlist') === '1' && !state.webmcpLoaded) {
+            bindWebmcpAllowInputs(host);
+            if (empty) empty.hidden = host.children.length > 0;
+            host.hidden = host.children.length === 0;
+            return;
+        }
         host.innerHTML = '';
         var forms = state.webmcpPublicForms || [];
         var cfg = state.webmcpConfig || { form_allowlist: [], tools: {} };
@@ -3588,17 +3643,7 @@
             host.appendChild(row);
         });
 
-        host.querySelectorAll('.ap-webmcp-allow').forEach(function (input) {
-            input.addEventListener('change', function () {
-                var slug = input.getAttribute('data-slug');
-                var list = state.webmcpConfig.form_allowlist || [];
-                var idx = list.indexOf(slug);
-                if (input.checked && idx < 0) list.push(slug);
-                if (!input.checked && idx >= 0) list.splice(idx, 1);
-                state.webmcpConfig.form_allowlist = list;
-                saveWebmcp();
-            });
-        });
+        bindWebmcpAllowInputs(host);
 
         // Warn if the submit tool is on but no forms are allowed.
         var submitOn = !!(cfg.tools && cfg.tools.birkly_submit_public_form);
