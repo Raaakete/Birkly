@@ -260,7 +260,15 @@ function getDiscoveryPageData(): array
             'meta' => birkly_ai_presence_load_meta(),
             'cms_diff' => birkly_ai_presence_cms_sync_diff($agDraft),
         ],
-        'discovery_embed_webmcp' => birkly_webmcp_load(),
+        'discovery_embed_webmcp' => (static function (): array {
+            $config = birkly_webmcp_load();
+
+            return [
+                'config' => $config,
+                'catalog' => birkly_webmcp_admin_catalog($config),
+                'public_forms' => birkly_webmcp_public_form_collections(),
+            ];
+        })(),
     ];
 }
 

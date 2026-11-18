@@ -12,8 +12,15 @@ if (isset($discovery_embed_hub_zone)) {
     }
 }
 $__ap_hub_zones = ['guide', 'tools', 'publish'];
-$__ap_webmcp = is_array($discovery_embed_webmcp ?? null) ? $discovery_embed_webmcp : null;
+$__ap_webmcp_payload = is_array($discovery_embed_webmcp ?? null) ? $discovery_embed_webmcp : null;
+$__ap_webmcp = is_array($__ap_webmcp_payload['config'] ?? null)
+    ? $__ap_webmcp_payload['config']
+    : (is_array($__ap_webmcp_payload) && array_key_exists('enabled', $__ap_webmcp_payload) ? $__ap_webmcp_payload : null);
+$__ap_webmcp_catalog = is_array($__ap_webmcp_payload['catalog'] ?? null) ? $__ap_webmcp_payload['catalog'] : [];
+$__ap_webmcp_forms = is_array($__ap_webmcp_payload['public_forms'] ?? null) ? $__ap_webmcp_payload['public_forms'] : [];
 $__ap_webmcp_on = $__ap_webmcp ? !empty($__ap_webmcp['enabled']) : false;
+$__ap_webmcp_ssr = isset($discovery_embed_hub_zone) && !empty($__ap_webmcp_catalog);
+$__ap_webmcp_allow = is_array($__ap_webmcp['form_allowlist'] ?? null) ? $__ap_webmcp['form_allowlist'] : [];
 $__ap_show_public_urls = is_array($__ap_public_urls)
     && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
         || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
@@ -615,7 +622,59 @@ if ($__ap_show_public_urls) {
                     <h3 class="u-m-0">{translate 'admin.ag_tools_catalog_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_catalog_help'}</p>
                 </header>
-                <div id="ap-webmcp-catalog" class="u-stack-4"></div>
+                <div id="ap-webmcp-catalog" class="u-stack-4"<?= $__ap_webmcp_ssr ? ' data-ssr-webmcp-catalog="1"' : '' ?>>
+<?php if ($__ap_webmcp_ssr) {
+    $grouped = [];
+    $packOrder = [];
+    foreach ($__ap_webmcp_catalog as $tool) {
+        if (!is_array($tool)) {
+            continue;
+        }
+        $pack = (string) ($tool['pack'] ?? 'plugin');
+        if (!isset($grouped[$pack])) {
+            $grouped[$pack] = [];
+            $packOrder[] = $pack;
+        }
+        $grouped[$pack][] = $tool;
+    }
+    usort($packOrder, static function (string $a, string $b): int {
+        if ($a === 'core') {
+            return -1;
+        }
+        if ($b === 'core') {
+            return 1;
+        }
+        return strcmp($a, $b);
+    });
+    foreach ($packOrder as $pack) {
+        $tools = $grouped[$pack] ?? [];
+        if ($tools === []) {
+            continue;
+        }
+        $packLabel = $pack === 'core' ? __('admin.ag_webmcp_pack_core') : ucwords(str_replace('_', ' ', $pack));
+        echo '<div class="card-section u-stack-2" data-ssr-webmcp-pack="' . htmlspecialchars($pack, ENT_QUOTES, 'UTF-8') . '">';
+        echo '<div class="u-split u-align-baseline"><h4 class="u-text-sm u-weight-semibold u-m-0">'
+            . htmlspecialchars($packLabel, ENT_QUOTES, 'UTF-8') . '</h4></div>';
+        echo '<ul class="data-list">';
+        foreach ($tools as $tool) {
+            $id = (string) ($tool['id'] ?? '');
+            $label = (string) ($tool['label'] ?? $id);
+            $desc = (string) ($tool['description'] ?? '');
+            $checked = !empty($tool['enabled']) ? ' checked' : '';
+            echo '<li class="data-list-item u-split u-align-start u-gap-3" data-ssr-webmcp-tool="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '">';
+            echo '<div class="u-stack-1 u-fill"><strong class="u-text-sm">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</strong>';
+            if ($desc !== '') {
+                echo '<span class="u-text-xs u-fg-secondary">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</span>';
+            }
+            echo '</div>';
+            echo '<label class="switch"><input type="checkbox" class="ap-webmcp-tool" data-tool-id="'
+                . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '"' . $checked
+                . '><span class="switch__slider"></span></label></li>';
+        }
+        echo '</ul></div>';
+    }
+} ?>
+                </div>
             </section>
 
             <section class="card u-p-6 u-stack-4">
@@ -623,8 +682,23 @@ if ($__ap_show_public_urls) {
                     <h3 class="u-m-0">{translate 'admin.ag_tools_allowlist_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_allowlist_help'}</p>
                 </header>
-                <div id="ap-webmcp-allowlist" class="u-stack-2"></div>
-                <p id="ap-webmcp-allowlist-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_allowlist_empty'}</p>
+                <div id="ap-webmcp-allowlist" class="u-stack-2"<?= ($__ap_webmcp_ssr && $__ap_webmcp_forms !== []) ? ' data-ssr-webmcp-allowlist="1"' : '' ?><?= ($__ap_webmcp_ssr && $__ap_webmcp_forms === []) ? ' hidden' : '' ?>>
+<?php if ($__ap_webmcp_ssr && $__ap_webmcp_forms !== []) {
+    foreach ($__ap_webmcp_forms as $form) {
+        if (!is_array($form)) {
+            continue;
+        }
+        $slug = (string) ($form['slug'] ?? '');
+        $name = (string) ($form['name'] ?? $slug);
+        $checked = in_array($slug, $__ap_webmcp_allow, true) ? ' checked' : '';
+        echo '<label class="u-row-2 u-text-sm"><input type="checkbox" class="ap-webmcp-allow" data-slug="'
+            . htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') . '"' . $checked . '> <span>'
+            . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ' <code class="u-text-xs u-fg-secondary">'
+            . htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') . '</code></span></label>';
+    }
+} ?>
+                </div>
+                <p id="ap-webmcp-allowlist-empty" class="empty-state empty-state--compact"<?= ($__ap_webmcp_ssr && $__ap_webmcp_forms === []) ? '' : ' hidden' ?>>{translate 'admin.ag_tools_allowlist_empty'}</p>
                 <p id="ap-webmcp-allowlist-warn" class="callout callout-warning u-text-sm u-m-0" hidden>{translate 'admin.ag_tools_allowlist_warn'}</p>
             </section>
 
@@ -633,7 +707,28 @@ if ($__ap_show_public_urls) {
                     <h3 class="u-m-0">{translate 'admin.ag_tools_preview_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_preview_help'}</p>
                 </header>
-                <ul id="ap-webmcp-preview" class="data-list"></ul>
+                <ul id="ap-webmcp-preview" class="data-list" data-ssr-webmcp-preview="1">
+<?php
+if ($__ap_webmcp_ssr) {
+    foreach ($__ap_webmcp_catalog as $tool) {
+        if (!is_array($tool) || empty($tool['enabled'])) {
+            continue;
+        }
+        if (($tool['id'] ?? '') === 'birkly_submit_public_form' && $__ap_webmcp_allow === []) {
+            continue;
+        }
+        $label = (string) ($tool['label'] ?? $tool['id'] ?? '');
+        $desc = (string) ($tool['description'] ?? '');
+        echo '<li class="data-list-item u-stack-1" data-ssr-webmcp-preview-item="1"><strong class="u-text-sm">'
+            . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</strong>';
+        if ($desc !== '') {
+            echo '<span class="u-text-xs u-fg-secondary">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+        echo '</li>';
+    }
+}
+?>
+                </ul>
                 <p id="ap-webmcp-preview-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_preview_empty'}</p>
             </section>
 
