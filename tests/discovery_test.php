@@ -113,6 +113,13 @@ $enabled = birkly_discovery_pack_enabled('agent_guide');
 assert_true($enabled === true, 'migrate enables agent_guide without stack overflow');
 assert_true(birkly_ai_presence_is_publicly_live() === true, 'publicly live after migrate');
 
+echo "==> Discovery admin page data\n";
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
+require_once $root . '/api/admin_templates.php';
+$discoveryPage = getDiscoveryPageData();
+assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
+assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
+
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
 assert_true($code === 0, 'discovery.php syntax');
