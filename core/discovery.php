@@ -235,7 +235,7 @@ function birkly_discovery_sitemap_is_live(): bool
 /**
  * @return list<array{id:string,pack:string,label:string,status:string,detail:string}>
  */
-function birkly_discovery_verify_checks(): array
+function birkly_discovery_verify_checks(bool $includeSeoHealth = false): array
 {
     require_once __DIR__ . '/ai_presence_discovery.php';
     require_once __DIR__ . '/site_seo.php';
@@ -250,9 +250,26 @@ function birkly_discovery_verify_checks(): array
         $checks[] = $check;
     }
 
-    require_once __DIR__ . '/site_seo_url_map.php';
-    foreach (birkly_seo_health_checks() as $check) {
-        $checks[] = $check;
+    if ($includeSeoHealth) {
+        require_once __DIR__ . '/site_seo_url_map.php';
+        foreach (birkly_seo_health_checks() as $check) {
+            $checks[] = $check;
+        }
+    } elseif (birkly_site_seo_is_published()) {
+        $discovery = birkly_discovery_load();
+        $cached = is_array($discovery['verify_cache'] ?? null) ? $discovery['verify_cache'] : [];
+        foreach ($cached as $check) {
+            if (!is_array($check) || ($check['pack'] ?? '') !== 'seo') {
+                continue;
+            }
+            if (!isset($check['id']) || !is_string($check['id'])) {
+                continue;
+            }
+            if (strncmp((string) $check['id'], 'seo_', 4) !== 0) {
+                continue;
+            }
+            $checks[] = $check;
+        }
     }
 
     if (birkly_site_seo_is_published()) {
@@ -313,10 +330,25 @@ function birkly_discovery_verify_checks(): array
  */
 function birkly_discovery_run_verify(): array
 {
-    $checks = birkly_discovery_verify_checks();
+    $checks = birkly_discovery_verify_checks(true);
     $ranAt = date('c');
     $config = birkly_discovery_load();
     $config['verify_last_run'] = $ranAt;
+    $seoCache = [];
+    foreach ($checks as $check) {
+        if (!is_array($check) || ($check['pack'] ?? '') !== 'seo') {
+            continue;
+        }
+        $id = (string) ($check['id'] ?? '');
+        if ($id === '' || strncmp($id, 'seo_', 4) !== 0) {
+            continue;
+        }
+        if (in_array($id, ['seo_meta_inject', 'seo_sitemap', 'seo_published'], true)) {
+            continue;
+        }
+        $seoCache[] = $check;
+    }
+    $config['verify_cache'] = $seoCache;
     birkly_discovery_save($config);
 
     return ['ok' => true, 'checks' => $checks, 'ran_at' => $ranAt];

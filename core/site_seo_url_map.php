@@ -1341,6 +1341,9 @@ function birkly_seo_health_checks(): array
     $checks = [];
     $titles = [];
     $rows = birkly_seo_url_map_admin_rows($config);
+    $htmlReads = 0;
+    $htmlReadCap = 80;
+    $titleScanTruncated = false;
 
     foreach ($rows as $row) {
         if (($row['type'] ?? '') === 'redirect') {
@@ -1350,9 +1353,14 @@ function birkly_seo_health_checks(): array
         if ($title === '' && ($row['type'] ?? '') === 'page') {
             $file = ltrim((string) ($row['file'] ?? $row['project_file'] ?? ''), '/');
             if ($file !== '') {
-                $html = birkly_seo_read_project_html($file);
-                if ($html !== '') {
-                    $title = birkly_seo_html_title($html);
+                if ($htmlReads >= $htmlReadCap) {
+                    $titleScanTruncated = true;
+                } else {
+                    $html = birkly_seo_read_project_html($file);
+                    $htmlReads++;
+                    if ($html !== '') {
+                        $title = birkly_seo_html_title($html);
+                    }
                 }
             }
         }
@@ -1368,6 +1376,16 @@ function birkly_seo_health_checks(): array
         if ($title !== '') {
             $titles[$title][] = (string) ($row['url'] ?? '');
         }
+    }
+
+    if ($titleScanTruncated) {
+        $checks[] = [
+            'id' => 'seo_health_scan_cap',
+            'pack' => 'seo',
+            'label' => 'Title health scan',
+            'status' => 'neutral',
+            'detail' => 'Sampled the first ' . $htmlReadCap . ' project HTML files — run Verify again after URL map changes.',
+        ];
     }
 
     foreach ($titles as $title => $urls) {
