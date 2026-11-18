@@ -52,8 +52,33 @@ if (!function_exists('birkly_ap_draft_field')) {
         if ($format === 'lines' && is_array($cur)) {
             return implode("\n", array_map(static fn ($v): string => (string) $v, $cur));
         }
+        if ($format === 'csv' && is_array($cur)) {
+            return implode(', ', array_map(static fn ($v): string => (string) $v, $cur));
+        }
+        if ($format === 'json' && (is_array($cur) || is_object($cur))) {
+            $encoded = json_encode($cur, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+
+            return is_string($encoded) ? $encoded : '[]';
+        }
 
         return is_scalar($cur) ? (string) $cur : '';
+    }
+}
+if (!function_exists('birkly_ap_draft_checkbox_checked')) {
+    function birkly_ap_draft_checkbox_checked(?array $draft, string $path): string
+    {
+        if (!$draft) {
+            return '';
+        }
+        $cur = $draft;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($cur) || !array_key_exists($segment, $cur)) {
+                return '';
+            }
+            $cur = $cur[$segment];
+        }
+
+        return $cur ? ' checked' : '';
     }
 }
 if (!function_exists('birkly_ap_draft_field_attr')) {
@@ -198,11 +223,11 @@ if (!function_exists('birkly_ap_guide_nav_open')) {
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.best_known_for', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                            <div class="ap-field-row"><textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                            <div class="ap-field-row"><textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.differentiators', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
@@ -537,19 +562,19 @@ if ($__ap_show_public_urls) {
                             </div>
                             <div class="form-group">
                                 <label for="ap-industry">{translate 'admin.ai_presence_industry'}</label>
-                                <div class="ap-field-row"><textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.industry" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.industry', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.industry" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-categories">{translate 'admin.ai_presence_categories'}</label>
-                                <div class="ap-field-row"><textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.categories" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.categories', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.categories" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-locations">{translate 'admin.ai_presence_locations'}</label>
-                                <div class="ap-field-row"><textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.locations" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.locations', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="identity.locations" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-website">{translate 'admin.ai_presence_website'}</label>
-                                <div class="ap-field-row"><input type="url" id="ap-website" class="input" data-field="identity.website"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="url" id="ap-website" class="input" data-field="identity.website" value="<?= birkly_ap_draft_field_attr($__ap_embed_draft, 'identity.website') ?>"><button type="button" class="button is-small ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label>{translate 'admin.ai_presence_social_profiles'}</label>
@@ -563,23 +588,23 @@ if ($__ap_show_public_urls) {
                         <div class="ap-context-grid">
                             <div class="form-group ap-span-full">
                                 <label for="ap-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.best_known_for', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                                <div class="ap-field-row"><textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.differentiators', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-best-suited">{translate 'admin.ai_presence_best_suited_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_suited_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.best_suited_for', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.best_suited_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-not-ideal">{translate 'admin.ai_presence_not_ideal_for'}</label>
-                                <div class="ap-field-row"><textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.not_ideal_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.not_ideal_for', 'lines') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.not_ideal_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
-                                <div class="ap-field-row"><textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.competitive_positioning" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'positioning.competitive_positioning') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="positioning.competitive_positioning" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                         </div>
                     </section>
@@ -588,19 +613,19 @@ if ($__ap_show_public_urls) {
                         <div class="ap-context-grid">
                             <div class="form-group">
                                 <label for="ap-tone">{translate 'admin.ai_presence_tone'}</label>
-                                <div class="ap-field-row"><input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv"><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.tone" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv" value="<?= birkly_ap_draft_field_attr($__ap_embed_draft, 'communication_guidance.tone', 'csv') ?>"><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.tone" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-preferred-json">{translate 'admin.ai_presence_preferred_terms'}</label>
-                                <div class="ap-field-row"><textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.preferred_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'communication_guidance.preferred_terms', 'json') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.preferred_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-avoided-json">{translate 'admin.ai_presence_avoided_terms'}</label>
-                                <div class="ap-field-row"><textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.avoided_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'communication_guidance.avoided_terms', 'json') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.avoided_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                             <div class="form-group ap-span-full">
                                 <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
-                                <div class="ap-field-row"><textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.custom_guidance" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
+                                <div class="ap-field-row"><textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"><?= birkly_ap_draft_field_attr($__ap_embed_draft, 'communication_guidance.custom_guidance') ?></textarea><button type="button" class="button is-small ap-field-ai" data-field="communication_guidance.custom_guidance" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                             </div>
                         </div>
                     </section>

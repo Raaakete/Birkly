@@ -80,6 +80,23 @@ assert_true(
     ($effective['identity']['official_name'] ?? '') === 'Published Only Co',
     'effective editor draft falls back to published content'
 );
+$richPub = birkly_ai_presence_load_published();
+if (is_array($richPub)) {
+    $richPub['identity']['full_description'] = 'Published full description body';
+    birkly_ai_presence_write_json(birkly_ai_presence_dir() . '/published.json', $richPub);
+}
+$sparse = birkly_ai_presence_default_draft();
+$sparse['identity']['official_name'] = 'Sparse local edit';
+birkly_ai_presence_save_draft($sparse);
+$merged = birkly_ai_presence_effective_editor_draft();
+assert_true(
+    ($merged['identity']['official_name'] ?? '') === 'Sparse local edit',
+    'effective draft keeps non-empty draft overlay fields'
+);
+assert_true(
+    ($merged['identity']['full_description'] ?? '') === 'Published full description body',
+    'effective draft keeps published fields when draft value is empty'
+);
 
 echo "==> Discovery verify + url map\n";
 require_once $root . '/core/ai_presence.php';

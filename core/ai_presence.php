@@ -245,31 +245,82 @@ function birkly_ai_presence_draft_has_meaningful_content(array $draft): bool
     return false;
 }
 
+function birkly_ai_presence_scalar_is_empty_for_overlay(mixed $value): bool
+{
+    if ($value === null) {
+        return true;
+    }
+    if (is_bool($value) || is_int($value) || is_float($value)) {
+        return false;
+    }
+    if (is_string($value)) {
+        return trim($value) === '';
+    }
+
+    return false;
+}
+
 /**
- * Draft for admin editing/hydration — falls back to published when on-disk draft is still default-empty.
+ * Overlay sparse draft edits onto a fuller published/base snapshot without blank strings
+ * wiping existing published field values.
+ *
+ * @param array<string, mixed> $base
+ * @param array<string, mixed> $overlay
+ * @return array<string, mixed>
+ */
+function birkly_ai_presence_merge_nonempty_overlay(array $base, array $overlay): array
+{
+    if ($overlay !== [] && array_is_list($overlay)) {
+        return array_values($overlay);
+    }
+
+    $result = $base;
+    foreach ($overlay as $key => $value) {
+        if (!is_string($key)) {
+            continue;
+        }
+        if ($key === 'publication_settings' && is_array($value)) {
+            $result[$key] = array_replace_recursive(is_array($result[$key] ?? null) ? $result[$key] : [], $value);
+            continue;
+        }
+        if (birkly_ai_presence_is_draft_list_key($key)) {
+            if (is_array($value) && $value !== []) {
+                $result[$key] = array_values($value);
+            }
+            continue;
+        }
+        if (is_array($value) && isset($result[$key]) && is_array($result[$key]) && !array_is_list($value)) {
+            $result[$key] = birkly_ai_presence_merge_nonempty_overlay($result[$key], $value);
+            continue;
+        }
+        if (is_bool($value) || !birkly_ai_presence_scalar_is_empty_for_overlay($value)) {
+            $result[$key] = $value;
+        }
+    }
+
+    return $result;
+}
+
+/**
+ * Draft for admin editing/hydration — published snapshot underlay plus non-empty draft overlay.
  *
  * @return array<string, mixed>
  */
 function birkly_ai_presence_effective_editor_draft(): array
 {
     $draft = birkly_ai_presence_load_draft();
-    if (birkly_ai_presence_draft_has_meaningful_content($draft)) {
+    $published = birkly_ai_presence_load_published();
+    if ($published === null) {
         return $draft;
     }
-    $published = birkly_ai_presence_load_published();
-    if ($published !== null && birkly_ai_presence_draft_has_meaningful_content($published)) {
-        $merged = birkly_ai_presence_normalize_draft($published);
-        if (is_array($merged['publication_settings'] ?? null) && is_array($draft['publication_settings'] ?? null)) {
-            $merged['publication_settings'] = array_replace_recursive(
-                $merged['publication_settings'],
-                $draft['publication_settings']
-            );
-        }
-
-        return $merged;
+    if (!birkly_ai_presence_draft_has_meaningful_content($published)) {
+        return $draft;
     }
 
-    return $draft;
+    $base = birkly_ai_presence_normalize_draft($published);
+    $merged = birkly_ai_presence_merge_nonempty_overlay($base, $draft);
+
+    return birkly_ai_presence_normalize_draft($merged);
 }
 
 function birkly_ai_presence_save_draft(array $draft): bool
