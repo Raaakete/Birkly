@@ -1150,6 +1150,7 @@
     function initTabs() {
         var root = getGuideTabsRoot();
         if (!root) return;
+        syncGuideSubnavPanels();
         var nav = root.querySelector('.ap-guide-nav');
         if (nav) {
             nav.setAttribute('role', 'tablist');
@@ -1158,12 +1159,14 @@
                 nav.addEventListener('click', function (e) {
                     var btn = e.target.closest('.side-nav-item[data-tab]');
                     if (!btn || !nav.contains(btn)) return;
+                    if (btn.tagName === 'A' || btn.getAttribute('data-disc-guide-link') === '1') {
+                        return;
+                    }
                     e.preventDefault();
                     showGuideTab(btn.getAttribute('data-tab'));
                 });
             }
         }
-        syncGuideSubnavPanels();
     }
 
     function renderOverview(data) {

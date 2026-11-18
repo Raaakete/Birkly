@@ -32,6 +32,27 @@ $__ap_webmcp_allow = is_array($__ap_webmcp['form_allowlist'] ?? null) ? $__ap_we
 $__ap_show_public_urls = is_array($__ap_public_urls)
     && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
         || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
+$__ap_discovery_embed = !empty($discovery_embed_shell) || isset($discovery_embed_hub_zone);
+if (!function_exists('birkly_ap_guide_nav_open')) {
+    function birkly_ap_guide_nav_open(string $tabId, string $activeTab, bool $discoveryEmbed): void
+    {
+        $active = $tabId === $activeTab;
+        $class = 'side-nav-item' . ($active ? ' active' : '');
+        $aria = $active ? 'true' : 'false';
+        $tabEsc = htmlspecialchars($tabId, ENT_QUOTES, 'UTF-8');
+        if ($discoveryEmbed && function_exists('admin_url')) {
+            $href = admin_url('discovery', ['tab' => 'agent-guide', 'guide_tab' => $tabId]);
+            echo '<a href="' . htmlspecialchars($href, ENT_QUOTES, 'UTF-8') . '" class="' . $class
+                . '" role="tab" data-tab="' . $tabEsc . '" data-disc-guide-link="1" aria-selected="' . $aria . '">';
+            return;
+        }
+        echo '<button type="button" class="' . $class . '" role="tab" data-tab="' . $tabEsc . '" aria-selected="' . $aria . '">';
+    }
+    function birkly_ap_guide_nav_close(bool $discoveryEmbed): void
+    {
+        echo ($discoveryEmbed && function_exists('admin_url')) ? '</a>' : '</button>';
+    }
+}
 ?>
 <div id="ap-publish-banner" class="callout callout-success u-mb-4" hidden role="status" aria-live="polite">
     <span class="u-text-xl" aria-hidden="true">✓</span>
@@ -72,33 +93,33 @@ $__ap_show_public_urls = is_array($__ap_public_urls)
     <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_essentials'}</p>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'overview' ? ' active' : '' ?>" role="tab" data-tab="overview" aria-selected="<?= $__ap_guide_tab === 'overview' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_open('overview', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_overview'}">{translate 'admin.ai_presence_tab_overview'}</span>
-            </button>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'essentials' ? ' active' : '' ?>" role="tab" data-tab="essentials" aria-selected="<?= $__ap_guide_tab === 'essentials' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
+            <?php birkly_ap_guide_nav_open('essentials', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ag_view_essentials'}">{translate 'admin.ag_view_essentials'}</span>
-            </button>
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
         </div>
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_offerings'}</p>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'sources' ? ' active' : '' ?>" role="tab" data-tab="sources" aria-selected="<?= $__ap_guide_tab === 'sources' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_open('sources', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_sources'}">{translate 'admin.ai_presence_tab_sources'}</span>
-            </button>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'context' ? ' active' : '' ?>" role="tab" data-tab="context" aria-selected="<?= $__ap_guide_tab === 'context' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
+            <?php birkly_ap_guide_nav_open('context', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_context'}">{translate 'admin.ai_presence_tab_context'}</span>
-            </button>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'products' ? ' active' : '' ?>" role="tab" data-tab="products" aria-selected="<?= $__ap_guide_tab === 'products' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
+            <?php birkly_ap_guide_nav_open('products', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_products'}">{translate 'admin.ai_presence_tab_products'}</span>
-            </button>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'claims' ? ' active' : '' ?>" role="tab" data-tab="claims" aria-selected="<?= $__ap_guide_tab === 'claims' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
+            <?php birkly_ap_guide_nav_open('claims', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_claims'}">{translate 'admin.ai_presence_tab_claims'}</span>
-            </button>
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
         </div>
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_advanced'}</p>
-            <button type="button" class="side-nav-item<?= $__ap_guide_tab === 'media' ? ' active' : '' ?>" role="tab" data-tab="media" aria-selected="<?= $__ap_guide_tab === 'media' ? 'true' : 'false' ?>">
+            <?php birkly_ap_guide_nav_open('media', $__ap_guide_tab, $__ap_discovery_embed); ?>
                 <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_media'}">{translate 'admin.ai_presence_tab_media'}</span>
-            </button>
+            <?php birkly_ap_guide_nav_close($__ap_discovery_embed); ?>
         </div>
     </nav>
     <div class="ap-guide-panels">

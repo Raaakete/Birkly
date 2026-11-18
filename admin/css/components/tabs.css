@@ -147,6 +147,7 @@
 
 /* Vertical — same language on the start edge */
 .side-nav-item,
+a.side-nav-item,
 .side-nav-sub-item,
 .folder-item,
 .folder-item-move {
@@ -155,6 +156,19 @@
   padding-inline-start: calc(var(--nav-pad-inline) + 1px - var(--nav-bar));
   padding-block-end: var(--nav-pad-block);
   border-inline-start: var(--nav-bar) solid var(--nav-bar-color);
+}
+
+a.side-nav-item {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border-block: 0;
+  border-inline-end: 0;
+  font: inherit;
 }
 
 .tab > svg,
