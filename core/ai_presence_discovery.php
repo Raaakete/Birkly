@@ -23,6 +23,7 @@ function birkly_ai_presence_discovery_ai_crawler_agents(): array
         'anthropic-ai',
         'Google-Extended',
         'Applebot-Extended',
+        'DuckDuckBot',
     ];
 }
 
@@ -60,7 +61,11 @@ function birkly_ai_presence_discovery_public_base(): string
  *
  * @return array{
  *   for_agents:?string,
+ *   for_agents_md:?string,
+ *   for_agents_json:?string,
  *   agent_guide_json:?string,
+ *   agent_guide_shortcut:?string,
+ *   agent_manifest:?string,
  *   llms_txt:?string,
  *   sitemap:?string,
  *   robots:?string
@@ -73,7 +78,11 @@ function birkly_ai_presence_discovery_url_map(?array $published = null, ?array $
     if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
         return [
             'for_agents' => null,
+            'for_agents_md' => null,
+            'for_agents_json' => null,
             'agent_guide_json' => null,
+            'agent_guide_shortcut' => null,
+            'agent_manifest' => null,
             'llms_txt' => null,
             'sitemap' => null,
             'robots' => null,
@@ -89,7 +98,11 @@ function birkly_ai_presence_discovery_url_map(?array $published = null, ?array $
 
     return [
         'for_agents' => birkly_ai_presence_for_agents_url($published, $meta),
+        'for_agents_md' => $base !== '' ? $base . '/for-agents.md' : null,
+        'for_agents_json' => $base !== '' ? $base . '/for-agents.json' : null,
         'agent_guide_json' => $guideJson !== '' ? $guideJson : null,
+        'agent_guide_shortcut' => $base !== '' ? $base . '/agent-guide.json' : null,
+        'agent_manifest' => $base !== '' ? $base . '/.well-known/agent.json' : null,
         'llms_txt' => birkly_ai_presence_llms_txt_url($published, $meta),
         'sitemap' => birkly_ai_presence_discovery_sitemap_url(),
         'robots' => $base !== '' ? $base . '/robots.txt' : null,
@@ -210,13 +223,20 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
             'priority' => '0.9',
         ];
         if ($settings['discovery_sitemap']) {
-            foreach (['llms_txt', 'agent_guide_json'] as $key) {
+            foreach ([
+                'llms_txt' => '0.7',
+                'agent_guide_json' => '0.85',
+                'for_agents_md' => '0.8',
+                'for_agents_json' => '0.82',
+                'agent_guide_shortcut' => '0.8',
+                'agent_manifest' => '0.75',
+            ] as $key => $priority) {
                 $url = $map[$key] ?? null;
                 if ($url !== null && $url !== '') {
                     $entries[] = [
                         'loc' => $url,
                         'lastmod' => $lastmod !== '' ? $lastmod : null,
-                        'priority' => $key === 'agent_guide_json' ? '0.85' : '0.7',
+                        'priority' => $priority,
                     ];
                 }
             }
@@ -303,7 +323,7 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
 
     if ($settings['discovery_ai_crawlers'] && $base !== '') {
         $paths = [];
-        foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $key) {
+        foreach (['for_agents', 'for_agents_md', 'for_agents_json', 'llms_txt', 'agent_guide_json', 'agent_guide_shortcut', 'agent_manifest', 'sitemap'] as $key) {
             $url = $map[$key] ?? null;
             if ($url !== null && $url !== '') {
                 $path = parse_url($url, PHP_URL_PATH);
@@ -313,7 +333,16 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
             }
         }
         if ($paths === []) {
-            $paths = ['/for-agents', '/llms.txt', '/.well-known/agent-guide.json', '/sitemap.xml'];
+            $paths = [
+                '/for-agents',
+                '/for-agents.md',
+                '/for-agents.json',
+                '/llms.txt',
+                '/.well-known/agent-guide.json',
+                '/.well-known/agent.json',
+                '/agent-guide.json',
+                '/sitemap.xml',
+            ];
         }
         foreach (birkly_ai_presence_discovery_ai_crawler_agents() as $agent) {
             if (stripos($body, 'User-agent: ' . $agent) !== false) {
@@ -332,8 +361,10 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
             $append .= "\n# Agent Guide — AI discovery (cross-linked endpoints)\n";
             $append .= 'LLMS: ' . $llmsUrl . '; type=summary' . "\n";
             foreach ([
+                'agent_manifest' => 'Agent Guide discovery manifest',
                 'agent_guide_json' => 'Agent Guide JSON',
                 'for_agents' => 'Agent Guide HTML',
+                'for_agents_md' => 'Agent Guide Markdown',
                 'sitemap' => 'Sitemap',
             ] as $key => $label) {
                 $url = $map[$key] ?? null;
@@ -621,7 +652,11 @@ function birkly_ai_presence_discovery_status(): array
                 '/sitemap.xml',
                 '/llms.txt',
                 '/for-agents',
+                '/for-agents.md',
+                '/for-agents.json',
+                '/agent-guide.json',
                 '/.well-known/agent-guide.json',
+                '/.well-known/agent.json',
             ];
             if ($indexnowKey !== '') {
                 $probePaths[] = '/' . $indexnowKey . '.txt';
@@ -662,6 +697,87 @@ function birkly_ai_presence_discovery_on_publish(): void
 /**
  * Serve IndexNow verification key at /{key}.txt when the URI matches.
  */
+/**
+ * Machine-readable discovery manifest for /.well-known/agent.json.
+ */
+function birkly_ai_presence_discovery_manifest_body(): ?string
+{
+    $meta = birkly_ai_presence_load_meta();
+    $published = birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $map = birkly_ai_presence_discovery_url_map($published, $meta);
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+
+    $payload = [
+        'schema' => 'birkly.agent_guide_discovery.v1',
+        'product' => 'Agent Guide',
+        'official_name' => trim((string) ($identity['official_name'] ?? '')),
+        'published_version' => (int) ($meta['published_version'] ?? 0),
+        'last_published_at' => (string) ($meta['last_published_at'] ?? ''),
+        'canonical_json' => $map['agent_guide_json'] ?? null,
+        'html' => $map['for_agents'] ?? null,
+        'markdown' => $map['for_agents_md'] ?? null,
+        'llms_txt' => $map['llms_txt'] ?? null,
+        'json_aliases' => array_values(array_filter([
+            $map['for_agents_json'] ?? null,
+            $map['agent_guide_shortcut'] ?? null,
+        ])),
+        'endpoints' => array_filter($map, static fn (?string $url): bool => $url !== null && $url !== ''),
+        'how_to_fetch' => 'Use canonical_json for authoritative facts. If your fetcher rejects application/json, '
+            . 'open html (/for-agents) or markdown (/for-agents.md). Start from llms_txt for a link map.',
+        'verify_claims' => 'Only treat claims with status "supported" in the JSON export as verified; follow sources_of_truth URLs.',
+    ];
+
+    $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    return $json !== false ? $json : null;
+}
+
+/**
+ * RFC 5988 Link header value cross-linking Agent Guide discovery URLs.
+ */
+function birkly_ai_presence_discovery_http_link_header(): string
+{
+    $map = birkly_ai_presence_discovery_url_map();
+    $parts = [];
+    $add = static function (?string $url, string $rel, ?string $type = null, ?string $title = null) use (&$parts): void {
+        if ($url === null || $url === '') {
+            return;
+        }
+        $segment = '<' . $url . '>; rel="' . $rel . '"';
+        if ($type !== null && $type !== '') {
+            $segment .= '; type="' . $type . '"';
+        }
+        if ($title !== null && $title !== '') {
+            $segment .= '; title="' . str_replace('"', '', $title) . '"';
+        }
+        $parts[] = $segment;
+    };
+
+    $add($map['agent_guide_json'] ?? null, 'canonical', 'application/json', 'Agent Guide JSON');
+    $add($map['for_agents'] ?? null, 'alternate', 'text/html', 'Agent Guide HTML');
+    $add($map['for_agents_md'] ?? null, 'alternate', 'text/markdown', 'Agent Guide Markdown');
+    $add($map['llms_txt'] ?? null, 'describedby', 'text/markdown', 'llms.txt');
+    $add($map['agent_manifest'] ?? null, 'describedby', 'application/json', 'Agent Guide discovery manifest');
+
+    return implode(', ', $parts);
+}
+
+function birkly_ai_presence_discovery_send_http_link_headers(): void
+{
+    if (!birkly_ai_presence_is_publicly_live()) {
+        return;
+    }
+
+    $link = birkly_ai_presence_discovery_http_link_header();
+    if ($link !== '') {
+        header('Link: ' . $link, false);
+    }
+}
+
 function birkly_ai_presence_discovery_try_serve_indexnow_key(string $uri): bool
 {
     if (!preg_match('#^/([a-f0-9]{32})\\.txt$#i', $uri, $m)) {

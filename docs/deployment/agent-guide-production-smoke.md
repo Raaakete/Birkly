@@ -9,6 +9,10 @@ After publish, these URLs should return **JSON** (not HTML 404):
 | URL | Purpose |
 |-----|---------|
 | `https://birkly.cloud/.well-known/agent-guide.json` | Canonical guide on **public** domain |
+| `https://birkly.cloud/.well-known/agent.json` | Discovery manifest (endpoints + fetch hints) |
+| `https://birkly.cloud/agent-guide.json` | Short-path JSON alias |
+| `https://birkly.cloud/for-agents` | HTML summary for page-reading agents |
+| `https://birkly.cloud/for-agents.md` | Markdown when JSON is unsupported |
 | `https://cms.birkly.cloud/api/public/ai_presence.php?action=brand` | Read API on CMS host |
 
 Legacy alias: `/.well-known/brand-context.json` (same content when published).

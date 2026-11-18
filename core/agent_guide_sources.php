@@ -387,6 +387,22 @@ function birkly_agent_guide_enrich_export(array $export): array
         $export['usage_hints']['citation'] = 'Prefer citing sources_of_truth and linked detail URLs over paraphrasing summaries alone.';
     }
 
+    $fetchHints = [];
+    if (!empty($map['agent_manifest'])) {
+        $fetchHints['discovery_manifest'] = $map['agent_manifest'];
+    }
+    if (!empty($map['for_agents'])) {
+        $fetchHints['html_summary'] = $map['for_agents'];
+    }
+    if (!empty($map['for_agents_md'])) {
+        $fetchHints['markdown_summary'] = $map['for_agents_md'];
+    }
+    $fetchHints['if_json_unsupported'] = 'Fetch markdown_summary or html_summary when your HTTP client cannot parse application/json.';
+    if ($fetchHints !== []) {
+        $export['usage_hints'] = is_array($export['usage_hints'] ?? null) ? $export['usage_hints'] : [];
+        $export['usage_hints']['discovery_fetch'] = $fetchHints;
+    }
+
     return $export;
 }
 

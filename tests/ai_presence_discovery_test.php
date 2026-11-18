@@ -8,6 +8,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 require_once $root . '/core/ai_presence.php';
 require_once $root . '/core/ai_presence_discovery.php';
+require_once $root . '/core/hosting_urls.php';
 
 $failures = 0;
 
@@ -32,6 +33,13 @@ assert_true($settings['footer_discovery_line'] === false, 'footer line default o
 assert_true($settings['discovery_sitemap'] === true, 'sitemap default on');
 assert_true($settings['discovery_indexnow'] === true, 'indexnow default on');
 assert_true($settings['discovery_ai_crawlers'] === true, 'ai crawlers default on');
+
+$hostingBackup = is_file($root . '/settings/hosting.json') ? file_get_contents($root . '/settings/hosting.json') : null;
+birkly_hosting_persist([
+    'cms_base_url' => 'https://cms.example.test',
+    'public_site_mode' => 'project',
+    'public_site_url' => 'https://birkly.example.test',
+]);
 
 echo "==> Publish + robots augment\n";
 $draft['identity']['official_name'] = 'Discovery Test Co';
@@ -110,8 +118,17 @@ assert_true(isset($routes['/for-agents.json']), 'for-agents.json route registere
 
 echo "==> SSR signature\n";
 require_once $root . '/core/project_ssr.php';
-assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc7'), 'SSR inject signature bumped to dsc7');
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc8'), 'SSR inject signature bumped to dsc8');
+assert_true(isset($routes['/.well-known/agent.json']), 'agent.json manifest route registered');
+assert_true(isset($routes['/agent-guide.json']), 'agent-guide.json shortcut route registered');
+$manifest = birkly_ai_presence_discovery_manifest_body();
+assert_true(is_string($manifest) && json_decode($manifest, true) !== null, 'discovery manifest is valid JSON');
 
 birkly_ai_presence_reset_for_tests();
+if ($hostingBackup !== null) {
+    file_put_contents($root . '/settings/hosting.json', $hostingBackup);
+} elseif (is_file($root . '/settings/hosting.json')) {
+    @unlink($root . '/settings/hosting.json');
+}
 
 exit($failures > 0 ? 1 : 0);

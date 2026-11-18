@@ -33,6 +33,12 @@ if ($discCode !== 0) {
     $failures++;
 }
 
+echo "==> Agent Guide discoverability tests\n";
+passthru('php ' . escapeshellarg($root . '/tests/agent_guide_discoverability_test.php'), $discDiscoverCode);
+if ($discDiscoverCode !== 0) {
+    $failures++;
+}
+
 birkly_ai_presence_reset_for_tests();
 
 echo "==> Schema file\n";
@@ -83,7 +89,7 @@ assert_true($ps['is_live'] === false, 'not live before first publish');
 $result = birkly_ai_presence_publish();
 assert_true(($result['ok'] ?? false) === true, 'test publish ok');
 require_once $root . '/core/project_ssr.php';
-assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc7'), 'SSR inject signature bumped to dsc7');
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc8'), 'SSR inject signature bumped to dsc8');
 $ps2 = birkly_ai_presence_publish_state();
 assert_true($ps2['is_live'] === true, 'live after publish');
 require_once $root . '/core/project_ssr.php';
@@ -126,6 +132,7 @@ assert_true(stripos($withDiscovery, 'For agents') !== false, 'discovery footer l
 assert_true(stripos($withDiscovery, 'birkly-agent-guide-hint') === false, 'discovery does not inject page body hint');
 assert_true(stripos($withDiscovery, 'birkly-agent-guide-public') === false, 'discovery does not inject full footer block');
 assert_true(stripos($withDiscovery, '/for-agents') !== false, 'discovery injects for-agents link');
+assert_true(stripos($withDiscovery, 'data-birkly-agent-guide="body-nav"') !== false, 'discovery injects crawlable body nav');
 $withCustomFooter = birkly_ai_presence_inject_discovery_into_html('<!DOCTYPE html><html><head></head><body><birkly-footer></birkly-footer></body></html>');
 assert_true(stripos($withCustomFooter, 'birkly-agent-guide-noscript') !== false, 'custom footer gets noscript crawler link');
 assert_true(stripos($withCustomFooter, 'data-birkly-agent-guide="footer-link"') !== false, 'noscript includes footer link marker');
