@@ -59,15 +59,39 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
     <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
     <?php if (isset($page) && $page === 'discovery'): ?>
     <?php
-    if (!function_exists('birkly_admin_asset_version')) {
-        require_once __DIR__ . '/../../core/build_info.php';
-    }
-    foreach (['agent-guide-wizard.js', 'ai-presence.js', 'discovery.js'] as $__discFooterJs) {
-        $discJsVer = htmlspecialchars(birkly_admin_asset_version('admin/js/' . $__discFooterJs), ENT_QUOTES, 'UTF-8');
-        echo '<script src="' . htmlspecialchars(birkly_url('/admin/js/' . $__discFooterJs), ENT_QUOTES, 'UTF-8') . '?v=' . $discJsVer . '"' . $__birklyScriptNonceAttr . '></script>' . "\n";
-    }
+    require_once __DIR__ . '/../../core/discovery_admin_assets.php';
+    birkly_echo_discovery_admin_script_tags();
     ?>
     <?php endif; ?>
+    <script<?= $__birklyScriptNonceAttr ?>>
+    (function () {
+        if (!document.querySelector('.discovery-page')) return;
+        if (window.__DISCOVERY_JS_LOADED__) return;
+        function discUrl(path) {
+            return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
+        }
+        function hasScript(name) {
+            return !!document.querySelector('script[src*="' + name + '"]');
+        }
+        function loadScript(path, next) {
+            var file = path.split('/').pop();
+            if (hasScript(file)) { next(); return; }
+            var el = document.createElement('script');
+            el.src = discUrl(path);
+            el.onload = next;
+            el.onerror = function () {
+                console.error('[Discovery] Failed to load script:', path);
+                next();
+            };
+            (document.head || document.documentElement).appendChild(el);
+        }
+        loadScript('/admin/js/agent-guide-wizard.js', function () {
+            loadScript('/admin/js/ai-presence.js', function () {
+                loadScript('/admin/js/discovery.js', function () {});
+            });
+        });
+    })();
+    </script>
 
     <script<?= $__birklyScriptNonceAttr ?>>
     const i18nOpenPage = <?= json_encode(__('admin.open_page'), JSON_UNESCAPED_UNICODE) ?>;
