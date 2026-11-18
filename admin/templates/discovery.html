@@ -361,7 +361,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-<!-- Shared Agent Guide / WebMCP editor (embed) -->
+<!-- Shared Agent Guide / WebMCP editor (embed).
+     INVARIANT: ap-hub-body.php lives in admin/partials/ (not under admin/templates/). -->
 <div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed"<?= $__disc_ap_embed_visible ? '' : ' hidden' ?>>
 <?php
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;

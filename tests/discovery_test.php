@@ -144,6 +144,7 @@ assert_true(
 );
 assert_true(strpos($discoveryHtml, 'Template not found') === false, 'discovery embed has no missing partial');
 assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery embed includes agent guide hub');
+assert_true(strpos($discoveryHtml, 'id="disc-bootstrap-data"') !== false, 'discovery bootstrap JSON script present');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
