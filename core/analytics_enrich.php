@@ -3,6 +3,8 @@
  * Analytics enrichment and aggregation helpers (zero external dependencies).
  */
 
+require_once __DIR__ . '/analytics_ai.php';
+
 /**
  * Detect automated clients from a user-agent string.
  */
@@ -21,7 +23,9 @@ function birkly_analytics_is_bot_user_agent(string $userAgent): bool
         'twitterbot', 'slackbot', 'discordbot', 'telegrambot', 'whatsapp',
         'headlesschrome', 'phantomjs', 'puppeteer', 'playwright', 'lighthouse',
         'wget/', 'curl/', 'python-requests', 'go-http-client', 'libwww-perl',
-        'gptbot', 'claudebot', 'anthropic-ai', 'ccbot', 'petal',
+        'gptbot', 'chatgpt-user', 'oai-searchbot', 'claudebot', 'claude-web',
+        'anthropic-ai', 'perplexitybot', 'perplexity-user', 'google-extended',
+        'ccbot', 'petal', 'cohere-ai', 'meta-externalagent', 'applebot-extended',
         'scrapy', 'httpclient', 'java/', 'okhttp', 'node-fetch',
     ];
 
@@ -103,6 +107,12 @@ function birkly_analytics_parse_user_agent(string $userAgent): array
             $label = 'Googlebot';
         } elseif (preg_match('/bingbot/i', $userAgent)) {
             $label = 'Bingbot';
+        } elseif (preg_match('/gptbot|chatgpt-user|oai-searchbot/i', $userAgent)) {
+            $label = 'OpenAI bot';
+        } elseif (preg_match('/claudebot|claude-web|anthropic/i', $userAgent)) {
+            $label = 'Anthropic bot';
+        } elseif (preg_match('/perplexitybot|perplexity-user/i', $userAgent)) {
+            $label = 'Perplexity bot';
         }
 
         return ['device_type' => 'bot', 'browser' => $label, 'os' => 'Bot'];
@@ -370,6 +380,19 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'consent_state' => $consentState,
         'visitor_token_hash' => $visitorTokenHash,
     ];
+
+    $ai = birkly_analytics_detect_ai_attribution(
+        $referrer,
+        $referrerHost,
+        trim((string) ($input['utm_source'] ?? '')),
+        trim((string) ($input['utm_medium'] ?? '')),
+        $userAgent
+    );
+    if ($ai['is_ai']) {
+        $event['ai_source'] = $ai['ai_source'];
+        $event['ai_channel'] = $ai['ai_channel'];
+        $event['is_ai'] = true;
+    }
 
     $event['quality'] = birkly_analytics_event_quality($event);
     $event['traffic_class'] = birkly_analytics_traffic_class($event);
@@ -777,6 +800,7 @@ function birkly_analytics_aggregate_events(array $events): array
         'forms' => birkly_analytics_rank_counts($formIds, 'form', 'submits', 10),
         'plugin_events' => birkly_analytics_rank_counts($pluginEvents, 'event', 'count', 10),
         'daily_stats' => $formattedDailyStats,
+        'ai_sources' => birkly_analytics_summarize_ai_sources($events),
     ];
 }
 
@@ -815,6 +839,12 @@ function birkly_analytics_visitor_label(array $event): string
  */
 function birkly_analytics_session_source_label(array $event): string
 {
+    $aiSource = trim((string) ($event['ai_source'] ?? ''));
+    if ($aiSource !== '') {
+        $channel = trim((string) ($event['ai_channel'] ?? 'referral'));
+        return 'ai:' . $aiSource . ($channel !== '' ? ('/' . $channel) : '');
+    }
+
     $utmSource = trim((string) ($event['utm_source'] ?? ''));
     if ($utmSource !== '') {
         $medium = trim((string) ($event['utm_medium'] ?? ''));
@@ -892,6 +922,7 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
     $unknownDeviceViews = 0;
     $botSessions = [];
     $botAgents = [];
+    $aiPageViews = 0;
 
     foreach ($events as $event) {
         if (!is_array($event)) {
@@ -907,6 +938,10 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
 
         if (($event['device_type'] ?? '') === 'unknown') {
             $unknownDeviceViews++;
+        }
+
+        if (!empty($event['is_ai']) || trim((string) ($event['ai_source'] ?? '')) !== '') {
+            $aiPageViews++;
         }
 
         $class = birkly_analytics_event_traffic_class($event);
@@ -939,6 +974,7 @@ function birkly_analytics_summarize_bot_traffic(array $events): array
         'unknown_device_views' => $unknownDeviceViews,
         'bot_sessions' => count($botSessions),
         'top_bot_agents' => birkly_analytics_rank_counts($botAgents, 'agent', 'views', 8),
+        'ai_page_views' => $aiPageViews,
     ];
 }
 
@@ -1475,6 +1511,7 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
             'paths' => [],
         ],
         'top_paths' => [],
+        'ai_sources' => [],
         'quality' => null,
         'pages_per_visitor_suppressed' => false,
     ];

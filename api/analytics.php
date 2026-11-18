@@ -23,6 +23,7 @@ set_cors_headers('public');
     require_once 'log.php';
     require_once __DIR__ . '/../core/analytics_enrich.php';
     require_once __DIR__ . '/../core/analytics_presets.php';
+    require_once __DIR__ . '/../core/analytics_consent.php';
     require_once __DIR__ . '/../core/analytics_config.php';
     require_once __DIR__ . '/../core/analytics_db.php';
 
@@ -119,6 +120,17 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
 // Public preset/consent config for trackers (no secrets)
 if ($action === 'public_config') {
     $active = birkly_analytics_active_preset();
+    $labels = birkly_analytics_consent_category_labels_en();
+    $categories = [];
+    foreach (birkly_analytics_consent_categories() as $cat) {
+        $id = (string) ($cat['id'] ?? '');
+        $categories[] = [
+            'id' => $id,
+            'label' => $labels[$id] ?? $id,
+            'required' => !empty($cat['required']),
+            'default' => !empty($cat['default']),
+        ];
+    }
     echo json_encode([
         'status' => 'ok',
         'data' => [
@@ -127,6 +139,8 @@ if ($action === 'public_config') {
             'consent_required' => birkly_analytics_consent_required(),
             'anonymous_counts' => birkly_analytics_anonymous_counts_enabled(),
             'consent_text' => (string) ($active['consent_text'] ?? ''),
+            'consent_ui' => birkly_analytics_consent_ui_mode(),
+            'consent_categories' => $categories,
             'events' => !empty($active['events']),
             'collect' => is_array($active['collect'] ?? null) ? array_values($active['collect']) : [],
         ],
@@ -149,8 +163,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
 
     // Standard+ blocks detailed tracking without consent, but may still count anonymous page views.
     $consentValue = $input['consent'] ?? $_COOKIE['birkly_analytics_consent'] ?? null;
-    $consentGranted = birkly_analytics_visitor_has_consent($consentValue);
-    $anonymousOnly = birkly_analytics_consent_required() && !$consentGranted;
+    $prefsRaw = $input['consent_prefs'] ?? null;
+    if (is_string($prefsRaw)) {
+        $decoded = json_decode($prefsRaw, true);
+        $prefsRaw = is_array($decoded) ? $decoded : null;
+    }
+    if (!is_array($prefsRaw) && isset($_COOKIE['birkly_analytics_consent_prefs'])) {
+        $decoded = json_decode((string) $_COOKIE['birkly_analytics_consent_prefs'], true);
+        $prefsRaw = is_array($decoded) ? $decoded : null;
+    }
+    $resolved = birkly_analytics_resolve_visitor_consent(
+        is_string($consentValue) || is_numeric($consentValue) ? (string) $consentValue : null,
+        is_array($prefsRaw) ? $prefsRaw : null
+    );
+    $anonymousOnly = birkly_analytics_consent_required() && birkly_analytics_consent_is_anonymous_only($resolved);
 
     if ($anonymousOnly && !birkly_analytics_anonymous_counts_enabled()) {
         echo json_encode(['status' => 'ok', 'tracked' => false, 'reason' => 'consent_required']);
@@ -232,6 +258,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
         $event = birkly_analytics_apply_anonymous_page_view_filter($event, $trackingId, $ip, $timestamp);
     } else {
         $event = birkly_analytics_apply_preset_to_event($event);
+        if (($resolved['mode'] ?? '') === 'custom') {
+            $event = birkly_analytics_apply_consent_prefs_to_event($event, $resolved);
+            $event['consent_state'] = 'custom';
+        }
     }
     if ($event === null) {
         echo json_encode(['status' => 'ok', 'tracked' => false, 'reason' => 'preset_filtered']);

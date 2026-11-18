@@ -3052,6 +3052,8 @@
         "analytics_bar_outbound_links": "Outbound links",
         "analytics_bar_plugin_events": "Plugin events",
         "analytics_bar_referrers": "Referrers",
+        "analytics_bar_ai_sources": "AI & assistants",
+        "analytics_ai_traffic_note": "AI-attributed page views (referrers, campaign tags, or known AI crawlers)",
         "analytics_bar_top_pages": "Top pages",
         "analytics_bar_traffic_sources": "Traffic sources",
         "analytics_consent_required_help": "Visitor consent banner is required for this preset.",
