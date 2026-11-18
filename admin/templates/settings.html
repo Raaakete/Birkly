@@ -1032,6 +1032,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="<?= htmlspecialchars(__('admin.settings_analytics_retention_ph')) ?>">
                     </div>
                   </div>
+                  <div id="analytics-consent-preview-wrap" class="form-group setting-row" hidden>
+                    <div class="setting-label">
+                      <span class="label"><?= __('admin.settings_analytics_consent_preview_label') ?></span>
+                    </div>
+                    <div class="setting-value">
+                      <p class="form-help"><?= __('admin.settings_analytics_consent_preview_help') ?></p>
+                      <div id="analytics-consent-preview" class="analytics-consent-preview" aria-hidden="true"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

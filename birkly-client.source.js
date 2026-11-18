@@ -299,9 +299,70 @@
             return '';
         }
 
+        function readConsentPrefs() {
+            const parts = (document.cookie || '').split(';');
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i].trim();
+                if (p.indexOf('birkly_analytics_consent_prefs=') === 0) {
+                    try {
+                        return JSON.parse(decodeURIComponent(p.slice('birkly_analytics_consent_prefs='.length)));
+                    } catch (_) {
+                        return null;
+                    }
+                }
+            }
+            if (window.BirklyAnalytics && window.BirklyAnalytics.consentPrefs) {
+                return window.BirklyAnalytics.consentPrefs;
+            }
+            return null;
+        }
+
         function consentGranted() {
             const consent = readConsentCookie();
             return consent === 'granted' || consent === '1';
+        }
+
+        function consentAllowsAnyDetail() {
+            const consent = readConsentCookie();
+            if (consentGranted()) {
+                return true;
+            }
+            if (consent !== 'custom') {
+                return false;
+            }
+            const prefs = readConsentPrefs();
+            if (!prefs || typeof prefs !== 'object') {
+                return false;
+            }
+            return !!(prefs.sessions || prefs.devices || prefs.campaigns || prefs.events);
+        }
+
+        function consentPrefEnabled(key) {
+            if (consentGranted()) {
+                return true;
+            }
+            const consent = readConsentCookie();
+            if (consent !== 'custom') {
+                return false;
+            }
+            const prefs = readConsentPrefs();
+            return !!(prefs && prefs[key]);
+        }
+
+        function eventsAllowedByConsent() {
+            if (!publicConfig || !publicConfig.events) {
+                return false;
+            }
+            if (!consentRequired()) {
+                return true;
+            }
+            if (consentGranted()) {
+                return true;
+            }
+            if (readConsentCookie() === 'custom') {
+                return consentPrefEnabled('events');
+            }
+            return false;
         }
 
         function consentRequired() {
@@ -327,18 +388,55 @@
             if (publicConfig.collecting === false) {
                 return false;
             }
-            if (consentRequired() && !consentGranted()) {
+            if (consentRequired() && !consentGranted() && !consentAllowsAnyDetail()) {
                 return allowsAnonymousPageView(extra);
+            }
+            if (consentRequired() && readConsentCookie() === 'custom') {
+                const eventType = String((extra && extra.event_type) || 'page_view').toLowerCase();
+                if (eventType !== 'page_view' && eventType !== 'pageview' && eventType !== ''
+                    && eventType !== 'page_exit' && eventType !== 'not_found') {
+                    return consentPrefEnabled('events');
+                }
             }
             return true;
         }
 
+        function ensureConsentHelperScript(done) {
+            if (window.BirklyAnalyticsConsent) {
+                done();
+                return;
+            }
+            var existing = document.querySelector('script[src*="birkly-analytics-consent"]');
+            if (existing) {
+                existing.addEventListener('load', done);
+                return;
+            }
+            window.__BIRKLY_CONSENT_DELEGATE_TO_CLIENT = true;
+            const s = document.createElement('script');
+            s.src = cmsUrl + '/birkly-analytics-consent.js';
+            s.async = true;
+            s.onload = function () { done(); };
+            s.onerror = function () { done(); };
+            document.head.appendChild(s);
+        }
+
         function ensureConsentBanner() {
-            if (!consentRequired() || consentGranted() || readConsentCookie() === 'denied') {
+            const consent = readConsentCookie();
+            if (!consentRequired() || consent === 'granted' || consent === 'denied' || consent === 'custom') {
+                return;
+            }
+            const text = (publicConfig && publicConfig.consent_text) || '';
+            const cfg = publicConfig || {};
+            if (cfg.consent_ui === 'advanced' && !window.BirklyAnalyticsConsent) {
+                ensureConsentHelperScript(function () {
+                    if (window.BirklyAnalyticsConsent && typeof window.BirklyAnalyticsConsent.show === 'function') {
+                        window.BirklyAnalyticsConsent.show(text, cfg);
+                    }
+                });
                 return;
             }
             if (window.BirklyAnalyticsConsent && typeof window.BirklyAnalyticsConsent.show === 'function') {
-                window.BirklyAnalyticsConsent.show((publicConfig && publicConfig.consent_text) || '');
+                window.BirklyAnalyticsConsent.show(text, cfg);
                 return;
             }
             // Lightweight fallback if consent helper script is not present
@@ -412,16 +510,54 @@
                 session_id: getSessionId()
             }, extra || {});
             const consent = readConsentCookie();
+            const prefs = readConsentPrefs();
             if (consent) {
                 payload.consent = consent;
             }
+            if (prefs && consent === 'custom') {
+                payload.consent_prefs = prefs;
+            }
             if (consentRequired()) {
-                payload.consent_state = consentGranted() ? 'granted' : 'anonymous';
+                if (consentGranted()) {
+                    payload.consent_state = 'granted';
+                } else if (consent === 'custom') {
+                    payload.consent_state = 'custom';
+                } else {
+                    payload.consent_state = 'anonymous';
+                }
             } else {
                 payload.consent_state = 'not_required';
             }
-            if (consentGranted() || !consentRequired()) {
+            if (consentPrefEnabled('sessions') || consentGranted() || !consentRequired()) {
                 payload.visitor_token = getVisitorToken();
+            }
+            return payload;
+        }
+
+        function applyConsentFieldStripping(payload) {
+            const consent = readConsentCookie();
+            if (!consentRequired() || consentGranted() || consent !== 'custom') {
+                return payload;
+            }
+            if (!consentPrefEnabled('sessions')) {
+                delete payload.session_id;
+                delete payload.visitor_token;
+            }
+            if (!consentPrefEnabled('devices')) {
+                delete payload.screen_width;
+                delete payload.screen_height;
+                delete payload.viewport_width;
+                delete payload.viewport_height;
+                delete payload.language;
+                delete payload.timezone;
+            }
+            if (!consentPrefEnabled('campaigns')) {
+                delete payload.utm_source;
+                delete payload.utm_medium;
+                delete payload.utm_campaign;
+                if (!payload.referrer) {
+                    payload.referrer = document.referrer || '';
+                }
             }
             return payload;
         }
@@ -431,8 +567,11 @@
             if (!canTrack(payloadData)) {
                 return;
             }
-            const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payloadData);
-            const payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(Object.assign({}, payloadData));
+            const anonymous = consentRequired() && !consentGranted() && !consentAllowsAnyDetail() && allowsAnonymousPageView(payloadData);
+            let payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(Object.assign({}, payloadData));
+            if (!anonymous) {
+                payload = applyConsentFieldStripping(payload);
+            }
             const url = cmsUrl + birklyCollectApiPath('track');
             const body = JSON.stringify(payload);
 
@@ -485,10 +624,13 @@
             }), true);
         }
 
+        let advancedConsentEventsBound = false;
+
         function bindAdvancedEvents() {
-            if (!(publicConfig && publicConfig.events)) {
+            if (!eventsAllowedByConsent() || advancedConsentEventsBound) {
                 return;
             }
+            advancedConsentEventsBound = true;
             document.addEventListener('click', function (e) {
                 const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
                 if (!a) return;
@@ -537,8 +679,14 @@
             });
 
             document.addEventListener('birkly:analytics-consent', function (e) {
-                if (e && e.detail && e.detail.consent === 'granted') {
-                    trackPageView();
+                if (!e || !e.detail) {
+                    return;
+                }
+                if (e.detail.consent === 'granted' || e.detail.consent === 'custom') {
+                    if (consentGranted() || consentAllowsAnyDetail()) {
+                        trackPageView();
+                        bindAdvancedEvents();
+                    }
                 }
             });
 
