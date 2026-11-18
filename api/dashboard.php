@@ -691,6 +691,10 @@ if ($action === 'analytics') {
                 $startDate = date('Y-m-d', strtotime('-30 days'));
                 $endDate = date('Y-m-d');
                 $combined = birkly_analytics_get_combined_report($startDate, $endDate);
+                $combinedDaily = birkly_analytics_get_combined_report(
+                    date('Y-m-d', strtotime('-60 days')),
+                    $endDate
+                );
                 $health = birkly_analytics_collection_health();
 
                 $websites = [];
@@ -729,7 +733,8 @@ if ($action === 'analytics') {
                 $response['data']['total_visitors'] = $data['unique_visitors'] ?? 0;
                 $response['data']['websites'] = $websites;
                 $daily = [];
-                foreach (is_array($data['daily_stats'] ?? null) ? $data['daily_stats'] : [] as $row) {
+                $dailySource = is_array($combinedDaily['daily_stats'] ?? null) ? $combinedDaily['daily_stats'] : [];
+                foreach ($dailySource as $row) {
                     if (!is_array($row)) {
                         continue;
                     }
@@ -740,7 +745,7 @@ if ($action === 'analytics') {
                         'interactions' => (int) ($row['interactions'] ?? 0),
                     ];
                 }
-                $response['data']['daily'] = array_slice($daily, -30);
+                $response['data']['daily'] = array_slice($daily, -60);
                 $response['data']['insights'] = $mergedInsights;
                 $response['data']['tracking_count'] = count($combined['tracking_ids'] ?? []);
                 $response['data']['has_domains'] = $response['data']['tracking_count'] > 0;
