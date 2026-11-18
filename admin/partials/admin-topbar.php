@@ -16,13 +16,22 @@ $visitProjectUrl = '';
 if ($showVisitProjectButton) {
     $visitProjectUrl = birkly_public_site_visit_url();
 }
+$birklyTopbarPage = isset($page) ? (string) $page : '';
+$birklyTopbarTitleKey = match ($birklyTopbarPage) {
+    'discovery' => 'admin.discovery',
+    default => null,
+};
 ?>
 <header class="admin-topbar" id="admin-topbar">
     <button class="topbar-icon-btn sidebar-toggle" type="button" id="sidebar-toggle" aria-label="<?= htmlspecialchars(__('admin.topbar_open_menu'), ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false" aria-controls="admin-sidebar">
         <?= birkly_icon('list') ?>
     </button>
     <div class="admin-topbar-left">
-        <nav class="admin-topbar-breadcrumbs" id="admin-topbar-breadcrumbs" aria-label="<?= htmlspecialchars(__('admin.breadcrumb_nav'), ENT_QUOTES, 'UTF-8') ?>"></nav>
+        <nav class="admin-topbar-breadcrumbs<?= $birklyTopbarTitleKey !== null ? ' breadcrumbs' : '' ?>" id="admin-topbar-breadcrumbs" aria-label="<?= htmlspecialchars(__('admin.breadcrumb_nav'), ENT_QUOTES, 'UTF-8') ?>">
+            <?php if ($birklyTopbarTitleKey !== null): ?>
+            <span class="current"><?= htmlspecialchars(__($birklyTopbarTitleKey), ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endif; ?>
+        </nav>
     </div>
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
