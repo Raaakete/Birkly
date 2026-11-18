@@ -134,7 +134,10 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
         function moveBreadcrumbsToTopbar() {
             const topbar = document.getElementById('admin-topbar');
             const topbarSlot = document.getElementById('admin-topbar-breadcrumbs');
-            if (!topbar || !topbarSlot || topbarSlot.childElementCount > 0) {
+            if (!topbar || !topbarSlot) {
+                return;
+            }
+            if (topbarSlot.childElementCount > 0 && topbarSlot.querySelector('.current')) {
                 return;
             }
 
@@ -185,6 +188,9 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
                 window.Birkly.BreadcrumbTruncate.init();
             }
         }
+
+        window.Birkly = window.Birkly || {};
+        window.Birkly.moveBreadcrumbsToTopbar = moveBreadcrumbsToTopbar;
 
         function moveUserMenuToHeader() {
             if (document.getElementById('admin-topbar')) {

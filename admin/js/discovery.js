@@ -113,7 +113,51 @@
 
     function getJson() {
         return fetch(apiUrl('/api/discovery.php?action=get'), { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); });
+            .then(function (r) {
+                if (!r.ok) {
+                    return r.text().then(function (body) {
+                        var hint = body ? String(body).trim().slice(0, 160) : '';
+                        throw new Error('HTTP ' + r.status + (hint ? ': ' + hint : ''));
+                    });
+                }
+                return r.json();
+            });
+    }
+
+    function readBootstrap() {
+        var el = document.getElementById('disc-bootstrap-data');
+        if (!el) return null;
+        var raw = (el.value !== undefined && el.value !== '') ? el.value : (el.textContent || '');
+        raw = String(raw).trim();
+        if (!raw) return null;
+        try {
+            var data = JSON.parse(raw);
+            return data && data.packs ? data : null;
+        } catch (e) {
+            console.error('Discovery bootstrap JSON.parse failed', e);
+            return null;
+        }
+    }
+
+    function ensureDiscoveryPageChrome() {
+        if (global.Birkly && typeof global.Birkly.moveBreadcrumbsToTopbar === 'function') {
+            global.Birkly.moveBreadcrumbsToTopbar();
+        }
+    }
+
+    function applyBootstrap(data) {
+        if (!data) return;
+        state.status = data;
+        updatePackTabDots(data);
+        renderPackToggles(data);
+        renderVerifyChecks(data.verify_checks, data.verify_last_run);
+    }
+
+    function normalizeOverrides(overrides) {
+        if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+            return overrides;
+        }
+        return {};
     }
 
     function getInitialZone() {
@@ -145,21 +189,58 @@
         }
     }
 
+    function packEnabledFromDom(packId) {
+        var map = {
+            seo: '#disc-seo-enabled',
+            agent_guide: '#disc-agent-guide-enabled',
+            webmcp: '#disc-webmcp-enabled',
+        };
+        var el = $(map[packId]);
+        return el ? !!el.checked : false;
+    }
+
+    function effectivePacks() {
+        var packs = state.status && state.status.packs;
+        if (packs && typeof packs === 'object') {
+            return packs;
+        }
+        return {
+            seo: { enabled: packEnabledFromDom('seo') },
+            agent_guide: { enabled: packEnabledFromDom('agent_guide') },
+            webmcp: { enabled: packEnabledFromDom('webmcp') },
+        };
+    }
+
     function syncPageBars(zone) {
         zone = zone || state.activeZone;
-        var packs = (state.status && state.status.packs) || {};
+        var packs = effectivePacks();
         var seoBar = $('#disc-seo-bar');
         var agBar = $('#disc-ag-bar');
         if (seoBar) seoBar.hidden = !(zone === 'seo' && packs.seo && packs.seo.enabled);
         if (agBar) agBar.hidden = !(zone === 'agent-guide' && packs.agent_guide && packs.agent_guide.enabled);
     }
 
+    function syncDiscoveryHubPanels(zone) {
+        var apZone = mapDiscZoneToAp(zone);
+        if (!apZone) return;
+        var embed = document.getElementById('disc-ap-embed');
+        var scope = embed || document;
+        ['guide', 'tools', 'publish'].forEach(function (hubZone) {
+            var panel = scope.querySelector('[data-hub-panel="' + hubZone + '"]');
+            if (!panel) return;
+            var active = hubZone === apZone;
+            panel.classList.toggle('active', active);
+            panel.hidden = !active;
+        });
+    }
+
     function syncApEmbed(zone) {
         var embed = $('#disc-ap-embed');
         if (!embed) return;
 
-        var agOn = state.status && state.status.packs && state.status.packs.agent_guide && state.status.packs.agent_guide.enabled;
-        var wmOn = state.status && state.status.packs && state.status.packs.webmcp && state.status.packs.webmcp.enabled;
+        var packs = effectivePacks();
+        var agOn = packs.agent_guide && packs.agent_guide.enabled;
+        var wmOn = packs.webmcp && packs.webmcp.enabled;
         var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
 
         embed.hidden = !showEmbed;
@@ -167,24 +248,23 @@
         syncPageBars(zone);
         document.dispatchEvent(new CustomEvent('birkly:discovery-zone', { detail: { zone: zone, embedVisible: showEmbed } }));
 
+        if (showEmbed) {
+            // Always sync hub panels (active + hidden). [hidden] alone is not enough when
+            // tabs.css keeps .tab-panel.active { display: block }.
+            syncDiscoveryHubPanels(zone);
+        }
+
         if (!showEmbed || !state.apReady) return;
 
         var apZone = mapDiscZoneToAp(zone);
         if (apZone && typeof global.switchApZone === 'function') {
             global.switchApZone(apZone, { updateUrl: false });
         }
-
-        var guidePanel = $('#ap-panel-guide');
-        var toolsPanel = $('#ap-panel-tools');
-        var publishPanel = $('#ap-panel-publish');
-        if (zone === 'agent-guide') {
-            if (guidePanel) guidePanel.hidden = false;
-            if (publishPanel) publishPanel.hidden = true;
-            if (toolsPanel) toolsPanel.hidden = true;
-        } else if (zone === 'webmcp') {
-            if (toolsPanel) toolsPanel.hidden = false;
-            if (guidePanel) guidePanel.hidden = true;
-            if (publishPanel) publishPanel.hidden = true;
+        if (zone === 'webmcp' && typeof global.hydrateWebmcpTools === 'function') {
+            global.hydrateWebmcpTools();
+        }
+        if (zone === 'agent-guide' && typeof global.ensureAgentGuideSubnav === 'function') {
+            global.ensureAgentGuideSubnav();
         }
     }
 
@@ -198,7 +278,9 @@
             if (tab) {
                 tab.classList.toggle('active', active);
                 tab.setAttribute('aria-selected', active ? 'true' : 'false');
-                tab.tabIndex = active ? 0 : -1;
+                if (typeof tab.tabIndex !== 'undefined') {
+                    tab.tabIndex = active ? 0 : -1;
+                }
             }
             if (panel) {
                 panel.classList.toggle('active', active);
@@ -214,10 +296,14 @@
         if (!tablist) return;
         tablist.addEventListener('click', function (e) {
             var btn = e.target.closest('[data-disc-zone]');
-            if (!btn) return;
+            if (!btn || !tablist.contains(btn)) return;
+            if (btn.tagName === 'A') {
+                e.preventDefault();
+            }
             switchZone(btn.getAttribute('data-disc-zone'));
         });
-        switchZone(getInitialZone());
+        state.activeZone = getInitialZone();
+        syncApEmbed(state.activeZone);
     }
 
     function setTabDot(id, ok) {
@@ -289,13 +375,20 @@
         if (socialSite) socialSite.textContent = siteHost;
         if (socialTitle) socialTitle.textContent = title;
         if (socialDesc) socialDesc.textContent = desc;
+        var socialCard = socialImage ? socialImage.closest('.social-preview') : null;
+        var twitterCard = (($('#disc-seo-twitter-card') || {}).value || 'summary_large_image').trim();
+        if (socialCard) {
+            socialCard.classList.toggle('social-preview--large', twitterCard === 'summary_large_image');
+        }
         if (socialImage) {
             if (image) {
                 socialImage.hidden = false;
                 socialImage.style.backgroundImage = 'url("' + image.replace(/"/g, '\\"') + '")';
+                socialImage.setAttribute('aria-hidden', 'true');
             } else {
                 socialImage.hidden = true;
                 socialImage.style.backgroundImage = '';
+                socialImage.removeAttribute('aria-hidden');
             }
         }
     }
@@ -377,7 +470,11 @@
     }
 
     function renderSeoForm(data) {
-        var seo = data.seo || {};
+        var seo = data && data.seo;
+        if (!seo || typeof seo !== 'object') {
+            renderSeoPreviews();
+            return;
+        }
         state.seo = seo;
         var siteTitle = $('#disc-seo-site-title');
         var desc = $('#disc-seo-description');
@@ -404,6 +501,7 @@
 
     function renderPackToggles(data) {
         if (!data || !data.packs) return;
+        var prevZone = state.activeZone;
         var map = {
             seo: '#disc-seo-enabled',
             agent_guide: '#disc-agent-guide-enabled',
@@ -421,9 +519,11 @@
             if (input && pack) {
                 input.checked = !!pack.enabled;
             }
-            if (config) config.hidden = !(pack && pack.enabled);
+            if (config && pack) {
+                config.hidden = !pack.enabled;
+            }
         });
-        syncPageBars();
+        syncPageBars(state.activeZone);
 
         var agStatus = $('#disc-agent-guide-status');
         if (agStatus && data.packs.agent_guide) {
@@ -432,11 +532,15 @@
 
         renderSeoForm(data);
         updateSeoStickyBar();
-        renderUrlMap(data.seo || state.seo);
-        renderDetailBindings(data.seo || state.seo);
+        try {
+            renderUrlMap(data.seo || state.seo);
+            renderDetailBindings(data.seo || state.seo);
+        } catch (urlMapErr) {
+            console.error('Discovery URL map render failed', urlMapErr);
+        }
         updateUrlMapToolbar();
 
-        syncApEmbed(state.activeZone);
+        syncApEmbed(prevZone || state.activeZone);
     }
 
     function renderVerifyChecks(checks, lastRun) {
@@ -671,14 +775,27 @@
         var filtered = rows.filter(function (row) {
             return filter === 'all' || row.type === filter;
         });
-        tbody.innerHTML = '';
         if (!filtered.length) {
+            if (tbody.querySelector('[data-ssr-url-row]')) {
+                updateEmptyPagesHelp(seo, summary);
+                updateUrlMapToolbar();
+                if (meta) {
+                    var metaTextKeep = formatScanMeta(seo, summary);
+                    if (metaTextKeep) {
+                        meta.textContent = metaTextKeep;
+                        meta.hidden = false;
+                    }
+                }
+                return;
+            }
+            tbody.innerHTML = '';
             var emptyMsg = t('discovery_seo_url_map_empty', 'Nothing listed yet — use “Set up with AI” or “Refresh from site files”.');
             if (filter === 'redirect') {
                 emptyMsg = t('discovery_seo_url_map_empty_redirects', 'No redirects yet.');
             }
             tbody.innerHTML = '<tr class="disc-url-empty"><td colspan="5">' + escapeHtml(emptyMsg) + '</td></tr>';
         } else {
+            tbody.innerHTML = '';
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
                 var projectFile = row.project_file || row.file || '';
@@ -737,7 +854,7 @@
         var pages = seo.url_map.pages || {};
         Object.keys(pages).forEach(function (path) {
             var page = pages[path] || {};
-            var overrides = page.overrides || {};
+            var overrides = normalizeOverrides(page.overrides);
             rows.push({
                 key: path,
                 type: 'page',
@@ -753,7 +870,7 @@
         var details = seo.url_map.details || {};
         Object.keys(details).forEach(function (key) {
             var detail = details[key] || {};
-            var overrides = detail.overrides || {};
+            var overrides = normalizeOverrides(detail.overrides);
             var template = detail.template_path || '';
             var collection = detail.collection || '';
             var slug = detail.slug || '';
@@ -1143,10 +1260,40 @@
         }
     }
 
+    function bindGuideSubnavBridge() {
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed || embed.getAttribute('data-disc-guide-nav') === '1') return;
+        embed.setAttribute('data-disc-guide-nav', '1');
+        embed.addEventListener('click', function (e) {
+            var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
+            if (!btn || !embed.contains(btn)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var tab = btn.getAttribute('data-tab');
+            if (typeof global.showAgentGuideTab === 'function') {
+                global.showAgentGuideTab(tab);
+                return;
+            }
+            if (typeof global.initAiPresence === 'function') {
+                global.initAiPresence({
+                    discoveryEmbed: true,
+                    initialHubZone: 'guide',
+                });
+            }
+            if (typeof global.showAgentGuideTab === 'function') {
+                global.showAgentGuideTab(tab);
+            }
+        }, true);
+    }
+
     function initApEmbed() {
         if (!document.getElementById('disc-ap-embed')) return;
         if (typeof global.initAiPresence === 'function') {
-            global.initAiPresence({ discoveryEmbed: true });
+            var apZone = mapDiscZoneToAp(state.activeZone);
+            global.initAiPresence({
+                discoveryEmbed: true,
+                initialHubZone: apZone || 'guide',
+            });
             state.apReady = true;
             syncApEmbed(state.activeZone);
         }
@@ -1154,21 +1301,38 @@
 
     function init() {
         if (!document.querySelector('.disc-hub')) return;
+        ensureDiscoveryPageChrome();
         mountPageBars();
+        state.activeZone = getInitialZone();
+        try {
+            applyBootstrap(readBootstrap());
+        } catch (bootstrapErr) {
+            console.error('Discovery bootstrap render failed', bootstrapErr);
+            showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
+        }
+        initApEmbed();
         initHubZones();
         bindPackToggles();
         bindSeoActions();
         bindUrlMapActions();
         bindVerify();
+        bindGuideSubnavBridge();
+        renderSeoPreviews();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
-        load().then(function () {
-            initApEmbed();
-        }).catch(function (e) {
+        load().catch(function (e) {
             showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
-            initApEmbed();
         });
+        window.addEventListener('load', function () {
+            var needsReload = !state.status || !state.status.seo || !state.status.seo.url_map;
+            var mapRows = buildUrlMapRowsFromSeo(state.status && state.status.seo);
+            if (!needsReload && mapRows.length) return;
+            load().catch(function () { /* keep SSR fallback */ });
+        });
+        if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(ensureDiscoveryPageChrome);
+        }
     }
 
     if (document.readyState === 'loading') {

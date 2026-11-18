@@ -1201,6 +1201,13 @@ function birkly_ai_presence_llms_txt_url(?array $published = null, ?array $meta 
  */
 function birkly_ai_presence_discovery_json_ld(?array $published = null, ?array $meta = null): ?string
 {
+    if (!function_exists('birkly_site_seo_json_ld_defer_agent_guide_organization')) {
+        require_once __DIR__ . '/site_seo_json_ld.php';
+    }
+    if (birkly_site_seo_json_ld_defer_agent_guide_organization()) {
+        return null;
+    }
+
     $meta = $meta ?? birkly_ai_presence_load_meta();
     $published = $published ?? birkly_ai_presence_load_published();
     if (!birkly_ai_presence_is_publicly_live($published, $meta)) {

@@ -40,6 +40,7 @@
 
       var HUB_ZONES = ['guide', 'tools', 'publish'];
     var discoveryEmbed = false;
+    var discoveryEmbedInitialZone = null;
 
     function settingsAiUrl() {
         if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
@@ -793,8 +794,26 @@
     // P60 IA: the Essentials/Advanced split is gone. The Guide is a single
     // experience with a vertical sub-nav (Overview, Essentials, Sources, …).
     // showGuideTab() ensures the Guide zone is active and selects a sub-tab.
+    function getGuideTabsRoot() {
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed) {
+                var inEmbed = embed.querySelector('.ai-presence-tabs.ap-guide-tabs');
+                if (inEmbed) return inEmbed;
+            }
+        }
+        return document.querySelector('.ai-presence-tabs.ap-guide-tabs')
+            || document.querySelector('.ai-presence-tabs');
+    }
+
     function showGuideTab(tab) {
-        switchZone('guide');
+        var hub = getHubRoot();
+        var guidePanel = hub && hub.querySelector('[data-hub-panel="guide"]');
+        if (!discoveryEmbed) {
+            switchZone('guide');
+        } else if (!guidePanel || guidePanel.hidden || state.hubZone !== 'guide') {
+            switchZone('guide', { updateUrl: false });
+        }
         switchTab(tab || 'overview');
     }
 
@@ -1070,37 +1089,84 @@
 
     function switchTab(tab) {
         if (!tab) return;
-        document.querySelectorAll('.ap-guide-nav [data-tab]').forEach(function (btn) {
-            var active = btn.getAttribute('data-tab') === tab;
-            btn.classList.toggle('active', active);
-            btn.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+        var tabsRoot = getGuideTabsRoot();
+        if (!tabsRoot) return;
+        var nav = tabsRoot.querySelector('.ap-guide-nav');
+        if (nav) {
+            nav.querySelectorAll('.side-nav-item[data-tab]').forEach(function (btn) {
+                var active = btn.getAttribute('data-tab') === tab;
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                if (global.Birkly && global.Birkly.TabsA11y && typeof global.Birkly.TabsA11y.syncTabButton === 'function') {
+                    global.Birkly.TabsA11y.syncTabButton(btn, active);
+                }
+            });
+        }
+        tabsRoot.querySelectorAll('.tab-content[data-tab-content]').forEach(function (pane) {
             var active = pane.getAttribute('data-tab-content') === tab;
             pane.classList.toggle('active', active);
             pane.hidden = !active;
+            if (global.Birkly && global.Birkly.TabsA11y && typeof global.Birkly.TabsA11y.syncTabPanel === 'function') {
+                global.Birkly.TabsA11y.syncTabPanel(pane, active);
+            }
         });
+        if (discoveryEmbed) {
+            try {
+                var url = new URL(window.location.href);
+                if (url.searchParams.get('tab') === 'agent-guide' || url.searchParams.get('tab') === 'guide') {
+                    url.searchParams.set('guide_tab', tab);
+                    window.history.replaceState({}, '', url.toString());
+                }
+            } catch (e) { /* ignore */ }
+        }
     }
 
-    function initTabs() {
-        var root = document.querySelector('.ai-presence-tabs');
-        if (!root) return;
-        var nav = root.querySelector('.ap-guide-nav');
-        if (nav) {
-            nav.setAttribute('role', 'tablist');
-            nav.addEventListener('click', function (e) {
-                var btn = e.target.closest('[data-tab]');
-                if (!btn || !nav.contains(btn)) return;
-                switchTab(btn.getAttribute('data-tab'));
-            });
-        }
-        document.querySelectorAll('.ai-presence-tabs .tab-content').forEach(function (pane) {
+    function syncGuideSubnavPanels() {
+        var tabsRoot = getGuideTabsRoot();
+        if (!tabsRoot) return;
+        tabsRoot.querySelectorAll('.tab-content[data-tab-content]').forEach(function (pane) {
             pane.hidden = !pane.classList.contains('active');
         });
     }
 
+    function initTabs() {
+        var root = getGuideTabsRoot();
+        if (!root) return;
+        var nav = root.querySelector('.ap-guide-nav');
+        if (nav) {
+            nav.setAttribute('role', 'tablist');
+            if (nav.getAttribute('data-guide-nav-bound') !== '1') {
+                nav.setAttribute('data-guide-nav-bound', '1');
+                nav.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.side-nav-item[data-tab]');
+                    if (!btn || !nav.contains(btn)) return;
+                    e.preventDefault();
+                    showGuideTab(btn.getAttribute('data-tab'));
+                });
+            }
+        }
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed && embed.getAttribute('data-guide-subnav-delegate') !== '1') {
+                embed.setAttribute('data-guide-subnav-delegate', '1');
+                embed.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.ap-guide-nav .side-nav-item[data-tab]');
+                    if (!btn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showGuideTab(btn.getAttribute('data-tab'));
+                }, true);
+            }
+        }
+        syncGuideSubnavPanels();
+    }
+
     function renderOverview(data) {
         var c = data.completeness || {};
+        var hasOverviewData = (c.items && c.items.length) || (typeof c.percent === 'number' && c.percent > 0);
+        if (!hasOverviewData && document.querySelector('[data-ssr-overview]')) {
+            return;
+        }
         var bar = document.getElementById('ai-presence-progress');
         var label = document.getElementById('ai-presence-completeness-label');
         if (bar) bar.style.width = (c.percent || 0) + '%';
@@ -1110,6 +1176,12 @@
 
         var cards = document.getElementById('ai-presence-status-cards');
         if (cards) {
+            if (!c.items || !c.items.length) {
+                if (cards.querySelector('[data-ssr-stat]')) {
+                    renderWorkflow(data);
+                    return;
+                }
+            }
             cards.innerHTML = '';
             (c.items || []).forEach(function (item) {
                 var div = document.createElement('div');
@@ -3198,6 +3270,17 @@
     // Hub shell — zones, status spine, deep-linking (P60-M2)
     // ===================================================================
 
+    function getHubRoot() {
+        if (discoveryEmbed) {
+            var embed = document.getElementById('disc-ap-embed');
+            if (embed) {
+                var scoped = embed.querySelector('.ap-hub');
+                if (scoped) return scoped;
+            }
+        }
+        return document.querySelector('.ap-hub');
+    }
+
     function getInitialZone() {
         try {
             var params = new URLSearchParams(window.location.search);
@@ -3230,13 +3313,16 @@
         opts = opts || {};
         state.hubZone = zone;
 
-        document.querySelectorAll('.ap-hub .tab[data-hub-zone]').forEach(function (btn) {
+        var hub = getHubRoot();
+        if (!hub) return;
+
+        hub.querySelectorAll('.tab[data-hub-zone]').forEach(function (btn) {
             var active = btn.getAttribute('data-hub-zone') === zone;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
             btn.tabIndex = active ? 0 : -1;
         });
-        document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
+        hub.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
             panel.classList.toggle('active', active);
             panel.hidden = !active;
@@ -3258,19 +3344,24 @@
     }
 
     function initHubZones() {
-        var hub = document.querySelector('.ap-hub');
+        var hub = getHubRoot();
         if (!hub) return;
 
         if (discoveryEmbed) {
-            var tablist = document.getElementById('ap-hub-tablist');
+            var tablist = hub.querySelector('#ap-hub-tablist');
             if (tablist) tablist.hidden = true;
             hub.classList.add('ap-hub--discovery-embed');
         }
 
-        document.addEventListener('click', function (e) {
-            var zoneBtn = e.target.closest('[data-hub-zone]');
-            if (zoneBtn && (zoneBtn.classList.contains('tab') ||
-                zoneBtn.classList.contains('ap-goto-zone'))) {
+        if (!state.hubZoneClickBound) {
+            state.hubZoneClickBound = true;
+            hub.addEventListener('click', function (e) {
+                var zoneBtn = e.target.closest('[data-hub-zone]');
+                if (!zoneBtn || !hub.contains(zoneBtn)) return;
+                if (!zoneBtn.classList.contains('tab') &&
+                    !zoneBtn.classList.contains('ap-goto-zone')) {
+                    return;
+                }
                 e.preventDefault();
                 var z = zoneBtn.getAttribute('data-hub-zone');
                 // Legacy Connections navigation → Settings → AI (P62-D2).
@@ -3279,8 +3370,8 @@
                     return;
                 }
                 switchZone(z);
-            }
-        });
+            });
+        }
 
         var tablist = document.getElementById('ap-hub-tablist');
         if (tablist) {
@@ -3313,7 +3404,31 @@
             switchZone(getInitialZone(), { updateUrl: false });
         });
 
-        switchZone(getInitialZone(), { updateUrl: false });
+        if (discoveryEmbed) {
+            var embedZone = discoveryEmbedInitialZone || 'guide';
+            var ssrZone = hub.getAttribute('data-discovery-initial-hub-zone');
+            if (ssrZone && HUB_ZONES.indexOf(ssrZone) >= 0) {
+                embedZone = ssrZone;
+            }
+            var guidePanel = hub.querySelector('[data-hub-panel="guide"]');
+            var toolsPanel = hub.querySelector('[data-hub-panel="tools"]');
+            var ssrMatches = false;
+            if (embedZone === 'guide' && guidePanel && !guidePanel.hidden) {
+                ssrMatches = true;
+            } else if (embedZone === 'tools' && toolsPanel && !toolsPanel.hidden) {
+                ssrMatches = true;
+            }
+            if (ssrMatches) {
+                state.hubZone = embedZone;
+                if (embedZone === 'tools') {
+                    ensureToolsZoneReady();
+                }
+            } else {
+                switchZone(embedZone, { updateUrl: false });
+            }
+        } else {
+            switchZone(getInitialZone(), { updateUrl: false });
+        }
     }
 
     function badge(el, text, tone) {
@@ -3373,6 +3488,14 @@
         return state.webmcpSupported;
     }
 
+    function ensureToolsZoneReady() {
+        if (!state.webmcpLoaded) {
+            return loadWebmcpConfig();
+        }
+        renderTools();
+        return Promise.resolve();
+    }
+
     function loadWebmcpConfig() {
         return fetch(webmcpApiUrl() + '?action=get', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -3385,6 +3508,8 @@
                 state.webmcpLoaded = true;
                 renderTools();
                 updateSpine();
+                bindWebmcpToolInputs(document.getElementById('ap-webmcp-catalog'));
+                bindWebmcpAllowInputs(document.getElementById('ap-webmcp-allowlist'));
                 renderPublishZone();
             })
             .catch(function (err) {
@@ -3416,18 +3541,67 @@
             .finally(function () { state.webmcpSaving = false; });
     }
 
+    function webmcpDetailsVisible() {
+        var config = document.getElementById('ap-webmcp-config');
+        return !!(config && !config.hidden);
+    }
+
+    function bindWebmcpToolInputs(root) {
+        (root || document).querySelectorAll('.ap-webmcp-tool').forEach(function (input) {
+            if (input.getAttribute('data-webmcp-bound') === '1') {
+                return;
+            }
+            input.setAttribute('data-webmcp-bound', '1');
+            input.addEventListener('change', function () {
+                var id = input.getAttribute('data-tool-id');
+                if (!state.webmcpConfig) {
+                    state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
+                }
+                if (!state.webmcpConfig.tools) {
+                    state.webmcpConfig.tools = {};
+                }
+                state.webmcpConfig.tools[id] = input.checked;
+                saveWebmcp();
+            });
+        });
+    }
+
+    function bindWebmcpAllowInputs(root) {
+        (root || document).querySelectorAll('.ap-webmcp-allow').forEach(function (input) {
+            if (input.getAttribute('data-webmcp-bound') === '1') {
+                return;
+            }
+            input.setAttribute('data-webmcp-bound', '1');
+            input.addEventListener('change', function () {
+                var slug = input.getAttribute('data-slug');
+                var list = (state.webmcpConfig && state.webmcpConfig.form_allowlist) || [];
+                var idx = list.indexOf(slug);
+                if (input.checked && idx < 0) {
+                    list.push(slug);
+                }
+                if (!input.checked && idx >= 0) {
+                    list.splice(idx, 1);
+                }
+                if (!state.webmcpConfig) {
+                    state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
+                }
+                state.webmcpConfig.form_allowlist = list;
+                saveWebmcp();
+            });
+        });
+    }
+
     function renderTools() {
         var cfg = state.webmcpConfig || { enabled: false, tools: {}, form_allowlist: [] };
         var master = document.getElementById('ap-webmcp-enabled');
         if (master) master.checked = !!cfg.enabled;
 
-        var config = document.getElementById('ap-webmcp-config');
-        if (config) config.hidden = !cfg.enabled;
+        syncWebmcpConfigVisibility();
 
         var supportNote = document.getElementById('ap-webmcp-support-note');
         if (supportNote) supportNote.hidden = webmcpSupportedInThisBrowser();
 
-        if (cfg.enabled) {
+        if (webmcpDetailsVisible() || cfg.enabled) {
             renderToolCatalog();
             renderAllowlist();
             renderToolsPreview();
@@ -3437,6 +3611,10 @@
     function renderToolCatalog() {
         var host = document.getElementById('ap-webmcp-catalog');
         if (!host) return;
+        if ((!state.webmcpCatalog || !state.webmcpCatalog.length) && host.getAttribute('data-ssr-webmcp-catalog') === '1') {
+            bindWebmcpToolInputs(host);
+            return;
+        }
         host.innerHTML = '';
         var cfg = state.webmcpConfig || { tools: {} };
         var byPack = {};
@@ -3488,14 +3666,7 @@
             host.appendChild(group);
         });
 
-        host.querySelectorAll('.ap-webmcp-tool').forEach(function (input) {
-            input.addEventListener('change', function () {
-                var id = input.getAttribute('data-tool-id');
-                if (!state.webmcpConfig.tools) state.webmcpConfig.tools = {};
-                state.webmcpConfig.tools[id] = input.checked;
-                saveWebmcp();
-            });
-        });
+        bindWebmcpToolInputs(host);
     }
 
     function renderAllowlist() {
@@ -3503,6 +3674,12 @@
         var empty = document.getElementById('ap-webmcp-allowlist-empty');
         var warn = document.getElementById('ap-webmcp-allowlist-warn');
         if (!host) return;
+        if (host.getAttribute('data-ssr-webmcp-allowlist') === '1' && !state.webmcpLoaded) {
+            bindWebmcpAllowInputs(host);
+            if (empty) empty.hidden = host.children.length > 0;
+            host.hidden = host.children.length === 0;
+            return;
+        }
         host.innerHTML = '';
         var forms = state.webmcpPublicForms || [];
         var cfg = state.webmcpConfig || { form_allowlist: [], tools: {} };
@@ -3521,17 +3698,7 @@
             host.appendChild(row);
         });
 
-        host.querySelectorAll('.ap-webmcp-allow').forEach(function (input) {
-            input.addEventListener('change', function () {
-                var slug = input.getAttribute('data-slug');
-                var list = state.webmcpConfig.form_allowlist || [];
-                var idx = list.indexOf(slug);
-                if (input.checked && idx < 0) list.push(slug);
-                if (!input.checked && idx >= 0) list.splice(idx, 1);
-                state.webmcpConfig.form_allowlist = list;
-                saveWebmcp();
-            });
-        });
+        bindWebmcpAllowInputs(host);
 
         // Warn if the submit tool is on but no forms are allowed.
         var submitOn = !!(cfg.tools && cfg.tools.birkly_submit_public_form);
@@ -3563,16 +3730,34 @@
         });
     }
 
+    function syncWebmcpConfigVisibility() {
+        var master = document.getElementById('ap-webmcp-enabled');
+        var config = document.getElementById('ap-webmcp-config');
+        if (!config) return;
+        var enabled = !!(master && master.checked);
+        if (!enabled && state.webmcpConfig) {
+            enabled = !!state.webmcpConfig.enabled;
+        }
+        config.hidden = !enabled;
+    }
+
     function initTools() {
         var master = document.getElementById('ap-webmcp-enabled');
         if (master) {
             master.addEventListener('change', function () {
                 if (!state.webmcpConfig) state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
                 state.webmcpConfig.enabled = master.checked;
-                var config = document.getElementById('ap-webmcp-config');
-                if (config) config.hidden = !master.checked;
+                syncWebmcpConfigVisibility();
                 saveWebmcp();
             });
+        }
+        if (discoveryEmbed) {
+            var hub = getHubRoot();
+            var toolsPanel = hub && hub.querySelector('[data-hub-panel="tools"]');
+            if (toolsPanel && !toolsPanel.hidden) {
+                syncWebmcpConfigVisibility();
+                ensureToolsZoneReady();
+            }
         }
     }
 
@@ -3758,6 +3943,7 @@
     global.initAiPresence = function (config) {
         config = config || {};
         discoveryEmbed = !!config.discoveryEmbed;
+        discoveryEmbedInitialZone = discoveryEmbed ? (config.initialHubZone || 'guide') : null;
         if (!isAiPresencePage()) return;
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
@@ -3770,6 +3956,20 @@
         initWizard();
         initPublishFeedback();
         initAssistTabs();
+        if (discoveryEmbed) {
+            document.addEventListener('birkly:discovery-zone', function (event) {
+                if (!event.detail || !event.detail.embedVisible) return;
+                initTabs();
+                syncGuideSubnavPanels();
+                if (event.detail.zone === 'agent-guide') {
+                    global.ensureAgentGuideSubnav();
+                }
+                if (state.meta) return;
+                load().catch(function (err) {
+                    toast(err.message || t('ag_js_failed_load_presence', 'Failed to load AI Presence'), 'error');
+                });
+            });
+        }
         window.addEventListener('birkly:ai-connection-changed', function () {
             loadAiConnections();
         });
@@ -3802,9 +4002,39 @@
                 updateSpine();
             });
         });
+        window.addEventListener('load', function () {
+            if (state.meta && state.draft) return;
+            load().catch(function () { /* SSR overview remains visible */ });
+            var tabsRoot = getGuideTabsRoot();
+            var guideNav = tabsRoot && tabsRoot.querySelector('.ap-guide-nav');
+            if (guideNav && global.Birkly && global.Birkly.TabsA11y
+                && typeof global.Birkly.TabsA11y.enhance === 'function'
+                && guideNav.getAttribute('data-tabs-a11y') !== '1') {
+                global.Birkly.TabsA11y.enhance(guideNav, {
+                    onActivate: function (tabId) {
+                        showGuideTab(tabId);
+                    }
+                });
+            }
+        });
     };
 
     global.switchApZone = switchZone;
+    global.hydrateWebmcpTools = ensureToolsZoneReady;
+    global.showAgentGuideTab = showGuideTab;
+    global.ensureAgentGuideSubnav = function () {
+        initTabs();
+        syncGuideSubnavPanels();
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var guideTab = params.get('guide_tab');
+            if (guideTab) {
+                showGuideTab(guideTab);
+            }
+        } catch (e) { /* ignore */ }
+    };
+
+    global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {

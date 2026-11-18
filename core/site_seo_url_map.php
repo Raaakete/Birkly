@@ -601,6 +601,134 @@ function birkly_seo_entry_field(array $entry, string $field): string
     return '';
 }
 
+/**
+ * @return mixed|null
+ */
+function birkly_seo_entry_raw_field(array $entry, string $field)
+{
+    if ($field === 'title') {
+        return $entry['title'] ?? null;
+    }
+    if (array_key_exists($field, $entry)) {
+        return $entry[$field];
+    }
+    $fields = is_array($entry['fields'] ?? null) ? $entry['fields'] : [];
+    if (array_key_exists($field, $fields)) {
+        return $fields[$field];
+    }
+
+    return null;
+}
+
+function birkly_seo_image_field_guess(string $collection): string
+{
+    $collection = strtolower(trim($collection));
+    if ($collection === 'blog' || $collection === 'posts' || $collection === 'news') {
+        return 'image';
+    }
+
+    return 'image';
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_seo_coerce_media_ids(mixed $raw): array
+{
+    if (is_string($raw) || is_numeric($raw)) {
+        $id = trim((string) $raw);
+        return $id !== '' ? [$id] : [];
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+    $ids = [];
+    foreach ($raw as $item) {
+        if (is_string($item) || is_numeric($item)) {
+            $id = trim((string) $item);
+            if ($id !== '') {
+                $ids[] = $id;
+            }
+            continue;
+        }
+        if (!is_array($item)) {
+            continue;
+        }
+        $candidate = $item['id'] ?? $item['value'] ?? $item['media_id'] ?? '';
+        if (is_string($candidate) || is_numeric($candidate)) {
+            $id = trim((string) $candidate);
+            if ($id !== '') {
+                $ids[] = $id;
+            }
+        }
+    }
+
+    return $ids;
+}
+
+function birkly_seo_absolute_public_url(string $pathOrUrl, string $canonical = ''): string
+{
+    $pathOrUrl = trim($pathOrUrl);
+    if ($pathOrUrl === '') {
+        return '';
+    }
+    if (preg_match('#^https?://#i', $pathOrUrl)) {
+        return $pathOrUrl;
+    }
+
+    $base = '';
+    if (function_exists('birkly_hosting_public_base_url')) {
+        require_once __DIR__ . '/hosting_urls.php';
+        $base = rtrim(trim((string) birkly_hosting_public_base_url()), '/');
+    }
+    if ($base === '' && $canonical !== '') {
+        $parts = parse_url($canonical);
+        if (is_array($parts) && !empty($parts['scheme']) && !empty($parts['host'])) {
+            $base = $parts['scheme'] . '://' . $parts['host'];
+            if (!empty($parts['port']) && !in_array((int) $parts['port'], [80, 443], true)) {
+                $base .= ':' . $parts['port'];
+            }
+        }
+    }
+    if ($base === '') {
+        return $pathOrUrl;
+    }
+
+    return $base . '/' . ltrim($pathOrUrl, '/');
+}
+
+function birkly_seo_resolve_entry_image_url(array $entry, string $imageField, string $canonical = ''): string
+{
+    require_once __DIR__ . '/fieldtype_template_shelf.php';
+    $raw = birkly_seo_entry_raw_field($entry, $imageField);
+    $ids = birkly_seo_coerce_media_ids($raw);
+    if ($ids === []) {
+        foreach (['image', 'hero', 'featured_image', 'cover', 'thumbnail'] as $fallbackField) {
+            if ($fallbackField === $imageField) {
+                continue;
+            }
+            $ids = birkly_seo_coerce_media_ids(birkly_seo_entry_raw_field($entry, $fallbackField));
+            if ($ids !== []) {
+                break;
+            }
+        }
+    }
+    foreach ($ids as $mediaId) {
+        $item = birkly_media_resolve_item($mediaId);
+        if ($item === null) {
+            continue;
+        }
+        $url = trim((string) ($item['url'] ?? ''));
+        if ($url === '') {
+            continue;
+        }
+
+        return birkly_seo_absolute_public_url($url, $canonical);
+    }
+
+    return '';
+}
+
 function birkly_seo_detail_key(string $templatePath, string $collection, string $slug): string
 {
     $path = birkly_seo_public_path_from_file($templatePath);
@@ -747,6 +875,22 @@ function birkly_seo_build_context(
         $context['page_title'] = birkly_seo_entry_field($entry, 'title');
         $context['entry_title'] = $context['page_title'];
         $context['meta_description'] = birkly_seo_entry_field($entry, $excerptField);
+        $context['collection_slug'] = $collection;
+
+        $publishedAt = trim((string) ($entry['published_at'] ?? ''));
+        if ($publishedAt === '') {
+            $publishedAt = trim((string) ($entry['created_at'] ?? ''));
+        }
+        $context['entry_date_published'] = $publishedAt;
+        $context['entry_date_modified'] = trim((string) ($entry['updated_at'] ?? ''));
+        $context['entry_author'] = birkly_seo_entry_field($entry, 'author');
+
+        $imageField = $binding !== null ? trim((string) ($binding['image_field'] ?? '')) : '';
+        if ($imageField === '') {
+            $imageField = birkly_seo_image_field_guess($collection);
+        }
+        $detailCanonical = birkly_seo_canonical_url($pathKey, $query);
+        $context['entry_image_url'] = birkly_seo_resolve_entry_image_url($entry, $imageField, $detailCanonical);
 
         $detailKey = birkly_seo_detail_key(
             $binding !== null ? (string) $binding['template_path'] : $relativePath,
@@ -778,6 +922,9 @@ function birkly_seo_build_context(
     }
     if (!empty($overrides['og_image'])) {
         $context['og_image'] = trim((string) $overrides['og_image']);
+    }
+    if (!empty($context['entry_image_url']) && empty($context['og_image'])) {
+        $context['og_image'] = (string) $context['entry_image_url'];
     }
 
     $context['canonical'] = birkly_seo_canonical_url($pathKey, $query);
@@ -1341,6 +1488,9 @@ function birkly_seo_health_checks(): array
     $checks = [];
     $titles = [];
     $rows = birkly_seo_url_map_admin_rows($config);
+    $htmlReads = 0;
+    $htmlReadCap = 80;
+    $titleScanTruncated = false;
 
     foreach ($rows as $row) {
         if (($row['type'] ?? '') === 'redirect') {
@@ -1350,9 +1500,14 @@ function birkly_seo_health_checks(): array
         if ($title === '' && ($row['type'] ?? '') === 'page') {
             $file = ltrim((string) ($row['file'] ?? $row['project_file'] ?? ''), '/');
             if ($file !== '') {
-                $html = birkly_seo_read_project_html($file);
-                if ($html !== '') {
-                    $title = birkly_seo_html_title($html);
+                if ($htmlReads >= $htmlReadCap) {
+                    $titleScanTruncated = true;
+                } else {
+                    $html = birkly_seo_read_project_html($file);
+                    $htmlReads++;
+                    if ($html !== '') {
+                        $title = birkly_seo_html_title($html);
+                    }
                 }
             }
         }
@@ -1368,6 +1523,16 @@ function birkly_seo_health_checks(): array
         if ($title !== '') {
             $titles[$title][] = (string) ($row['url'] ?? '');
         }
+    }
+
+    if ($titleScanTruncated) {
+        $checks[] = [
+            'id' => 'seo_health_scan_cap',
+            'pack' => 'seo',
+            'label' => 'Title health scan',
+            'status' => 'neutral',
+            'detail' => 'Sampled the first ' . $htmlReadCap . ' project HTML files — run Verify again after URL map changes.',
+        ];
     }
 
     foreach ($titles as $title => $urls) {

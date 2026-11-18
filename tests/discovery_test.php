@@ -75,9 +75,27 @@ $draft['identity']['official_name'] = 'Verify Co';
 $draft['publication_settings']['enabled'] = true;
 birkly_ai_presence_save_draft($draft);
 birkly_ai_presence_publish();
+$shallow = birkly_discovery_verify_checks(false);
+$shallowSeoDeep = 0;
+foreach ($shallow as $check) {
+    if (($check['pack'] ?? '') === 'seo' && str_starts_with((string) ($check['id'] ?? ''), 'seo_missing_title_')) {
+        $shallowSeoDeep++;
+    }
+}
+assert_true($shallowSeoDeep === 0, 'shallow verify skips per-page SEO health');
+
 $verify = birkly_discovery_run_verify();
 assert_true($verify['ok'] === true, 'verify runs');
 assert_true(count($verify['checks']) >= 3, 'verify has checks');
+$deepSeo = 0;
+foreach ($verify['checks'] as $check) {
+    if (($check['pack'] ?? '') === 'seo' && str_starts_with((string) ($check['id'] ?? ''), 'seo_')) {
+        $deepSeo++;
+    }
+}
+assert_true($deepSeo >= 2, 'deep verify includes SEO checks');
+$cached = birkly_discovery_load();
+assert_true(is_array($cached['verify_cache'] ?? null), 'verify caches SEO health rows');
 $map = birkly_discovery_url_map();
 assert_true(isset($map['for_agents_md']), 'url map has for_agents_md key');
 
@@ -94,6 +112,92 @@ birkly_ai_presence_publish();
 $enabled = birkly_discovery_pack_enabled('agent_guide');
 assert_true($enabled === true, 'migrate enables agent_guide without stack overflow');
 assert_true(birkly_ai_presence_is_publicly_live() === true, 'publicly live after migrate');
+
+echo "==> Discovery admin page data\n";
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
+require_once $root . '/api/admin_templates.php';
+$discoveryPage = getDiscoveryPageData();
+assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
+assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
+assert_true(is_array($discoveryPage['discovery_embed_overview']['completeness'] ?? null), 'discovery embed overview completeness');
+assert_true(is_array($discoveryPage['discovery_embed_webmcp']['config'] ?? null), 'discovery embed includes webmcp config');
+assert_true(is_array($discoveryPage['discovery_embed_webmcp']['catalog'] ?? null), 'discovery embed includes webmcp catalog');
+assert_true(count($discoveryPage['discovery_embed_webmcp']['catalog']) >= 6, 'webmcp catalog has core tools');
+
+echo "==> Discovery template render\n";
+require_once $root . '/admin/template_parser.php';
+require_once $root . '/core/i18n.php';
+require_once $root . '/core/icons.php';
+if (!function_exists('admin_url')) {
+    function admin_url(string $page, array $params = []): string
+    {
+        return birkly_admin_url($page, $params);
+    }
+}
+I18n::init();
+$_GET['tab'] = 'seo';
+$discoveryHtml = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true($discoveryHtml !== '', 'discovery template renders');
+assert_true(
+    preg_match('/id="disc-page-bars"[\s\S]*id="disc-ag-bar"/', $discoveryHtml) === 1,
+    'agent guide bar is inside disc-page-bars'
+);
+assert_true(
+    preg_match('/id="disc-ap-embed"[\s\S]*id="disc-ag-bar"/', $discoveryHtml) !== 1,
+    'agent guide bar is not inside disc-ap-embed'
+);
+assert_true(strpos($discoveryHtml, 'Template not found') === false, 'discovery embed has no missing partial');
+assert_true(strpos($discoveryHtml, 'id="ap-panel-guide"') !== false, 'discovery embed includes agent guide hub');
+assert_true(strpos($discoveryHtml, '<textarea id="disc-bootstrap-data"') !== false, 'discovery bootstrap textarea present');
+assert_true(strpos($discoveryHtml, 'page-header-left') === false, 'discovery has no duplicate in-page breadcrumb row');
+assert_true(strpos($discoveryHtml, '"packs"') !== false, 'discovery bootstrap includes pack data');
+if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $discoveryHtml, $bootMatch)) {
+    $bootRaw = $bootMatch[1];
+    assert_true(strpos($bootRaw, '&quot;') === false, 'discovery bootstrap is raw JSON (no HTML entity quotes)');
+    $bootJson = json_decode($bootRaw, true);
+    assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
+}
+assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
+$_GET['tab'] = 'agent-guide';
+$discoveryAg = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(strpos($discoveryAg, 'data-tab="essentials"') !== false, 'agent guide embed has side nav tabs');
+assert_true(strpos($discoveryAg, 'tabs-v2-root') === false, 'guide layout is not a tabs-v2 horizontal root');
+$_GET['tab'] = 'webmcp';
+$discoveryWebmcp = (string) render_template_file($root . '/admin/templates/discovery.html', $discoveryPage);
+assert_true(
+    strpos($discoveryWebmcp, 'class="tab-panel active" id="ap-panel-tools"') !== false,
+    'webmcp discovery tab SSR activates tools hub panel'
+);
+assert_true(
+    preg_match('/id="ap-panel-guide"[^>]*hidden/', $discoveryWebmcp) === 1,
+    'webmcp discovery tab SSR hides guide hub panel'
+);
+assert_true(
+    strpos($discoveryWebmcp, 'data-discovery-initial-hub-zone="tools"') !== false,
+    'webmcp embed marks initial hub zone'
+);
+require_once $root . '/core/webmcp.php';
+$wmPath = birkly_webmcp_settings_path();
+$wmBackup = is_file($wmPath) ? file_get_contents($wmPath) : null;
+$wmEnabled = birkly_webmcp_load();
+$wmEnabled['enabled'] = true;
+file_put_contents($wmPath, json_encode($wmEnabled, JSON_THROW_ON_ERROR));
+birkly_webmcp_reset_cache();
+$discoveryWebmcpOn = (string) render_template_file($root . '/admin/templates/discovery.html', getDiscoveryPageData());
+assert_true(
+    preg_match('/id="ap-webmcp-config" class="u-stack-6"(?!\s+hidden)/', $discoveryWebmcpOn) === 1,
+    'enabled webmcp SSR shows tools catalog chrome'
+);
+assert_true(strpos($discoveryWebmcpOn, 'data-ssr-webmcp-tool=') !== false, 'enabled webmcp SSR lists tools');
+if ($wmBackup !== null) {
+    file_put_contents($wmPath, $wmBackup);
+} elseif (is_file($wmPath)) {
+    @unlink($wmPath);
+}
+birkly_webmcp_reset_cache();
+$discJs = (string) file_get_contents($root . '/admin/js/discovery.js');
+assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
+assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);

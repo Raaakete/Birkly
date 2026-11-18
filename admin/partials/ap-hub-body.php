@@ -1,3 +1,30 @@
+<?php
+$__ap_embed_overview = is_array($discovery_embed_overview ?? null) ? $discovery_embed_overview : null;
+$__ap_completeness = is_array($__ap_embed_overview['completeness'] ?? null) ? $__ap_embed_overview['completeness'] : null;
+$__ap_public_urls = is_array($__ap_embed_overview['public_urls'] ?? null) ? $__ap_embed_overview['public_urls'] : null;
+$__ap_meta = is_array($__ap_embed_overview['meta'] ?? null) ? $__ap_embed_overview['meta'] : null;
+$__ap_pct = $__ap_completeness ? (int) ($__ap_completeness['percent'] ?? 0) : 0;
+$__ap_hub_zone = 'guide';
+if (isset($discovery_embed_hub_zone)) {
+    $zoneCandidate = strtolower((string) $discovery_embed_hub_zone);
+    if (in_array($zoneCandidate, ['guide', 'tools', 'publish'], true)) {
+        $__ap_hub_zone = $zoneCandidate;
+    }
+}
+$__ap_hub_zones = ['guide', 'tools', 'publish'];
+$__ap_webmcp_payload = is_array($discovery_embed_webmcp ?? null) ? $discovery_embed_webmcp : null;
+$__ap_webmcp = is_array($__ap_webmcp_payload['config'] ?? null)
+    ? $__ap_webmcp_payload['config']
+    : (is_array($__ap_webmcp_payload) && array_key_exists('enabled', $__ap_webmcp_payload) ? $__ap_webmcp_payload : null);
+$__ap_webmcp_catalog = is_array($__ap_webmcp_payload['catalog'] ?? null) ? $__ap_webmcp_payload['catalog'] : [];
+$__ap_webmcp_forms = is_array($__ap_webmcp_payload['public_forms'] ?? null) ? $__ap_webmcp_payload['public_forms'] : [];
+$__ap_webmcp_on = $__ap_webmcp ? !empty($__ap_webmcp['enabled']) : false;
+$__ap_webmcp_ssr = isset($discovery_embed_hub_zone) && !empty($__ap_webmcp_catalog);
+$__ap_webmcp_allow = is_array($__ap_webmcp['form_allowlist'] ?? null) ? $__ap_webmcp['form_allowlist'] : [];
+$__ap_show_public_urls = is_array($__ap_public_urls)
+    && ((string) ($__ap_public_urls['well_known_url'] ?? '') !== ''
+        || (string) ($__ap_public_urls['api_url'] ?? '') !== '');
+?>
 <div id="ap-publish-banner" class="callout callout-success u-mb-4" hidden role="status" aria-live="polite">
     <span class="u-text-xl" aria-hidden="true">✓</span>
     <div class="callout-body u-cluster-4">
@@ -15,26 +42,25 @@
 
 <!-- Hub: Guide | Tools | Publish — Connections home is Settings → AI (P62-D2).
      Status is a green/red dot on each main tab (no separate status sidebar). -->
-<div class="ap-hub">
+<div class="ap-hub"<?= isset($discovery_embed_hub_zone) ? ' data-discovery-initial-hub-zone="' . htmlspecialchars($__ap_hub_zone, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 <!-- Hub zones — Guide | Tools | Publish -->
 <div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">
-        <span>{translate 'admin.ag_hub_tab_guide'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-guide" data-ok="0" aria-hidden="true"></span>
+<?php foreach ($__ap_hub_zones as $__hz) {
+    $hubActive = $__hz === $__ap_hub_zone;
+    $hubTabId = 'ap-tab-' . $__hz;
+    $hubPanelId = 'ap-panel-' . $__hz;
+    $hubLabelKey = $__hz === 'guide' ? 'admin.ag_hub_tab_guide' : ($__hz === 'tools' ? 'admin.ag_hub_tab_tools' : 'admin.ag_hub_tab_publish');
+    ?>
+    <button type="button" class="tab<?= $hubActive ? ' active' : '' ?>" role="tab" id="<?= htmlspecialchars($hubTabId, ENT_QUOTES, 'UTF-8') ?>" data-hub-zone="<?= htmlspecialchars($__hz, ENT_QUOTES, 'UTF-8') ?>" aria-controls="<?= htmlspecialchars($hubPanelId, ENT_QUOTES, 'UTF-8') ?>" aria-selected="<?= $hubActive ? 'true' : 'false' ?>" tabindex="<?= $hubActive ? '0' : '-1' ?>">
+        <span><?= htmlspecialchars(__($hubLabelKey), ENT_QUOTES, 'UTF-8') ?></span>
+        <span class="ap-tab-dot" id="ap-tab-dot-<?= htmlspecialchars($__hz, ENT_QUOTES, 'UTF-8') ?>" data-ok="0" aria-hidden="true"></span>
     </button>
-    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">
-        <span>{translate 'admin.ag_hub_tab_tools'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-tools" data-ok="0" aria-hidden="true"></span>
-    </button>
-    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">
-        <span>{translate 'admin.ag_hub_tab_publish'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-publish" data-ok="0" aria-hidden="true"></span>
-    </button>
+<?php } ?>
 </div>
 
-<div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
+<div class="tab-panel<?= $__ap_hub_zone === 'guide' ? ' active' : '' ?>" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide"<?= $__ap_hub_zone === 'guide' ? '' : ' hidden' ?>>
 <div class="ap-guide-layout">
-    <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
+    <div class="ai-presence-tabs ap-guide-tabs">
     <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
         <div class="side-nav-group">
             <p class="side-nav-group-label">{translate 'admin.ag_nav_essentials'}</p>
@@ -242,14 +268,37 @@
                             <div class="card u-p-6 u-stack-2">
                                 <h3>{translate 'admin.ai_presence_completeness'}</h3>
                                 <div class="u-my-4" aria-hidden="true">
-                                    <div class="progress"><div class="progress-bar" id="ai-presence-progress" style="width:0%"></div></div>
+                                    <div class="progress"><div class="progress-bar" id="ai-presence-progress" data-ssr-overview="1" style="width:<?php echo $__ap_pct; ?>%"></div></div>
                                 </div>
-                                <p id="ai-presence-completeness-label" class="u-text-base u-weight-medium u-m-0"></p>
+                                <p id="ai-presence-completeness-label" class="u-text-base u-weight-medium u-m-0"><?php
+if ($__ap_completeness) {
+    echo htmlspecialchars($__ap_pct . '% complete', ENT_QUOTES, 'UTF-8');
+}
+?></p>
                                 <ul id="ai-presence-next-steps" class="ai-presence-item-list u-text-sm"></ul>
                             </div>
                             <div class="card u-p-6 u-stack-3">
                                 <h3>{translate 'admin.ai_presence_status'}</h3>
-                                <div class="u-grid-2" id="ai-presence-status-cards"></div>
+                                <div class="u-grid-2" id="ai-presence-status-cards">
+<?php
+if ($__ap_completeness && is_array($__ap_completeness['items'] ?? null)) {
+    foreach ($__ap_completeness['items'] as $__ap_stat) {
+        if (!is_array($__ap_stat)) {
+            continue;
+        }
+        $complete = !empty($__ap_stat['complete']);
+        $label = htmlspecialchars((string) ($__ap_stat['label'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $score = (int) ($__ap_stat['score'] ?? 0);
+        $max = (int) ($__ap_stat['max'] ?? 0);
+        $statClass = $complete ? ' ap-stat-complete' : '';
+        echo '<div class="stat' . $statClass . '" data-ssr-stat="1">'
+            . '<span class="stat-label">' . $label . '</span>'
+            . '<span class="stat-value u-text-lg u-numeric">' . $score . '/' . $max . '</span>'
+            . '</div>';
+    }
+}
+?>
+                                </div>
                             </div>
                         </div>
                         <section class="card u-p-6 u-stack-3 u-mt-4" id="ap-cms-sync-panel"
@@ -276,7 +325,28 @@
                             <h3>{translate 'admin.ai_presence_public_urls'}</h3>
                             <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ai_presence_public_urls_help'}</p>
                             <p id="ap-public-urls-empty" class="empty-state empty-state--inline" hidden></p>
-                            <dl id="ai-presence-public-urls" class="ai-presence-urls"></dl>
+                            <dl id="ai-presence-public-urls" class="ai-presence-urls" data-ssr-overview="1">
+<?php
+if ($__ap_show_public_urls) {
+    $wk = htmlspecialchars((string) ($__ap_public_urls['well_known_url'] ?? '—'), ENT_QUOTES, 'UTF-8');
+    $api = htmlspecialchars((string) ($__ap_public_urls['api_url'] ?? '—'), ENT_QUOTES, 'UTF-8');
+    $pubAt = htmlspecialchars((string) ($__ap_meta['last_published_at'] ?? 'Never'), ENT_QUOTES, 'UTF-8');
+    echo '<dt>Agent Guide</dt><dd><code>' . $wk . '</code></dd>';
+    if (!empty($__ap_public_urls['legacy_well_known_url'])) {
+        echo '<dt>Legacy well-known</dt><dd><code>'
+            . htmlspecialchars((string) $__ap_public_urls['legacy_well_known_url'], ENT_QUOTES, 'UTF-8')
+            . '</code></dd>';
+    }
+    echo '<dt>Public API</dt><dd><code>' . $api . '</code></dd>';
+    if (!empty($__ap_public_urls['legacy_api_url'])) {
+        echo '<dt>Legacy API</dt><dd><code>'
+            . htmlspecialchars((string) $__ap_public_urls['legacy_api_url'], ENT_QUOTES, 'UTF-8')
+            . '</code></dd>';
+    }
+    echo '<dt>Last published</dt><dd>' . $pubAt . '</dd>';
+}
+?>
+                            </dl>
                         </section>
                     </div>
                 </div>
@@ -521,7 +591,7 @@
 </div><!-- .tab-panel guide -->
 
 <!-- ===================== TOOLS zone (WebMCP) — P60-M6 ===================== -->
-<div class="tab-panel" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools" hidden>
+<div class="tab-panel<?= $__ap_hub_zone === 'tools' ? ' active' : '' ?>" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools"<?= $__ap_hub_zone === 'tools' ? '' : ' hidden' ?>>
     <div class="u-max-w-page u-stack-6">
         <div class="u-stack-2">
             <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_tools_lede'}</p>
@@ -539,20 +609,72 @@
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
                 </div>
                 <label class="switch switch--lg" title="{translate 'admin.ag_tools_master_title'}">
-                    <input type="checkbox" id="ap-webmcp-enabled">
+                    <input type="checkbox" id="ap-webmcp-enabled"<?= $__ap_webmcp_on ? ' checked' : '' ?>>
                     <span class="switch__slider"></span>
                 </label>
             </div>
             <p id="ap-webmcp-support-note" class="u-text-xs u-fg-secondary u-m-0" hidden>{translate 'admin.ag_tools_browser_note'}</p>
         </section>
 
-        <div id="ap-webmcp-config" class="u-stack-6" hidden>
+        <div id="ap-webmcp-config" class="u-stack-6"<?= $__ap_webmcp_on ? '' : ' hidden' ?>>
             <section class="card u-p-6 u-stack-4">
                 <header class="u-stack-1">
                     <h3 class="u-m-0">{translate 'admin.ag_tools_catalog_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_catalog_help'}</p>
                 </header>
-                <div id="ap-webmcp-catalog" class="u-stack-4"></div>
+                <div id="ap-webmcp-catalog" class="u-stack-4"<?= $__ap_webmcp_ssr ? ' data-ssr-webmcp-catalog="1"' : '' ?>>
+<?php if ($__ap_webmcp_ssr) {
+    $grouped = [];
+    $packOrder = [];
+    foreach ($__ap_webmcp_catalog as $tool) {
+        if (!is_array($tool)) {
+            continue;
+        }
+        $pack = (string) ($tool['pack'] ?? 'plugin');
+        if (!isset($grouped[$pack])) {
+            $grouped[$pack] = [];
+            $packOrder[] = $pack;
+        }
+        $grouped[$pack][] = $tool;
+    }
+    usort($packOrder, static function (string $a, string $b): int {
+        if ($a === 'core') {
+            return -1;
+        }
+        if ($b === 'core') {
+            return 1;
+        }
+        return strcmp($a, $b);
+    });
+    foreach ($packOrder as $pack) {
+        $tools = $grouped[$pack] ?? [];
+        if ($tools === []) {
+            continue;
+        }
+        $packLabel = $pack === 'core' ? __('admin.ag_webmcp_pack_core') : ucwords(str_replace('_', ' ', $pack));
+        echo '<div class="card-section u-stack-2" data-ssr-webmcp-pack="' . htmlspecialchars($pack, ENT_QUOTES, 'UTF-8') . '">';
+        echo '<div class="u-split u-align-baseline"><h4 class="u-text-sm u-weight-semibold u-m-0">'
+            . htmlspecialchars($packLabel, ENT_QUOTES, 'UTF-8') . '</h4></div>';
+        echo '<ul class="data-list">';
+        foreach ($tools as $tool) {
+            $id = (string) ($tool['id'] ?? '');
+            $label = (string) ($tool['label'] ?? $id);
+            $desc = (string) ($tool['description'] ?? '');
+            $checked = !empty($tool['enabled']) ? ' checked' : '';
+            echo '<li class="data-list-item u-split u-align-start u-gap-3" data-ssr-webmcp-tool="' . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '">';
+            echo '<div class="u-stack-1 u-fill"><strong class="u-text-sm">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</strong>';
+            if ($desc !== '') {
+                echo '<span class="u-text-xs u-fg-secondary">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</span>';
+            }
+            echo '</div>';
+            echo '<label class="switch"><input type="checkbox" class="ap-webmcp-tool" data-tool-id="'
+                . htmlspecialchars($id, ENT_QUOTES, 'UTF-8') . '"' . $checked
+                . '><span class="switch__slider"></span></label></li>';
+        }
+        echo '</ul></div>';
+    }
+} ?>
+                </div>
             </section>
 
             <section class="card u-p-6 u-stack-4">
@@ -560,8 +682,23 @@
                     <h3 class="u-m-0">{translate 'admin.ag_tools_allowlist_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_allowlist_help'}</p>
                 </header>
-                <div id="ap-webmcp-allowlist" class="u-stack-2"></div>
-                <p id="ap-webmcp-allowlist-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_allowlist_empty'}</p>
+                <div id="ap-webmcp-allowlist" class="u-stack-2"<?= ($__ap_webmcp_ssr && $__ap_webmcp_forms !== []) ? ' data-ssr-webmcp-allowlist="1"' : '' ?><?= ($__ap_webmcp_ssr && $__ap_webmcp_forms === []) ? ' hidden' : '' ?>>
+<?php if ($__ap_webmcp_ssr && $__ap_webmcp_forms !== []) {
+    foreach ($__ap_webmcp_forms as $form) {
+        if (!is_array($form)) {
+            continue;
+        }
+        $slug = (string) ($form['slug'] ?? '');
+        $name = (string) ($form['name'] ?? $slug);
+        $checked = in_array($slug, $__ap_webmcp_allow, true) ? ' checked' : '';
+        echo '<label class="u-row-2 u-text-sm"><input type="checkbox" class="ap-webmcp-allow" data-slug="'
+            . htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') . '"' . $checked . '> <span>'
+            . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . ' <code class="u-text-xs u-fg-secondary">'
+            . htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') . '</code></span></label>';
+    }
+} ?>
+                </div>
+                <p id="ap-webmcp-allowlist-empty" class="empty-state empty-state--compact"<?= ($__ap_webmcp_ssr && $__ap_webmcp_forms === []) ? '' : ' hidden' ?>>{translate 'admin.ag_tools_allowlist_empty'}</p>
                 <p id="ap-webmcp-allowlist-warn" class="callout callout-warning u-text-sm u-m-0" hidden>{translate 'admin.ag_tools_allowlist_warn'}</p>
             </section>
 
@@ -570,7 +707,28 @@
                     <h3 class="u-m-0">{translate 'admin.ag_tools_preview_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_preview_help'}</p>
                 </header>
-                <ul id="ap-webmcp-preview" class="data-list"></ul>
+                <ul id="ap-webmcp-preview" class="data-list" data-ssr-webmcp-preview="1">
+<?php
+if ($__ap_webmcp_ssr) {
+    foreach ($__ap_webmcp_catalog as $tool) {
+        if (!is_array($tool) || empty($tool['enabled'])) {
+            continue;
+        }
+        if (($tool['id'] ?? '') === 'birkly_submit_public_form' && $__ap_webmcp_allow === []) {
+            continue;
+        }
+        $label = (string) ($tool['label'] ?? $tool['id'] ?? '');
+        $desc = (string) ($tool['description'] ?? '');
+        echo '<li class="data-list-item u-stack-1" data-ssr-webmcp-preview-item="1"><strong class="u-text-sm">'
+            . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</strong>';
+        if ($desc !== '') {
+            echo '<span class="u-text-xs u-fg-secondary">' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</span>';
+        }
+        echo '</li>';
+    }
+}
+?>
+                </ul>
                 <p id="ap-webmcp-preview-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_preview_empty'}</p>
             </section>
 
@@ -610,7 +768,7 @@
 </div>
 
 <!-- ===================== PUBLISH zone — P60-M7 ===================== -->
-<div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
+<div class="tab-panel<?= $__ap_hub_zone === 'publish' ? ' active' : '' ?>" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish"<?= $__ap_hub_zone === 'publish' ? '' : ' hidden' ?>>
     <div class="u-max-w-page u-stack-6">
         <div class="u-split u-align-start u-gap-3">
             <div class="u-stack-1">

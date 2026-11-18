@@ -39,10 +39,20 @@ $input = sanitize_input($input);
 $action = $input['action'] ?? $_GET['action'] ?? 'get';
 
 if ($action === 'get') {
-    echo json_encode([
-        'status' => 'ok',
-        'data' => birkly_discovery_status(),
-    ]);
+    try {
+        $payload = json_encode(
+            [
+                'status' => 'ok',
+                'data' => birkly_discovery_status(),
+            ],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR
+        );
+    } catch (Throwable $e) {
+        error_log('discovery.php get: ' . $e->getMessage());
+        echo json_encode(['status' => 'error', 'message' => 'Could not load Discovery status']);
+        exit;
+    }
+    echo $payload;
     exit;
 }
 
