@@ -145,12 +145,19 @@
         }
     }
 
+    function applyAgentGuideHydrate(data) {
+        var hydrate = data && data.agent_guide_hydrate;
+        if (!hydrate || typeof global.hydrateAgentGuideFromBootstrap !== 'function') return;
+        global.hydrateAgentGuideFromBootstrap(hydrate);
+    }
+
     function applyBootstrap(data) {
         if (!data) return;
         state.status = data;
         updatePackTabDots(data);
         renderPackToggles(data);
         renderVerifyChecks(data.verify_checks, data.verify_last_run);
+        applyAgentGuideHydrate(data);
     }
 
     function normalizeOverrides(overrides) {
@@ -590,6 +597,7 @@
             updatePackTabDots(res.data);
             renderPackToggles(res.data);
             renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
+            applyAgentGuideHydrate(res.data);
             return res.data;
         });
     }
@@ -1371,6 +1379,7 @@
             showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
         }
         initApEmbed();
+        applyAgentGuideHydrate(state.status);
         initHubZones();
         bindPackToggles();
         bindSeoActions();

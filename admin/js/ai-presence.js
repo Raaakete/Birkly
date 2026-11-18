@@ -1087,11 +1087,35 @@
     }
 
     function bindFields() {
-        document.querySelectorAll('[data-field]').forEach(function (el) {
+        var embed = inDiscoveryEmbed() ? document.getElementById('disc-ap-embed') : null;
+        var scope = embed || document;
+        scope.querySelectorAll('[data-field]').forEach(function (el) {
+            if (el.tagName === 'BUTTON') return;
             writeFieldEl(el);
+            if (el.getAttribute('data-field-bound') === '1') return;
+            el.setAttribute('data-field-bound', '1');
             el.addEventListener('input', function () { readFieldEl(el); });
             el.addEventListener('change', function () { readFieldEl(el); });
         });
+    }
+
+    function hydrateAgentGuidePayload(payload) {
+        if (!payload || !payload.draft || typeof payload.draft !== 'object') return false;
+        state.draft = payload.draft;
+        if (payload.meta) state.meta = payload.meta;
+        if (payload.public_urls) state.publicUrls = payload.public_urls;
+        if (payload.cms_diff) state.cmsDiff = payload.cms_diff;
+        if (payload.publish_state) state.publishState = payload.publish_state;
+        bindFields();
+        refreshAllRenders({
+            draft: state.draft,
+            meta: state.meta,
+            completeness: payload.completeness,
+            public_urls: state.publicUrls,
+            publish_state: state.publishState,
+            cms_diff: state.cmsDiff,
+        });
+        return true;
     }
 
     function switchTab(tab) {
@@ -4052,6 +4076,7 @@
         } catch (e) { /* ignore */ }
     };
 
+    global.hydrateAgentGuideFromBootstrap = hydrateAgentGuidePayload;
     global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
 
     if (document.readyState === 'loading') {
