@@ -287,6 +287,8 @@ assert_true(strpos($aiJs, 'inDiscoveryEmbed') !== false, 'ai-presence detects di
 assert_true(strpos($discJs, 'syncDiscoveryHubPanels') !== false, 'discovery syncs hub panel active+hidden');
 assert_true(strpos($aiJs, "data-hub-panel') === 'guide'") !== false, 'agent guide switchTab keeps guide hub panel visible in embed');
 assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), 'data-hub-panel][hidden]') !== false, 'discovery embed hub hidden CSS guard');
+assert_true(strpos((string) file_get_contents($root . '/admin/css/pages/discovery.css'), '#disc-ap-embed[hidden]') !== false, 'discovery embed hidden blocks pointer events');
+assert_true(strpos($discJs, 'resetAgentGuideUiChrome') !== false || strpos($aiJs, 'resetAgentGuideUiChrome') !== false, 'discovery can reset agent guide overlays');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);

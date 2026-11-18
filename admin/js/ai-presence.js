@@ -98,9 +98,11 @@
 
     function bindEl(id, event, handler) {
         var el = document.getElementById(id);
-        if (el) {
-            el.addEventListener(event, handler);
-        }
+        if (!el) return;
+        var flag = 'data-ap-bound-' + event;
+        if (el.getAttribute(flag) === '1') return;
+        el.setAttribute(flag, '1');
+        el.addEventListener(event, handler);
     }
 
     function toast(msg, type) {
@@ -1248,9 +1250,25 @@
 
     function tryDiscoveryBootstrapHydrate() {
         if (!document.getElementById('disc-ap-embed')) return false;
-        var payload = readDiscoveryHydratePayload();
-        if (!payload) return false;
-        return hydrateAgentGuidePayload(payload);
+        try {
+            var payload = readDiscoveryHydratePayload();
+            if (!payload) return false;
+            return hydrateAgentGuidePayload(payload);
+        } catch (err) {
+            console.error('Discovery agent guide bootstrap hydrate failed', err);
+            return false;
+        }
+    }
+
+    function resetAgentGuideUiChrome() {
+        hideAiLoading();
+        [ABOUT_MODAL_ID, 'ap-publish-success-modal'].forEach(function (id) {
+            closeApModal(id);
+        });
+        document.querySelectorAll('#disc-ap-embed .modal.is-open, #disc-ap-embed .modal.active').forEach(function (modal) {
+            modal.classList.remove('is-open', 'active', 'show');
+            modal.setAttribute('aria-hidden', 'true');
+        });
     }
 
     function hydrateAgentGuidePayload(payload) {
@@ -4197,6 +4215,7 @@
         initWizard();
         initPublishFeedback();
         initAssistTabs();
+        bindActions();
         if (discoveryEmbed) {
             document.addEventListener('birkly:discovery-zone', function (event) {
                 if (!event.detail || !event.detail.embedVisible) return;
@@ -4226,7 +4245,6 @@
                 return loadWebmcpConfig();
             }
         }).then(function () {
-            bindActions();
             renderAssistSuggestions();
             updateSpine();
         }).catch(function (e) {
@@ -4234,12 +4252,10 @@
             loadAiConnections().finally(function () {
                 if (!state.webmcpLoaded) {
                     loadWebmcpConfig().finally(function () {
-                        bindActions();
                         updateSpine();
                     });
                     return;
                 }
-                bindActions();
                 updateSpine();
             });
         });
@@ -4278,6 +4294,7 @@
     global.hydrateAgentGuideFromBootstrap = hydrateAgentGuidePayload;
     global.syncAgentGuideSubnavPanels = syncGuideSubnavPanels;
     global.tryDiscoveryBootstrapHydrate = tryDiscoveryBootstrapHydrate;
+    global.resetAgentGuideUiChrome = resetAgentGuideUiChrome;
 
     if (document.getElementById('disc-ap-embed')) {
         if (document.readyState === 'loading') {
