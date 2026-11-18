@@ -252,55 +252,65 @@
         }
         var confidence = quality.confidence || 'low';
         var coverage = quality.coverage || {};
-        var lines = [
-            trustConfidenceLabel(confidence),
-            t('analytics_trust_coverage_line', 'Payload coverage: {session}% sessions · {ua}% user-agent · {token}% visitor token', {
-                session: coverage.has_session_pct != null ? coverage.has_session_pct : '0',
-                ua: coverage.has_ua_pct != null ? coverage.has_ua_pct : '0',
-                token: coverage.has_visitor_token_pct != null ? coverage.has_visitor_token_pct : '0'
-            })
-        ];
         var indexed = Number(quality.indexed_event_count) || 0;
         var raw = Number(quality.event_count) || 0;
-        if (raw > 0 && indexed < raw) {
-            lines.push(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — reloading may backfill remaining JSON.' , { indexed: indexed, raw: raw }));
-        }
-        function coverageMeter(label, pct) {
+        var tokenPct = Number(coverage.has_visitor_token_pct) || 0;
+
+        function coverageRow(title, help, pct) {
             var p = Math.max(0, Math.min(100, Number(pct) || 0));
-            return '<div class="analytics-coverage-row">' +
-                '<span class="analytics-coverage-row__label">' + escapeHtml(label) + '</span>' +
-                '<span class="analytics-coverage-row__value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
-                '<div class="meter analytics-coverage-row__meter" style="--value:' + Math.max(2, Math.round(p)) + '%"><span></span></div>' +
+            return '<div class="analytics-data-health__row">' +
+                '<div class="analytics-data-health__row-head">' +
+                '<span class="analytics-data-health__row-title">' + escapeHtml(title) + '</span>' +
+                '<span class="analytics-data-health__row-value u-numeric">' + escapeHtml(String(p)) + '%</span>' +
+                '</div>' +
+                '<p class="form-help analytics-data-health__row-help u-m-0">' + escapeHtml(help) + '</p>' +
+                '<div class="meter analytics-data-health__meter" style="--value:' + Math.max(2, Math.round(p)) + '%"><span></span></div>' +
                 '</div>';
         }
 
         var defs = quality.definitions || {};
-        var defBits = [];
+        var footnotes = [];
         if (defs.session) {
-            defBits.push(t('analytics_trust_def_session', 'Sessions: {text}', { text: defs.session }));
+            footnotes.push(t('analytics_trust_def_session', 'Sessions — {text}', { text: defs.session }));
         }
         if (defs.visitor) {
-            defBits.push(t('analytics_trust_def_visitor', 'Visitors: {text}', { text: defs.visitor }));
+            footnotes.push(t('analytics_trust_def_visitor', 'Visitors — {text}', { text: defs.visitor }));
         }
 
-        return '<section class="analytics-trust card analytics-trust-card" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
-            '<div class="analytics-trust__head u-cluster u-justify-between u-gap-3">' +
-            '<div class="analytics-trust__title-block">' +
+        return '<aside class="callout analytics-data-health" role="status" data-confidence="' + escapeHtml(confidence) + '">' +
+            '<div class="analytics-data-health__head u-cluster u-justify-between u-gap-3 u-wrap">' +
+            '<div class="analytics-data-health__intro">' +
+            '<p class="callout-title u-m-0">' + escapeHtml(t('analytics_trust_title', 'How complete is your data?')) + '</p>' +
+            '<p class="callout-body u-m-0">' + escapeHtml(t('analytics_trust_lede', 'Higher coverage means sessions, visitors, and device stats are easier to trust.')) + '</p>' +
             '<span class="analytics-trust__badge analytics-trust__badge--' + escapeHtml(confidence) + '">' + escapeHtml(trustConfidenceLabel(confidence)) + '</span>' +
-            '<p class="analytics-trust__summary u-m-0">' + escapeHtml(lines[0] || '') + '</p>' +
             '</div>' +
             '<button type="button" class="button is-small is-secondary" id="analytics-rebuild-index">' + escapeHtml(t('analytics_rebuild_index', 'Rebuild index')) + '</button>' +
             '</div>' +
-            '<div class="analytics-coverage-grid">' +
-            coverageMeter(t('analytics_cov_sessions', 'Sessions'), coverage.has_session_pct) +
-            coverageMeter(t('analytics_cov_ua', 'User-agent'), coverage.has_ua_pct) +
-            coverageMeter(t('analytics_cov_token', 'Visitor token'), coverage.has_visitor_token_pct) +
+            '<div class="analytics-data-health__grid">' +
+            coverageRow(
+                t('analytics_cov_sessions', 'Session ids'),
+                t('analytics_cov_sessions_help', 'How often each hit includes a session id so visits can be grouped.'),
+                coverage.has_session_pct
+            ) +
+            coverageRow(
+                t('analytics_cov_ua', 'Browser & device labels'),
+                t('analytics_cov_ua_help', 'How often we received enough browser data to show OS, browser, and screen size.'),
+                coverage.has_ua_pct
+            ) +
+            coverageRow(
+                t('analytics_cov_token', 'Returning visitor tokens'),
+                t('analytics_cov_token_help', 'How often someone accepted analytics and received a privacy-safe token.'),
+                coverage.has_visitor_token_pct
+            ) +
             '</div>' +
-            (raw > 0 && indexed < raw
-                ? '<p class="form-help analytics-trust__index-hint u-m-0">' + escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })) + '</p>'
+            (tokenPct < 5
+                ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_cov_token_zero_hint', 'Tokens appear after visitors accept the analytics banner on your public site (Standard or Advanced preset).')) + '</p>'
                 : '') +
-            (defBits.length ? '<p class="form-help analytics-trust__defs u-m-0">' + defBits.map(function (d) { return escapeHtml(d); }).join(' ') + '</p>' : '') +
-            '</section>';
+            (raw > 0 && indexed < raw
+                ? '<p class="form-help analytics-data-health__hint u-m-0">' + escapeHtml(t('analytics_trust_index_lag', 'SQLite index: {indexed} of {raw} events indexed — use Rebuild index if this stays low.', { indexed: indexed, raw: raw })) + '</p>'
+                : '') +
+            (footnotes.length ? '<div class="analytics-data-health__footnotes">' + footnotes.map(function (d) { return '<p class="form-help u-m-0">' + escapeHtml(d) + '</p>'; }).join('') + '</div>' : '') +
+            '</aside>';
     }
 
     function renderBarList(title, rows, labelKey, valueKey) {
@@ -346,15 +356,19 @@
     function renderTrafficQuality(bot) {
         bot = bot || {};
         var humanViews = Number(bot.human_page_views) || 0;
+        var limitedViews = Number(bot.limited_page_views) || 0;
         var botViews = Number(bot.bot_page_views) || 0;
         var suspected = Number(bot.suspected_bot_page_views) || 0;
         var unknownDev = Number(bot.unknown_device_views) || 0;
-        var total = humanViews + botViews + suspected;
+        var total = humanViews + limitedViews + botViews + suspected;
         if (total === 0) {
             return '';
         }
 
         function qualityBar(label, count, modifier) {
+            if (count <= 0) {
+                return '';
+            }
             var pct = Math.max(4, Math.round((count / Math.max(total, 1)) * 100));
             return '<li class="analytics-quality-row analytics-quality-row--' + modifier + '">' +
                 '<span class="ranked-label">' + escapeHtml(label) + '</span>' +
@@ -364,24 +378,27 @@
         }
 
         var agents = Array.isArray(bot.top_bot_agents) ? bot.top_bot_agents : [];
-        var agentList = agents.length
-            ? '<div class="analytics-quality-agents u-m-0">' + renderBarList(t('analytics_bot_agents_title', 'Top bot user agents'), agents, 'agent', 'views') + '</div>'
+        var agentBlock = agents.length
+            ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_bot_agents_title', 'Top bot user agents')) + ': ' +
+                agents.slice(0, 3).map(function (row) {
+                    return escapeHtml(String(row.agent || '—')) + ' (' + formatCount(row.views || 0) + ')';
+                }).join(', ') + '</p>'
             : '';
 
-        return '<section class="card analytics-quality-card">' +
-            '<div class="card-header"><h4 class="section-title analytics-panel__title">' + escapeHtml(t('analytics_traffic_quality_title', 'Traffic quality')) + '</h4></div>' +
-            '<div class="card-body u-stack-3">' +
-            '<p class="form-help u-m-0">' + escapeHtml(t('analytics_traffic_quality_help', 'Tags on page views. Default totals exclude confirmed bots only. Suspected hits stay in sessions and visitors.')) + '</p>' +
+        return '<section class="analytics-quality-panel u-stack-3">' +
+            '<h4 class="analytics-section-head__title u-m-0">' + escapeHtml(t('analytics_traffic_quality_title', 'Page view breakdown')) + '</h4>' +
+            '<p class="form-help u-m-0">' + escapeHtml(t('analytics_traffic_quality_help', 'Headline totals already leave out confirmed bots. Privacy-limited views are normal when consent is declined or browser data is missing — they are not counted as bots.')) + '</p>' +
             '<ul class="ranked analytics-quality-list">' +
-            qualityBar(t('analytics_kpi_human_views', 'Human page views'), humanViews, 'human') +
-            qualityBar(t('analytics_kpi_suspected_views', 'Suspected automation'), suspected, 'suspected') +
+            qualityBar(t('analytics_kpi_human_views', 'Full browser detail'), humanViews, 'human') +
+            qualityBar(t('analytics_kpi_limited_views', 'Privacy-limited views'), limitedViews, 'limited') +
+            qualityBar(t('analytics_kpi_suspected_views', 'Unidentified requests'), suspected, 'suspected') +
             qualityBar(t('analytics_kpi_bot_views', 'Confirmed bots'), botViews, 'bot') +
             '</ul>' +
             (unknownDev > 0
-                ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_unknown_device_hint', 'Unknown device context on {count} views (often privacy browsers or incomplete payloads).', { count: unknownDev })) + '</p>'
+                ? '<p class="form-help u-m-0">' + escapeHtml(t('analytics_unknown_device_hint', '{count} views lacked device context (private browsers or minimal payloads).', { count: unknownDev })) + '</p>'
                 : '') +
-            agentList +
-            '</div></section>';
+            agentBlock +
+            '</section>';
     }
 
     function reportTabIds(preset) {
@@ -404,13 +421,12 @@
         var tabs = reportTabIds(preset);
         var items = tabs.map(function (tab) {
             var active = state.reportTab === tab.id;
-            return '<button type="button" class="tab' + (active ? ' active' : '') + '" role="tab" aria-selected="' + (active ? 'true' : 'false') + '" data-report-tab="' + escapeHtml(tab.id) + '">' +
-                '<span class="nav-text">' + escapeHtml(tab.label) + '</span></button>';
+            return '<button type="button" class="tab segmented-item' + (active ? ' active' : '') + '" role="tab" aria-selected="' + (active ? 'true' : 'false') + '" data-report-tab="' + escapeHtml(tab.id) + '">' +
+                '<span class="nav-text" data-text="' + escapeHtml(tab.label) + '">' + escapeHtml(tab.label) + '</span></button>';
         }).join('');
 
-        return '<div class="analytics-report-tabs-wrap">' +
-            '<nav class="tabs segmented analytics-report-tabs" role="tablist" aria-label="' + escapeHtml(t('analytics_report_tabs_label', 'Report sections')) + '">' + items + '</nav>' +
-            '<p class="form-help analytics-drill-hint u-m-0">' + escapeHtml(t('analytics_drill_hint', 'Pick a section — details load here instead of one long page.')) + '</p></div>';
+        return '<div class="analytics-report-tabs-wrap tabs-root">' +
+            '<nav class="tabs segmented analytics-report-tabs" role="tablist" aria-label="' + escapeHtml(t('analytics_report_tabs_label', 'Report sections')) + '">' + items + '</nav></div>';
     }
 
     function renderTopPaths(paths) {
@@ -593,7 +609,7 @@
         if (tab === 'overview') {
             var metrics = '';
             if (preset !== 'minimal' && preset !== 'off') {
-                metrics += kpiStat(formatCount(report.sessions || 0), t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_primary_hint', 'Primary identity anchor'), 'analytics-stat--hero');
+                metrics += kpiStat(formatCount(report.sessions || 0), t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_primary_hint', 'Grouped visits in one browser tab'), '');
             }
             metrics += kpiStat(formatCount(report.page_views || 0), t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Excludes confirmed bots by default'), '') +
                 kpiStat(formatCount(report.unique_visitors || 0), t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Token or session/day identity'), '');
