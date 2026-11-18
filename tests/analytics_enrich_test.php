@@ -171,4 +171,21 @@ $suspected = birkly_analytics_traffic_class([
 ]);
 assert_true($suspected === 'suspected', 'empty UA classified suspected');
 
+$sameIpMultiSession = birkly_analytics_aggregate_events([
+    array_merge($event, ['session_id' => 'sess_a', 'path' => '/a', 'timestamp' => time()]),
+    array_merge($event, ['session_id' => 'sess_b', 'path' => '/b', 'timestamp' => time() + 1]),
+    array_merge($event, ['session_id' => 'sess_c', 'path' => '/c', 'timestamp' => time() + 2]),
+]);
+assert_true($sameIpMultiSession['unique_visitors'] === 3, 'same IP with distinct sessions counts as three visitors');
+assert_true(($sameIpMultiSession['sessions'] ?? 0) === 3, 'three sessions recorded');
+
+$tokenA = hash('sha256', 'example.com:vid_one');
+$tokenB = hash('sha256', 'example.com:vid_two');
+$tokenVisitors = birkly_analytics_aggregate_events([
+    array_merge($event, ['visitor_token_hash' => $tokenA, 'session_id' => 's1', 'timestamp' => time()]),
+    array_merge($event, ['visitor_token_hash' => $tokenA, 'session_id' => 's2', 'timestamp' => time() + 1]),
+    array_merge($event, ['visitor_token_hash' => $tokenB, 'session_id' => 's3', 'timestamp' => time() + 2]),
+]);
+assert_true($tokenVisitors['unique_visitors'] === 2, 'visitor_token_hash dedupes across sessions');
+
 echo "analytics_enrich_test: OK\n";

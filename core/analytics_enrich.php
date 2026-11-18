@@ -298,6 +298,24 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
     $ipHash = hash('sha256', $ip . $trackingId);
     $visitorDayKey = hash('sha256', 'vd:' . $trackingId . ':' . date('Y-m-d', $timestamp) . ':' . $ip);
 
+    $consentState = trim((string) ($input['consent_state'] ?? ''));
+    if ($consentState === '') {
+        $rawConsent = strtolower(trim((string) ($input['consent'] ?? '')));
+        if ($rawConsent === 'granted' || $rawConsent === 'accepted' || $rawConsent === 'true' || $rawConsent === '1') {
+            $consentState = 'granted';
+        } elseif ($rawConsent === 'anonymous') {
+            $consentState = 'anonymous';
+        } else {
+            $consentState = 'not_required';
+        }
+    }
+
+    $visitorTokenHash = '';
+    $rawVisitorToken = trim((string) ($input['visitor_token'] ?? ''));
+    if ($rawVisitorToken !== '' && $trackingId !== '') {
+        $visitorTokenHash = hash('sha256', $trackingId . ':' . $rawVisitorToken);
+    }
+
     $eventData = is_array($input['event_data'] ?? null) ? $input['event_data'] : [];
     if ($eventType === 'outbound_click' && ($eventData['href'] ?? '') === '' && $referrer !== '') {
         $eventData['href'] = $referrer;
@@ -334,17 +352,73 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'session_id' => (string) ($input['session_id'] ?? ''),
         'event_name' => (string) ($input['event_name'] ?? ''),
         'event_data' => $eventData,
+        'schema_version' => 2,
+        'consent_state' => $consentState,
+        'visitor_token_hash' => $visitorTokenHash,
     ];
+
+    $event['quality'] = birkly_analytics_event_quality($event);
+    $event['traffic_class'] = birkly_analytics_traffic_class($event);
+
+    return $event;
+}
+
+/**
+ * @param array<string, mixed> $event
+ * @return array{has_ua:bool,has_session:bool,has_visitor_token:bool,has_viewport:bool}
+ */
+function birkly_analytics_event_quality(array $event): array
+{
+    $ua = trim((string) ($event['user_agent'] ?? ''));
+
+    return [
+        'has_ua' => $ua !== '' && strlen($ua) >= 16,
+        'has_session' => trim((string) ($event['session_id'] ?? '')) !== '',
+        'has_visitor_token' => trim((string) ($event['visitor_token_hash'] ?? '')) !== '',
+        'has_viewport' => ((int) ($event['viewport_width'] ?? 0)) > 0 || ((int) ($event['viewport_height'] ?? 0)) > 0,
+    ];
+}
+
+/**
+ * Stored traffic_class when present; otherwise classify at read time.
+ *
+ * @param array<string, mixed> $event
+ */
+function birkly_analytics_event_traffic_class(array $event): string
+{
+    $stored = strtolower(trim((string) ($event['traffic_class'] ?? '')));
+    if (in_array($stored, ['human', 'bot', 'suspected', 'unknown'], true)) {
+        return $stored;
+    }
+
+    return birkly_analytics_traffic_class($event);
 }
 
 function birkly_analytics_visitor_key(array $event): string
 {
-    $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
-    if ($ipHash !== '') {
-        return $ipHash;
+    $visitorToken = trim((string) ($event['visitor_token_hash'] ?? ''));
+    if ($visitorToken !== '') {
+        return 'vt:' . $visitorToken;
     }
 
-    return (string) ($event['visitor_day_key'] ?? '');
+    $sessionId = trim((string) ($event['session_id'] ?? ''));
+    if ($sessionId !== '') {
+        $day = date('Y-m-d', (int) ($event['timestamp'] ?? time()));
+
+        return 'sess:' . hash('sha256', $day . ':' . $sessionId);
+    }
+
+    $dayKey = (string) ($event['visitor_day_key'] ?? '');
+    if ($dayKey !== '') {
+        return 'vd:' . $dayKey;
+    }
+
+    $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
+    if ($ipHash !== '') {
+        return 'ip:' . $ipHash;
+    }
+
+    return '';
 }
 
 /**
@@ -922,7 +996,7 @@ function birkly_analytics_exclude_bot_events(array $events, bool $includeBots = 
     }
 
     return array_values(array_filter($events, static function ($event): bool {
-        return is_array($event) && birkly_analytics_traffic_class($event) === 'human';
+        return is_array($event) && birkly_analytics_event_traffic_class($event) !== 'bot';
     }));
 }
 
