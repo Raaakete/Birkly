@@ -179,9 +179,31 @@
         }
     }
 
+    function packEnabledFromDom(packId) {
+        var map = {
+            seo: '#disc-seo-enabled',
+            agent_guide: '#disc-agent-guide-enabled',
+            webmcp: '#disc-webmcp-enabled',
+        };
+        var el = $(map[packId]);
+        return el ? !!el.checked : false;
+    }
+
+    function effectivePacks() {
+        var packs = state.status && state.status.packs;
+        if (packs && typeof packs === 'object') {
+            return packs;
+        }
+        return {
+            seo: { enabled: packEnabledFromDom('seo') },
+            agent_guide: { enabled: packEnabledFromDom('agent_guide') },
+            webmcp: { enabled: packEnabledFromDom('webmcp') },
+        };
+    }
+
     function syncPageBars(zone) {
         zone = zone || state.activeZone;
-        var packs = (state.status && state.status.packs) || {};
+        var packs = effectivePacks();
         var seoBar = $('#disc-seo-bar');
         var agBar = $('#disc-ag-bar');
         if (seoBar) seoBar.hidden = !(zone === 'seo' && packs.seo && packs.seo.enabled);
@@ -192,8 +214,9 @@
         var embed = $('#disc-ap-embed');
         if (!embed) return;
 
-        var agOn = state.status && state.status.packs && state.status.packs.agent_guide && state.status.packs.agent_guide.enabled;
-        var wmOn = state.status && state.status.packs && state.status.packs.webmcp && state.status.packs.webmcp.enabled;
+        var packs = effectivePacks();
+        var agOn = packs.agent_guide && packs.agent_guide.enabled;
+        var wmOn = packs.webmcp && packs.webmcp.enabled;
         var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
 
         embed.hidden = !showEmbed;
@@ -256,7 +279,8 @@
             }
             switchZone(btn.getAttribute('data-disc-zone'));
         });
-        switchZone(getInitialZone());
+        state.activeZone = getInitialZone();
+        syncApEmbed(state.activeZone);
     }
 
     function setTabDot(id, ok) {
@@ -416,7 +440,10 @@
     }
 
     function renderSeoForm(data) {
-        var seo = data.seo || {};
+        var seo = data && data.seo;
+        if (!seo || typeof seo !== 'object') {
+            return;
+        }
         state.seo = seo;
         var siteTitle = $('#disc-seo-site-title');
         var desc = $('#disc-seo-description');
@@ -461,9 +488,11 @@
             if (input && pack) {
                 input.checked = !!pack.enabled;
             }
-            if (config) config.hidden = !(pack && pack.enabled);
+            if (config && pack) {
+                config.hidden = !pack.enabled;
+            }
         });
-        syncPageBars();
+        syncPageBars(state.activeZone);
 
         var agStatus = $('#disc-agent-guide-status');
         if (agStatus && data.packs.agent_guide) {
@@ -1199,17 +1228,18 @@
     function init() {
         if (!document.querySelector('.disc-hub')) return;
         mountPageBars();
-        initHubZones();
-        bindPackToggles();
-        bindSeoActions();
-        bindUrlMapActions();
-        bindVerify();
+        state.activeZone = getInitialZone();
         try {
             applyBootstrap(readBootstrap());
         } catch (bootstrapErr) {
             console.error('Discovery bootstrap render failed', bootstrapErr);
             showMessage(bootstrapErr.message || t('discovery_js_load_failed', 'Load failed'), true);
         }
+        initHubZones();
+        bindPackToggles();
+        bindSeoActions();
+        bindUrlMapActions();
+        bindVerify();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
