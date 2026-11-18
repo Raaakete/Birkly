@@ -76,7 +76,9 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   min-height: 14rem;
+  height: 100%;
 }
 .analytics-overview-breakdown { grid-area: breakdown; min-width: 0; align-self: stretch; }
 .analytics-kpi-tile {
@@ -272,6 +274,7 @@
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
+  justify-content: flex-end;
 }
 .analytics-chart-card__head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -287,10 +290,15 @@
   flex: 1 1 auto;
   min-height: 12rem;
   width: 100%;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 .analytics-chart-hover {
   position: absolute;
-  top: 0;
+  bottom: 100%;
+  margin-bottom: var(--s-2);
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
