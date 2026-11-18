@@ -145,6 +145,7 @@
         "ag_js_link_check_complete": "リンクチェック完了",
         "ag_js_link_suggestions_ready": "リンクの提案の準備が完了しました - AI Assist で確認します",
         "ag_js_media_picker_unavailable": "メディア ピッカーは使用できません — ページをリロードしてください",
+        "ag_js_modal_dom_missing": "Agent Guide のダイアログが完全に読み込まれませんでした。デプロイ後にハード更新してください。",
         "ag_js_no_collections": "CMS コレクションが見つかりません - 最初にコンテンツ コレクションを作成してください",
         "ag_js_no_collections_match": "検索に一致するコレクションはありません",
         "ag_js_no_proposals": "提案は生成されませんでした",

@@ -485,6 +485,71 @@
     var modalFocusTrap = null;
     var modalPreviousFocus = null;
 
+    function apQuerySelector(scope, id) {
+        if (!id) return null;
+        if (!scope || !scope.querySelector) return null;
+        try {
+            if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+                return scope.querySelector('#' + CSS.escape(id));
+            }
+        } catch (e) { /* fall through */ }
+        return scope.querySelector('[id="' + String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+    }
+
+    function apFormEl(id) {
+        var embed = document.getElementById('disc-ap-embed');
+        if (embed) {
+            var scoped = apQuerySelector(embed, id);
+            if (scoped) return scoped;
+        }
+        return document.getElementById(id);
+    }
+
+    function apModalEl(id) {
+        var modal = document.getElementById(id);
+        if (modal) return modal;
+        var embed = document.getElementById('disc-ap-embed');
+        if (embed) return apQuerySelector(embed, id);
+        return null;
+    }
+
+    function setApFormValue(id, value) {
+        var el = apFormEl(id);
+        if (!el) {
+            console.error('[Agent Guide] Missing form control #' + id);
+            return false;
+        }
+        el.value = value == null ? '' : value;
+        return true;
+    }
+
+    function ensureDiscoveryModalsMounted() {
+        var embed = document.getElementById('disc-ap-embed');
+        if (!embed) return;
+        var modals = embed.querySelectorAll('.ap-modal[id]');
+        modals.forEach(function (modal) {
+            if (modal.parentNode === document.body) return;
+            document.body.appendChild(modal);
+        });
+        if (modals.length) {
+            embed.setAttribute('data-ap-modals-mounted', '1');
+        }
+    }
+
+    function agentGuideModalsReady() {
+        return !!apFormEl('ap-claim-statement') && !!apFormEl('ap-evidence-title');
+    }
+
+    function toastAgentGuideModalIncomplete() {
+        toast(
+            t(
+                'ag_js_modal_dom_missing',
+                'Agent Guide dialogs did not load completely — hard-refresh this page after your deploy finishes.'
+            ),
+            'error'
+        );
+    }
+
     function getModalFocusable(modal) {
         return Array.from(modal.querySelectorAll(
             'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -518,9 +583,14 @@
     }
 
     function openApModal(id) {
+        ensureDiscoveryModalsMounted();
         if (inDiscoveryEmbed() && !agentGuideVisible()) return;
-        var modal = document.getElementById(id);
-        if (!modal) return;
+        var modal = apModalEl(id);
+        if (!modal) {
+            console.error('[Agent Guide] Missing modal #' + id);
+            toastAgentGuideModalIncomplete();
+            return;
+        }
         modalPreviousFocus = document.activeElement;
         modal.classList.add('active');
         modal.style.display = 'flex';
@@ -531,7 +601,7 @@
     }
 
     function closeApModal(id) {
-        var modal = document.getElementById(id);
+        var modal = apModalEl(id);
         if (!modal) return;
         modal.classList.remove('active');
         modal.style.display = 'none';
@@ -1300,11 +1370,15 @@
     function repairDiscoveryEmbedHandlers() {
         if (!document.getElementById('disc-ap-embed')) return;
         discoveryEmbed = true;
+        ensureDiscoveryModalsMounted();
         initAssistTabs();
         initFieldAiButtons();
         bindActions();
         bindDiscoveryEmbedCaptureClicks();
         bindDiscoveryAgentGuideBarClicks();
+        if (!agentGuideModalsReady()) {
+            console.error('[Agent Guide] Modal markup incomplete in Discovery embed');
+        }
     }
 
     function bindDiscoveryAgentGuideBarClicks() {
@@ -1343,12 +1417,19 @@
         if (!embed || embed.getAttribute('data-ap-embed-capture') === '1') return;
         embed.setAttribute('data-ap-embed-capture', '1');
         embed.addEventListener('click', function (e) {
+            if (e.__apEmbedCaptureHandled) return;
             var target = e.target;
             if (!target || !target.closest) return;
+
+            function markApEmbedClickHandled(evt) {
+                evt.__apEmbedCaptureHandled = true;
+                evt.stopPropagation();
+            }
 
             var assist = target.closest('[data-assist-mode]');
             if (assist) {
                 e.preventDefault();
+                markApEmbedClickHandled(e);
                 runCopilot(assist.getAttribute('data-assist-mode'))
                     .catch(function (err) { toast(err.message, 'error'); });
                 return;
@@ -1358,6 +1439,7 @@
             if (btn) {
                 if (btn.id === 'ap-assist-auto-fill') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     assistAutoFill().catch(function (err) { toast(err.message, 'error'); });
                     return;
                 }
@@ -1378,21 +1460,25 @@
                 }
                 if (btn.id === 'ap-add-claim') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     openClaimModal(null);
                     return;
                 }
                 if (btn.id === 'ap-add-evidence') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     openEvidenceModal(null);
                     return;
                 }
                 if (btn.id === 'ap-add-cms-evidence') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     addCmsEvidence();
                     return;
                 }
                 if (btn.id === 'ap-pick-media') {
                     e.preventDefault();
+                    markApEmbedClickHandled(e);
                     openMediaPicker();
                     return;
                 }
@@ -1459,6 +1545,7 @@
             var fieldAi = target.closest('.ap-field-ai');
             if (fieldAi) {
                 e.preventDefault();
+                markApEmbedClickHandled(e);
                 var field = fieldAi.getAttribute('data-field');
                 if (field) runFieldAi(field).catch(function (err) { toast(err.message, 'error'); });
                 return;
@@ -1469,6 +1556,8 @@
                 e.preventDefault();
                 var mediaIdx = parseInt(editMedia.getAttribute('data-idx'), 10);
                 if (!isNaN(mediaIdx)) openMediaEditModal(mediaIdx);
+                e.__apEmbedCaptureHandled = true;
+                return;
             }
         }, true);
     }
@@ -2397,8 +2486,14 @@
     function agentGuideVisible() {
         var embed = document.getElementById('disc-ap-embed');
         if (!embed) return true;
+        if (embed.hidden) return false;
+        var zone = document.documentElement.getAttribute('data-disc-tab');
+        if (!zone && document.body) {
+            zone = document.body.getAttribute('data-admin-tab');
+        }
+        if (zone === 'agent-guide') return true;
         var tab = document.getElementById('disc-tab-agent-guide');
-        return !embed.hidden && (!tab || tab.getAttribute('aria-selected') === 'true');
+        return tab && tab.getAttribute('aria-selected') === 'true';
     }
 
     function maybeShowSetup(data) {
@@ -3050,15 +3145,21 @@
     }
 
     function openClaimModal(idx) {
+        if (!state.draft) state.draft = {};
+        ensureDiscoveryModalsMounted();
+        if (!agentGuideModalsReady()) {
+            toastAgentGuideModalIncomplete();
+            return;
+        }
         modalState.claimIdx = idx == null ? null : idx;
         var claim = idx != null ? (state.draft.claims || [])[idx] : null;
         modalState.claimSources = claim && Array.isArray(claim.sources) ?
             JSON.parse(JSON.stringify(claim.sources)) : [];
-        var titleEl = document.getElementById('ap-claim-modal-title');
+        var titleEl = apFormEl('ap-claim-modal-title');
         if (titleEl) titleEl.textContent = claim ? 'Edit claim' : 'Add claim';
-        document.getElementById('ap-claim-statement').value = claim ? (claim.statement || '') : '';
-        document.getElementById('ap-claim-status').value = claim ? (claim.status || 'pending_review') : 'pending_review';
-        document.getElementById('ap-claim-notes').value = claim ? (claim.notes || '') : '';
+        setApFormValue('ap-claim-statement', claim ? (claim.statement || '') : '');
+        setApFormValue('ap-claim-status', claim ? (claim.status || 'pending_review') : 'pending_review');
+        setApFormValue('ap-claim-notes', claim ? (claim.notes || '') : '');
         refreshClaimSourcesList();
         openApModal('ap-claim-modal');
     }
@@ -3093,16 +3194,22 @@
     }
 
     function openEvidenceModal(idx) {
+        if (!state.draft) state.draft = {};
+        ensureDiscoveryModalsMounted();
+        if (!agentGuideModalsReady()) {
+            toastAgentGuideModalIncomplete();
+            return;
+        }
         modalState.evidenceIdx = idx == null ? null : idx;
         var ev = idx != null ? (state.draft.evidence || [])[idx] : null;
-        var titleEl = document.getElementById('ap-evidence-modal-title');
+        var titleEl = apFormEl('ap-evidence-modal-title');
         if (titleEl) titleEl.textContent = ev ? 'Edit evidence' : 'Add evidence';
-        document.getElementById('ap-evidence-title').value = ev ? (ev.title || '') : '';
-        document.getElementById('ap-evidence-url').value = ev ? (ev.url || '') : '';
-        document.getElementById('ap-evidence-type').value = ev ? (ev.type || 'external_url') : 'external_url';
-        document.getElementById('ap-evidence-notes').value = ev ? (ev.notes || '') : '';
-        document.getElementById('ap-evidence-rating').value = ev && ev.rating != null ? String(ev.rating) : '';
-        document.getElementById('ap-evidence-review-count').value = ev && ev.review_count != null ? String(ev.review_count) : '';
+        setApFormValue('ap-evidence-title', ev ? (ev.title || '') : '');
+        setApFormValue('ap-evidence-url', ev ? (ev.url || '') : '');
+        setApFormValue('ap-evidence-type', ev ? (ev.type || 'external_url') : 'external_url');
+        setApFormValue('ap-evidence-notes', ev ? (ev.notes || '') : '');
+        setApFormValue('ap-evidence-rating', ev && ev.rating != null ? String(ev.rating) : '');
+        setApFormValue('ap-evidence-review-count', ev && ev.review_count != null ? String(ev.review_count) : '');
         openApModal('ap-evidence-modal');
     }
 
@@ -3268,9 +3375,10 @@
             global.Birkly.MediaModal.open(function (media) {
                 if (media) setPickedMedia(media);
             });
-        } else {
-            toast(t('ag_js_media_picker_unavailable', 'Media picker unavailable — reload the page'), 'error');
+            return;
         }
+        console.error('[Agent Guide] Birkly.MediaModal missing');
+        toast(t('ag_js_media_picker_unavailable', 'Media picker unavailable — reload the page'), 'error');
     }
 
     function openMediaEditModal(idx) {
@@ -4450,6 +4558,9 @@
         initWizard();
         initPublishFeedback();
         initAssistTabs();
+        if (discoveryEmbed || document.getElementById('disc-ap-embed')) {
+            ensureDiscoveryModalsMounted();
+        }
         bindActions();
         global.__AI_PRESENCE_ACTIONS_BOUND__ = true;
         global.__AI_PRESENCE_INIT_COMPLETE__ = true;

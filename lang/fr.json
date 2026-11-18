@@ -145,6 +145,7 @@
         "ag_js_link_check_complete": "Vérification complet",
         "ag_js_link_suggestions_ready": "Suggestions de liens prêtes — révision dans AI Assist",
         "ag_js_media_picker_unavailable": "Sélecteur de médias indisponible — rechargez la page",
+        "ag_js_modal_dom_missing": "Les dialogues Agent Guide ne se sont pas chargés complètement — actualisez après le déploiement.",
         "ag_js_no_collections": "Aucune collection CMS trouvée — créez d'abord des collections de contenu",
         "ag_js_no_collections_match": "Aucune collection ne correspond à votre recherche",
         "ag_js_no_proposals": "Aucune proposition générée",
