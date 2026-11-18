@@ -754,14 +754,27 @@
         var filtered = rows.filter(function (row) {
             return filter === 'all' || row.type === filter;
         });
-        tbody.innerHTML = '';
         if (!filtered.length) {
+            if (tbody.querySelector('[data-ssr-url-row]')) {
+                updateEmptyPagesHelp(seo, summary);
+                updateUrlMapToolbar();
+                if (meta) {
+                    var metaTextKeep = formatScanMeta(seo, summary);
+                    if (metaTextKeep) {
+                        meta.textContent = metaTextKeep;
+                        meta.hidden = false;
+                    }
+                }
+                return;
+            }
+            tbody.innerHTML = '';
             var emptyMsg = t('discovery_seo_url_map_empty', 'Nothing listed yet — use “Set up with AI” or “Refresh from site files”.');
             if (filter === 'redirect') {
                 emptyMsg = t('discovery_seo_url_map_empty_redirects', 'No redirects yet.');
             }
             tbody.innerHTML = '<tr class="disc-url-empty"><td colspan="5">' + escapeHtml(emptyMsg) + '</td></tr>';
         } else {
+            tbody.innerHTML = '';
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
                 var projectFile = row.project_file || row.file || '';
@@ -1261,6 +1274,12 @@
         });
         load().catch(function (e) {
             showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
+        });
+        window.addEventListener('load', function () {
+            var needsReload = !state.status || !state.status.seo || !state.status.seo.url_map;
+            var mapRows = buildUrlMapRowsFromSeo(state.status && state.status.seo);
+            if (!needsReload && mapRows.length) return;
+            load().catch(function () { /* keep SSR fallback */ });
         });
         if (typeof requestAnimationFrame === 'function') {
             requestAnimationFrame(ensureDiscoveryPageChrome);

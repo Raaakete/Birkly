@@ -119,6 +119,7 @@ require_once $root . '/api/admin_templates.php';
 $discoveryPage = getDiscoveryPageData();
 assert_true(is_array($discoveryPage['discovery_status'] ?? null), 'getDiscoveryPageData includes discovery_status');
 assert_true(!empty($discoveryPage['discovery_status']['packs']['seo']), 'discovery page data has seo pack');
+assert_true(is_array($discoveryPage['discovery_embed_overview']['completeness'] ?? null), 'discovery embed overview completeness');
 
 echo "==> Discovery template render\n";
 require_once $root . '/admin/template_parser.php';
@@ -153,6 +154,7 @@ if (preg_match('/<textarea id="disc-bootstrap-data"[^>]*>(.*?)<\/textarea>/s', $
     $bootJson = json_decode($bootRaw, true);
     assert_true(is_array($bootJson) && isset($bootJson['packs']), 'discovery bootstrap JSON parses');
 }
+assert_true(strpos($discoveryHtml, 'data-ssr-overview') !== false, 'discovery embed SSR overview markers');
 
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);

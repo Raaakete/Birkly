@@ -1102,6 +1102,10 @@
 
     function renderOverview(data) {
         var c = data.completeness || {};
+        var hasOverviewData = (c.items && c.items.length) || (typeof c.percent === 'number' && c.percent > 0);
+        if (!hasOverviewData && document.querySelector('[data-ssr-overview]')) {
+            return;
+        }
         var bar = document.getElementById('ai-presence-progress');
         var label = document.getElementById('ai-presence-completeness-label');
         if (bar) bar.style.width = (c.percent || 0) + '%';
@@ -1111,6 +1115,12 @@
 
         var cards = document.getElementById('ai-presence-status-cards');
         if (cards) {
+            if (!c.items || !c.items.length) {
+                if (cards.querySelector('[data-ssr-stat]')) {
+                    renderWorkflow(data);
+                    return;
+                }
+            }
             cards.innerHTML = '';
             (c.items || []).forEach(function (item) {
                 var div = document.createElement('div');
@@ -3816,6 +3826,10 @@
                 bindActions();
                 updateSpine();
             });
+        });
+        window.addEventListener('load', function () {
+            if (state.meta && state.draft) return;
+            load().catch(function () { /* SSR overview remains visible */ });
         });
     };
 
