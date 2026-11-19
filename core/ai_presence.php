@@ -136,6 +136,12 @@ function birkly_ai_presence_default_draft(): array
             'discovery_sitemap' => true,
             'discovery_indexnow' => true,
             'discovery_ai_crawlers' => true,
+            'llms_txt_detail' => 'full',
+            'for_agents_detail' => 'full',
+            'llms_full_txt_enabled' => false,
+            'llms_full_max_bytes' => 2097152,
+            'llms_txt_max_bytes' => 262144,
+            'llms_full_allowed_hosts' => [],
         ],
     ];
 }
@@ -497,6 +503,20 @@ function birkly_ai_presence_load_published(): ?array
         $meta = birkly_ai_presence_load_meta();
         if ((int) ($meta['published_version'] ?? 0) >= 1) {
             $data['publication_settings']['enabled'] = true;
+        }
+    }
+    // normalize_draft fills new publication_settings from default_draft; omit keys that
+    // were absent on disk so public text exports keep map/summary until republish.
+    foreach ([
+        'llms_txt_detail',
+        'for_agents_detail',
+        'llms_full_txt_enabled',
+        'llms_full_max_bytes',
+        'llms_txt_max_bytes',
+        'llms_full_allowed_hosts',
+    ] as $exportKey) {
+        if (!array_key_exists($exportKey, $rawPub)) {
+            unset($data['publication_settings'][$exportKey]);
         }
     }
     return $data;
@@ -962,6 +982,9 @@ function birkly_ai_presence_publish(): array
 
     birkly_ai_presence_write_public_exports($snapshot, $version, $now);
 
+    require_once __DIR__ . '/agent_guide_public_export.php';
+    birkly_agent_guide_public_export_build_llms_full_snapshot($snapshot, $meta);
+
     birkly_ai_presence_invalidate_project_ssr_cache();
 
     require_once __DIR__ . '/ai_presence_discovery.php';
@@ -1196,151 +1219,13 @@ function birkly_ai_presence_llms_txt_body(): ?string
         return null;
     }
 
-    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
-    $name = trim((string) ($identity['official_name'] ?? ''));
-    if ($name === '') {
-        $name = 'Site';
-    }
-    $short = trim((string) ($identity['short_description'] ?? ''));
-    $full = trim((string) ($identity['full_description'] ?? $identity['what_we_do'] ?? ''));
-    $website = trim((string) ($identity['website'] ?? ''));
-
-    $urls = birkly_ai_presence_public_urls();
-    $guideUrl = (string) ($urls['well_known_url'] ?? $urls['cms_canonical_url'] ?? '');
-    $cmsBase = rtrim((string) ($urls['cms_base_url'] ?? ''), '/');
-    $publicBase = rtrim((string) ($urls['public_site_base'] ?? ''), '/');
-    $siteUrl = $website !== '' ? $website : ($publicBase !== '' ? $publicBase : $cmsBase);
-
-    require_once __DIR__ . '/ai_presence_discovery.php';
-    $map = birkly_ai_presence_discovery_url_map($published, $meta);
-
-    $lines = [];
-    $lines[] = '# ' . $name;
-    $lines[] = '';
-    if ($short !== '') {
-        $lines[] = '> ' . $short;
-        $lines[] = '';
+    require_once __DIR__ . '/agent_guide_public_export.php';
+    $settings = birkly_agent_guide_public_export_output_settings($published);
+    if ($settings['llms_txt_detail'] === 'full') {
+        return birkly_agent_guide_public_export_llms_txt_full($published, $meta);
     }
 
-    $lines[] = '## For AI systems';
-    $lines[] = '';
-    $lines[] = 'Cross-linked discovery endpoints — start anywhere and follow links to the full Agent Guide:';
-    $lines[] = '';
-    if (!empty($map['for_agents'])) {
-        $lines[] = '- [Agent Guide (HTML)](' . $map['for_agents'] . ')';
-    }
-    if (!empty($map['for_agents_md'])) {
-        $lines[] = '- [Agent Guide (Markdown)](' . $map['for_agents_md'] . ')';
-    }
-    if (!empty($map['agent_manifest'])) {
-        $lines[] = '- [Agent Guide discovery manifest](' . $map['agent_manifest'] . ')';
-    }
-    if (!empty($map['agent_guide_json'])) {
-        $lines[] = '- [Agent Guide (JSON)](' . $map['agent_guide_json'] . ')';
-    }
-    if (!empty($map['llms_txt'])) {
-        $lines[] = '- [llms.txt (this file)](' . $map['llms_txt'] . ')';
-    }
-    if (!empty($map['sitemap'])) {
-        $lines[] = '- [Sitemap](' . $map['sitemap'] . ')';
-    }
-    if (!empty($map['robots'])) {
-        $lines[] = '- [robots.txt](' . $map['robots'] . ')';
-    }
-    $lines[] = '';
-    $lines[] = 'Prefer the Agent Guide JSON for authoritative brand facts, claims, and product names.';
-    $lines[] = 'If your client rejects `application/json`, fetch the HTML or Markdown Agent Guide instead.';
-    $lines[] = 'Do not invent capabilities not listed there.';
-    $lines[] = '';
-
-    if ($full !== '') {
-        $lines[] = '## About';
-        $lines[] = '';
-        $lines[] = $full;
-        $lines[] = '';
-    } elseif ($short === '') {
-        $lines[] = '## About';
-        $lines[] = '';
-        $lines[] = $name . ' publishes an Agent Guide so AI systems can cite accurate brand facts.';
-        $lines[] = '';
-    }
-
-    $lines[] = '## Links';
-    $lines[] = '';
-    if ($siteUrl !== '') {
-        $lines[] = '- [Website](' . $siteUrl . ')';
-    }
-    if ($guideUrl !== '' && ($map['agent_guide_json'] ?? '') !== $guideUrl) {
-        $lines[] = '- [Agent Guide (JSON)](' . $guideUrl . ')';
-    }
-    $forAgentsUrl = $map['for_agents'] ?? birkly_ai_presence_for_agents_url($published, $meta);
-    if ($forAgentsUrl !== null && $forAgentsUrl !== '') {
-        $lines[] = '- [Agent Guide (HTML for visiting AIs)](' . $forAgentsUrl . ')';
-    }
-    $lines[] = '- [llms.txt standard](https://llmstxt.org/)';
-    $lines[] = '';
-
-    $products = is_array($published['products_services'] ?? null) ? $published['products_services'] : [];
-    $productLines = [];
-    foreach ($products as $product) {
-        if (!is_array($product)) {
-            continue;
-        }
-        $title = trim((string) ($product['name'] ?? $product['title'] ?? ''));
-        if ($title === '') {
-            continue;
-        }
-        $link = trim((string) ($product['url'] ?? $product['link'] ?? $product['canonical_url'] ?? ''));
-        if ($link !== '') {
-            $productLines[] = '- [' . $title . '](' . $link . ')';
-        } else {
-            $productLines[] = '- ' . $title;
-        }
-        if (count($productLines) >= 12) {
-            break;
-        }
-    }
-    if ($productLines !== []) {
-        $lines[] = '## Products and services';
-        $lines[] = '';
-        foreach ($productLines as $pl) {
-            $lines[] = $pl;
-        }
-        $lines[] = '';
-    }
-
-    $sources = is_array($published['sources_of_truth'] ?? null) ? $published['sources_of_truth'] : [];
-    $sourceLines = [];
-    foreach ($sources as $source) {
-        if (!is_array($source)) {
-            continue;
-        }
-        $label = trim((string) ($source['label'] ?? $source['title'] ?? $source['name'] ?? ''));
-        $url = trim((string) ($source['url'] ?? $source['href'] ?? ''));
-        if ($label === '' || $url === '') {
-            continue;
-        }
-        $sourceLines[] = '- [' . $label . '](' . $url . ')';
-        if (count($sourceLines) >= 8) {
-            break;
-        }
-    }
-    if ($sourceLines !== []) {
-        $lines[] = '## Sources of truth';
-        $lines[] = '';
-        foreach ($sourceLines as $sl) {
-            $lines[] = $sl;
-        }
-        $lines[] = '';
-    }
-
-    $body = implode("\n", $lines);
-    // Lighthouse flags files shorter than 50 characters.
-    if (strlen($body) < 50) {
-        $body .= "\nSee the [Agent Guide](" . ($guideUrl !== '' ? $guideUrl : ($siteUrl !== '' ? $siteUrl : 'https://llmstxt.org/')) . ") for details.\n";
-    }
-
-    return $body;
+    return birkly_agent_guide_public_export_llms_txt_map($published, $meta);
 }
 
 /**
@@ -1794,6 +1679,15 @@ function birkly_ai_presence_discovery_body_snippet(?array $published = null, ?ar
         return '';
     }
 
+    require_once __DIR__ . '/agent_guide_public_export.php';
+    $exportSettings = birkly_agent_guide_public_export_output_settings($published);
+    if ($exportSettings['for_agents_detail'] === 'full') {
+        $fullBody = birkly_agent_guide_public_export_for_agents_html_body($published, $meta);
+        if ($fullBody !== '') {
+            return "\n" . $fullBody . "\n";
+        }
+    }
+
     $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
     $name = trim((string) ($identity['official_name'] ?? ''));
     if ($name === '') {
@@ -2004,57 +1898,10 @@ function birkly_ai_presence_for_agents_markdown(): ?string
         return null;
     }
 
-    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
-    $name = trim((string) ($identity['official_name'] ?? 'Site'));
-    $short = trim((string) ($identity['short_description'] ?? ''));
-    $full = trim((string) ($identity['full_description'] ?? $identity['what_we_do'] ?? ''));
+    require_once __DIR__ . '/agent_guide_public_export.php';
+    $body = birkly_agent_guide_public_export_for_agents_markdown($published, $meta);
 
-    require_once __DIR__ . '/ai_presence_discovery.php';
-    $map = birkly_ai_presence_discovery_url_map($published, $meta);
-
-    $lines = ['# ' . $name];
-    if ($short !== '') {
-        $lines[] = '';
-        $lines[] = '> ' . $short;
-    }
-    if ($full !== '' && $full !== $short) {
-        $lines[] = '';
-        $lines[] = $full;
-    }
-
-    $lines[] = '';
-    $lines[] = '## Discovery';
-    foreach (['for_agents', 'agent_guide_json', 'llms_txt', 'sitemap', 'robots'] as $key) {
-        $url = $map[$key] ?? null;
-        if ($url !== null && $url !== '') {
-            $label = str_replace('_', ' ', $key);
-            $lines[] = '- [' . $label . '](' . $url . ')';
-        }
-    }
-
-    $claims = is_array($published['claims'] ?? null) ? $published['claims'] : [];
-    $supported = [];
-    foreach ($claims as $claim) {
-        if (!is_array($claim) || ($claim['status'] ?? '') !== 'supported') {
-            continue;
-        }
-        $text = trim((string) ($claim['text'] ?? $claim['claim'] ?? ''));
-        if ($text !== '') {
-            $supported[] = $text;
-        }
-    }
-    if ($supported !== []) {
-        $lines[] = '';
-        $lines[] = '## Supported claims';
-        foreach (array_slice($supported, 0, 12) as $claim) {
-            $lines[] = '- ' . $claim;
-        }
-    }
-
-    $lines[] = '';
-    $lines[] = '_Published Agent Guide v' . (int) ($meta['published_version'] ?? 0) . '_';
-
-    return implode("\n", $lines) . "\n";
+    return is_string($body) ? $body . (str_ends_with($body, "\n") ? '' : "\n") : null;
 }
 
 /**
