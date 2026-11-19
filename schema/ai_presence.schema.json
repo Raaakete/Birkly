@@ -299,7 +299,13 @@
         "public_path": { "type": "string" },
         "include_json_ld": { "type": "boolean" },
         "redact_public_fields": { "type": "array", "items": { "type": "string" } },
-        "public_views_enabled": { "type": "boolean" }
+        "public_views_enabled": { "type": "boolean" },
+        "llms_txt_detail": { "type": "string", "enum": ["map", "full"] },
+        "for_agents_detail": { "type": "string", "enum": ["summary", "full"] },
+        "llms_full_txt_enabled": { "type": "boolean" },
+        "llms_full_max_bytes": { "type": "integer", "minimum": 65536 },
+        "llms_txt_max_bytes": { "type": "integer", "minimum": 1024 },
+        "llms_full_allowed_hosts": { "type": "array", "items": { "type": "string" } }
       }
     },
     "setup_started_at": { "type": "string" },

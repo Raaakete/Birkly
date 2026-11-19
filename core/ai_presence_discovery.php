@@ -68,6 +68,7 @@ function birkly_ai_presence_discovery_public_base(): string
  *   agent_guide_shortcut:?string,
  *   agent_manifest:?string,
  *   llms_txt:?string,
+ *   llms_full_txt:?string,
  *   sitemap:?string,
  *   robots:?string
  * }
@@ -85,10 +86,13 @@ function birkly_ai_presence_discovery_url_map(?array $published = null, ?array $
             'agent_guide_shortcut' => null,
             'agent_manifest' => null,
             'llms_txt' => null,
+            'llms_full_txt' => null,
             'sitemap' => null,
             'robots' => null,
         ];
     }
+
+    require_once __DIR__ . '/agent_guide_public_export.php';
 
     $base = birkly_ai_presence_discovery_public_base();
     $urls = birkly_ai_presence_public_urls();
@@ -105,6 +109,7 @@ function birkly_ai_presence_discovery_url_map(?array $published = null, ?array $
         'agent_guide_shortcut' => $base !== '' ? $base . '/agent-guide.json' : null,
         'agent_manifest' => $base !== '' ? $base . '/.well-known/agent.json' : null,
         'llms_txt' => birkly_ai_presence_llms_txt_url($published, $meta),
+        'llms_full_txt' => birkly_agent_guide_public_export_llms_full_txt_url($published, $meta),
         'sitemap' => birkly_ai_presence_discovery_sitemap_url(),
         'robots' => $base !== '' ? $base . '/robots.txt' : null,
     ];
@@ -226,6 +231,7 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
         if ($settings['discovery_sitemap']) {
             foreach ([
                 'llms_txt' => '0.7',
+                'llms_full_txt' => '0.65',
                 'agent_guide_json' => '0.85',
                 'for_agents_md' => '0.8',
                 'for_agents_json' => '0.82',
@@ -324,7 +330,7 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
 
     if ($settings['discovery_ai_crawlers'] && $base !== '') {
         $paths = [];
-        foreach (['for_agents', 'for_agents_md', 'for_agents_json', 'llms_txt', 'agent_guide_json', 'agent_guide_shortcut', 'agent_manifest', 'sitemap'] as $key) {
+        foreach (['for_agents', 'for_agents_md', 'for_agents_json', 'llms_txt', 'llms_full_txt', 'agent_guide_json', 'agent_guide_shortcut', 'agent_manifest', 'sitemap'] as $key) {
             $url = $map[$key] ?? null;
             if ($url !== null && $url !== '') {
                 $path = parse_url($url, PHP_URL_PATH);
@@ -638,6 +644,54 @@ function birkly_ai_presence_discovery_status(): array
     ];
 
     if ($live) {
+        require_once __DIR__ . '/agent_guide_public_export.php';
+        $published = birkly_ai_presence_load_published();
+        $metrics = birkly_agent_guide_public_export_output_metrics($published, $meta);
+        if ($metrics !== []) {
+            $llmsDetail = (string) ($metrics['llms_txt_detail'] ?? 'map');
+            $forDetail = (string) ($metrics['for_agents_detail'] ?? 'summary');
+            $checks[] = [
+                'id' => 'export_detail_levels',
+                'label' => 'Public export detail',
+                'status' => 'pass',
+                'detail' => 'llms.txt: ' . $llmsDetail . ' · for-agents: ' . $forDetail
+                    . ' (' . number_format((int) ($metrics['llms_txt_bytes'] ?? 0)) . ' / '
+                    . number_format((int) ($metrics['for_agents_md_bytes'] ?? 0)) . ' bytes).',
+            ];
+            if (!empty($metrics['llms_txt_over_cap'])) {
+                $checks[] = [
+                    'id' => 'llms_txt_size',
+                    'label' => 'llms.txt size',
+                    'status' => 'warn',
+                    'detail' => 'llms.txt exceeds your configured max_bytes — consider map mode or raising the cap.',
+                ];
+            }
+            if (!empty($metrics['llms_full_enabled'])) {
+                $fullUrl = birkly_agent_guide_public_export_llms_full_txt_url($published, $meta);
+                $fullBytes = (int) ($metrics['llms_full_bytes'] ?? 0);
+                $checks[] = [
+                    'id' => 'llms_full_txt',
+                    'label' => 'llms-full.txt',
+                    'status' => $fullBytes > 0 ? 'pass' : 'warn',
+                    'detail' => $fullBytes > 0
+                        ? ('Snapshot ' . number_format($fullBytes) . ' bytes' . ($fullUrl !== null ? ' · ' . $fullUrl : ''))
+                        : 'Enabled but empty — republish to rebuild the snapshot.',
+                    'url' => $fullUrl,
+                ];
+                $skipped = $metrics['llms_full_skipped'] ?? [];
+                if (is_array($skipped) && $skipped !== []) {
+                    $checks[] = [
+                        'id' => 'llms_full_skipped',
+                        'label' => 'llms-full fetches skipped',
+                        'status' => 'warn',
+                        'detail' => count($skipped) . ' source URL(s) were not inlined (host allowlist or size cap).',
+                    ];
+                }
+            }
+        }
+    }
+
+    if ($live) {
         $map = birkly_ai_presence_discovery_url_map();
         $meshKeys = ['for_agents', 'agent_guide_json', 'llms_txt', 'sitemap'];
         $meshPresent = 0;
@@ -660,6 +714,7 @@ function birkly_ai_presence_discovery_status(): array
             $probePaths = [
                 '/sitemap.xml',
                 '/llms.txt',
+                '/llms-full.txt',
                 '/for-agents',
                 '/for-agents.md',
                 '/for-agents.json',

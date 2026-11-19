@@ -1057,6 +1057,33 @@ if ($__ap_webmcp_ssr) {
                 <input type="text" id="ap-pub-footer-line-text" class="input u-mt-2" data-field="publication_settings.footer_discovery_line_text" placeholder="{translate 'admin.ag_discovery_footer_line_placeholder'}">
             </div>
             <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
+                <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_export_public_text_title'}</h4>
+                <p class="form-help u-mt-1">{translate 'admin.ag_export_public_text_help'}</p>
+                <div class="u-cluster-3 u-mt-3">
+                    <div class="form-group">
+                        <label for="ap-pub-llms-detail">{translate 'admin.ag_export_llms_detail'}</label>
+                        <select id="ap-pub-llms-detail" class="input" data-field="publication_settings.llms_txt_detail">
+                            <option value="map">{translate 'admin.ag_export_llms_map'}</option>
+                            <option value="full">{translate 'admin.ag_export_llms_full'}</option>
+                        </select>
+                        <p class="form-help">{translate 'admin.ag_export_llms_detail_help'}</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="ap-pub-for-agents-detail">{translate 'admin.ag_export_for_agents_detail'}</label>
+                        <select id="ap-pub-for-agents-detail" class="input" data-field="publication_settings.for_agents_detail">
+                            <option value="summary">{translate 'admin.ag_export_for_agents_summary'}</option>
+                            <option value="full">{translate 'admin.ag_export_for_agents_full'}</option>
+                        </select>
+                        <p class="form-help">{translate 'admin.ag_export_for_agents_detail_help'}</p>
+                    </div>
+                </div>
+                <label class="u-row-2 u-text-sm u-mt-3"><input type="checkbox" id="ap-pub-llms-full" data-field="publication_settings.llms_full_txt_enabled"> {translate 'admin.ag_export_llms_full_enabled'}</label>
+                <p class="form-help">{translate 'admin.ag_export_llms_full_enabled_help'}</p>
+                <label class="form-group u-mt-3" for="ap-pub-llms-full-hosts">{translate 'admin.ag_export_llms_full_hosts'}</label>
+                <textarea id="ap-pub-llms-full-hosts" class="input" rows="3" data-field="publication_settings.llms_full_allowed_hosts" data-array="lines" placeholder="docs.example.com"></textarea>
+                <p class="form-help">{translate 'admin.ag_export_llms_full_hosts_help'}</p>
+            </div>
+            <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
                 <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-discovery-sitemap" data-field="publication_settings.discovery_sitemap"> {translate 'admin.ag_discovery_sitemap'}</label>
                 <p class="form-help">{translate 'admin.ag_discovery_sitemap_help'}</p>
             </div>

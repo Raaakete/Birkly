@@ -72,7 +72,9 @@ assert_true(!empty($map['robots']), 'url map has robots');
 
 $llmsBody = birkly_ai_presence_llms_txt_body();
 assert_true($llmsBody !== null, 'llms.txt body when live');
-assert_true(stripos($llmsBody, '## For AI systems') !== false, 'llms.txt has For AI systems section');
+$hasDiscoverySection = stripos($llmsBody, '## For AI systems') !== false
+    || stripos($llmsBody, '## Discovery links') !== false;
+assert_true($hasDiscoverySection, 'llms.txt has discovery section (map or full)');
 assert_true(stripos($llmsBody, 'sitemap') !== false, 'llms.txt links to sitemap');
 assert_true(stripos($llmsBody, 'robots.txt') !== false, 'llms.txt links to robots.txt');
 assert_true(stripos($robots, 'Sitemap:') !== false && stripos($robots, 'agent-guide') !== false, 'robots cross-links guide endpoints');

@@ -22,6 +22,7 @@ function birkly_http_route_map(): array
         '/.well-known/agent.json' => '/api/well_known_agent_manifest.php',
         '/agent-guide.json' => '/api/well_known_agent_guide.php',
         '/llms.txt' => '/api/llms_txt.php',
+        '/llms-full.txt' => '/api/llms_full_txt.php',
         '/sitemap.xml' => '/api/sitemap_xml.php',
         '/for-agents' => '/api/for_agents.php',
         '/for-agents.md' => '/api/for_agents_md.php',
