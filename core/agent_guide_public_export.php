@@ -487,15 +487,9 @@ function birkly_agent_guide_public_export_full_markdown_lines(
         if (!is_array($rel)) {
             continue;
         }
-        $rname = trim((string) ($rel['name'] ?? ''));
-        $rurl = trim((string) ($rel['url'] ?? ''));
-        if ($rname === '') {
-            continue;
-        }
-        if ($rurl !== '') {
-            $relLines[] = '- [' . $rname . '](' . $rurl . ')';
-        } else {
-            $relLines[] = '- ' . $rname;
+        $line = birkly_agent_guide_public_export_relationship_markdown_line($rel);
+        if ($line !== '') {
+            $relLines[] = $line;
         }
     }
     if ($relLines !== []) {
@@ -606,17 +600,71 @@ function birkly_agent_guide_public_export_communication_markdown(array $comm): a
     return $rows;
 }
 
+function birkly_agent_guide_public_export_relationship_markdown_line(array $rel): string
+{
+    $name = trim((string) ($rel['name'] ?? ''));
+    if ($name === '') {
+        return '';
+    }
+    $url = trim((string) ($rel['url'] ?? ''));
+    $type = trim((string) ($rel['type'] ?? ''));
+    $description = trim((string) ($rel['description'] ?? ''));
+    $typeLabel = $type !== '' ? ucwords(str_replace('_', ' ', strtolower($type))) : '';
+
+    if ($url !== '') {
+        $line = '- [' . $name . '](' . $url . ')';
+    } else {
+        $line = '- ' . $name;
+    }
+    if ($typeLabel !== '') {
+        $line .= ' (' . $typeLabel . ')';
+    }
+    if ($description !== '') {
+        $line .= ': ' . $description;
+    }
+
+    return $line;
+}
+
+function birkly_agent_guide_public_export_truncate_text_bytes(string $text, int $maxBytes, string $ellipsis = '…'): string
+{
+    if ($maxBytes <= 0 || strlen($text) <= $maxBytes) {
+        return $text;
+    }
+    $cut = $maxBytes - strlen($ellipsis);
+    if ($cut < 1) {
+        return $ellipsis;
+    }
+
+    return rtrim(substr($text, 0, $cut)) . $ellipsis;
+}
+
+function birkly_agent_guide_public_export_normalize_plaintext(string $text): string
+{
+    $text = str_replace(["\r\n", "\r"], "\n", $text);
+    $text = preg_replace("/[ \t]+\n/", "\n", $text) ?? $text;
+    $text = preg_replace("/\n[ \t]+/", "\n", $text) ?? $text;
+    $text = preg_replace("/[ \t]{2,}/", ' ', $text) ?? $text;
+    $text = preg_replace("/\n{3,}/", "\n\n", $text) ?? $text;
+
+    return trim($text);
+}
+
 function birkly_agent_guide_public_export_llms_txt_full(?array $published, ?array $meta): ?string
 {
     if ($published === null || !birkly_ai_presence_is_publicly_live($published, $meta)) {
         return null;
     }
+    $settings = birkly_agent_guide_public_export_output_settings($published);
     $lines = birkly_agent_guide_public_export_full_markdown_lines($published, $meta, true);
     $body = implode("\n", $lines);
     if (strlen($body) < 50) {
         $map = birkly_ai_presence_discovery_url_map($published, $meta);
         $fallback = $map['agent_guide_json'] ?? 'https://llmstxt.org/';
         $body .= "\nSee the [Agent Guide](" . $fallback . ") for details.\n";
+    }
+    if (strlen($body) > $settings['llms_txt_max_bytes']) {
+        $body = birkly_agent_guide_public_export_truncate_text_bytes($body, $settings['llms_txt_max_bytes']);
     }
 
     return $body;
@@ -816,7 +864,7 @@ function birkly_agent_guide_public_export_build_llms_full_snapshot(array $snapsh
             $skipped[] = $url;
             continue;
         }
-        $text = birkly_agent_guide_public_export_html_to_text((string) $fetch['body']);
+        $text = birkly_agent_guide_public_export_html_page_text((string) $fetch['body']);
         if ($text === '') {
             $skipped[] = $url;
             continue;
@@ -834,6 +882,7 @@ function birkly_agent_guide_public_export_build_llms_full_snapshot(array $snapsh
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
+    $body = birkly_agent_guide_public_export_normalize_plaintext($body);
     file_put_contents($dir . '/' . BIRKLY_AGENT_GUIDE_EXPORT_LLMS_FULL_SNAPSHOT, $body);
     $metaOut = [
         'bytes' => strlen($body),
@@ -845,15 +894,146 @@ function birkly_agent_guide_public_export_build_llms_full_snapshot(array $snapsh
     return ['ok' => true, 'bytes' => $metaOut['bytes'], 'skipped' => $skipped];
 }
 
-function birkly_agent_guide_public_export_html_to_text(string $html): string
+function birkly_agent_guide_public_export_html_strip_boilerplate(string $html): string
 {
-    $html = preg_replace('/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/i', '', $html) ?? $html;
-    $html = strip_tags($html);
-    $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $html = preg_replace("/[ \t]+/", ' ', $html) ?? $html;
-    $html = preg_replace("/\n{3,}/", "\n\n", $html) ?? $html;
+    $patterns = [
+        '/<noscript\b[^>]*>[\s\S]*?<\/noscript>/i',
+        '/<script\b[^>]*>[\s\S]*?<\/script>/i',
+        '/<style\b[^>]*>[\s\S]*?<\/style>/i',
+        '/<template\b[^>]*>[\s\S]*?<\/template>/i',
+        '/<svg\b[^>]*>[\s\S]*?<\/svg>/i',
+    ];
+    foreach ($patterns as $pattern) {
+        $html = preg_replace($pattern, '', $html) ?? $html;
+    }
 
-    return trim($html);
+    return $html;
+}
+
+function birkly_agent_guide_public_export_html_page_text(string $html): string
+{
+    $html = birkly_agent_guide_public_export_html_strip_boilerplate($html);
+    if (trim($html) === '') {
+        return '';
+    }
+
+    if (class_exists(DOMDocument::class)) {
+        $dom = new DOMDocument();
+        $prev = libxml_use_internal_errors(true);
+        $wrapped = '<?xml encoding="UTF-8"><!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>'
+            . $html . '</body></html>';
+        $dom->loadHTML($wrapped, LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET | LIBXML_COMPACT);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+
+        $xpath = new DOMXPath($dom);
+        foreach (['nav', 'header', 'footer', 'script', 'style', 'template', 'svg', 'noscript'] as $tag) {
+            $nodes = $xpath->query('//' . $tag);
+            if ($nodes === false) {
+                continue;
+            }
+            $remove = [];
+            foreach ($nodes as $node) {
+                $remove[] = $node;
+            }
+            foreach ($remove as $node) {
+                if ($node->parentNode !== null) {
+                    $node->parentNode->removeChild($node);
+                }
+            }
+        }
+        $hidden = $xpath->query('//*[@aria-hidden="true" or contains(@class,"birkly-agent-guide")]');
+        if ($hidden !== false) {
+            $remove = [];
+            foreach ($hidden as $node) {
+                $remove[] = $node;
+            }
+            foreach ($remove as $node) {
+                if ($node->parentNode !== null) {
+                    $node->parentNode->removeChild($node);
+                }
+            }
+        }
+        $discovery = $xpath->query('//*[@data-birkly-agent-guide]');
+        if ($discovery !== false) {
+            $remove = [];
+            foreach ($discovery as $node) {
+                $remove[] = $node;
+            }
+            foreach ($remove as $node) {
+                if ($node->parentNode !== null) {
+                    $node->parentNode->removeChild($node);
+                }
+            }
+        }
+
+        $root = $xpath->query('//main')->item(0)
+            ?? $xpath->query('//article')->item(0)
+            ?? $dom->getElementsByTagName('body')->item(0);
+
+        if ($root !== null) {
+            $text = birkly_agent_guide_public_export_dom_collect_text($root);
+            return birkly_agent_guide_public_export_normalize_plaintext($text);
+        }
+    }
+
+    $text = strip_tags($html);
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    return birkly_agent_guide_public_export_normalize_plaintext($text);
+}
+
+function birkly_agent_guide_public_export_dom_collect_text(DOMNode $node): string
+{
+    if ($node->nodeType === XML_TEXT_NODE) {
+        return $node->textContent ?? '';
+    }
+    if ($node->nodeType !== XML_ELEMENT_NODE) {
+        return '';
+    }
+
+    $name = strtolower($node->nodeName);
+    if ($name === 'br') {
+        return "\n";
+    }
+    if ($name === 'pre' || $name === 'code') {
+        $inner = '';
+        foreach ($node->childNodes as $child) {
+            $inner .= birkly_agent_guide_public_export_dom_collect_text($child);
+        }
+
+        return $inner . "\n\n";
+    }
+
+    $block = in_array($name, [
+        'p', 'div', 'section', 'article', 'main', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'tr', 'table', 'blockquote', 'hr',
+    ], true);
+
+    $out = '';
+    foreach ($node->childNodes as $child) {
+        $out .= birkly_agent_guide_public_export_dom_collect_text($child);
+    }
+    if ($block && $out !== '') {
+        return rtrim($out) . "\n\n";
+    }
+
+    return $out;
+}
+
+function birkly_agent_guide_public_export_markdown_list_item_to_html(string $line, callable $esc): string
+{
+    $trim = trim($line);
+    if (!str_starts_with($trim, '- ')) {
+        return '<p>' . $esc($trim) . '</p>';
+    }
+    $content = substr($trim, 2);
+    if (preg_match('/^\[([^\]]+)\]\(([^)]+)\)(.*)$/u', $content, $m)) {
+        $tail = $m[3];
+        return '<p><a href="' . $esc($m[2]) . '">' . $esc($m[1]) . '</a>' . $esc($tail) . '</p>';
+    }
+
+    return '<p>' . $esc($content) . '</p>';
 }
 
 /**
@@ -893,7 +1073,7 @@ function birkly_agent_guide_public_export_for_agents_html_body(?array $published
             continue;
         }
         if (str_starts_with($trim, '- ')) {
-            $html[] = '<p>' . $esc(substr($trim, 2)) . '</p>';
+            $html[] = birkly_agent_guide_public_export_markdown_list_item_to_html($trim, $esc);
             continue;
         }
         if (str_starts_with($trim, '_') && str_ends_with($trim, '_')) {
