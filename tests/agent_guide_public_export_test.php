@@ -102,6 +102,37 @@ $redactLlms = birkly_ai_presence_llms_txt_body();
 ag_export_assert(is_string($redactLlms) && !str_contains($redactLlms, 'SECRET_FULL'), 'redacted field absent from llms');
 ag_export_assert(str_contains((string) $redactLlms, 'Public short'), 'non-redacted field present');
 
+echo "==> Related section descriptions\n";
+$rel = [
+    'name' => 'Birkly Docs',
+    'url' => 'https://docs.birkly.io/',
+    'type' => 'documentation',
+    'description' => 'The full documentation covers the content model.',
+];
+$relLine = birkly_agent_guide_public_export_relationship_markdown_line($rel);
+ag_export_assert(str_contains($relLine, '(Documentation):'), 'relationship line includes type');
+ag_export_assert(str_contains($relLine, 'full documentation'), 'relationship line includes description');
+
+$pubWithRel = birkly_ai_presence_load_published();
+$pubWithRel['relationships'] = [$rel];
+$mdWithRel = birkly_agent_guide_public_export_for_agents_markdown($pubWithRel, birkly_ai_presence_load_meta());
+ag_export_assert(is_string($mdWithRel) && str_contains($mdWithRel, 'full documentation'), 'for-agents.md exports relationship description');
+
+echo "==> llms-full HTML extraction\n";
+$sampleHtml = '<html><body>'
+    . '<noscript class="birkly-agent-guide-discovery">JavaScript is disabled in your browser</noscript>'
+    . '<header><nav>Menu skip</nav></header>'
+    . '<main><h1>Product</h1><p>Real copy here.</p>'
+    . '<pre><code>curl https://example.test</code></pre></main>'
+    . str_repeat("\n\n\n", 10)
+    . '</body></html>';
+$pageText = birkly_agent_guide_public_export_html_page_text($sampleHtml);
+ag_export_assert(!str_contains($pageText, 'JavaScript is disabled'), 'page text strips noscript discovery bar');
+ag_export_assert(str_contains($pageText, 'Real copy here'), 'page text keeps main content');
+ag_export_assert(str_contains($pageText, 'curl https://example.test'), 'page text keeps pre/code');
+ag_export_assert(!str_contains($pageText, 'Menu skip'), 'page text drops nav/header');
+ag_export_assert(!preg_match("/\n{3,}/", $pageText), 'page text has no 3+ blank line runs');
+
 echo "==> llms-full route + snapshot\n";
 $fullDraft = birkly_ai_presence_load_draft();
 $fullDraft['publication_settings']['llms_full_txt_enabled'] = true;
