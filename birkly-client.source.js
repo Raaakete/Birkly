@@ -274,13 +274,84 @@
             window.addEventListener('hashchange', notify);
         }
 
-        function getUtmParams() {
-            const params = new URLSearchParams(window.location.search);
+        function readUtmFromSearch(search) {
+            const params = new URLSearchParams(search || '');
             return {
                 utm_source: params.get('utm_source') || '',
                 utm_medium: params.get('utm_medium') || '',
-                utm_campaign: params.get('utm_campaign') || ''
+                utm_campaign: params.get('utm_campaign') || '',
+                utm_term: params.get('utm_term') || '',
+                utm_content: params.get('utm_content') || ''
             };
+        }
+
+        function utmHasValues(utm) {
+            return !!(utm && (utm.utm_source || utm.utm_medium || utm.utm_campaign || utm.utm_term || utm.utm_content));
+        }
+
+        function getAttributionParams() {
+            const storageKey = 'birkly_attribution_' + trackingId;
+            const fromUrl = readUtmFromSearch(window.location.search);
+            if (utmHasValues(fromUrl)) {
+                try {
+                    sessionStorage.setItem(storageKey, JSON.stringify(fromUrl));
+                } catch (_) { /* ignore */ }
+                return fromUrl;
+            }
+            try {
+                const stored = JSON.parse(sessionStorage.getItem(storageKey) || '{}');
+                return {
+                    utm_source: stored.utm_source || '',
+                    utm_medium: stored.utm_medium || '',
+                    utm_campaign: stored.utm_campaign || '',
+                    utm_term: stored.utm_term || '',
+                    utm_content: stored.utm_content || ''
+                };
+            } catch (_) {
+                return readUtmFromSearch('');
+            }
+        }
+
+        function isExternalReferrer(referrer) {
+            if (!referrer) {
+                return false;
+            }
+            try {
+                return new URL(referrer).hostname !== window.location.hostname;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function getLandingReferrer() {
+            const storageKey = 'birkly_landing_referrer_' + trackingId;
+            try {
+                return sessionStorage.getItem(storageKey) || '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function captureLandingReferrer(referrer) {
+            if (!isExternalReferrer(referrer)) {
+                return;
+            }
+            const storageKey = 'birkly_landing_referrer_' + trackingId;
+            try {
+                if (!sessionStorage.getItem(storageKey)) {
+                    sessionStorage.setItem(storageKey, referrer);
+                }
+            } catch (_) { /* ignore */ }
+        }
+
+        function getEffectiveReferrer() {
+            const live = document.referrer || '';
+            if (isExternalReferrer(live)) {
+                captureLandingReferrer(live);
+                return live;
+            }
+            const landing = getLandingReferrer();
+            return landing || live;
         }
 
         let publicConfig = window.BirklyAnalyticsPublicConfig || null;
@@ -479,25 +550,30 @@
         }
 
         function buildAnonymousTrackPayload(extra) {
+            const effectiveReferrer = getEffectiveReferrer();
             return Object.assign({
                 tracking_id: trackingId,
                 event_type: 'pageview',
                 domain: window.location.hostname,
                 path: window.location.pathname + window.location.search,
+                referrer: effectiveReferrer,
+                landing_referrer: getLandingReferrer() || effectiveReferrer,
                 consent: 'anonymous',
                 consent_state: 'anonymous'
             }, extra || {});
         }
 
         function buildTrackPayload(extra) {
-            const utm = getUtmParams();
+            const utm = getAttributionParams();
+            const effectiveReferrer = getEffectiveReferrer();
             const payload = Object.assign({
                 tracking_id: trackingId,
                 event_type: 'pageview',
                 domain: window.location.hostname,
                 path: window.location.pathname + window.location.search,
                 entrance_path: getEntrancePath(),
-                referrer: document.referrer || '',
+                referrer: effectiveReferrer,
+                landing_referrer: getLandingReferrer() || effectiveReferrer,
                 screen_width: window.screen.width || 0,
                 screen_height: window.screen.height || 0,
                 viewport_width: window.innerWidth || document.documentElement.clientWidth || 0,
@@ -555,8 +631,9 @@
                 delete payload.utm_source;
                 delete payload.utm_medium;
                 delete payload.utm_campaign;
+                delete payload.landing_referrer;
                 if (!payload.referrer) {
-                    payload.referrer = document.referrer || '';
+                    payload.referrer = getEffectiveReferrer();
                 }
             }
             return payload;

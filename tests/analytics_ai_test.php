@@ -45,4 +45,10 @@ $events = [
 $summary = birkly_analytics_summarize_ai_sources($events);
 ai_assert('summarize ai', count($summary) === 1 && ($summary[0]['views'] ?? 0) === 2);
 
+$refPath = birkly_analytics_detect_ai_from_path('/docs?ref=chatgpt');
+ai_assert('ref query path', $refPath['is_ai'] === true && $refPath['ai_source'] === 'ChatGPT');
+
+$cursor = birkly_analytics_detect_ai_from_path('/?utm_source=cursor&utm_medium=ai');
+ai_assert('cursor utm path', $cursor['is_ai'] === true && $cursor['ai_source'] === 'Cursor');
+
 exit($failures > 0 ? 1 : 0);
