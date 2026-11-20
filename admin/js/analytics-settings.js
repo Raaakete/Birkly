@@ -760,7 +760,7 @@
             return sectionHeading(t('analytics_tab_acquisition', 'Acquisition'), t('analytics_section_content_sub', 'Where traffic comes from')) +
                 '<div class="analytics-panel-grid">' +
                 renderBarList(t('analytics_bar_traffic_sources', 'Traffic sources'), report.traffic_sources, 'source', 'visits') +
-                (isAdvanced() && aiRows.length
+                (((preset === 'standard' || isAdvanced()) && aiRows.length)
                     ? renderBarList(t('analytics_bar_ai_sources', 'AI & assistants'), aiRows, 'source', 'visits')
                     : '') +
                 renderBarList(t('analytics_bar_referrers', 'Referrers'), report.referrers, 'domain', 'visits') +

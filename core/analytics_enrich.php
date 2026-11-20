@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/analytics_ai.php';
+require_once __DIR__ . '/analytics_attribution.php';
 
 /**
  * Detect automated clients from a user-agent string.
@@ -281,6 +282,8 @@ function birkly_analytics_country_from_timezone(string $timezone): string
  */
 function birkly_analytics_build_event(array $input, string $ip, string $userAgent, int $timestamp): array
 {
+    $input = birkly_analytics_enrich_input_attribution($input);
+
     $trackingId = (string) ($input['tracking_id'] ?? '');
     $path = (string) ($input['path'] ?? '/');
     $referrer = (string) ($input['referrer'] ?? '');
@@ -388,6 +391,9 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         trim((string) ($input['utm_medium'] ?? '')),
         $userAgent
     );
+    if (!$ai['is_ai']) {
+        $ai = birkly_analytics_detect_ai_from_path($path);
+    }
     if ($ai['is_ai']) {
         $event['ai_source'] = $ai['ai_source'];
         $event['ai_channel'] = $ai['ai_channel'];
@@ -712,6 +718,11 @@ function birkly_analytics_aggregate_events(array $events): array
             $campaignCounts[$campaignLabel] = ($campaignCounts[$campaignLabel] ?? 0) + 1;
         } elseif ($utmSource !== '') {
             $campaignCounts[$utmSource] = ($campaignCounts[$utmSource] ?? 0) + 1;
+        }
+        $aiSource = trim((string) ($event['ai_source'] ?? ''));
+        if ($aiSource !== '' && $utmCampaign === '' && $utmSource === '') {
+            $aiCampaignLabel = 'AI · ' . $aiSource;
+            $campaignCounts[$aiCampaignLabel] = ($campaignCounts[$aiCampaignLabel] ?? 0) + 1;
         }
 
         $deviceType = (string) ($event['device_type'] ?? 'unknown');
