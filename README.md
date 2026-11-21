@@ -22,7 +22,7 @@ See [What is Birkly?](https://docs.birkly.io/00-overview/what-is-birkly.html) in
 
 ### Alpha release
 
-Try the current self-host build: **[v0.0.1 (alpha)](https://github.com/Raaakete/Birkly/releases/tag/v0.0.1)** — download `birkly-release.zip`, extract, open **`0_START-HERE.html`**, then run `./start-server.sh`. Versioning: **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable — details in [RELEASE.md](RELEASE.md).
+Try the current self-host build: **[v0.0.2 (alpha)](https://github.com/Raaakete/Birkly/releases/tag/v0.0.2)** — download `birkly-release.zip`, extract, open **`0_START-HERE.html`**, then run `./start-server.sh`. Versioning: **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable — details in [RELEASE.md](RELEASE.md).
 
 ## Quick start
 
@@ -83,7 +83,7 @@ Official plugin sources and the full test suite live in the private **Birkly-Mar
 
 ## Releases
 
-Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Latest alpha: [v0.0.1](https://github.com/Raaakete/Birkly/releases/tag/v0.0.1). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
+Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Latest alpha: [v0.0.2](https://github.com/Raaakete/Birkly/releases/tag/v0.0.2). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
 
 ## License
 
