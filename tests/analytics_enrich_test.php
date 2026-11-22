@@ -35,6 +35,13 @@ assert_true($event['country'] === 'DK', 'timezone maps to DK');
 assert_true($event['utm_source'] === 'newsletter', 'utm source stored');
 assert_true($event['referrer_host'] === 'google.com', 'referrer host parsed');
 
+$now = time();
+$windowed = birkly_analytics_filter_events_time_window([
+    ['timestamp' => $now - 100, 'event_type' => 'page_view'],
+    ['timestamp' => $now - 90000, 'event_type' => 'page_view'],
+], $now - 3600);
+assert_true(count($windowed) === 1, 'time window keeps events in last hour');
+
 $report = birkly_analytics_aggregate_events([
     $event,
     array_merge($event, [

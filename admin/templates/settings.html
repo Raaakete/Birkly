@@ -1060,6 +1060,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </select>
                   <label class="u-sr-only" for="analytics-period-range"><?= __('admin.analytics_period_label') ?></label>
                   <select id="analytics-period-range" class="input input-sm analytics-report-toolbar__control" aria-label="<?= htmlspecialchars(__('admin.analytics_period_label')) ?>">
+                    <option value="24h"><?= __('admin.analytics_period_24h') ?></option>
                     <option value="7"><?= __('admin.analytics_period_7d') ?></option>
                     <option value="30" selected><?= __('admin.analytics_period_30d') ?></option>
                     <option value="90"><?= __('admin.analytics_period_90d') ?></option>

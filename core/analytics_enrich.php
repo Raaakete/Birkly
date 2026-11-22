@@ -1174,6 +1174,34 @@ function birkly_analytics_load_events_for_scope(string $trackingId, string $star
  * @param list<array<string, mixed>> $events
  * @return list<array<string, mixed>>
  */
+/**
+ * Narrow events to a wall-clock window (for "last 24 hours" reports).
+ *
+ * @param list<array<string, mixed>> $events
+ * @return list<array<string, mixed>>
+ */
+function birkly_analytics_filter_events_time_window(array $events, int $sinceTimestamp, int $untilTimestamp = 0): array
+{
+    if ($sinceTimestamp <= 0 && $untilTimestamp <= 0) {
+        return $events;
+    }
+
+    return array_values(array_filter($events, static function ($event) use ($sinceTimestamp, $untilTimestamp): bool {
+        if (!is_array($event)) {
+            return false;
+        }
+        $ts = (int) ($event['timestamp'] ?? 0);
+        if ($sinceTimestamp > 0 && $ts < $sinceTimestamp) {
+            return false;
+        }
+        if ($untilTimestamp > 0 && $ts > $untilTimestamp) {
+            return false;
+        }
+
+        return true;
+    }));
+}
+
 function birkly_analytics_exclude_bot_events(array $events, bool $includeBots = false): array
 {
     if ($includeBots) {
@@ -1245,11 +1273,19 @@ function birkly_analytics_get_combined_report(string $startDate, string $endDate
 
     $trackingIds = birkly_analytics_list_enabled_tracking_ids();
     $rawEvents = birkly_analytics_load_events_for_scope('all', $startDate, $endDate);
+    $sinceTs = (int) ($options['since_timestamp'] ?? 0);
+    $untilTs = (int) ($options['until_timestamp'] ?? 0);
+    if ($sinceTs > 0 || $untilTs > 0) {
+        $rawEvents = birkly_analytics_filter_events_time_window($rawEvents, $sinceTs, $untilTs);
+    }
     $events = !empty($options['include_bots']) ? $rawEvents : birkly_analytics_exclude_bot_events($rawEvents);
 
     $domains = [];
     foreach ($trackingIds as $trackingId) {
         $domainEvents = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+        if ($sinceTs > 0 || $untilTs > 0) {
+            $domainEvents = birkly_analytics_filter_events_time_window($domainEvents, $sinceTs, $untilTs);
+        }
         if (empty($options['include_bots'])) {
             $domainEvents = birkly_analytics_exclude_bot_events($domainEvents);
         }
@@ -1535,6 +1571,11 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
     }
 
     $rawEvents = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+    $sinceTs = (int) ($options['since_timestamp'] ?? 0);
+    $untilTs = (int) ($options['until_timestamp'] ?? 0);
+    if ($sinceTs > 0 || $untilTs > 0) {
+        $rawEvents = birkly_analytics_filter_events_time_window($rawEvents, $sinceTs, $untilTs);
+    }
     $events = !empty($options['include_bots']) ? $rawEvents : birkly_analytics_exclude_bot_events($rawEvents);
     $report = birkly_analytics_aggregate_events($events);
     $report['bot_traffic'] = birkly_analytics_summarize_bot_traffic($rawEvents);

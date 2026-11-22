@@ -383,13 +383,86 @@
             '<ul class="ranked analytics-ranked analytics-ranked--bars">' + items + '</ul></section>';
     }
 
-    function selectedPeriodDays() {
+    function reportPeriodParams() {
         var select = document.getElementById('analytics-period-range');
-        var days = select ? parseInt(select.value, 10) : state.periodDays;
+        var raw = select ? String(select.value) : String(state.periodDays);
+        if (raw === '24h') {
+            return { mode: '24h', days: 0, sinceHours: 24 };
+        }
+        var days = parseInt(raw, 10);
         if (!days || days < 1) {
             days = 30;
         }
-        return days;
+        return { mode: 'days', days: days, sinceHours: 0 };
+    }
+
+    function selectedPeriodDays() {
+        var params = reportPeriodParams();
+        return params.mode === '24h' ? 1 : params.days;
+    }
+
+    function reportPeriodDateRange() {
+        var params = reportPeriodParams();
+        var end = new Date();
+        if (params.mode === '24h') {
+            var start = new Date(end.getTime() - 86400000);
+            return {
+                startDate: start.toISOString().slice(0, 10),
+                endDate: end.toISOString().slice(0, 10),
+                sinceHours: 24,
+                sinceTimestamp: 0,
+                untilTimestamp: 0
+            };
+        }
+        var start = new Date(end.getTime() - params.days * 86400000);
+        return {
+            startDate: start.toISOString().slice(0, 10),
+            endDate: end.toISOString().slice(0, 10),
+            sinceHours: 0,
+            sinceTimestamp: 0,
+            untilTimestamp: 0
+        };
+    }
+
+    function previousReportPeriodRange(current) {
+        var end = new Date();
+        if (current && current.sinceHours === 24) {
+            var windowEnd = new Date(end.getTime() - 86400000);
+            var windowStart = new Date(windowEnd.getTime() - 86400000);
+            return {
+                startDate: windowStart.toISOString().slice(0, 10),
+                endDate: windowEnd.toISOString().slice(0, 10),
+                sinceHours: 0,
+                sinceTimestamp: Math.floor(windowStart.getTime() / 1000),
+                untilTimestamp: Math.floor(windowEnd.getTime() / 1000)
+            };
+        }
+        var params = reportPeriodParams();
+        var start = new Date(end.getTime() - params.days * 86400000);
+        var prevEnd = new Date(start.getTime() - 86400000);
+        var prevStart = new Date(prevEnd.getTime() - params.days * 86400000);
+        return {
+            startDate: prevStart.toISOString().slice(0, 10),
+            endDate: prevEnd.toISOString().slice(0, 10),
+            sinceHours: 0,
+            sinceTimestamp: 0,
+            untilTimestamp: 0
+        };
+    }
+
+    function appendPeriodQuery(qs, range) {
+        qs += '&start_date=' + encodeURIComponent(range.startDate) +
+            '&end_date=' + encodeURIComponent(range.endDate);
+        if (range.sinceHours > 0) {
+            qs += '&since_hours=' + encodeURIComponent(String(range.sinceHours));
+        }
+        if (range.sinceTimestamp > 0) {
+            qs += '&since_timestamp=' + encodeURIComponent(String(range.sinceTimestamp));
+        }
+        if (range.untilTimestamp > 0) {
+            qs += '&until_timestamp=' + encodeURIComponent(String(range.untilTimestamp));
+        }
+        return qs;
     }
 
     function includeBotsInReport() {
@@ -714,8 +787,10 @@
     function renderReportTabBody(report, preset) {
         var scope = selectedScope();
         var scopeLabel = scope === 'all' ? t('analytics_scope_all', 'All enabled domains') : scope;
-        var periodDays = selectedPeriodDays();
-        var sub = t('analytics_section_overview_sub', 'Last {days} days · {scope}', { days: periodDays, scope: scopeLabel });
+        var periodParams = reportPeriodParams();
+        var sub = periodParams.mode === '24h'
+            ? t('analytics_section_overview_sub_24h', 'Last 24 hours · {scope}', { scope: scopeLabel })
+            : t('analytics_section_overview_sub', 'Last {days} days · {scope}', { days: periodParams.days, scope: scopeLabel });
         var tab = state.reportTab;
 
         if (tab === 'overview') {
@@ -1097,21 +1172,17 @@
         state.trackingId = trackingId;
         updateExportVisibility();
 
-        var periodDays = selectedPeriodDays();
-        state.periodDays = periodDays;
+        var periodParams = reportPeriodParams();
+        state.periodDays = periodParams.mode === '24h' ? 1 : periodParams.days;
         state.includeBots = includeBotsInReport();
-        var end = new Date();
-        var start = new Date(end.getTime() - periodDays * 86400000);
+        var currentRange = reportPeriodDateRange();
         var qs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
-            '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
-            '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10)) +
             '&include_bots=' + (state.includeBots ? '1' : '0');
-        var prevEnd = new Date(start.getTime() - 86400000);
-        var prevStart = new Date(prevEnd.getTime() - periodDays * 86400000);
+        qs = appendPeriodQuery(qs, currentRange);
+        var prevRange = previousReportPeriodRange(currentRange);
         var prevQs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
-            '&start_date=' + encodeURIComponent(prevStart.toISOString().slice(0, 10)) +
-            '&end_date=' + encodeURIComponent(prevEnd.toISOString().slice(0, 10)) +
             '&include_bots=' + (state.includeBots ? '1' : '0');
+        prevQs = appendPeriodQuery(prevQs, prevRange);
 
         return Promise.all([
             fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
