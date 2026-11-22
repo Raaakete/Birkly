@@ -99,12 +99,42 @@
     let bar = { slots: [], available: [], pinned: [] };
     let analytics = null;
 
+    const DASHBOARD_RANGE_KEY = 'birkly_dashboard_analytics_range';
+
+    function getTrafficRange() {
+        try {
+            return sessionStorage.getItem(DASHBOARD_RANGE_KEY) || '30';
+        } catch (_) {
+            return '30';
+        }
+    }
+
+    function setTrafficRange(range) {
+        trafficRange = range;
+        trafficDays = range === '24h' ? 1 : (Number(range) || 30);
+        try {
+            sessionStorage.setItem(DASHBOARD_RANGE_KEY, range);
+        } catch (_) { /* ignore */ }
+        document.dispatchEvent(new CustomEvent('birkly:dashboard-analytics-range', { detail: { range: range } }));
+    }
+
+    function metricPeriodMeta(id) {
+        const range = (analytics && analytics.analytics_range) || trafficRange;
+        if (range === '24h') {
+            return t('dash_metric_' + id + '_meta_24h', 'last 24 hours');
+        }
+        if (range === '7') {
+            return t('dash_metric_' + id + '_meta_7d', 'last 7 days');
+        }
+        return t('dash_metric_' + id + '_meta', 'last 30 days');
+    }
+
     const METRIC_META = {
         drafts: () => t('dash_metric_drafts_meta', 'waiting to be published'),
         collections: () => t('dash_metric_collections_meta', 'content types'),
         media: () => t('dash_metric_media_meta', 'files in the library'),
-        page_views: () => t('dash_metric_page_views_meta', 'last 30 days'),
-        visitors: () => t('dash_metric_visitors_meta', 'last 30 days'),
+        page_views: () => metricPeriodMeta('page_views'),
+        visitors: () => metricPeriodMeta('visitors'),
     };
 
     function metricValue(metric) {
@@ -379,7 +409,8 @@
         return value;
     }
 
-    let trafficDays = 30;
+    let trafficRange = getTrafficRange();
+    let trafficDays = trafficRange === '24h' ? 1 : (Number(trafficRange) || 30);
 
     function dayKey(date) {
         const y = date.getFullYear();
@@ -518,6 +549,30 @@
         }
     }
 
+    function trafficChartRows() {
+        if (analytics && analytics.chart_granularity === 'hour') {
+            return (analytics.daily || []).map((row) => ({
+                date: String(row.date || ''),
+                views: Number(row.views || 0),
+                interactions: Number(row.interactions || 0),
+                visitors: Number(row.visitors || 0),
+            }));
+        }
+        return trafficWindow(trafficDays);
+    }
+
+    function trafficGhostRows() {
+        if (analytics && analytics.chart_granularity === 'hour') {
+            return (analytics.daily_previous || []).map((row) => ({
+                date: String(row.date || ''),
+                views: Number(row.views || 0),
+                interactions: Number(row.interactions || 0),
+                visitors: Number(row.visitors || 0),
+            }));
+        }
+        return trafficWindow(trafficDays, trafficDays);
+    }
+
     function renderTrafficChart() {
         const host = document.getElementById('dashboard-traffic-chart');
         if (!host) return;
@@ -527,8 +582,8 @@
             return;
         }
         host.hidden = false;
-        const rows = trafficWindow(trafficDays);
-        const ghostRows = trafficWindow(trafficDays, trafficDays);
+        const rows = trafficChartRows();
+        const ghostRows = trafficGhostRows();
         const visits = rows.reduce((sum, row) => sum + row.views, 0);
         const interactions = rows.reduce((sum, row) => sum + row.interactions, 0);
         const ghostViews = ghostRows.map((row) => row.views);
@@ -545,8 +600,9 @@
         const interactionPath = chartSmoothPath(interactionPts);
         const ghostPath = ghostPts.length ? chartSmoothPath(ghostPts) : '';
         const areaPath = chartAreaPath(visitPts, height);
-        const first = rows[0]?.date?.slice(5) || '';
-        const last = rows[rows.length - 1]?.date?.slice(5) || '';
+        const isHourly = analytics.chart_granularity === 'hour';
+        const first = isHourly ? (rows[0]?.date || '') : (rows[0]?.date?.slice(5) || '');
+        const last = isHourly ? (rows[rows.length - 1]?.date || '') : (rows[rows.length - 1]?.date?.slice(5) || '');
         const label = t('dash_visits', 'Visits') + ' ' + number(visits) + ', ' + t('dash_interactions', 'Interactions') + ' ' + number(interactions);
         const columns = rows.map((row, i) => {
             const gx = padX + colW * i;
@@ -602,22 +658,45 @@
     }
 
     bindTabs(document.getElementById('dashboard-inbox-tabs'));
-    bindTabs(document.getElementById('dashboard-traffic-tabs'), (tab) => renderTraffic(tab.dataset.traffic));
+    bindTabs(document.getElementById('dashboard-traffic-tabs'), (tab) => {
+        activeTrafficTab = tab.dataset.traffic || 'pages';
+        renderTraffic(activeTrafficTab);
+    });
+    function syncTrafficRangeUi() {
+        const range = document.getElementById('dashboard-traffic-range');
+        if (!range) return;
+        range.querySelectorAll('[data-range]').forEach((el) => {
+            el.setAttribute('aria-pressed', String(el.dataset.range) === trafficRange ? 'true' : 'false');
+        });
+    }
+
+    function loadDashboardAnalytics() {
+        return getJson('/api/dashboard.php?action=analytics&range=' + encodeURIComponent(trafficRange))
+            .then((data) => { analytics = data; })
+            .catch(() => { analytics = null; });
+    }
+
     const range = document.getElementById('dashboard-traffic-range');
+    let activeTrafficTab = 'pages';
     range?.addEventListener('click', (event) => {
         const button = event.target.closest('[data-range]');
         if (!button || !range.contains(button)) return;
-        trafficDays = Number(button.dataset.range) || 30;
-        range.querySelectorAll('[data-range]').forEach((el) => {
-            el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
+        const nextRange = String(button.dataset.range || '30');
+        if (nextRange === trafficRange) return;
+        setTrafficRange(nextRange);
+        syncTrafficRangeUi();
+        loadDashboardAnalytics().then(() => {
+            renderTrafficChart();
+            renderTraffic(activeTrafficTab);
+            if (bar.slots.some((m) => m.source === 'analytics')) renderMetrics();
         });
-        renderTrafficChart();
     });
 
     /* ---------- Load ---------- */
     renderGreeting();
     renderStatus();
-    const analyticsLoad = getJson('/api/dashboard.php?action=analytics').then((data) => { analytics = data; }).catch(() => { analytics = null; });
+    syncTrafficRangeUi();
+    const analyticsLoad = loadDashboardAnalytics();
     getJson('/api/dashboard.php?action=metrics').then((data) => {
         bar = data || bar;
         renderMetrics();

@@ -1180,6 +1180,73 @@ function birkly_analytics_load_events_for_scope(string $trackingId, string $star
  * @param list<array<string, mixed>> $events
  * @return list<array<string, mixed>>
  */
+/**
+ * Bucket page-view events into hourly rows for dashboard charts (last N hours).
+ *
+ * @param list<array<string, mixed>> $events
+ * @return list<array{date: string, views: int, visitors: int, interactions: int}>
+ */
+function birkly_analytics_hourly_series(array $events, int $sinceTimestamp, int $untilTimestamp = 0): array
+{
+    $untilTimestamp = $untilTimestamp > 0 ? $untilTimestamp : time();
+    if ($sinceTimestamp <= 0) {
+        $sinceTimestamp = $untilTimestamp - 86400;
+    }
+
+    $bucketCount = (int) max(1, min(48, (int) ceil(($untilTimestamp - $sinceTimestamp) / 3600)));
+    $buckets = [];
+    for ($i = 0; $i < $bucketCount; $i++) {
+        $start = $sinceTimestamp + ($i * 3600);
+        $buckets[] = [
+            'start' => $start,
+            'end' => $start + 3600,
+            'date' => date('H:i', $start),
+            'views' => 0,
+            'visitor_keys' => [],
+            'interactions' => 0,
+        ];
+    }
+
+    foreach ($events as $event) {
+        if (!is_array($event)) {
+            continue;
+        }
+        $ts = (int) ($event['timestamp'] ?? 0);
+        if ($ts < $sinceTimestamp || $ts > $untilTimestamp) {
+            continue;
+        }
+        $type = strtolower((string) ($event['event_type'] ?? 'page_view'));
+        if ($type === 'pageview' || $type === '') {
+            $type = 'page_view';
+        }
+        $bucketIndex = (int) floor(($ts - $sinceTimestamp) / 3600);
+        if ($bucketIndex < 0 || $bucketIndex >= $bucketCount) {
+            continue;
+        }
+        if ($type === 'page_view' || $type === 'not_found') {
+            $buckets[$bucketIndex]['views']++;
+            $key = birkly_analytics_visitor_key($event);
+            if ($key !== '') {
+                $buckets[$bucketIndex]['visitor_keys'][$key] = true;
+            }
+        } elseif (in_array($type, ['form_submit', 'outbound_click', 'plugin_event'], true)) {
+            $buckets[$bucketIndex]['interactions']++;
+        }
+    }
+
+    $rows = [];
+    foreach ($buckets as $bucket) {
+        $rows[] = [
+            'date' => (string) $bucket['date'],
+            'views' => (int) $bucket['views'],
+            'visitors' => count($bucket['visitor_keys']),
+            'interactions' => (int) $bucket['interactions'],
+        ];
+    }
+
+    return $rows;
+}
+
 function birkly_analytics_filter_events_time_window(array $events, int $sinceTimestamp, int $untilTimestamp = 0): array
 {
     if ($sinceTimestamp <= 0 && $untilTimestamp <= 0) {

@@ -48,7 +48,14 @@
             return Promise.resolve(null);
         }
 
-        const url = typeof Birkly.url === 'function' ? Birkly.url(endpoint) : endpoint;
+        let url = typeof Birkly.url === 'function' ? Birkly.url(endpoint) : endpoint;
+        if (String(endpoint).indexOf('action=analytics') !== -1) {
+            let range = '30';
+            try {
+                range = sessionStorage.getItem('birkly_dashboard_analytics_range') || '30';
+            } catch (_) { /* ignore */ }
+            url += (url.indexOf('?') === -1 ? '?' : '&') + 'range=' + encodeURIComponent(range);
+        }
         return fetch(url, { credentials: 'same-origin' })
             .then(function(response) {
                 if (!response.ok) throw new Error('Widget endpoint request failed.');
