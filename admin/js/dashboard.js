@@ -326,8 +326,23 @@
             setContent(element,
                 '<div class="card-section">' +
                 '<div class="u-grid-3">' +
-                kpi(pageViews.toLocaleString(), t('dash_kpi_page_views', 'Page views'), t('dash_kpi_page_views_help', 'Last 30 days · all domains')) +
-                kpi(visitors.toLocaleString(), t('dash_kpi_visitors', 'Visitors'), t('dash_kpi_visitors_help', 'Deduped across domains')) +
+                kpi(pageViews.toLocaleString(), t('dash_kpi_page_views', 'Page views'), (function () {
+                    var range = String(data.analytics_range || '30');
+                    if (range === '24h') {
+                        return t('dash_kpi_page_views_help_24h', 'Last 24 hours · all domains');
+                    }
+                    if (range === '7') {
+                        return t('dash_kpi_page_views_help_7d', 'Last 7 days · all domains');
+                    }
+                    return t('dash_kpi_page_views_help', 'Last 30 days · all domains');
+                }())) +
+                kpi(visitors.toLocaleString(), t('dash_kpi_visitors', 'Visitors'), (function () {
+                    var range = String(data.analytics_range || '30');
+                    if (range === '24h') {
+                        return t('dash_kpi_visitors_help_24h', 'Last 24 hours · deduped across domains');
+                    }
+                    return t('dash_kpi_visitors_help', 'Deduped across domains');
+                }())) +
                 kpi(String(viewsPerVisitor), t('dash_kpi_pages_per_visitor', 'Pages / visitor'), t('dash_kpi_engagement', 'Engagement')) +
                 '</div>' +
                 (healthNote ? '<div class="u-stack-2">' + healthNote + '</div>' : '') +
@@ -913,10 +928,26 @@
         });
     }
 
+    function reloadAnalyticsMiniWidget() {
+        const grid = document.getElementById('dashboard-widget-grid');
+        if (!grid || !window.Birkly?.Dashboard) return;
+        const widget = (dashboardState.widgets || []).find(function (w) {
+            return w && w.id === 'analytics-mini';
+        });
+        if (!widget || (dashboardState.layout.hidden_widgets || []).includes('analytics-mini')) {
+            return;
+        }
+        const body = grid.querySelector('[data-dashboard-widget="analytics-mini"] .dash-widget-body');
+        if (body) {
+            loadAndMountWidget(body, widget);
+        }
+    }
+
     function initDashboard() {
         setupOnboardingHandlers();
         setupCustomizeUi();
         loadWidgetManifest();
+        document.addEventListener('birkly:dashboard-analytics-range', reloadAnalyticsMiniWidget);
     }
 
     window.addEventListener('beforeunload', () => refreshTimers.forEach(timer => clearInterval(timer)));

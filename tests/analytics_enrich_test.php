@@ -42,6 +42,15 @@ $windowed = birkly_analytics_filter_events_time_window([
 ], $now - 3600);
 assert_true(count($windowed) === 1, 'time window keeps events in last hour');
 
+$hourStart = $now - 7200;
+$hourlyEvents = [
+    ['timestamp' => $hourStart + 100, 'event_type' => 'page_view', 'ip_hash' => 'a', 'visitor_token' => 't1'],
+    ['timestamp' => $hourStart + 3700, 'event_type' => 'page_view', 'ip_hash' => 'b', 'visitor_token' => 't2'],
+];
+$hourly = birkly_analytics_hourly_series($hourlyEvents, $hourStart, $hourStart + 7200);
+assert_true(count($hourly) === 2, 'hourly series has two buckets for two hours');
+assert_true(($hourly[0]['views'] ?? 0) === 1 && ($hourly[1]['views'] ?? 0) === 1, 'hourly views per bucket');
+
 $report = birkly_analytics_aggregate_events([
     $event,
     array_merge($event, [

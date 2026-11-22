@@ -688,13 +688,23 @@ if ($action === 'analytics') {
                 require_once __DIR__ . '/../core/analytics_config.php';
                 birkly_analytics_purge_expired();
 
-                $startDate = date('Y-m-d', strtotime('-30 days'));
+                $range = strtolower(trim((string) ($_GET['range'] ?? '30')));
+                if (!in_array($range, ['24h', '7', '30'], true)) {
+                    $range = '30';
+                }
                 $endDate = date('Y-m-d');
-                $combined = birkly_analytics_get_combined_report($startDate, $endDate);
-                $combinedDaily = birkly_analytics_get_combined_report(
-                    date('Y-m-d', strtotime('-60 days')),
-                    $endDate
-                );
+                $now = time();
+                $reportOptions = [];
+                if ($range === '24h') {
+                    $reportOptions['since_timestamp'] = $now - 86400;
+                    $startDate = date('Y-m-d', $reportOptions['since_timestamp']);
+                } elseif ($range === '7') {
+                    $startDate = date('Y-m-d', strtotime('-7 days'));
+                } else {
+                    $startDate = date('Y-m-d', strtotime('-30 days'));
+                }
+
+                $combined = birkly_analytics_get_combined_report($startDate, $endDate, $reportOptions);
                 $health = birkly_analytics_collection_health();
 
                 $websites = [];
@@ -732,20 +742,45 @@ if ($action === 'analytics') {
                 $response['data']['total_page_views'] = $data['page_views'] ?? 0;
                 $response['data']['total_visitors'] = $data['unique_visitors'] ?? 0;
                 $response['data']['websites'] = $websites;
-                $daily = [];
-                $dailySource = is_array($combinedDaily['daily_stats'] ?? null) ? $combinedDaily['daily_stats'] : [];
-                foreach ($dailySource as $row) {
-                    if (!is_array($row)) {
-                        continue;
+                $response['data']['analytics_range'] = $range;
+                $response['data']['chart_granularity'] = $range === '24h' ? 'hour' : 'day';
+
+                if ($range === '24h') {
+                    $rawEvents = birkly_analytics_load_events_for_scope('all', $startDate, $endDate);
+                    $rawEvents = birkly_analytics_filter_events_time_window($rawEvents, $now - 86400, $now);
+                    $rawEvents = birkly_analytics_exclude_bot_events($rawEvents);
+                    $response['data']['daily'] = birkly_analytics_hourly_series($rawEvents, $now - 86400, $now);
+
+                    $prevRaw = birkly_analytics_load_events_for_scope(
+                        'all',
+                        date('Y-m-d', $now - 172800),
+                        $endDate
+                    );
+                    $prevRaw = birkly_analytics_filter_events_time_window($prevRaw, $now - 172800, $now - 86400);
+                    $prevRaw = birkly_analytics_exclude_bot_events($prevRaw);
+                    $response['data']['daily_previous'] = birkly_analytics_hourly_series($prevRaw, $now - 172800, $now - 86400);
+                } else {
+                    $historyDays = $range === '7' ? 14 : 60;
+                    $combinedDaily = birkly_analytics_get_combined_report(
+                        date('Y-m-d', strtotime('-' . $historyDays . ' days')),
+                        $endDate
+                    );
+                    $daily = [];
+                    $dailySource = is_array($combinedDaily['daily_stats'] ?? null) ? $combinedDaily['daily_stats'] : [];
+                    foreach ($dailySource as $row) {
+                        if (!is_array($row)) {
+                            continue;
+                        }
+                        $daily[] = [
+                            'date' => (string) ($row['date'] ?? ''),
+                            'views' => (int) ($row['views'] ?? 0),
+                            'visitors' => (int) ($row['visitors'] ?? 0),
+                            'interactions' => (int) ($row['interactions'] ?? 0),
+                        ];
                     }
-                    $daily[] = [
-                        'date' => (string) ($row['date'] ?? ''),
-                        'views' => (int) ($row['views'] ?? 0),
-                        'visitors' => (int) ($row['visitors'] ?? 0),
-                        'interactions' => (int) ($row['interactions'] ?? 0),
-                    ];
+                    $response['data']['daily'] = array_slice($daily, -$historyDays);
+                    $response['data']['daily_previous'] = [];
                 }
-                $response['data']['daily'] = array_slice($daily, -60);
                 $response['data']['insights'] = $mergedInsights;
                 $response['data']['tracking_count'] = count($combined['tracking_ids'] ?? []);
                 $response['data']['has_domains'] = $response['data']['tracking_count'] > 0;
