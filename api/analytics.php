@@ -350,6 +350,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
     $includeBots = filter_var($_GET['include_bots'] ?? '0', FILTER_VALIDATE_BOOLEAN);
     $activePreset = birkly_analytics_active_preset();
     $includeJourney = (($activePreset['id'] ?? '') === 'advanced');
+    $reportOptions = [
+        'include_bots' => $includeBots,
+        'include_journey' => $includeJourney,
+    ];
+    $sinceHours = (int) ($_GET['since_hours'] ?? 0);
+    if ($sinceHours > 0) {
+        $reportOptions['since_timestamp'] = time() - ($sinceHours * 3600);
+        $startDate = date('Y-m-d', $reportOptions['since_timestamp']);
+        $endDate = date('Y-m-d');
+    }
+    $sinceTimestamp = (int) ($_GET['since_timestamp'] ?? 0);
+    $untilTimestamp = (int) ($_GET['until_timestamp'] ?? 0);
+    if ($sinceTimestamp > 0) {
+        $reportOptions['since_timestamp'] = $sinceTimestamp;
+        $startDate = date('Y-m-d', $sinceTimestamp);
+        if ($untilTimestamp > 0) {
+            $endDate = date('Y-m-d', $untilTimestamp);
+        }
+    }
+    if ($untilTimestamp > 0) {
+        $reportOptions['until_timestamp'] = $untilTimestamp;
+    }
     
     if ($trackingId === '') {
         $trackingId = 'all';
@@ -357,10 +379,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
 
     birkly_analytics_purge_expired();
     
-    $analytics = getAnalyticsData($trackingId, $startDate, $endDate, [
-        'include_bots' => $includeBots,
-        'include_journey' => $includeJourney,
-    ]);
+    $analytics = getAnalyticsData($trackingId, $startDate, $endDate, $reportOptions);
     
     echo json_encode([
         'status' => 'ok',
