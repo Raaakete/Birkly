@@ -27,6 +27,64 @@ function birkly_entry_lang_field_raw(array $entryData, string $langCode, string 
 }
 
 /**
+ * Sentinel / stale values that must never overwrite live localized content on save.
+ */
+function birkly_entry_multilang_save_value_is_ignorable($value): bool
+{
+    if (!is_string($value)) {
+        return false;
+    }
+    $trimmed = trim($value);
+    if ($trimmed === '') {
+        return false;
+    }
+    if ($trimmed === '<p>PLACEHOLDER_REPLACE_VIA_UPDATE</p>') {
+        return true;
+    }
+    if ($trimmed === 'PLACEHOLDER_REPLACE_VIA_UPDATE') {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Remove legacy top-level copies of localized schema fields (canonical values live under language keys).
+ *
+ * @param array<string, mixed> $entryOutput
+ * @param list<array<string, mixed>> $fields
+ * @return array<string, mixed>
+ */
+function birkly_entry_strip_legacy_multilang_flat_fields(array $entryOutput, array $fields, ?array $existingEntry = null): array
+{
+    require_once __DIR__ . '/entry_multilang_field_mode.php';
+
+    $entryContext = $entryOutput;
+    if (!isset($entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY]) && is_array($existingEntry)) {
+        $modes = birkly_multilang_entry_field_modes($existingEntry);
+        if ($modes !== []) {
+            $entryContext[BIRKLY_MULTILANG_ENTRY_MODES_KEY] = $modes;
+        }
+    }
+
+    foreach ($fields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $fieldName = (string) ($field['name'] ?? '');
+        if ($fieldName === '' || $fieldName === 'title') {
+            continue;
+        }
+        if (birkly_multilang_field_is_shared_for_entry($field, true, $entryContext)) {
+            continue;
+        }
+        unset($entryOutput[$fieldName]);
+    }
+
+    return $entryOutput;
+}
+
+/**
  * Resolve the canonical top-level entry title for multilanguage entries.
  */
 function birkly_entry_resolve_top_level_title(
@@ -347,6 +405,10 @@ function birkly_entry_apply_multilang_fields(
                 continue;
             }
 
+            if (birkly_entry_multilang_save_value_is_ignorable($rawValue)) {
+                continue;
+            }
+
             $fieldType = (string) ($field['type'] ?? '');
             $entryOutput[$langCode][$fieldName] = birkly_entry_process_fieldtype_value(
                 $fieldName,
@@ -380,6 +442,8 @@ function birkly_entry_apply_multilang_fields(
             $existingEntry
         );
     }
+
+    $entryOutput = birkly_entry_strip_legacy_multilang_flat_fields($entryOutput, $fields, $existingEntry);
 
     return $entryOutput;
 }

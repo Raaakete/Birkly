@@ -85,4 +85,37 @@ assert_true(
     strpos($localizedBlocks, 'Hallo') !== false
 );
 
+assert_true(
+    'detects ignorable placeholder body',
+    birkly_entry_multilang_save_value_is_ignorable('<p>PLACEHOLDER_REPLACE_VIA_UPDATE</p>')
+);
+
+$blogFields = [
+    ['name' => 'excerpt', 'type' => 'textarea'],
+    ['name' => 'body', 'type' => 'content-editor'],
+    ['name' => 'featured', 'type' => 'checkbox'],
+];
+$existing = [
+    'id' => 'entry123',
+    'body' => '<p>PLACEHOLDER_REPLACE_VIA_UPDATE</p>',
+    'multilang_field_modes' => ['body' => 'localize', 'excerpt' => 'localize', 'featured' => 'shared'],
+    'en' => ['body' => '<p>Real article</p>', 'excerpt' => 'Good excerpt'],
+];
+$merged = birkly_entry_apply_multilang_fields(
+    ['id' => 'entry123', 'en' => $existing['en']],
+  ['en' => ['body' => '<p>PLACEHOLDER_REPLACE_VIA_UPDATE</p>']],
+    $blogFields,
+    ['en', 'de'],
+    $existing,
+    'entry123'
+);
+assert_true(
+    'placeholder post does not wipe en body',
+    ($merged['en']['body'] ?? '') === '<p>Real article</p>'
+);
+assert_true(
+    'legacy flat body key removed',
+    !array_key_exists('body', $merged)
+);
+
 exit($failures > 0 ? 1 : 0);
