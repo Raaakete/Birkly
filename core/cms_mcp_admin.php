@@ -17,7 +17,7 @@ function cms_mcp_admin_action_catalog(): array
         [
             'group' => 'entries',
             'actions' => [
-                ['action' => 'entries.bulk', 'description' => 'Bulk publish/unpublish/delete/restore entries', 'write' => true, 'permission' => 'write'],
+                ['action' => 'entries.bulk', 'description' => 'Bulk publish/unpublish/delete/restore entries. Payload: collection (slug), action (publish|unpublish|delete|restore), entry_ids (string[]; aliases ids, entryIds). No CSRF over MCP.', 'write' => true, 'permission' => 'write'],
                 ['action' => 'entries.review', 'description' => 'Approve/reject/request changes on pending_review entry', 'write' => true, 'permission' => 'write'],
                 ['action' => 'entries.duplicate', 'description' => 'Duplicate an entry', 'write' => true, 'permission' => 'write'],
                 ['action' => 'entries.restore', 'description' => 'Restore trashed entry', 'write' => true, 'permission' => 'write'],

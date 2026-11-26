@@ -6073,21 +6073,8 @@
             handleSubmit(form, e);
         }, true);
 
-        // Catch Enter key inside Haru forms (some setups submit without firing capture submit handlers reliably)
-        document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter') return;
-            const target = e.target;
-            if (!(target instanceof HTMLElement)) return;
-            const form = target.closest('form');
-            if (!(form instanceof HTMLFormElement)) return;
-            if (!form.hasAttribute('data-birkly-url') && !(form.hasAttribute('data-birkly-route') && form.hasAttribute('data-birkly-action'))) return;
-            Birkly.warn('Birkly: document keydown capture (Enter)', {
-                route: form.getAttribute('data-birkly-route'),
-                action: form.getAttribute('data-birkly-action'),
-                url: form.getAttribute('data-birkly-url')
-            });
-            handleSubmit(form, e);
-        }, true);
+        // Enter in single-line fields: rely on the browser implicit submit → document submit capture above.
+        // Do not intercept Enter globally (breaks textarea newlines and combobox/tag widgets).
 
         // Direct binding (some environments miss document-level submit)
         function bindExistingForms() {

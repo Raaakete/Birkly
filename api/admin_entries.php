@@ -1389,7 +1389,7 @@ function performBulkOperation() {
         
         $collectionSlug = $input['collection'] ?? '';
         $action = $input['action'] ?? '';
-        $entryIds = $input['entry_ids'] ?? [];
+        $entryIds = $input['entry_ids'] ?? $input['ids'] ?? $input['entryIds'] ?? [];
         
         error_log("performBulkOperation: collection=$collectionSlug, action=$action, entryIds=" . count($entryIds));
     } catch (Exception $e) {
@@ -1419,7 +1419,7 @@ function performBulkOperation() {
     // Validate CSRF token
     error_log("performBulkOperation: Validating CSRF token");
     $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!validateStateChangeCsrfToken($csrf, 'bulk_operation')) {
         error_log("performBulkOperation: CSRF token validation failed");
         log_security_event('permission_denied', ['action' => 'bulk_operation', 'reason' => 'invalid CSRF']);
         return ['status' => 'error', 'message' => 'Invalid CSRF token'];
