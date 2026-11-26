@@ -1874,6 +1874,28 @@ function birkly_marketplace_release_download(string $slug, string $version, ?str
 }
 
 /**
+ * Resolve installed plugin version when the caller passed a marketplace slug instead of plugin id.
+ */
+function birkly_marketplace_resolve_installed_version(string $slugOrPluginId, array $plugins): string
+{
+    if (isset($plugins[$slugOrPluginId]) && is_array($plugins[$slugOrPluginId])) {
+        return (string) ($plugins[$slugOrPluginId]['version'] ?? '0.0.0');
+    }
+
+    $slugOrPluginId = trim($slugOrPluginId);
+    foreach ($plugins as $plugin) {
+        if (!is_array($plugin)) {
+            continue;
+        }
+        if (trim((string) ($plugin['marketplace_slug'] ?? '')) === $slugOrPluginId) {
+            return (string) ($plugin['version'] ?? '0.0.0');
+        }
+    }
+
+    return '0.0.0';
+}
+
+/**
  * @return array{ok:bool,latest_version?:string,update_available:bool,current_version:string,error?:string}
  */
 function birkly_marketplace_check_plugin_update(string $slug, string $currentVersion, ?string $licenseRef = null): array

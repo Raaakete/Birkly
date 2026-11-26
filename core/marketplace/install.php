@@ -742,6 +742,7 @@ function birkly_marketplace_installed_plugin_updates(): array
             'offer_distribution' => $check['offer_distribution'] ?? 'stable',
             'offer_distribution_notice' => $check['offer_distribution_notice'] ?? '',
             'update_available' => !empty($check['update_available']),
+            'requires_newer_birkly' => $check['requires_newer_birkly'] ?? null,
             'license_lapsed' => !empty($check['license_lapsed']),
             'license_warning' => $check['license_warning'] ?? null,
             'entitlement_status' => $entitlementStatus,

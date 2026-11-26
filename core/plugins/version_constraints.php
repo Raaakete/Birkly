@@ -29,7 +29,9 @@ function birkly_cms_version_for_plugin_compat(): string
 {
     $version = trim(birkly_resolve_cms_version_string());
 
-    if ($version === '0.0.1') {
+    /** @var list<string> Pre-1.0 distribution labels that still run the 1.1.x plugin API (e.g. birkly.io). */
+    $sentinelCompat = ['0.0.1', '0.0.2'];
+    if (in_array($version, $sentinelCompat, true)) {
         return '1.1.0';
     }
 

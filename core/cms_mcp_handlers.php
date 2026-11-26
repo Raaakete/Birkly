@@ -690,7 +690,7 @@ function cms_mcp_handler_marketplace(string $subAction, array $input, array $aiU
         case 'check_updates':
             $slug = (string) ($input['slug'] ?? $input['plugin_id'] ?? '');
             $plugins = function_exists('get_all_plugins') ? get_all_plugins() : [];
-            $current = (string) ($plugins[$slug]['version'] ?? '0.0.0');
+            $current = birkly_marketplace_resolve_installed_version($slug, $plugins);
             return cms_mcp_ok(birkly_marketplace_check_plugin_update($slug, $current));
         case 'upgrade':
             if (!function_exists('get_all_plugins')) {
@@ -1009,12 +1009,16 @@ function cms_mcp_handler_plugins(string $subAction, array $input, array $aiUser)
             return cms_mcp_ok(['plugins' => get_all_plugins()]);
         case 'check_updates':
             $pluginId = (string) ($input['plugin_id'] ?? '');
-            return cms_mcp_ok(birkly_marketplace_check_plugin_update($pluginId));
+            $plugins = get_all_plugins();
+            $slug = birkly_marketplace_plugin_offer_slug($pluginId, $plugins[$pluginId] ?? []);
+            $current = birkly_marketplace_resolve_installed_version($slug !== '' ? $slug : $pluginId, $plugins);
+            return cms_mcp_ok(birkly_marketplace_check_plugin_update($slug !== '' ? $slug : $pluginId, $current));
         case 'update':
             $pluginId = (string) ($input['plugin_id'] ?? '');
             $plugins = get_all_plugins();
-            $current = (string) ($plugins[$pluginId]['version'] ?? '0.0.0');
-            $check = birkly_marketplace_check_plugin_update($pluginId, $current);
+            $slug = birkly_marketplace_plugin_offer_slug($pluginId, $plugins[$pluginId] ?? []);
+            $current = birkly_marketplace_resolve_installed_version($slug !== '' ? $slug : $pluginId, $plugins);
+            $check = birkly_marketplace_check_plugin_update($slug !== '' ? $slug : $pluginId, $current);
             if (!($check['update_available'] ?? false)) {
                 return cms_mcp_error('No update available');
             }
