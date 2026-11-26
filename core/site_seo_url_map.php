@@ -811,6 +811,25 @@ function birkly_seo_detail_public_url(
 }
 
 /**
+ * True when the request path is already the pretty URL for this slug (avoid redirect loops).
+ */
+function birkly_seo_request_is_pretty_detail_path(string $requestPath, string $pattern, string $slug): bool
+{
+    $pattern = trim($pattern);
+    if ($pattern === '' || !str_contains($pattern, '{slug}')) {
+        return false;
+    }
+    $requestPath = birkly_seo_normalize_path($requestPath);
+    $expected = birkly_seo_normalize_path(str_replace('{slug}', $slug, $pattern));
+    if ($requestPath === $expected) {
+        return true;
+    }
+    $encoded = birkly_seo_normalize_path(str_replace('{slug}', rawurlencode($slug), $pattern));
+
+    return $requestPath === $encoded;
+}
+
+/**
  * 301 redirect legacy ?collection=&slug= detail URLs to pretty patterns when configured.
  *
  * @param array<string, mixed> $query
@@ -833,6 +852,12 @@ function birkly_seo_maybe_redirect_query_detail_to_pretty(string $relativeTempla
     }
     $pattern = trim((string) ($binding['url_pattern'] ?? ''));
     if ($pattern === '' || !str_contains($pattern, '{slug}')) {
+        return;
+    }
+    $requestPath = birkly_seo_normalize_path(
+        parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: ''
+    );
+    if (birkly_seo_request_is_pretty_detail_path($requestPath, $pattern, $slug)) {
         return;
     }
     $template = (string) ($binding['template_path'] ?? $rel);

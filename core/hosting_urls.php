@@ -723,6 +723,19 @@ function birkly_hosting_is_platform_endpoint_path(string $uri): bool
 }
 
 /**
+ * Append the current request query string to a redirect target when present.
+ */
+function birkly_hosting_redirect_with_request_query(string $target): string
+{
+    $qs = (string) ($_SERVER['QUERY_STRING'] ?? '');
+    if ($qs === '') {
+        return $target;
+    }
+
+    return $target . (str_contains($target, '?') ? '&' : '?') . $qs;
+}
+
+/**
  * Redirect alias hostnames to primary when enabled.
  */
 function birkly_hosting_maybe_redirect_alias_to_primary(string $uri): bool
@@ -743,7 +756,7 @@ function birkly_hosting_maybe_redirect_alias_to_primary(string $uri): bool
 
     if (birkly_hosting_is_cms_alias_host($host)) {
         $target = rtrim((string) $config['cms_base_url'], '/') . ($uri === '' ? '/' : $uri);
-        header('Location: ' . $target, true, 301);
+        header('Location: ' . birkly_hosting_redirect_with_request_query($target), true, 301);
         exit;
     }
 
@@ -753,7 +766,7 @@ function birkly_hosting_maybe_redirect_alias_to_primary(string $uri): bool
             return false;
         }
         $target = rtrim($publicBase, '/') . ($uri === '' ? '/' : $uri);
-        header('Location: ' . $target, true, 301);
+        header('Location: ' . birkly_hosting_redirect_with_request_query($target), true, 301);
         exit;
     }
 

@@ -363,6 +363,14 @@ try {
     $repair = birkly_hosting_repair_delivery(true, false);
     assert_true('repair clears SSR cache', !is_file($cacheMarker));
     assert_true('repair reports SSR invalidation', ($repair['ssr_invalidated'] ?? false) === true);
+
+    $_SERVER['QUERY_STRING'] = 'collection=blog&slug=hello';
+    assert_true(
+        'redirect appends query string',
+        birkly_hosting_redirect_with_request_query('https://www.example.com/blog-post.html')
+            === 'https://www.example.com/blog-post.html?collection=blog&slug=hello'
+    );
+    unset($_SERVER['QUERY_STRING']);
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {

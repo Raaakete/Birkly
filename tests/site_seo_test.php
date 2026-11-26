@@ -114,6 +114,14 @@ $config['detail_bindings'] = [[
 birkly_site_seo_save($config);
 $pretty = birkly_seo_detail_public_url('blog-post.html', 'blog', 'hello-world');
 assert_true($pretty === 'https://birkly.example.test/blog/hello-world', 'pretty detail URL without query string');
+assert_true(
+    birkly_seo_request_is_pretty_detail_path('/blog/hello-world', '/blog/{slug}', 'hello-world'),
+    'detects already-pretty path (loop guard)'
+);
+assert_true(
+    !birkly_seo_request_is_pretty_detail_path('/blog-post.html', '/blog/{slug}', 'hello-world'),
+    'legacy template path is not pretty'
+);
 
 echo "==> Signature part\n";
 assert_true(str_starts_with(birkly_site_seo_signature_part(), 'seo'), 'signature part prefix');
