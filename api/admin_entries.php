@@ -675,6 +675,11 @@ function saveEntry() {
             is_array($entry) ? $entry : null,
             $entryId
         );
+        $entryOutput = birkly_entry_strip_legacy_multilang_flat_fields(
+            $entryOutput,
+            $fields,
+            is_array($entry) ? $entry : null
+        );
     } else {
         // Single language - process fields normally
         foreach ($fields as $field) {
@@ -742,9 +747,29 @@ function saveEntry() {
 }
     
     // Also add any other fields that might have been submitted but aren't in schema
+    $localizedFlatFieldNames = [];
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        require_once __DIR__ . '/../core/entry_multilang_field_mode.php';
+        $entryContext = $entryOutput;
+        foreach ($fields as $field) {
+            if (!is_array($field)) {
+                continue;
+            }
+            $fieldName = (string) ($field['name'] ?? '');
+            if ($fieldName === '' || $fieldName === 'title') {
+                continue;
+            }
+            if (!birkly_multilang_field_is_shared_for_entry($field, true, $entryContext)) {
+                $localizedFlatFieldNames[$fieldName] = true;
+            }
+        }
+    }
     foreach ($entryData as $key => $value) {
         // Skip system fields and form helper fields
         // Also skip password field (used for user creation only, not stored in entry)
+        if (isset($localizedFlatFieldNames[$key])) {
+            continue;
+        }
         if (!in_array($key, ['id', 'title', 'slug', 'status', 'created_at', 'updated_at', 'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description', 'og_image', 'canonical_url', 'robots_noindex', 'ai_summary', 'structured_data_json', 'reviewer_hidden', 'password']) 
             && !isset($entryOutput[$key])) {
             // Special handling for JSON strings
