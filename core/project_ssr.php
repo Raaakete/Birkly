@@ -1207,6 +1207,15 @@ function birkly_project_ssr_serve(string $filePath, array $query = [], array $se
     }
 
     $data = birkly_project_ssr_build_data($html, $query, $language, $storage, $requests);
+    $detailReq = birkly_project_ssr_detail_request($query);
+    if ($detailReq !== null && !is_array($data['entry'] ?? null)) {
+        $serveOptions['http_status'] = 404;
+        if ($notFoundUri === '') {
+            require_once __DIR__ . '/site_seo_url_map.php';
+            $path = birkly_seo_public_path_from_file($relative);
+            $serveOptions['not_found_uri'] = $path !== '' ? $path : $relative;
+        }
+    }
     $rendered = birkly_project_ssr_render($html, $data);
     if ($rendered === null || $rendered === '') {
         return false;

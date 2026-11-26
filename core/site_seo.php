@@ -32,6 +32,7 @@ function birkly_site_seo_defaults(): array
                 'sitemap' => true,
                 'robots_sitemap_line' => true,
                 'indexnow' => true,
+                'rss' => true,
             ],
         ],
         'defaults' => [
@@ -203,7 +204,13 @@ function birkly_site_seo_normalize(array $input): array
  */
 function birkly_site_seo_save(array $input): array
 {
-    $config = birkly_site_seo_normalize($input);
+    $patch = birkly_site_seo_sanitize_save_input($input);
+    $existing = birkly_site_seo_load();
+    $merged = array_replace_recursive($existing, $patch);
+    if (array_key_exists('detail_bindings', $patch) && is_array($patch['detail_bindings'])) {
+        $merged['detail_bindings'] = $patch['detail_bindings'];
+    }
+    $config = birkly_site_seo_normalize($merged);
 
     $dir = dirname(birkly_site_seo_settings_path());
     if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
@@ -382,6 +389,9 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
     if (!birkly_site_seo_should_auto_inject()) {
         return $html;
     }
+    if (!empty($context['detail_not_found'])) {
+        return $html;
+    }
 
     $surfaces = birkly_site_seo_load()['delivery']['surfaces'] ?? [];
     $meta = birkly_site_seo_resolve_meta($context);
@@ -460,6 +470,14 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         $parts[] = '<meta name="msvalidate.01" content="' . $esc($bingVerify) . '">';
     }
 
+    if (!empty($surfaces['rss']) && stripos($html, 'type="application/rss+xml"') === false
+        && stripos($html, 'type="application/atom+xml"') === false) {
+        require_once __DIR__ . '/site_seo_feed.php';
+        foreach (birkly_seo_feed_alternate_link_tags() as $tag) {
+            $parts[] = $tag;
+        }
+    }
+
     $hasJsonLd = stripos($html, 'application/ld+json') !== false;
     if (!$hasJsonLd || stripos($html, '#organization') === false) {
         require_once __DIR__ . '/site_seo_json_ld.php';
@@ -516,3 +534,5 @@ function birkly_site_seo_signature_part(): string
     ]) ?: ''), 0, 6);
     return 'seo' . $bits . 'm' . $revision;
 }
+
+require_once __DIR__ . '/site_seo_entry_hooks.php';

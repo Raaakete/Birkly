@@ -20,6 +20,17 @@ function birkly_hosting_serve_public_file(string $filePath): void
 
     if (birkly_project_ssr_should_render($filePath)) {
         $query = isset($_GET) && is_array($_GET) ? $_GET : [];
+        require_once __DIR__ . '/site_seo.php';
+        require_once __DIR__ . '/site_seo_url_map.php';
+        $relative = str_replace('\\', '/', ltrim(
+            str_replace(rtrim(birkly_project_root(), '/\\') . '/project/', '', $filePath),
+            '/'
+        ));
+        try {
+            birkly_seo_maybe_redirect_query_detail_to_pretty($relative, $query);
+        } catch (Throwable $e) {
+            error_log('birkly_seo_maybe_redirect_query_detail_to_pretty: ' . $e->getMessage());
+        }
         if (birkly_project_ssr_serve($filePath, $query)) {
             exit;
         }
@@ -68,6 +79,9 @@ function birkly_hosting_serve_file(string $filePath): void
         $mime = 'image/png';
     }
     header('Content-Type: ' . $mime);
+    if (!headers_sent()) {
+        header('Cache-Control: ' . birkly_hosting_public_file_cache_control($filePath));
+    }
     if ($ext === 'html' || $ext === 'htm') {
         $html = (string) file_get_contents($filePath);
         echo birkly_project_prepare_html_for_serve($html);
@@ -81,6 +95,27 @@ function birkly_hosting_serve_file(string $filePath): void
     }
     readfile($filePath);
     exit;
+}
+
+/**
+ * Cache-Control for static project assets (version query → long-lived).
+ */
+function birkly_hosting_public_file_cache_control(string $filePath): string
+{
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    if (in_array($ext, ['html', 'htm', 'php'], true)) {
+        return 'public, max-age=300';
+    }
+    $static = in_array($ext, ['css', 'js', 'woff', 'woff2', 'ttf', 'otf', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'map'], true);
+    if (!$static) {
+        return 'public, max-age=3600';
+    }
+    $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
+    if (preg_match('/[?&]v=/', $uri) === 1) {
+        return 'public, max-age=31536000, immutable';
+    }
+
+    return 'public, max-age=86400';
 }
 
 /**

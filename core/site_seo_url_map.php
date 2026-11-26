@@ -77,6 +77,9 @@ function birkly_seo_normalize_url_map_sections(array $config): array
             'excerpt_field' => $excerptField,
             'excerpt_field_auto' => !empty($binding['excerpt_field_auto']),
             'url_pattern' => isset($binding['url_pattern']) ? (string) $binding['url_pattern'] : null,
+            'feed_enabled' => !empty($binding['feed_enabled']),
+            'feed_title' => trim((string) ($binding['feed_title'] ?? '')),
+            'feed_path' => trim((string) ($binding['feed_path'] ?? '')),
             'auto_detected' => !empty($binding['auto_detected']),
         ];
     }
@@ -784,6 +787,68 @@ function birkly_seo_canonical_url(string $pathKey, array $query = []): string
 }
 
 /**
+ * Public URL for a detail row (pretty pattern when configured).
+ *
+ * @param array<string, mixed>|null $binding
+ */
+function birkly_seo_detail_public_url(
+    string $templatePath,
+    string $collection,
+    string $slug,
+    ?array $binding = null
+): string {
+    $pathKey = birkly_seo_public_path_from_file($templatePath);
+    if ($binding === null) {
+        $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+        $binding = birkly_seo_find_binding($config, $templatePath, $collection);
+    }
+    $pattern = is_array($binding) ? trim((string) ($binding['url_pattern'] ?? '')) : '';
+    if ($pattern !== '' && str_contains($pattern, '{slug}')) {
+        return birkly_seo_canonical_url(str_replace('{slug}', rawurlencode($slug), $pattern), []);
+    }
+
+    return birkly_seo_canonical_url($pathKey, ['collection' => $collection, 'slug' => $slug]);
+}
+
+/**
+ * 301 redirect legacy ?collection=&slug= detail URLs to pretty patterns when configured.
+ *
+ * @param array<string, mixed> $query
+ */
+function birkly_seo_maybe_redirect_query_detail_to_pretty(string $relativeTemplatePath, array $query): void
+{
+    if (!birkly_site_seo_is_published()) {
+        return;
+    }
+    $collection = trim((string) ($query['collection'] ?? ''));
+    $slug = trim((string) ($query['slug'] ?? ''));
+    if ($collection === '' || $slug === '') {
+        return;
+    }
+    $rel = str_replace('\\', '/', ltrim($relativeTemplatePath, '/'));
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $binding = birkly_seo_find_binding($config, $rel, $collection);
+    if ($binding === null) {
+        return;
+    }
+    $pattern = trim((string) ($binding['url_pattern'] ?? ''));
+    if ($pattern === '' || !str_contains($pattern, '{slug}')) {
+        return;
+    }
+    $template = (string) ($binding['template_path'] ?? $rel);
+    $target = birkly_seo_detail_public_url($template, $collection, $slug, $binding);
+    $legacy = birkly_seo_canonical_url(
+        birkly_seo_public_path_from_file($template),
+        ['collection' => $collection, 'slug' => $slug]
+    );
+    if ($target === '' || $target === $legacy || $target[0] === '/') {
+        return;
+    }
+    header('Location: ' . $target, true, 301);
+    exit;
+}
+
+/**
  * Materialize published detail URLs into url_map.details (on publish).
  *
  * @param array<string, mixed> $config
@@ -862,9 +927,23 @@ function birkly_seo_build_context(
 
     $context = [];
     $overrides = [];
+    $binding = null;
     $collection = trim((string) ($query['collection'] ?? ''));
     $slug = trim((string) ($query['slug'] ?? ''));
     $entry = is_array($ssrData['entry'] ?? null) ? $ssrData['entry'] : null;
+    $isDetailRequest = $collection !== '' && $slug !== '';
+
+    if ($isDetailRequest && $entry === null) {
+        if (preg_match('/<title[^>]*>(.*?)<\/title>/is', $renderedHtml, $m)) {
+            $parsed = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            if ($parsed !== '') {
+                $context['page_title'] = $parsed;
+            }
+        }
+        $context['detail_not_found'] = true;
+
+        return $context;
+    }
 
     if ($collection !== '' && $slug !== '' && $entry !== null) {
         $binding = birkly_seo_find_binding($config, $relativePath, $collection);
@@ -889,7 +968,12 @@ function birkly_seo_build_context(
         if ($imageField === '') {
             $imageField = birkly_seo_image_field_guess($collection);
         }
-        $detailCanonical = birkly_seo_canonical_url($pathKey, $query);
+        $detailCanonical = birkly_seo_detail_public_url(
+            $binding !== null ? (string) $binding['template_path'] : $relativePath,
+            $collection,
+            $slug,
+            $binding
+        );
         $context['entry_image_url'] = birkly_seo_resolve_entry_image_url($entry, $imageField, $detailCanonical);
 
         $detailKey = birkly_seo_detail_key(
@@ -927,10 +1011,19 @@ function birkly_seo_build_context(
         $context['og_image'] = (string) $context['entry_image_url'];
     }
 
-    $context['canonical'] = birkly_seo_canonical_url($pathKey, $query);
-
-    if ($entry !== null && $context['entry_title'] ?? '' !== '') {
-        $context['is_detail'] = true;
+    if ($entry !== null) {
+        $binding = $binding ?? birkly_seo_find_binding($config, $relativePath, $collection);
+        $context['canonical'] = birkly_seo_detail_public_url(
+            $binding !== null ? (string) $binding['template_path'] : $relativePath,
+            $collection,
+            $slug,
+            $binding
+        );
+        if (($context['entry_title'] ?? '') !== '') {
+            $context['is_detail'] = true;
+        }
+    } else {
+        $context['canonical'] = birkly_seo_canonical_url($pathKey, []);
     }
 
     return $context;
@@ -1440,15 +1533,7 @@ function birkly_seo_sitemap_entries(): array
                 break;
             }
         }
-        $pattern = is_array($binding) ? trim((string) ($binding['url_pattern'] ?? '')) : '';
-        if ($pattern !== '' && str_contains($pattern, '{slug}')) {
-            $loc = birkly_seo_canonical_url(str_replace('{slug}', $slug, $pattern), []);
-        } else {
-            $loc = birkly_seo_canonical_url(
-                birkly_seo_public_path_from_file($template),
-                ['collection' => $collection, 'slug' => $slug]
-            );
-        }
+        $loc = birkly_seo_detail_public_url($template, $collection, $slug, is_array($binding) ? $binding : null);
         if ($loc === '' || $loc[0] === '/') {
             continue;
         }

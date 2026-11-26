@@ -56,6 +56,11 @@ function birkly_http_route_is_platform_discovery_path(string $uri): bool
         return true;
     }
 
+    require_once __DIR__ . '/site_seo_feed.php';
+    if (birkly_seo_feed_should_serve($path)) {
+        return true;
+    }
+
     return false;
 }
 
@@ -107,6 +112,15 @@ function birkly_dispatch_http_route(string $uri): bool
             require_once __DIR__ . '/hosting_routing.php';
         }
         if (birkly_hosting_serve_favicon_if_available()) {
+            return true;
+        }
+    }
+
+    require_once __DIR__ . '/site_seo_feed.php';
+    if (birkly_seo_feed_should_serve($uri)) {
+        $full = __DIR__ . '/../api/feed_xml.php';
+        if (is_file($full)) {
+            require $full;
             return true;
         }
     }
