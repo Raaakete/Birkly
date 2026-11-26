@@ -77,6 +77,44 @@ $ctx = birkly_seo_build_context('/about.html', [], [], '<html><head><title>About
 $injectedPage = birkly_site_seo_inject_head($html, $ctx);
 assert_true(stripos($injectedPage, '<title>Custom About Title</title>') !== false, 'page override title injected');
 
+echo "==> save_seo partial merge\n";
+$full = birkly_site_seo_load();
+$full['enabled'] = true;
+$full['published'] = true;
+$full['defaults']['site_title'] = 'Preserve Me';
+birkly_site_seo_save($full);
+$partial = [
+    'detail_bindings' => [
+        [
+            'id' => 'bind_test',
+            'collection' => 'blog',
+            'template_path' => 'blog-post.html',
+            'excerpt_field' => 'excerpt',
+        ],
+    ],
+];
+birkly_site_seo_save($partial);
+$afterPartial = birkly_site_seo_load();
+assert_true(!empty($afterPartial['enabled']) && !empty($afterPartial['published']), 'partial save keeps enabled/published');
+assert_true(($afterPartial['defaults']['site_title'] ?? '') === 'Preserve Me', 'partial save keeps defaults');
+
+echo "==> Pretty detail canonical\n";
+birkly_hosting_persist([
+    'cms_base_url' => 'https://cms.example.test',
+    'public_site_mode' => 'project',
+    'public_site_url' => 'https://birkly.example.test',
+]);
+$config = birkly_site_seo_load();
+$config['detail_bindings'] = [[
+    'id' => 'bind_blog',
+    'collection' => 'blog',
+    'template_path' => 'blog-post.html',
+    'url_pattern' => '/blog/{slug}',
+]];
+birkly_site_seo_save($config);
+$pretty = birkly_seo_detail_public_url('blog-post.html', 'blog', 'hello-world');
+assert_true($pretty === 'https://birkly.example.test/blog/hello-world', 'pretty detail URL without query string');
+
 echo "==> Signature part\n";
 assert_true(str_starts_with(birkly_site_seo_signature_part(), 'seo'), 'signature part prefix');
 

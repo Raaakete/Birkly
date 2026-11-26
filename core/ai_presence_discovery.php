@@ -390,42 +390,37 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
 }
 
 /**
- * @return array{ok:bool,status?:int,error?:string,submitted?:int}
+ * Submit one or more absolute URLs to IndexNow (SEO or Agent Guide surfaces).
+ *
+ * @param list<string> $urlList
+ * @return array{ok:bool,status?:int,error?:string,submitted?:int,response_body?:string}
  */
-function birkly_ai_presence_discovery_indexnow_ping(): array
+function birkly_ai_presence_discovery_indexnow_submit_urls(array $urlList): array
 {
-    if (!birkly_ai_presence_is_publicly_live()) {
-        return ['ok' => false, 'error' => 'guide_not_live'];
-    }
-
     $settings = birkly_ai_presence_discovery_publication_settings();
-    if (!$settings['discovery_indexnow']) {
+    $seoIndexNow = function_exists('birkly_site_seo_surface_enabled') && birkly_site_seo_surface_enabled('indexnow');
+    if (!$settings['discovery_indexnow'] && !$seoIndexNow) {
         return ['ok' => false, 'error' => 'indexnow_disabled'];
     }
 
     $base = birkly_ai_presence_discovery_public_base();
     if ($base === '') {
+        require_once __DIR__ . '/hosting_urls.php';
+        $base = rtrim(birkly_hosting_public_base_url(), '/');
+    }
+    if ($base === '') {
         return ['ok' => false, 'error' => 'no_public_base'];
+    }
+
+    $urlList = array_values(array_unique(array_filter($urlList, static fn ($u) => is_string($u) && $u !== '')));
+    if ($urlList === []) {
+        return ['ok' => false, 'error' => 'no_urls'];
     }
 
     $key = birkly_ai_presence_discovery_indexnow_key();
     $host = parse_url($base, PHP_URL_HOST);
     if (!is_string($host) || $host === '') {
         return ['ok' => false, 'error' => 'invalid_host'];
-    }
-
-    $urlList = [];
-    $map = birkly_ai_presence_discovery_url_map();
-    foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $mapKey) {
-        $url = $map[$mapKey] ?? null;
-        if ($url !== null && $url !== '') {
-            $urlList[] = $url;
-        }
-    }
-
-    $urlList = array_values(array_unique($urlList));
-    if ($urlList === []) {
-        return ['ok' => false, 'error' => 'no_urls'];
     }
 
     $payload = json_encode([
@@ -470,6 +465,32 @@ function birkly_ai_presence_discovery_indexnow_ping(): array
         'submitted' => count($urlList),
         'response_body' => $meta['discovery_last_indexnow_body'],
     ];
+}
+
+/**
+ * @return array{ok:bool,status?:int,error?:string,submitted?:int}
+ */
+function birkly_ai_presence_discovery_indexnow_ping(): array
+{
+    if (!birkly_ai_presence_is_publicly_live()) {
+        return ['ok' => false, 'error' => 'guide_not_live'];
+    }
+
+    $settings = birkly_ai_presence_discovery_publication_settings();
+    if (!$settings['discovery_indexnow']) {
+        return ['ok' => false, 'error' => 'indexnow_disabled'];
+    }
+
+    $urlList = [];
+    $map = birkly_ai_presence_discovery_url_map();
+    foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $mapKey) {
+        $url = $map[$mapKey] ?? null;
+        if ($url !== null && $url !== '') {
+            $urlList[] = $url;
+        }
+    }
+
+    return birkly_ai_presence_discovery_indexnow_submit_urls($urlList);
 }
 
 /**
