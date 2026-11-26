@@ -474,6 +474,37 @@ function birkly_project_ssr_build_nested_sub_entry_requests(string $html, array 
  *
  * @return array<string,mixed>|null
  */
+/**
+ * Whether a detail query points at a missing or unpublished entry (404 SSR).
+ *
+ * @param array<string, mixed> $query
+ */
+function birkly_project_ssr_detail_entry_missing(array $query, string $language = 'en', $storage = null): bool
+{
+    $detail = birkly_project_ssr_detail_request($query);
+    if ($detail === null) {
+        return false;
+    }
+    require_once __DIR__ . '/page_bundle_runner.php';
+    require_once __DIR__ . '/storage/StorageFactory.php';
+    require_once __DIR__ . '/public_read.php';
+    if ($storage === null) {
+        $storage = get_storage(birkly_project_root() . '/content');
+    }
+    $collection = trim((string) ($query['collection'] ?? ''));
+    $slug = trim((string) ($query['slug'] ?? ''));
+    $entryId = trim((string) ($query['id'] ?? $query['entry'] ?? ''));
+    if ($collection === '' || ($slug === '' && $entryId === '')) {
+        return false;
+    }
+    $result = birkly_public_get_entry($storage, $collection, $slug, $entryId, $language);
+    if (($result['status'] ?? '') !== 'ok') {
+        return true;
+    }
+
+    return !is_array($result['data']['entry'] ?? null);
+}
+
 function birkly_project_ssr_detail_request(array $query): ?array
 {
     $collection = trim((string) ($query['collection'] ?? ''));
@@ -889,9 +920,13 @@ function birkly_project_ssr_cache_put(
     int $ttl,
     string $relativePath = '',
     string $revision = '',
-    ?array $sourceFingerprint = null
+    ?array $sourceFingerprint = null,
+    int $httpStatus = 200
 ): bool
 {
+    if ($httpStatus === 404) {
+        return false;
+    }
     if (!birkly_project_ssr_ensure_cache_dir()) {
         return false;
     }
@@ -901,6 +936,7 @@ function birkly_project_ssr_cache_put(
         'ttl' => $ttl,
         'path' => $relativePath,
         'revision' => $revision,
+        'http_status' => $httpStatus,
     ];
     if ($sourceFingerprint !== null) {
         $meta['source_mtime'] = (int) ($sourceFingerprint['mtime'] ?? 0);
@@ -1197,6 +1233,14 @@ function birkly_project_ssr_serve(string $filePath, array $query = [], array $se
     if ($ttl > 0) {
         $cached = birkly_project_ssr_cache_get($cacheKey, $ttl, $sourceFingerprint);
         if ($cached !== null) {
+            if (birkly_project_ssr_detail_entry_missing($query, $language, $storage)) {
+                $serveOptions['http_status'] = 404;
+                if ($notFoundUri === '') {
+                    require_once __DIR__ . '/site_seo_url_map.php';
+                    $path = birkly_seo_public_path_from_file($relative);
+                    $serveOptions['not_found_uri'] = $path !== '' ? $path : $relative;
+                }
+            }
             if ($notFoundUri !== '') {
                 require_once __DIR__ . '/project_custom_404.php';
                 $cached = birkly_project_custom_404_inject_not_found_meta($cached, $notFoundUri);
@@ -1207,8 +1251,7 @@ function birkly_project_ssr_serve(string $filePath, array $query = [], array $se
     }
 
     $data = birkly_project_ssr_build_data($html, $query, $language, $storage, $requests);
-    $detailReq = birkly_project_ssr_detail_request($query);
-    if ($detailReq !== null && !is_array($data['entry'] ?? null)) {
+    if (birkly_project_ssr_detail_entry_missing($query, $language, $storage)) {
         $serveOptions['http_status'] = 404;
         if ($notFoundUri === '') {
             require_once __DIR__ . '/site_seo_url_map.php';
@@ -1242,14 +1285,16 @@ function birkly_project_ssr_serve(string $filePath, array $query = [], array $se
     }
 
     $cacheWrite = 'skip';
-    if ($ttl > 0) {
+    $responseStatus = (int) ($serveOptions['http_status'] ?? 200);
+    if ($ttl > 0 && $responseStatus !== 404) {
         $cacheWrite = birkly_project_ssr_cache_put(
             $cacheKey,
             $rendered,
             $ttl,
             $relative,
             $revision,
-            $sourceFingerprint
+            $sourceFingerprint,
+            $responseStatus
         ) ? 'ok' : 'fail';
     }
 

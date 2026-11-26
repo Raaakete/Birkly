@@ -426,6 +426,15 @@ try {
         $autoOut = (string) ob_get_clean();
         assert_true('auto mode renders server-side (V-DEF-04)', $servedAuto === true);
         assert_true('auto mode output is rendered', strpos($autoOut, 'Year: ' . date('Y')) !== false, 'out=' . substr($autoOut, 0, 200));
+
+        assert_true(
+            'detail missing false without query',
+            birkly_project_ssr_detail_entry_missing([]) === false
+        );
+        assert_true(
+            'cache put skips http 404 responses',
+            birkly_project_ssr_cache_put('test_skip_404', '<html></html>', 60, '', '', null, 404) === false
+        );
     } finally {
         @unlink($smokeFile);
         birkly_project_ssr_invalidate_all();
