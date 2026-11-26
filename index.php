@@ -75,7 +75,10 @@ if ($file && birkly_resolved_path_is_inside_root($file, $root) && is_file($file)
     header('Content-Type: ' . $mime);
     // Public runtimes use versioned URLs + long cache in nginx — avoid duplicate headers here.
     $base = basename($file);
-    if (preg_match('/^birkly-(client|webmcp|components)\.js$/', $base) !== 1
+    if (str_starts_with($uri, '/media/')) {
+        require_once __DIR__ . '/core/hosting_routing.php';
+        header('Cache-Control: ' . birkly_hosting_public_file_cache_control($file));
+    } elseif (preg_match('/^birkly-(client|webmcp|components)\.js$/', $base) !== 1
         && preg_match('/\.(?:js|css|svg|png|jpg|jpeg|webp|gif|ico|woff2?)$/i', $base) === 1) {
         header('Cache-Control: public, max-age=604800');
     }
