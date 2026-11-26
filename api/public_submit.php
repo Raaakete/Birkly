@@ -104,6 +104,7 @@ if (($collectionMeta['entry_method'] ?? 'admin_only') !== 'public_api') {
 
 require_once __DIR__ . '/../core/public_read.php';
 require_once __DIR__ . '/../core/entry_ownership.php';
+require_once __DIR__ . '/../core/public_submit_values.php';
 require_once __DIR__ . '/domain_auth.php';
 $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
 setDynamicCORS();
@@ -146,7 +147,7 @@ foreach ($schema['fields'] as $field) {
     $required = $field['required'] ?? false;
     $type = $field['type'] ?? 'text';
     $value = $fields[$name] ?? '';
-    if ($required && trim($value) === '' && !isset($_FILES[$name])) {
+    if ($required && birkly_public_submit_field_value_is_empty($type, $value) && !isset($_FILES[$name])) {
         // Allow slug to be auto-generated later
         if ($name === 'slug') {
             $deferredRequired[] = $name;
@@ -167,6 +168,8 @@ foreach ($schema['fields'] as $field) {
     // File/media/image field
     if (($type === 'media' || $type === 'file' || $type === 'image') && isset($_FILES[$name])) {
         $fileFields[$name] = $field;
+    } else if (in_array($type, ['multiselect', 'tags'], true)) {
+        $cleanData[$name] = birkly_public_submit_coerce_string_list_field($field, $value);
     } else if ($type === 'wysiwyg' || $type === 'media') {
         $cleanData[$name] = $value;
     } else if ($type === 'checkbox') {
