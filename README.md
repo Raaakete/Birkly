@@ -112,7 +112,7 @@ Official plugin sources and the full test suite live in the private **Birkly-Mar
 
 ## Releases
 
-Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Latest alpha: [v0.0.2](https://github.com/Raaakete/Birkly/releases/tag/v0.0.2). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
+Self-host builds are published on [GitHub Releases](https://github.com/Raaakete/Birkly/releases). Versioning follows [RELEASE.md](RELEASE.md): **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable release.
 
 ## License
 

@@ -5,7 +5,7 @@
  *
  * Environment variables (required unless noted):
  *   BIRKLY_URL          — Birkly base URL (e.g. http://localhost:8080)
- *   BIRKLY_MCP_API_KEY  — Per-connection MCP API key from Settings → MCP Connections
+ *   BIRKLY_MCP_API_KEY  — MCP API key from Settings → AI (API-key connection)
  *
  * Legacy aliases (still supported): HARUCMS_URL, HARUCMS_API_KEY
  *
