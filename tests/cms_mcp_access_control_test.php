@@ -95,6 +95,30 @@ assert_true(
     && str_contains((string) ($subTraversal['message'] ?? ''), 'Invalid entry id')
 );
 
+$bulkTraversal = cms_mcp_dispatch_admin('sub_entries.bulk', [
+    'collection' => 'blog',
+    'entry_id' => '../etc',
+    'sub_collection' => 'comments',
+    'bulk_action' => 'delete',
+    'sub_entry_ids' => ['x'],
+], $admin);
+assert_true(
+    'sub_entries.bulk rejects traversal entry_id',
+    ($bulkTraversal['status'] ?? '') === 'error'
+    && str_contains((string) ($bulkTraversal['message'] ?? ''), 'Invalid entry id')
+);
+
+$countTraversal = cms_mcp_dispatch_admin('sub_entries.count', [
+    'collection' => 'blog',
+    'entry_id' => '../etc',
+    'sub_collection' => 'comments',
+], $admin);
+assert_true(
+    'sub_entries.count rejects traversal entry_id',
+    ($countTraversal['status'] ?? '') === 'error'
+    && str_contains((string) ($countTraversal['message'] ?? ''), 'Invalid entry id')
+);
+
 require_once dirname(__DIR__) . '/core/ai_tool_registry.php';
 $toolDenied = birkly_ai_dispatch_tool_call('cms_admin_action', [
     'action' => 'entries.save',
