@@ -109,6 +109,10 @@ function cms_mcp_handler_content(string $subAction, array $input, array $aiUser)
             if ($slug === '' || $newSlug === '') {
                 return cms_mcp_error('slug and new_slug are required');
             }
+            $invalid = cms_mcp_validate_collection_slug($slug) ?? cms_mcp_validate_collection_slug($newSlug);
+            if ($invalid !== null) {
+                return $invalid;
+            }
             $contentStorage = birkly_ai_content_storage();
             $sourceDir = birkly_content_resolve_collection_dir_name($contentStorage, $slug);
             if ($sourceDir === null) {
@@ -138,10 +142,19 @@ function cms_mcp_handler_content(string $subAction, array $input, array $aiUser)
             if ($collection === '' || $order === []) {
                 return cms_mcp_error('collection and order[] are required');
             }
-            $settingsPath = dirname(__DIR__) . '/content/collections/' . $collection . '/order.json';
-            $dir = dirname($settingsPath);
-            if (!is_dir($dir)) {
+            $invalid = cms_mcp_validate_collection_slug($collection);
+            if ($invalid !== null) {
+                return $invalid;
+            }
+            require_once dirname(__DIR__) . '/api/storage.php';
+            $contentStorage = birkly_ai_content_storage();
+            $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, $collection);
+            if ($collectionDir === null) {
                 return cms_mcp_error('Collection not found');
+            }
+            $settingsPath = cms_mcp_content_collections_root() . '/' . $collectionDir . '/order.json';
+            if (!cms_mcp_path_within_collections($settingsPath)) {
+                return cms_mcp_error('Invalid collection path');
             }
             file_put_contents($settingsPath, json_encode(array_values($order), JSON_PRETTY_PRINT));
             return cms_mcp_ok(['collection' => $collection, 'count' => count($order)]);
@@ -195,10 +208,28 @@ function cms_mcp_handler_sub_entries(string $subAction, array $input, array $aiU
             if ($collection === '' || $entryId === '' || $subCollection === '' || $order === []) {
                 return cms_mcp_error('collection, entry_id, sub_collection, and order[] are required');
             }
-            $path = dirname(__DIR__) . '/content/collections/' . $collection . '/entries/' . $entryId . '/sub_collections/' . $subCollection . '/.order.json';
+            $invalid = cms_mcp_validate_collection_slug($collection)
+                ?? cms_mcp_validate_entry_id($entryId)
+                ?? cms_mcp_validate_collection_slug($subCollection);
+            if ($invalid !== null) {
+                return $invalid;
+            }
+            $contentStorage = birkly_ai_content_storage();
+            $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, $collection);
+            if ($collectionDir === null) {
+                return cms_mcp_error('Collection not found');
+            }
+            $entryDir = cms_mcp_content_collections_root() . '/' . $collectionDir . '/entries/' . $entryId;
+            if (!is_dir($entryDir)) {
+                return cms_mcp_error('Entry not found');
+            }
+            $path = $entryDir . '/sub_collections/' . $subCollection . '/.order.json';
+            if (!cms_mcp_path_within_collections($path)) {
+                return cms_mcp_error('Invalid sub-entry path');
+            }
             $dir = dirname($path);
             if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+                return cms_mcp_error('Sub-collection not found');
             }
             file_put_contents($path, json_encode(array_values($order), JSON_PRETTY_PRINT));
             return cms_mcp_ok(['order' => array_values($order)]);

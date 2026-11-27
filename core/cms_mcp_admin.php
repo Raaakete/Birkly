@@ -321,6 +321,29 @@ function cms_mcp_admin_action_meta(): array
     return $meta;
 }
 
+/**
+ * Permissions that satisfy a catalog permission (role must hold one; never treat read as write).
+ *
+ * @return string[]
+ */
+function cms_mcp_permission_supersets(string $permission): array
+{
+    return match ($permission) {
+        'manage_settings' => ['manage_settings', 'read_settings'],
+        'manage_users' => ['manage_users', 'list_users'],
+        'manage_content' => ['manage_content', 'write'],
+        'manage_plugins' => ['manage_plugins'],
+        'manage_project_site' => ['manage_project_site'],
+        'read_media' => ['read_media', 'manage_media'],
+        'manage_media' => ['manage_media'],
+        'upload' => ['upload', 'manage_media'],
+        'delete' => ['delete', 'manage_content', 'delete_user'],
+        'write' => ['write', 'manage_content'],
+        'read' => ['read'],
+        default => [$permission],
+    };
+}
+
 /** @return string[]|null */
 function cms_mcp_permissions_for_action(string $action): ?array
 {
@@ -328,35 +351,50 @@ function cms_mcp_permissions_for_action(string $action): ?array
     if ($meta === null) {
         return null;
     }
-    $perm = $meta['permission'];
-    if ($perm === 'manage_content') {
-        return ['manage_content', 'write', 'read'];
+    $perm = (string) $meta['permission'];
+    $accepted = cms_mcp_permission_supersets($perm);
+
+    if (!empty($meta['write'])) {
+        $accepted = array_values(array_filter(
+            $accepted,
+            static fn (string $p): bool => $p !== 'read' && $p !== 'read_media' && $p !== 'read_settings' && $p !== 'list_users'
+        ));
+        if ($accepted === []) {
+            $accepted = cms_mcp_permission_supersets('write');
+        }
     }
-    if ($perm === 'manage_settings') {
-        return ['manage_settings', 'read_settings'];
+
+    return $accepted;
+}
+
+function cms_mcp_user_can_admin_action(array $aiUser, string $action): bool
+{
+    $required = cms_mcp_permissions_for_action($action);
+    if ($required === null) {
+        return false;
     }
-    if ($perm === 'manage_users') {
-        return ['manage_users', 'list_users'];
+
+    return cms_mcp_user_can($aiUser, $required);
+}
+
+/**
+ * @return array{success: false, message: string}|null Null when allowed.
+ */
+function cms_mcp_enforce_admin_action_permission(array $aiUser, string $action): ?array
+{
+    if ($action === '') {
+        return null;
     }
-    if ($perm === 'manage_plugins') {
-        return ['manage_plugins', 'read'];
+    if (cms_mcp_user_can_admin_action($aiUser, $action)) {
+        return null;
     }
-    if ($perm === 'manage_project_site') {
-        return ['manage_project_site', 'read'];
-    }
-    if ($perm === 'read_media') {
-        return ['read_media', 'read', 'manage_media'];
-    }
-    if ($perm === 'manage_media') {
-        return ['manage_media', 'upload', 'delete'];
-    }
-    if ($perm === 'upload') {
-        return ['upload', 'manage_media'];
-    }
-    if ($perm === 'delete') {
-        return ['delete', 'manage_content', 'delete_user'];
-    }
-    return ['read', 'write', $perm];
+
+    $role = (string) ($aiUser['role'] ?? 'unknown');
+
+    return [
+        'success' => false,
+        'message' => 'Permission denied for action ' . $action . ' (role: ' . $role . ')',
+    ];
 }
 
 /**
