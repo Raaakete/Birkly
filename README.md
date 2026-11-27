@@ -2,6 +2,8 @@
 
 **An open-source CMS for humans and AI.**
 
+[![Birkly MCP server](https://glama.ai/mcp/servers/Raaakete/Birkly/badges/score.svg)](https://glama.ai/mcp/servers/Raaakete/Birkly)
+
 A modular, API-first PHP CMS with a predictable architecture, no build step, no external core dependencies, and an optional database. Content lives as JSON on disk by default — upload a release zip, run, and manage everything from `/admin`.
 
 ### Admin
@@ -22,7 +24,7 @@ See [What is Birkly?](https://docs.birkly.io/00-overview/what-is-birkly.html) in
 
 ### Alpha release
 
-Try the current self-host build: **[v0.0.2 (alpha)](https://github.com/Raaakete/Birkly/releases/tag/v0.0.2)** — download `birkly-release.zip`, extract, open **`0_START-HERE.html`**, then run `./start-server.sh`. Versioning: **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable — details in [RELEASE.md](RELEASE.md).
+Try the current self-host build from **[Releases](https://github.com/Raaakete/Birkly/releases)** — download `birkly-release.zip`, extract, open **`0_START-HERE.html`**, then run `./start-server.sh`. Versioning: **0.0.x** alpha, **0.1.x** beta, **1.0.0** first stable — details in [RELEASE.md](RELEASE.md).
 
 ## Quick start
 
@@ -44,6 +46,33 @@ BIRKLY_ADMIN_PASSWORD='YourPassword123!' php scripts/create-default-user.php
 ```
 
 The default email is `admin@localhost`. Pass `--email=you@example.com` to use another. If an admin account already exists, the script leaves it unchanged.
+
+## MCP server
+
+Birkly has a built-in [MCP](https://modelcontextprotocol.io) server, so AI apps like Claude, ChatGPT, Cursor or VS Code can work with your site directly. Agents can read and edit collections, entries, pages, media and settings. Every connection uses a Birkly role, so an agent can only do what that role allows, and writes still go through your AI app's approval prompts.
+
+**Connect an AI app (recommended):** open **Settings → AI** in the admin, copy your personal connector URL and add it as a custom connector in your AI app. You sign in with your Birkly account (OAuth).
+
+```
+https://your-site.example/mcp/agents/ai_agent_personal
+```
+
+**Local or stdio-only clients:** use `mcp-bridge.js` with an MCP API key from **Settings → AI**:
+
+```json
+{
+  "mcpServers": {
+    "birkly": {
+      "command": "node",
+      "args": ["/path/to/birkly/mcp-bridge.js"],
+      "env": {
+        "BIRKLY_URL": "http://localhost:8080",
+        "BIRKLY_MCP_API_KEY": "your-key"
+      }
+    }
+  }
+}
+```
 
 ## Where your site lives
 
