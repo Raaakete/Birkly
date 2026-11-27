@@ -55,6 +55,14 @@ if (empty($parent_collection) || empty($parent_entry_id) || empty($sub_collectio
     exit;
 }
 
+try {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection);
+} catch (InvalidArgumentException $e) {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    exit;
+}
+
 // Load collection and sub-collection configuration
 $storage = get_storage();
 $collectionPath = "collections/{$parent_collection}/collection.json";

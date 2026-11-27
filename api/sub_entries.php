@@ -37,6 +37,15 @@ if (!function_exists('getSubEntrySiblings')) {
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/plugins.php';
 
+function sub_entries_api_bad_path(InvalidArgumentException $e): void
+{
+    ob_clean();
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    ob_end_flush();
+    exit;
+}
+
 // Basic auth check for admin operations
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? $_GET['action'] ?? '';
@@ -111,6 +120,14 @@ if ($action === 'list') {
     }
     
     try {
+        birkly_sub_entries_assert_valid_path_segments(
+            $parent_collection,
+            $parent_entry_id,
+            $sub_collection,
+            null,
+            $parent_sub_collection !== null && $parent_sub_collection !== '' ? (string) $parent_sub_collection : null,
+            $parent_sub_entry_id !== null && $parent_sub_entry_id !== '' ? (string) $parent_sub_entry_id : null,
+        );
         
         // Check if this is a nested sub-entry list request
         if (!empty($parent_sub_collection) && !empty($parent_sub_entry_id)) {
@@ -161,6 +178,8 @@ if ($action === 'list') {
         ]);
         ob_end_flush();
         exit;
+    } catch (InvalidArgumentException $e) {
+        sub_entries_api_bad_path($e);
     } catch (Exception $e) {
         error_log("Error in sub_entries API (list): " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
@@ -210,6 +229,8 @@ if ($action === 'get') {
         }
         ob_end_flush();
         exit;
+    } catch (InvalidArgumentException $e) {
+        sub_entries_api_bad_path($e);
     } catch (Exception $e) {
         error_log("Error in sub_entries API (get): " . $e->getMessage());
         ob_clean();
@@ -283,6 +304,8 @@ if ($action === 'create') {
         }
         ob_end_flush();
         exit;
+    } catch (InvalidArgumentException $e) {
+        sub_entries_api_bad_path($e);
     } catch (Exception $e) {
         error_log("Error in sub_entries API (create): " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
@@ -339,6 +362,8 @@ if ($action === 'update') {
         }
         ob_end_flush();
         exit;
+    } catch (InvalidArgumentException $e) {
+        sub_entries_api_bad_path($e);
     } catch (Exception $e) {
         error_log("Error in sub_entries API (update): " . $e->getMessage());
         ob_clean();
@@ -392,6 +417,8 @@ if ($action === 'delete') {
         }
         ob_end_flush();
         exit;
+    } catch (InvalidArgumentException $e) {
+        sub_entries_api_bad_path($e);
     } catch (Exception $e) {
         error_log("Error in sub_entries API (delete): " . $e->getMessage());
         ob_clean();

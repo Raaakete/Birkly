@@ -8,6 +8,7 @@
 
 require_once __DIR__ . '/StorageInterface.php';
 require_once __DIR__ . '/file_lock.php';
+require_once __DIR__ . '/safe_path.php';
 
 class FlatFileStorage implements StorageInterface {
     public $basePath;
@@ -18,9 +19,18 @@ class FlatFileStorage implements StorageInterface {
             mkdir($this->basePath, 0755, true);
         }
     }
+
+    /** @return string|null */
+    private function resolveFullPath(string $relativePath): ?string
+    {
+        return birkly_storage_resolve_relative_path($this->basePath, $relativePath);
+    }
     
     public function read($path) {
-        $fullPath = $this->basePath . '/' . ltrim($path, '/');
+        $fullPath = $this->resolveFullPath((string) $path);
+        if ($fullPath === null) {
+            return null;
+        }
         if (!file_exists($fullPath)) {
             return null;
         }
@@ -33,7 +43,10 @@ class FlatFileStorage implements StorageInterface {
     }
     
     public function write($path, $data) {
-        $fullPath = $this->basePath . '/' . ltrim($path, '/');
+        $fullPath = $this->resolveFullPath((string) $path);
+        if ($fullPath === null) {
+            return false;
+        }
         $dir = dirname($fullPath);
         if (!file_exists($dir)) {
             mkdir($dir, 0755, true);
@@ -65,7 +78,10 @@ class FlatFileStorage implements StorageInterface {
     }
     
     public function delete($path) {
-        $fullPath = $this->basePath . '/' . ltrim($path, '/');
+        $fullPath = $this->resolveFullPath((string) $path);
+        if ($fullPath === null) {
+            return false;
+        }
         if (file_exists($fullPath)) {
             return unlink($fullPath);
         }
@@ -73,7 +89,10 @@ class FlatFileStorage implements StorageInterface {
     }
     
     public function list($path) {
-        $fullPath = $this->basePath . '/' . ltrim($path, '/');
+        $fullPath = $this->resolveFullPath((string) $path);
+        if ($fullPath === null) {
+            return [];
+        }
         if (!file_exists($fullPath)) {
             return [];
         }
@@ -84,11 +103,18 @@ class FlatFileStorage implements StorageInterface {
     }
     
     public function exists($path) {
-        $fullPath = $this->basePath . '/' . ltrim($path, '/');
+        $fullPath = $this->resolveFullPath((string) $path);
+        if ($fullPath === null) {
+            return false;
+        }
         return file_exists($fullPath);
     }
     
     public function query($collection, $filters = [], $options = []) {
+        require_once dirname(__DIR__) . '/entry_slug.php';
+        if (!birkly_validate_content_slug((string) $collection)) {
+            return [];
+        }
         // For flat-file storage, we need to scan the collection directory
         $collectionPath = $this->basePath . '/collections/' . $collection . '/entries';
         if (!file_exists($collectionPath)) {

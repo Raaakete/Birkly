@@ -217,7 +217,7 @@ function cms_mcp_handler_sub_entries(string $subAction, array $input, array $aiU
             $contentStorage = birkly_ai_content_storage();
             $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, $collection);
             $entryDir = cms_mcp_content_collections_root() . '/' . $collectionDir . '/entries/' . $entryId;
-            $path = $entryDir . '/sub_collections/' . $subCollection . '/.order.json';
+            $path = $entryDir . '/sub_entries/' . $subCollection . '/.order.json';
             file_put_contents($path, json_encode(array_values($order), JSON_PRETTY_PRINT));
             return cms_mcp_ok(['order' => array_values($order)]);
 

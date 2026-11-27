@@ -136,7 +136,7 @@ function cms_mcp_validate_sub_entries_path_context(
         return cms_mcp_error('Entry not found');
     }
 
-    $subDir = $entryDir . '/sub_collections/' . $subCollection;
+    $subDir = $entryDir . '/sub_entries/' . $subCollection;
     if (!cms_mcp_path_within_collections($subDir)) {
         return cms_mcp_error('Invalid sub-entry path');
     }
