@@ -8,7 +8,10 @@ Security fixes are applied to the latest release on the default branch of [Raaak
 
 **Please do not open public GitHub issues for security vulnerabilities.**
 
-Report security issues privately to the maintainers via GitHub Security Advisories on the Birkly repository, or contact the team through [birkly.cloud](https://birkly.cloud).
+Report security issues privately, in one of two ways:
+
+1. **GitHub (preferred):** [Report a vulnerability](https://github.com/Raaakete/Birkly/security/advisories/new) in the repository's Security tab. Only you and the maintainers can see the report, and we can work on the fix together in a private fork.
+2. **Email:** [hello@birkly.io](mailto:hello@birkly.io) with "Security" in the subject line, if you don't have a GitHub account or prefer email.
 
 Include:
 
