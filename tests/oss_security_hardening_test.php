@@ -42,6 +42,10 @@ try {
     assert_true(true, 'require rejects path traversal');
 }
 
+assert_true(birkly_validate_content_entry_id('abc123_entry'), 'valid entry id');
+assert_true(!birkly_validate_content_entry_id('../etc'), 'rejects traversal entry id');
+assert_true(!birkly_validate_content_entry_id('foo/bar'), 'rejects slash in entry id');
+
 assert_true(!birkly_ai_presence_is_safe_external_url('http://127.0.0.1/secret'), 'blocks localhost URL');
 assert_true(!birkly_ai_presence_is_safe_external_url('ftp://example.com'), 'blocks non-http URL');
 assert_true(birkly_ai_presence_is_safe_external_url('https://example.com'), 'allows public https URL');

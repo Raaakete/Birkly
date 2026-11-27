@@ -303,6 +303,24 @@ function birkly_require_valid_content_slug(string $slug): void
 }
 
 /**
+ * Validate entry / sub-entry id segments before filesystem paths are built.
+ */
+function birkly_validate_content_entry_id(string $entryId): bool
+{
+    if ($entryId === '') {
+        return false;
+    }
+
+    if (strpos($entryId, '..') !== false
+        || strpos($entryId, '/') !== false
+        || strpos($entryId, '\\') !== false) {
+        return false;
+    }
+
+    return preg_match('/^[a-zA-Z0-9_-]+$/', $entryId) === 1;
+}
+
+/**
  * Whether a fieldtype needs per-language HTML render (not just name/id rewrite).
  */
 function birkly_admin_field_needs_per_language_render(string $fieldType): bool

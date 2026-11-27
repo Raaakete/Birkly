@@ -47,6 +47,57 @@ function cms_mcp_csrf_valid(string $csrf, string $actionName): bool
  * @param callable(): T $fn
  * @return T
  */
+function cms_mcp_content_collections_root(): string
+{
+    return dirname(__DIR__) . '/content/collections';
+}
+
+/**
+ * True when $absolutePath's parent directory is inside content/collections/.
+ */
+function cms_mcp_path_within_collections(string $absolutePath): bool
+{
+    $root = realpath(cms_mcp_content_collections_root());
+    if ($root === false) {
+        return false;
+    }
+
+    $parent = realpath(dirname($absolutePath));
+    if ($parent === false) {
+        $normalized = str_replace('\\', '/', dirname($absolutePath));
+        $rootNorm = rtrim(str_replace('\\', '/', $root), '/');
+
+        return str_starts_with($normalized, $rootNorm . '/');
+    }
+
+    $rootNorm = rtrim(str_replace('\\', '/', $root), '/');
+    $parentNorm = str_replace('\\', '/', $parent);
+
+    return $parentNorm === $rootNorm || str_starts_with($parentNorm, $rootNorm . '/');
+}
+
+/** @return array<string, mixed>|null Error payload, or null when valid. */
+function cms_mcp_validate_collection_slug(string $slug): ?array
+{
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_slug($slug)) {
+        return cms_mcp_error('Invalid collection slug');
+    }
+
+    return null;
+}
+
+/** @return array<string, mixed>|null Error payload, or null when valid. */
+function cms_mcp_validate_entry_id(string $entryId): ?array
+{
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_entry_id($entryId)) {
+        return cms_mcp_error('Invalid entry id');
+    }
+
+    return null;
+}
+
 function cms_mcp_with_json_input(array $input, callable $fn)
 {
     $previous = $GLOBALS['__CMS_MCP_JSON_INPUT'] ?? null;

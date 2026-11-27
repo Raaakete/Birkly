@@ -367,6 +367,17 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $denied['message']]]];
     }
 
+    if ($actionType === 'cms_admin_action') {
+        $cmsSubAction = trim((string) ($arguments['action'] ?? ''));
+        if ($cmsSubAction !== '') {
+            require_once __DIR__ . '/cms_mcp_admin.php';
+            $cmsDenied = cms_mcp_enforce_admin_action_permission($aiUser, $cmsSubAction);
+            if ($cmsDenied !== null) {
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => $cmsDenied['message']]]];
+            }
+        }
+    }
+
     if (birkly_plugin_mcp_tool_is_registered($actionType)) {
         $pluginResult = birkly_plugin_mcp_dispatch($actionType, $arguments, $aiUser);
         if ($pluginResult !== null) {
