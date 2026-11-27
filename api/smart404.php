@@ -7,6 +7,8 @@
 require_once '../core/csrf.php';
 require_once '../api/auth.php';
 require_once '../api/session.php';
+require_once __DIR__ . '/../core/entry_slug.php';
+require_once __DIR__ . '/../core/storage/StorageFactory.php';
 
 header('Content-Type: application/json');
 
@@ -53,6 +55,10 @@ function generateSmart404($data) {
     } else {
         // Get specific collections
         foreach ($collections as $collectionName) {
+            $collectionName = (string) $collectionName;
+            if (!birkly_validate_content_slug($collectionName)) {
+                continue;
+            }
             $collectionsData[$collectionName] = getCollectionSlugs($collectionName);
         }
     }
@@ -114,27 +120,31 @@ function getCollectionsList() {
 }
 
 function getCollectionSlugs($collectionName) {
-    $entriesDir = "../content/collections/{$collectionName}/entries/";
+    if (!birkly_validate_content_slug((string) $collectionName)) {
+        return [];
+    }
+    if (!function_exists('get_storage')) {
+        require_once __DIR__ . '/../core/storage/StorageFactory.php';
+    }
+    $storage = get_storage();
+    $entriesPath = 'collections/' . $collectionName . '/entries';
+    $files = $storage->list($entriesPath);
     $slugs = [];
-    
-    if (is_dir($entriesDir)) {
-        $files = scandir($entriesDir);
-        foreach ($files as $file) {
-            if ($file !== '.' && $file !== '..' && pathinfo($file, PATHINFO_EXTENSION) === 'json') {
-                $entryData = json_decode(file_get_contents($entriesDir . $file), true);
-                if ($entryData) {
-                    // Use explicit slug if available, otherwise use filename without extension
-                    if (isset($entryData['slug'])) {
-                        $slugs[] = $entryData['slug'];
-                    } else {
-                        $slug = pathinfo($file, PATHINFO_FILENAME);
-                        $slugs[] = $slug;
-                    }
-                }
-            }
+    foreach ($files as $file) {
+        if (!is_string($file) || substr($file, -5) !== '.json' || str_starts_with($file, '.')) {
+            continue;
+        }
+        $entryData = $storage->read($entriesPath . '/' . $file);
+        if (!is_array($entryData)) {
+            continue;
+        }
+        if (isset($entryData['slug']) && is_string($entryData['slug']) && $entryData['slug'] !== '') {
+            $slugs[] = $entryData['slug'];
+        } else {
+            $slugs[] = pathinfo($file, PATHINFO_FILENAME);
         }
     }
-    
+
     return $slugs;
 }
 

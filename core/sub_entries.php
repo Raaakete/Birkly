@@ -23,6 +23,42 @@ if (file_exists(__DIR__ . '/sub_entries/activity.php')) {
 }
 
 /**
+ * @throws InvalidArgumentException when any path segment is unsafe
+ */
+function birkly_sub_entries_assert_valid_path_segments(
+    string $parentCollection,
+    string $parentEntryId,
+    string $subCollection,
+    ?string $subEntryId = null,
+    ?string $parentSubCollection = null,
+    ?string $parentSubEntryId = null,
+): void {
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_slug($parentCollection)) {
+        throw new InvalidArgumentException('Invalid parent_collection');
+    }
+    if (!birkly_validate_content_entry_id($parentEntryId)) {
+        throw new InvalidArgumentException('Invalid parent_entry_id');
+    }
+    if (!birkly_validate_content_slug($subCollection)) {
+        throw new InvalidArgumentException('Invalid sub_collection');
+    }
+    if ($subEntryId !== null && $subEntryId !== '' && !birkly_validate_content_entry_id($subEntryId)) {
+        throw new InvalidArgumentException('Invalid sub_entry_id');
+    }
+    if ($parentSubCollection !== null && $parentSubCollection !== '') {
+        if (!birkly_validate_content_slug($parentSubCollection)) {
+            throw new InvalidArgumentException('Invalid parent_sub_collection');
+        }
+    }
+    if ($parentSubEntryId !== null && $parentSubEntryId !== '') {
+        if (!birkly_validate_content_entry_id($parentSubEntryId)) {
+            throw new InvalidArgumentException('Invalid parent_sub_entry_id');
+        }
+    }
+}
+
+/**
  * Get sub-entries for a parent entry
  * 
  * @param string $parent_collection Parent collection slug
@@ -33,6 +69,7 @@ if (file_exists(__DIR__ . '/sub_entries/activity.php')) {
  * @return array List of sub-entries
  */
 function getSubEntries($parent_collection, $parent_entry_id, $sub_collection, $filters = [], $options = []) {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection);
     // DISABLE CACHE for now - it prevents reordering from working
     // The cache doesn't know when .order.json changes
     /*
@@ -207,6 +244,7 @@ function getSubEntries($parent_collection, $parent_entry_id, $sub_collection, $f
  * @return array List of sibling sub-entries
  */
 function getSubEntrySiblings($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id, $options = []) {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id);
     $all_entries = getSubEntries($parent_collection, $parent_entry_id, $sub_collection, [], $options);
     
     // Filter out the current entry
@@ -304,6 +342,14 @@ function getNestedSubEntries(
     $filters = [],
     $options = []
 ) {
+    birkly_sub_entries_assert_valid_path_segments(
+        $parent_collection,
+        $parent_entry_id,
+        $sub_collection,
+        null,
+        $parent_sub_collection,
+        $parent_sub_entry_id,
+    );
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -414,6 +460,7 @@ function getNestedSubEntries(
  * @return array|null Sub-entry data or null if not found
  */
 function getSubEntry($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id) {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id);
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -452,6 +499,22 @@ function getSubEntry($parent_collection, $parent_entry_id, $sub_collection, $sub
  * @return array|false Created sub-entry with ID, or false on failure
  */
 function createSubEntry($parent_collection, $parent_entry_id, $sub_collection, $data) {
+    $parentSubCollection = isset($data['parent_sub_collection']) ? (string) $data['parent_sub_collection'] : null;
+    $parentSubEntryId = isset($data['parent_sub_entry_id']) ? (string) $data['parent_sub_entry_id'] : null;
+    if ($parentSubCollection === '') {
+        $parentSubCollection = null;
+    }
+    if ($parentSubEntryId === '') {
+        $parentSubEntryId = null;
+    }
+    birkly_sub_entries_assert_valid_path_segments(
+        $parent_collection,
+        $parent_entry_id,
+        $sub_collection,
+        null,
+        $parentSubCollection,
+        $parentSubEntryId
+    );
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -628,6 +691,7 @@ function createSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
  * @return array|false Updated sub-entry or false on failure
  */
 function updateSubEntry($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id, $data) {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id);
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -760,6 +824,14 @@ function updateSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
  * @return bool True on success
  */
 function deleteSubEntry($parent_collection, $parent_entry_id, $sub_collection, $sub_entry_id, $parent_sub_collection = null, $parent_sub_entry_id = null) {
+    birkly_sub_entries_assert_valid_path_segments(
+        $parent_collection,
+        $parent_entry_id,
+        $sub_collection,
+        $sub_entry_id,
+        $parent_sub_collection !== null && $parent_sub_collection !== '' ? (string) $parent_sub_collection : null,
+        $parent_sub_entry_id !== null && $parent_sub_entry_id !== '' ? (string) $parent_sub_entry_id : null,
+    );
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -844,6 +916,7 @@ function deleteSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
  * @return int Count of sub-entries
  */
 function countSubEntries($parent_collection, $parent_entry_id, $sub_collection, $filters = []) {
+    birkly_sub_entries_assert_valid_path_segments($parent_collection, $parent_entry_id, $sub_collection);
     $entries = getSubEntries($parent_collection, $parent_entry_id, $sub_collection, $filters);
     return count($entries);
 }
@@ -855,6 +928,10 @@ function countSubEntries($parent_collection, $parent_entry_id, $sub_collection, 
  * @return array List of sub-collection configurations
  */
 function getSubCollections($collection_slug) {
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_slug($collection_slug)) {
+        return [];
+    }
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -882,6 +959,14 @@ function getSubCollections($collection_slug) {
  * @return array|null Sub-collection configuration or null
  */
 function getSubCollectionConfig($collection_slug, $sub_collection_slug, $parent_sub_collection_slug = null) {
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_slug($collection_slug) || !birkly_validate_content_slug($sub_collection_slug)) {
+        return null;
+    }
+    if ($parent_sub_collection_slug !== null && $parent_sub_collection_slug !== ''
+        && !birkly_validate_content_slug($parent_sub_collection_slug)) {
+        return null;
+    }
     $subCollections = getSubCollections($collection_slug);
     
     // If parent_sub_collection_slug is provided, search in nested sub-collections
@@ -925,6 +1010,10 @@ function getSubCollectionConfig($collection_slug, $sub_collection_slug, $parent_
  */
 function birkly_sub_entries_delete_all_for_parent(string $parentCollection, string $parentEntryId): void
 {
+    require_once __DIR__ . '/entry_slug.php';
+    if (!birkly_validate_content_slug($parentCollection) || !birkly_validate_content_entry_id($parentEntryId)) {
+        return;
+    }
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }

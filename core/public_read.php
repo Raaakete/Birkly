@@ -801,6 +801,7 @@ function birkly_public_filter_entry($entry, string $collectionSlug, string $cont
 
 /**
  * A sub-entry with no status is treated as published. Explicit drafts are not.
+ * Sub-entry path validation and storage guards prevent anonymous reads outside collections/.
  *
  * @param array<string, mixed> $entry
  */
