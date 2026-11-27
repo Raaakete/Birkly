@@ -205,32 +205,19 @@ function cms_mcp_handler_sub_entries(string $subAction, array $input, array $aiU
         case 'set_order':
         case 'reorder':
             $order = is_array($input['order'] ?? null) ? $input['order'] : [];
-            if ($collection === '' || $entryId === '' || $subCollection === '' || $order === []) {
+            if ($order === []) {
                 return cms_mcp_error('collection, entry_id, sub_collection, and order[] are required');
             }
-            $invalid = cms_mcp_validate_collection_slug($collection)
-                ?? cms_mcp_validate_entry_id($entryId)
-                ?? cms_mcp_validate_collection_slug($subCollection);
-            if ($invalid !== null) {
-                return $invalid;
+            $scopeError = cms_mcp_validate_sub_entries_path_context($collection, $entryId, $subCollection, true);
+            if ($scopeError !== null) {
+                return $scopeError;
             }
+            require_once dirname(__DIR__) . '/core/content_resolve.php';
+            require_once dirname(__DIR__) . '/api/storage.php';
             $contentStorage = birkly_ai_content_storage();
             $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, $collection);
-            if ($collectionDir === null) {
-                return cms_mcp_error('Collection not found');
-            }
             $entryDir = cms_mcp_content_collections_root() . '/' . $collectionDir . '/entries/' . $entryId;
-            if (!is_dir($entryDir)) {
-                return cms_mcp_error('Entry not found');
-            }
             $path = $entryDir . '/sub_collections/' . $subCollection . '/.order.json';
-            if (!cms_mcp_path_within_collections($path)) {
-                return cms_mcp_error('Invalid sub-entry path');
-            }
-            $dir = dirname($path);
-            if (!is_dir($dir)) {
-                return cms_mcp_error('Sub-collection not found');
-            }
             file_put_contents($path, json_encode(array_values($order), JSON_PRETTY_PRINT));
             return cms_mcp_ok(['order' => array_values($order)]);
 
@@ -238,9 +225,18 @@ function cms_mcp_handler_sub_entries(string $subAction, array $input, array $aiU
             $bulkAction = (string) ($input['bulk_action'] ?? $input['action'] ?? '');
             $ids = is_array($input['sub_entry_ids'] ?? null) ? $input['sub_entry_ids'] : [];
             if ($bulkAction === 'delete') {
+                $scopeError = cms_mcp_validate_sub_entries_path_context($collection, $entryId, $subCollection, true);
+                if ($scopeError !== null) {
+                    return $scopeError;
+                }
                 $deleted = 0;
                 foreach ($ids as $id) {
-                    if (deleteSubEntry($collection, $entryId, $subCollection, (string) $id)) {
+                    $subEntryId = (string) $id;
+                    $invalidId = cms_mcp_validate_entry_id($subEntryId);
+                    if ($invalidId !== null) {
+                        return $invalidId;
+                    }
+                    if (deleteSubEntry($collection, $entryId, $subCollection, $subEntryId)) {
                         $deleted++;
                     }
                 }
@@ -249,6 +245,10 @@ function cms_mcp_handler_sub_entries(string $subAction, array $input, array $aiU
             return cms_mcp_error('Unsupported sub_entries bulk action');
 
         case 'count':
+            $scopeError = cms_mcp_validate_sub_entries_path_context($collection, $entryId, $subCollection, false);
+            if ($scopeError !== null) {
+                return $scopeError;
+            }
             return cms_mcp_ok(['count' => countSubEntries($collection, $entryId, $subCollection)]);
 
         default:
