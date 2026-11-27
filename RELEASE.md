@@ -20,7 +20,7 @@ The **`VERSION`** file at repo root is the installed CMS version. It must match 
 - **One tag per release:** `v{VERSION}` (example: `v0.0.1`).
 - **Release asset:** `birkly-release.zip` (runtime zip from `build-cms-release.sh`).
 - Do not publish phase-scoped tag names (`v1.0.1-p86.2`, demo dates, etc.) on the public line.
-- **GitHub “Latest”** should point at the newest **non–pre-release** stable, or at the newest **pre-release** only when the whole product is still in alpha/beta (0.0.x / 0.1.x).
+- **GitHub “Latest”** (UI badge and API `GET /repos/.../releases/latest`) resolves to the newest **non–pre-release** only. While every 0.0.x / 0.1.x build stays marked **Pre-release**, `/releases/latest/download/...` returns **404** — use explicit tag URLs in docs and on birkly.io (`.../releases/download/v0.0.3/birkly-release.zip`). Unflagging a 0.0.x release as “latest” just to fix that URL blurs alpha vs stable; prefer tag pins until **1.0.0**.
 
 ## Maintainer checklist (new release)
 
@@ -31,6 +31,7 @@ The **`VERSION`** file at repo root is the installed CMS version. It must match 
 5. `git tag v0.0.2 && git push origin v0.0.2`
 6. Create GitHub Release: attach `birkly-release.zip`, notes, **Pre-release** if `0.0.x` or `0.1.x`.
 7. Hub/Docs: announce when pins or install docs need updating (Marketplace stays private).
+8. **Marketing site:** update hard-coded download fallback URLs on [birkly.io](https://birkly.io) (hero/CTA buttons) so they point at the new tag, e.g. `https://github.com/Raaakete/Birkly/releases/download/v{VERSION}/birkly-release.zip` — not only GitHub **Latest** (see below).
 
 ## Hub and update checks
 
